@@ -16,7 +16,8 @@ interface AssessmentBotScreenProps {
 export default function AssessmentBotScreen({ 
   assistantId,
   systemPrompt,
-  onNext 
+  onNext,
+  onPrevious
 }: AssessmentBotScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
@@ -133,7 +134,18 @@ export default function AssessmentBotScreen({
           </form>
         </div>
       </div>
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-between">
+        {onPrevious ? (
+          <Button
+            onClick={onPrevious}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        ) : <div></div>}
+        
         <Button
           onClick={handleNext}
           disabled={isLoading || isSendingToN8N}

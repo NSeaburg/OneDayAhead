@@ -68,7 +68,11 @@ export default function Home() {
       <div className="flex-grow relative">
         {/* Video Screen (1) */}
         <div className={`absolute inset-0 ${currentScreen === 1 ? 'block' : 'hidden'}`}>
-          <VideoScreen videoUrl={config.videoUrl} onNext={goToNextScreen} />
+          <VideoScreen 
+            videoUrl={config.videoUrl} 
+            onNext={goToNextScreen} 
+            onPrevious={currentScreen > 1 ? goToPreviousScreen : undefined} 
+          />
         </div>
         
         {/* Article + Chatbot Screen (2) */}
@@ -78,6 +82,7 @@ export default function Home() {
             assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.discussion}
             onNext={goToNextScreen} 
+            onPrevious={goToPreviousScreen} 
           />
         </div>
         
@@ -87,6 +92,7 @@ export default function Home() {
             assistantId={assessmentAssistantId}
             systemPrompt={config.systemPrompts.assessment}
             onNext={goToNextScreen} 
+            onPrevious={goToPreviousScreen}
           />
         </div>
         
@@ -95,6 +101,7 @@ export default function Home() {
           <FinalBotScreen 
             assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.feedback}
+            onPrevious={goToPreviousScreen}
           />
         </div>
       </div>

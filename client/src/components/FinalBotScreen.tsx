@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { Send, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatMessages } from "@/hooks/useChatMessages";
@@ -7,11 +7,13 @@ import { useChatMessages } from "@/hooks/useChatMessages";
 interface FinalBotScreenProps {
   assistantId: string;
   systemPrompt: string;
+  onPrevious?: () => void;
 }
 
 export default function FinalBotScreen({ 
   assistantId,
-  systemPrompt
+  systemPrompt,
+  onPrevious
 }: FinalBotScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   
@@ -89,7 +91,18 @@ export default function FinalBotScreen({
           </form>
         </div>
       </div>
-      {/* No "Next" button on the final screen */}
+      <div className="mt-4 flex justify-start">
+        {onPrevious && (
+          <Button
+            onClick={onPrevious}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Assessment
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
