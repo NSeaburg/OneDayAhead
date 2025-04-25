@@ -5,10 +5,14 @@ import ArticleChatScreen from "@/components/ArticleChatScreen";
 import AssessmentBotScreen from "@/components/AssessmentBotScreen";
 import FinalBotScreen from "@/components/FinalBotScreen";
 import { config } from "@/config";
+import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 
 export default function Home() {
   // Track the current screen in the learning flow
   const [currentScreen, setCurrentScreen] = useState(1);
+  
+  // Fetch assistant ID from the backend
+  const { assistantId, isLoading, error } = useAssistantConfig();
   
   // Function to navigate to the next screen
   const goToNextScreen = () => {
@@ -16,6 +20,40 @@ export default function Home() {
       setCurrentScreen(currentScreen + 1);
     }
   };
+
+  // Display loading state while fetching assistant ID
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-gray-300 mb-4"></div>
+            <div className="h-4 w-48 bg-gray-300 rounded mb-2"></div>
+            <div className="h-3 w-32 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Display error state if assistant ID couldn't be fetched
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
+        <div className="flex items-center justify-center h-screen">
+          <div className="flex flex-col items-center text-center p-4">
+            <div className="text-red-500 text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold mb-2">Configuration Error</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <p className="text-gray-500 text-sm">Please check that your OpenAI API key and Assistant ID are properly configured.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get the actual assistant ID to use, falling back to config values if needed
+  const actualAssistantId = assistantId || config.openai.discussionAssistantId;
 
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
@@ -33,7 +71,7 @@ export default function Home() {
         <div className={`absolute inset-0 ${currentScreen === 2 ? 'block' : 'hidden'}`}>
           <ArticleChatScreen 
             articleContent={config.articleContent}
-            assistantId={config.openai.discussionAssistantId}
+            assistantId={actualAssistantId}
             systemPrompt={config.systemPrompts.discussion}
             onNext={goToNextScreen} 
           />
@@ -42,7 +80,7 @@ export default function Home() {
         {/* Assessment Bot Screen (3) */}
         <div className={`absolute inset-0 ${currentScreen === 3 ? 'block' : 'hidden'}`}>
           <AssessmentBotScreen 
-            assistantId={config.openai.assessmentAssistantId}
+            assistantId={actualAssistantId}
             systemPrompt={config.systemPrompts.assessment}
             onNext={goToNextScreen} 
           />
@@ -51,7 +89,7 @@ export default function Home() {
         {/* Final Routed Bot Screen (4) */}
         <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
           <FinalBotScreen 
-            assistantId={config.openai.finalBotIdPlaceholder}
+            assistantId={actualAssistantId}
             systemPrompt={config.systemPrompts.feedback}
           />
         </div>

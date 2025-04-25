@@ -87,12 +87,11 @@ export const config = {
 
   // OpenAI API configuration
   openai: {
-    // Use assistant IDs for each chatbot
-    // These would be replaced with real assistant IDs in production
-    discussionAssistantId: "discussion-assistant",
-    assessmentAssistantId: "assessment-assistant",
+    // Using the OpenAI Assistant IDs - the actual ID is injected from the server
+    discussionAssistantId: "assistant-id", // This will be replaced with the OPENAI_ASSISTANT_ID from the server
+    assessmentAssistantId: "assistant-id", // This will be replaced with the OPENAI_ASSISTANT_ID from the server
     // The final bot ID will be determined externally (via N8N)
-    finalBotIdPlaceholder: "feedback-assistant",
+    finalBotIdPlaceholder: "assistant-id", // This will be replaced with the OPENAI_ASSISTANT_ID from the server
   },
 
   // System prompts for each assistant
