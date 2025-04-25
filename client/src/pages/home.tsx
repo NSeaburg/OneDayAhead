@@ -20,6 +20,13 @@ export default function Home() {
       setCurrentScreen(currentScreen + 1);
     }
   };
+  
+  // Function to navigate to the previous screen
+  const goToPreviousScreen = () => {
+    if (currentScreen > 1) {
+      setCurrentScreen(currentScreen - 1);
+    }
+  };
 
   // Display loading state while fetching assistant IDs
   if (isLoading) {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Send } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatMessages } from "@/hooks/useChatMessages";
@@ -10,6 +10,7 @@ interface AssessmentBotScreenProps {
   assistantId: string;
   systemPrompt: string;
   onNext: () => void;
+  onPrevious?: () => void;
 }
 
 export default function AssessmentBotScreen({ 

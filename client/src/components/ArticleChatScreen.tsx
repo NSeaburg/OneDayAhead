@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Send } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatMessages } from "@/hooks/useChatMessages";
@@ -9,13 +9,15 @@ interface ArticleChatScreenProps {
   assistantId: string;
   systemPrompt: string;
   onNext: () => void;
+  onPrevious?: () => void;
 }
 
 export default function ArticleChatScreen({ 
   articleContent, 
   assistantId,
   systemPrompt,
-  onNext 
+  onNext,
+  onPrevious
 }: ArticleChatScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   
@@ -106,7 +108,18 @@ export default function ArticleChatScreen({
           </div>
         </div>
       </div>
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-between">
+        {onPrevious ? (
+          <Button
+            onClick={onPrevious}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        ) : <div></div>}
+        
         <Button
           onClick={onNext}
           className="bg-primary hover:bg-primary/90 text-white"
