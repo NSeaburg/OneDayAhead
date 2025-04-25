@@ -3,6 +3,8 @@ import { ArrowRight, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatMessages } from "@/hooks/useChatMessages";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface AssessmentBotScreenProps {
   assistantId: string;
@@ -16,6 +18,8 @@ export default function AssessmentBotScreen({
   onNext 
 }: AssessmentBotScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
+  const [isSendingToN8N, setIsSendingToN8N] = useState(false);
+  const { toast } = useToast();
   
   const { messages, sendMessage, isLoading } = useChatMessages({
     assistantId,
@@ -28,6 +32,43 @@ export default function AssessmentBotScreen({
     if (inputMessage.trim()) {
       sendMessage(inputMessage);
       setInputMessage("");
+    }
+  };
+  
+  const handleNext = async () => {
+    try {
+      setIsSendingToN8N(true);
+      
+      // Send conversation data to N8N before proceeding to the next screen
+      const response = await apiRequest("POST", "/api/send-to-n8n", {
+        conversationData: messages
+      });
+      
+      const result = await response.json();
+      console.log("N8N integration result:", result);
+      
+      // Show success toast
+      toast({
+        title: "Assessment data sent",
+        description: "Your assessment data has been successfully sent to the learning system.",
+      });
+      
+      // Then call the onNext function to move to the next screen
+      onNext();
+    } catch (error) {
+      console.error("Failed to send data to N8N:", error);
+      
+      // Show error toast
+      toast({
+        title: "Error sending assessment data",
+        description: "There was a problem sending your assessment data. You can still continue.",
+        variant: "destructive"
+      });
+      
+      // Still allow the user to proceed to the next screen even if N8N integration fails
+      onNext();
+    } finally {
+      setIsSendingToN8N(false);
     }
   };
 
@@ -93,11 +134,12 @@ export default function AssessmentBotScreen({
       </div>
       <div className="mt-4 flex justify-end">
         <Button
-          onClick={onNext}
+          onClick={handleNext}
+          disabled={isLoading || isSendingToN8N}
           className="bg-primary hover:bg-primary/90 text-white"
         >
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {isSendingToN8N ? "Sending..." : "Next"}
+          {!isSendingToN8N && <ArrowRight className="ml-2 h-4 w-4" />}
         </Button>
       </div>
     </div>

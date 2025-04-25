@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from "openai";
+import axios from "axios";
 
 // Initialize OpenAI client
 const openai = new OpenAI({ 
@@ -19,6 +20,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || "",
       assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || ""
     });
+  });
+  
+  // Route to send assessment data to N8N
+  app.post("/api/send-to-n8n", async (req, res) => {
+    try {
+      const { conversationData } = req.body;
+      
+      // Verify we have data to send
+      if (!conversationData || !Array.isArray(conversationData)) {
+        return res.status(400).json({ 
+          error: "Invalid conversation data. Expected an array of messages." 
+        });
+      }
+      
+      // Get N8N webhook URL from environment variable
+      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+      
+      if (!n8nWebhookUrl) {
+        console.warn("N8N_WEBHOOK_URL environment variable not set");
+        return res.status(500).json({ 
+          error: "N8N webhook URL not configured" 
+        });
+      }
+      
+      // Send data to N8N webhook
+      const response = await axios.post(n8nWebhookUrl, {
+        conversationData,
+        timestamp: new Date().toISOString(),
+        source: "learning-app-assessment"
+      });
+      
+      console.log("Successfully sent assessment data to N8N:", response.status);
+      
+      return res.json({ 
+        success: true, 
+        message: "Assessment data sent to N8N successfully" 
+      });
+    } catch (error: any) {
+      console.error("Error sending data to N8N:", error);
+      return res.status(500).json({ 
+        error: "Failed to send assessment data to N8N",
+        details: error.message || String(error)
+      });
+    }
   });
 
   // OpenAI chat completions endpoint
