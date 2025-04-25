@@ -44,46 +44,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Send data to N8N webhook with the threadId included
-      const response = await axios.post(n8nWebhookUrl, {
-        conversationData,
-        threadId, // Include the thread ID in the N8N payload
-        timestamp: new Date().toISOString(),
-        source: "learning-app-assessment"
-      });
-      
-      console.log("Successfully sent assessment data to N8N:", response.status);
-      console.log("ThreadId included in N8N payload:", threadId);
-      
-      // Extract the nextAssistantId from the N8N response if available
-      let nextAssistantId = response.data?.nextAssistantId;
-      
-      // Validate that the nextAssistantId is a valid OpenAI assistant ID format
-      // Valid assistant IDs start with "asst_" and only contain letters, numbers, underscores, or dashes
-      const validAssistantIdPattern = /^asst_[a-zA-Z0-9_-]+$/;
-      
-      if (!nextAssistantId) {
-        console.log("Missing assistant ID in N8N response");
-        nextAssistantId = null; // Set to null to trigger fallback
-      } else if (nextAssistantId.includes("{{$json") || !validAssistantIdPattern.test(nextAssistantId)) {
-        console.log("Invalid assistant ID format received:", nextAssistantId);
-        nextAssistantId = null; // Set to null to trigger fallback
-      } else {
-        console.log("Valid assistant ID received from N8N:", nextAssistantId);
+      try {
+        // Send data to N8N webhook with the threadId included
+        const response = await axios.post(n8nWebhookUrl, {
+          conversationData,
+          threadId, // Include the thread ID in the N8N payload
+          timestamp: new Date().toISOString(),
+          source: "learning-app-assessment"
+        });
+        
+        console.log("Successfully sent assessment data to N8N:", response.status);
+        console.log("ThreadId included in N8N payload:", threadId);
+        
+        // Extract the nextAssistantId from the N8N response if available
+        let nextAssistantId = response.data?.nextAssistantId;
+        
+        // Validate that the nextAssistantId is a valid OpenAI assistant ID format
+        // Valid assistant IDs start with "asst_" and only contain letters, numbers, underscores, or dashes
+        const validAssistantIdPattern = /^asst_[a-zA-Z0-9_-]+$/;
+        
+        if (!nextAssistantId) {
+          console.log("Missing assistant ID in N8N response");
+          nextAssistantId = null; // Set to null to trigger fallback
+        } else if (nextAssistantId.includes("{{$json") || !validAssistantIdPattern.test(nextAssistantId)) {
+          console.log("Invalid assistant ID format received:", nextAssistantId);
+          nextAssistantId = null; // Set to null to trigger fallback
+        } else {
+          console.log("Valid assistant ID received from N8N:", nextAssistantId);
+        }
+        
+        console.log("Next Assistant ID received from N8N:", nextAssistantId || "None provided (or invalid format)");
+        
+        return res.json({ 
+          success: true, 
+          message: "Assessment data sent to N8N successfully",
+          nextAssistantId: nextAssistantId // Include the next assistant ID in the response
+        });
+      } catch (axiosError: any) {
+        // Handle N8N webhook errors but allow the application to continue
+        console.error("N8N webhook error:", axiosError.response?.data || axiosError.message);
+        
+        // Return a successful response to the client, but with a warning
+        // This allows the application to continue with a fallback
+        return res.json({ 
+          success: false, 
+          message: "N8N workflow error, continuing with fallback",
+          error: axiosError.response?.data?.message || "N8N workflow execution failed",
+          nextAssistantId: null // Use fallback assistant
+        });
       }
-      
-      console.log("Next Assistant ID received from N8N:", nextAssistantId || "None provided (or invalid format)");
-      
-      return res.json({ 
-        success: true, 
-        message: "Assessment data sent to N8N successfully",
-        nextAssistantId: nextAssistantId // Include the next assistant ID in the response
-      });
     } catch (error: any) {
-      console.error("Error sending data to N8N:", error);
-      return res.status(500).json({ 
-        error: "Failed to send assessment data to N8N",
-        details: error.message || String(error)
+      console.error("Error in N8N integration:", error);
+      
+      // Return a response that allows the client to continue rather than showing an error
+      return res.json({ 
+        success: false, 
+        message: "Error in N8N integration, continuing with fallback",
+        error: error.message || String(error),
+        nextAssistantId: null // Use fallback assistant
       });
     }
   });

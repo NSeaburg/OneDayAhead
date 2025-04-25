@@ -50,31 +50,47 @@ export default function AssessmentBotScreen({
       const result = await response.json();
       console.log("N8N integration result:", result);
       console.log("Thread ID sent to N8N:", threadId);
-      console.log("Next Assistant ID received:", result.nextAssistantId || "None provided");
       
-      // Pass the nextAssistantId when navigating to the next screen
-      const nextAssistantId = result.nextAssistantId;
-      
-      // Show success toast
-      toast({
-        title: "Assessment data sent",
-        description: "Your assessment data has been successfully sent to the learning system.",
-      });
-      
-      // Then call the onNext function to move to the next screen with the dynamic assistant ID
-      onNext(nextAssistantId);
+      if (result.success) {
+        console.log("Next Assistant ID received:", result.nextAssistantId || "None provided");
+        
+        // Pass the nextAssistantId when navigating to the next screen
+        const nextAssistantId = result.nextAssistantId;
+        
+        // Show success toast
+        toast({
+          title: "Assessment data sent",
+          description: "Your assessment data has been successfully sent to the learning system.",
+        });
+        
+        // Then call the onNext function to move to the next screen with the dynamic assistant ID
+        onNext(nextAssistantId);
+      } else {
+        // Handle the case where N8N returned a non-error response but with success: false
+        console.log("N8N integration failed:", result.message);
+        
+        // Show warning toast
+        toast({
+          title: "N8N integration issue",
+          description: "There was an issue with the N8N workflow, but you can continue with a fallback assistant.",
+          variant: "default"
+        });
+        
+        // Still proceed to the next screen but with no nextAssistantId (will use fallback)
+        onNext(null);
+      }
     } catch (error) {
       console.error("Failed to send data to N8N:", error);
       
       // Show error toast
       toast({
         title: "Error sending assessment data",
-        description: "There was a problem sending your assessment data. You can still continue.",
+        description: "There was a problem sending your assessment data. You can still continue with a fallback assistant.",
         variant: "destructive"
       });
       
       // Still allow the user to proceed to the next screen even if N8N integration fails
-      onNext();
+      onNext(null); // Explicitly pass null to ensure fallback
     } finally {
       setIsSendingToN8N(false);
     }
