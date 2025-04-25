@@ -3,6 +3,7 @@ import ProgressIndicator from "@/components/ProgressIndicator";
 import VideoScreen from "@/components/VideoScreen";
 import ArticleChatScreen from "@/components/ArticleChatScreen";
 import AssessmentBotScreen from "@/components/AssessmentBotScreen";
+import DynamicAssistantScreen from "@/components/DynamicAssistantScreen";
 import FinalBotScreen from "@/components/FinalBotScreen";
 import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
@@ -12,6 +13,9 @@ import { RotateCcw } from "lucide-react";
 export default function Home() {
   // Track the current screen in the learning flow
   const [currentScreen, setCurrentScreen] = useState(1);
+  
+  // Store the dynamic assistant ID received from N8N
+  const [dynamicAssistantId, setDynamicAssistantId] = useState<string | null>(null);
   
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
@@ -111,13 +115,32 @@ export default function Home() {
           <AssessmentBotScreen 
             assistantId={assessmentAssistantId}
             systemPrompt={config.systemPrompts.assessment}
+            onNext={(nextAssistantId) => {
+              // Store the dynamic assistant ID received from N8N webhook
+              if (nextAssistantId) {
+                setDynamicAssistantId(nextAssistantId);
+                console.log("Set dynamic assistant ID:", nextAssistantId);
+              } else {
+                console.log("No nextAssistantId provided, using fallback");
+              }
+              goToNextScreen();
+            }} 
+            onPrevious={goToPreviousScreen}
+          />
+        </div>
+        
+        {/* Dynamic Assistant Screen (4) - Assistant ID determined by N8N */}
+        <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
+          <DynamicAssistantScreen 
+            assistantId={dynamicAssistantId || discussionAssistantId} // Fallback to discussion assistant if dynamic ID is not available
+            systemPrompt={config.systemPrompts.dynamic}
             onNext={goToNextScreen} 
             onPrevious={goToPreviousScreen}
           />
         </div>
         
-        {/* Final Routed Bot Screen (4) */}
-        <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
+        {/* Final Feedback Bot Screen (5) */}
+        <div className={`absolute inset-0 ${currentScreen === 5 ? 'block' : 'hidden'}`}>
           <FinalBotScreen 
             assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.feedback}

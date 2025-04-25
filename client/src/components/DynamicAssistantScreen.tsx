@@ -3,30 +3,26 @@ import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatMessages } from "@/hooks/useChatMessages";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
-interface AssessmentBotScreenProps {
+interface DynamicAssistantScreenProps {
   assistantId: string;
   systemPrompt: string;
-  onNext: (nextAssistantId?: string) => void;
+  onNext: () => void;
   onPrevious?: () => void;
 }
 
-export default function AssessmentBotScreen({ 
+export default function DynamicAssistantScreen({ 
   assistantId,
   systemPrompt,
   onNext,
   onPrevious
-}: AssessmentBotScreenProps) {
+}: DynamicAssistantScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
-  const [isSendingToN8N, setIsSendingToN8N] = useState(false);
-  const { toast } = useToast();
   
   const { messages, sendMessage, isLoading, threadId } = useChatMessages({
     assistantId,
     systemPrompt,
-    initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?"
+    initialMessage: "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?"
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,56 +32,16 @@ export default function AssessmentBotScreen({
       setInputMessage("");
     }
   };
-  
-  const handleNext = async () => {
-    try {
-      setIsSendingToN8N(true);
-      
-      // Send conversation data to N8N before proceeding to the next screen
-      const response = await apiRequest("POST", "/api/send-to-n8n", {
-        conversationData: messages,
-        threadId: threadId // Include the thread ID for N8N to process
-      });
-      
-      const result = await response.json();
-      console.log("N8N integration result:", result);
-      console.log("Thread ID sent to N8N:", threadId);
-      console.log("Next Assistant ID received:", result.nextAssistantId || "None provided");
-      
-      // Pass the nextAssistantId when navigating to the next screen
-      const nextAssistantId = result.nextAssistantId;
-      
-      // Show success toast
-      toast({
-        title: "Assessment data sent",
-        description: "Your assessment data has been successfully sent to the learning system.",
-      });
-      
-      // Then call the onNext function to move to the next screen with the dynamic assistant ID
-      onNext(nextAssistantId);
-    } catch (error) {
-      console.error("Failed to send data to N8N:", error);
-      
-      // Show error toast
-      toast({
-        title: "Error sending assessment data",
-        description: "There was a problem sending your assessment data. You can still continue.",
-        variant: "destructive"
-      });
-      
-      // Still allow the user to proceed to the next screen even if N8N integration fails
-      onNext();
-    } finally {
-      setIsSendingToN8N(false);
-    }
-  };
 
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Knowledge Assessment</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Specialized Guidance</h1>
       <div className="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         <div className="p-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="font-semibold text-lg text-gray-800">Assessment Assistant</h2>
+          <h2 className="font-semibold text-lg text-gray-800">Dynamic Assistant</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Assistant ID: {assistantId.substring(0, 15)}...
+          </p>
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
           {messages.map((message, index) => (
@@ -93,18 +49,18 @@ export default function AssessmentBotScreen({
               <div className="flex items-start mb-1">
                 <div className={`w-8 h-8 rounded-full ${
                   message.role === 'assistant' 
-                    ? 'bg-green-500 text-white' 
+                    ? 'bg-blue-500 text-white' 
                     : 'bg-gray-200 text-gray-600'
                 } flex items-center justify-center mr-2 flex-shrink-0`}>
-                  <i className={message.role === 'assistant' ? 'ri-question-line' : 'ri-user-line'}></i>
+                  <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
                 </div>
                 <span className="text-xs text-gray-500 mt-1">
-                  {message.role === 'assistant' ? 'Assessment Bot' : 'You'}
+                  {message.role === 'assistant' ? 'Dynamic Assistant' : 'You'}
                 </span>
               </div>
               <div className={`ml-10 ${
                 message.role === 'assistant' 
-                  ? 'bg-green-50' 
+                  ? 'bg-blue-50' 
                   : 'bg-white border border-gray-200'
               } rounded-lg p-3 text-gray-700`}>
                 {message.content}
@@ -126,14 +82,14 @@ export default function AssessmentBotScreen({
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your response here..."
-              className="flex-grow focus:border-green-500"
+              placeholder="Type your message here..."
+              className="flex-grow focus:border-blue-500"
             />
             <Button 
               type="submit"
               size="icon"
               disabled={isLoading}
-              className="p-2 bg-green-500 hover:bg-green-600 text-white"
+              className="p-2 bg-blue-500 hover:bg-blue-600 text-white"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -153,12 +109,11 @@ export default function AssessmentBotScreen({
         ) : <div></div>}
         
         <Button
-          onClick={handleNext}
-          disabled={isLoading || isSendingToN8N}
+          onClick={onNext}
           className="bg-primary hover:bg-primary/90 text-white"
         >
-          {isSendingToN8N ? "Sending..." : "Next"}
-          {!isSendingToN8N && <ArrowRight className="ml-2 h-4 w-4" />}
+          Next
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>

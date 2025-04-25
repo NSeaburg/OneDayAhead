@@ -55,9 +55,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Successfully sent assessment data to N8N:", response.status);
       console.log("ThreadId included in N8N payload:", threadId);
       
+      // Extract the nextAssistantId from the N8N response if available
+      const nextAssistantId = response.data?.nextAssistantId;
+      console.log("Next Assistant ID received from N8N:", nextAssistantId || "None provided");
+      
       return res.json({ 
         success: true, 
-        message: "Assessment data sent to N8N successfully" 
+        message: "Assessment data sent to N8N successfully",
+        nextAssistantId: nextAssistantId // Include the next assistant ID in the response
       });
     } catch (error: any) {
       console.error("Error sending data to N8N:", error);
