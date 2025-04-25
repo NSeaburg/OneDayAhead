@@ -44,37 +44,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Log what we're sending
-      console.log("Sending data to N8N webhook URL:", n8nWebhookUrl.substring(0, 15) + "...");
-      console.log("Data structure being sent:", {
-        conversationCount: conversationData.length,
-        firstMessagePreview: conversationData[0]?.content.substring(0, 30) + "...",
-        lastMessagePreview: conversationData[conversationData.length - 1]?.content.substring(0, 30) + "...",
+      // Send data to N8N webhook
+      const response = await axios.post(n8nWebhookUrl, {
+        conversationData,
         timestamp: new Date().toISOString(),
         source: "learning-app-assessment"
       });
-
-      // Prepare payload with structure that N8N webhooks typically expect
-      const payload = {
-        data: {
-          conversationData,
-          timestamp: new Date().toISOString(),
-          source: "learning-app-assessment"
-        }
-      };
-      
-      // Send data to N8N webhook with appropriate headers
-      const response = await axios.post(n8nWebhookUrl, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'User-Agent': 'Learning-App/1.0'
-        }
-      });
       
       console.log("Successfully sent assessment data to N8N:", response.status);
-      console.log("N8N response headers:", response.headers);
-      console.log("N8N response data:", response.data);
       
       return res.json({ 
         success: true, 
@@ -82,22 +59,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Error sending data to N8N:", error);
-      
-      // More detailed error logging
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error("N8N error response status:", error.response.status);
-        console.error("N8N error response headers:", error.response.headers);
-        console.error("N8N error response data:", error.response.data);
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error("N8N no response received. Request details:", error.request);
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error("N8N request setup error:", error.message);
-      }
-      
       return res.status(500).json({ 
         error: "Failed to send assessment data to N8N",
         details: error.message || String(error)
