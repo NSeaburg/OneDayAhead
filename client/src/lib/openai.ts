@@ -24,6 +24,7 @@ export interface ChatCompletionResponse {
       role: string;
     };
   }[];
+  threadId?: string; // Optional thread ID when using OpenAI Assistants API
 }
 
 // Function to create a chat completion using the OpenAI API via our backend
@@ -47,7 +48,7 @@ export const createChatCompletion = async (
 // Hook to create a simple chat stream function
 export const useChatCompletion = () => {
   const sendMessage = useCallback(
-    async (messages: Message[], systemPrompt?: string, assistantId?: string): Promise<string> => {
+    async (messages: Message[], systemPrompt?: string, assistantId?: string): Promise<[string, string?]> => {
       const messagesWithSystem: Message[] = systemPrompt
         ? [{ role: "system", content: systemPrompt }, ...messages]
         : [...messages];
@@ -59,10 +60,10 @@ export const useChatCompletion = () => {
           assistantId: assistantId,
         });
 
-        return completion.choices[0].message.content;
+        return [completion.choices[0].message.content, completion.threadId];
       } catch (error) {
         console.error("Error in chat completion:", error);
-        return "I'm sorry, I couldn't process your request. Please try again.";
+        return ["I'm sorry, I couldn't process your request. Please try again.", undefined];
       }
     },
     []

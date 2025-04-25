@@ -95,7 +95,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 role: "assistant"
               }
             }
-          ]
+          ],
+          threadId: threadId // Include the thread ID in the response
         });
       } else {
         // Fallback to direct chat completion if no assistant ID is provided

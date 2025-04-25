@@ -14,6 +14,7 @@ export function useChatMessages({
 }: UseChatMessagesProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [threadId, setThreadId] = useState<string | undefined>(undefined);
   const { sendMessage: sendChatCompletion } = useChatCompletion();
 
   // Initialize with welcome message from the assistant if provided
@@ -40,17 +41,22 @@ export function useChatMessages({
       // Get only conversation messages (no system message)
       const conversationMessages = [...messages, userMessage];
       
-      // Get assistant response
-      const assistantResponse = await sendChatCompletion(
+      // Get assistant response and threadId
+      const [assistantResponseText, responseThreadId] = await sendChatCompletion(
         conversationMessages,
         systemPrompt,
         assistantId
       );
       
+      // Store the thread ID if available
+      if (responseThreadId) {
+        setThreadId(responseThreadId);
+      }
+      
       // Add assistant response to the chat
       const assistantMessage: Message = {
         role: "assistant",
-        content: assistantResponse
+        content: assistantResponseText
       };
       
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
@@ -70,6 +76,7 @@ export function useChatMessages({
   return {
     messages,
     sendMessage,
-    isLoading
+    isLoading,
+    threadId
   };
 }
