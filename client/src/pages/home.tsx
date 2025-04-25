@@ -6,6 +6,8 @@ import AssessmentBotScreen from "@/components/AssessmentBotScreen";
 import FinalBotScreen from "@/components/FinalBotScreen";
 import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 
 export default function Home() {
   // Track the current screen in the learning flow
@@ -26,6 +28,13 @@ export default function Home() {
     if (currentScreen > 1) {
       setCurrentScreen(currentScreen - 1);
     }
+  };
+  
+  // Function to reset the app to the first screen
+  const resetApp = () => {
+    setCurrentScreen(1);
+    // Force reload the page to clear all state
+    window.location.reload();
   };
 
   // Display loading state while fetching assistant IDs
@@ -62,7 +71,18 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
       {/* Progress indicator showing current position in the learning flow */}
-      <ProgressIndicator currentStep={currentScreen} totalSteps={config.totalSteps} />
+      <div className="flex justify-between items-center">
+        <ProgressIndicator currentStep={currentScreen} totalSteps={config.totalSteps} />
+        <div className="m-4">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-100"
+            onClick={resetApp}
+          >
+            <RotateCcw className="h-4 w-4" /> Reset App
+          </Button>
+        </div>
+      </div>
       
       {/* Screen container with all screen components */}
       <div className="flex-grow relative">

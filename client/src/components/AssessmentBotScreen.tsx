@@ -49,6 +49,7 @@ export default function AssessmentBotScreen({
       
       const result = await response.json();
       console.log("N8N integration result:", result);
+      console.log("Thread ID sent to N8N:", threadId);
       
       // Show success toast
       toast({

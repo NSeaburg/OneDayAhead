@@ -53,6 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       console.log("Successfully sent assessment data to N8N:", response.status);
+      console.log("ThreadId included in N8N payload:", threadId);
       
       return res.json({ 
         success: true, 
