@@ -21,7 +21,7 @@ export default function ArticleChatScreen({
 }: ArticleChatScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   
-  const { messages, sendMessage, isLoading } = useChatMessages({
+  const { messages, sendMessage, isLoading, threadId } = useChatMessages({
     assistantId,
     systemPrompt,
     initialMessage: "Hello! I'm your learning assistant for this module. Feel free to ask any questions about the article content or related topics, and I'll help clarify concepts or provide additional information."

@@ -17,7 +17,7 @@ export default function FinalBotScreen({
 }: FinalBotScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   
-  const { messages, sendMessage, isLoading } = useChatMessages({
+  const { messages, sendMessage, isLoading, threadId } = useChatMessages({
     assistantId,
     systemPrompt,
     initialMessage: "Based on your assessment responses, I've been assigned to provide personalized feedback and additional resources. Let's discuss your learning journey so far and identify areas where you might want to explore further."

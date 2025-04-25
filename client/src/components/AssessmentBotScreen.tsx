@@ -23,7 +23,7 @@ export default function AssessmentBotScreen({
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const { toast } = useToast();
   
-  const { messages, sendMessage, isLoading } = useChatMessages({
+  const { messages, sendMessage, isLoading, threadId } = useChatMessages({
     assistantId,
     systemPrompt,
     initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?"
@@ -43,7 +43,8 @@ export default function AssessmentBotScreen({
       
       // Send conversation data to N8N before proceeding to the next screen
       const response = await apiRequest("POST", "/api/send-to-n8n", {
-        conversationData: messages
+        conversationData: messages,
+        threadId: threadId // Include the thread ID for N8N to process
       });
       
       const result = await response.json();

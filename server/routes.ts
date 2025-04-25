@@ -25,7 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Route to send assessment data to N8N
   app.post("/api/send-to-n8n", async (req, res) => {
     try {
-      const { conversationData } = req.body;
+      const { conversationData, threadId } = req.body;
       
       // Verify we have data to send
       if (!conversationData || !Array.isArray(conversationData)) {
@@ -44,9 +44,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Send data to N8N webhook
+      // Send data to N8N webhook with the threadId included
       const response = await axios.post(n8nWebhookUrl, {
         conversationData,
+        threadId, // Include the thread ID in the N8N payload
         timestamp: new Date().toISOString(),
         source: "learning-app-assessment"
       });
