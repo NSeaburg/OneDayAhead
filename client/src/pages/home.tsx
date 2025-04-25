@@ -11,8 +11,8 @@ export default function Home() {
   // Track the current screen in the learning flow
   const [currentScreen, setCurrentScreen] = useState(1);
   
-  // Fetch assistant ID from the backend
-  const { assistantId, isLoading, error } = useAssistantConfig();
+  // Fetch assistant IDs from the backend
+  const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
   
   // Function to navigate to the next screen
   const goToNextScreen = () => {
@@ -21,7 +21,7 @@ export default function Home() {
     }
   };
 
-  // Display loading state while fetching assistant ID
+  // Display loading state while fetching assistant IDs
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
@@ -36,7 +36,7 @@ export default function Home() {
     );
   }
 
-  // Display error state if assistant ID couldn't be fetched
+  // Display error state if assistant IDs couldn't be fetched
   if (error) {
     return (
       <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
@@ -45,15 +45,12 @@ export default function Home() {
             <div className="text-red-500 text-4xl mb-4">⚠️</div>
             <h2 className="text-xl font-semibold mb-2">Configuration Error</h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            <p className="text-gray-500 text-sm">Please check that your OpenAI API key and Assistant ID are properly configured.</p>
+            <p className="text-gray-500 text-sm">Please check that your OpenAI API key and Assistant IDs are properly configured.</p>
           </div>
         </div>
       </div>
     );
   }
-
-  // Get the actual assistant ID to use, falling back to config values if needed
-  const actualAssistantId = assistantId || config.openai.discussionAssistantId;
 
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
@@ -71,7 +68,7 @@ export default function Home() {
         <div className={`absolute inset-0 ${currentScreen === 2 ? 'block' : 'hidden'}`}>
           <ArticleChatScreen 
             articleContent={config.articleContent}
-            assistantId={actualAssistantId}
+            assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.discussion}
             onNext={goToNextScreen} 
           />
@@ -80,7 +77,7 @@ export default function Home() {
         {/* Assessment Bot Screen (3) */}
         <div className={`absolute inset-0 ${currentScreen === 3 ? 'block' : 'hidden'}`}>
           <AssessmentBotScreen 
-            assistantId={actualAssistantId}
+            assistantId={assessmentAssistantId}
             systemPrompt={config.systemPrompts.assessment}
             onNext={goToNextScreen} 
           />
@@ -89,7 +86,7 @@ export default function Home() {
         {/* Final Routed Bot Screen (4) */}
         <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
           <FinalBotScreen 
-            assistantId={actualAssistantId}
+            assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.feedback}
           />
         </div>

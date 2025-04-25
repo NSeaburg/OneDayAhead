@@ -8,14 +8,16 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY 
 });
 
-// Default Assistant ID
-const DEFAULT_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
+// Default Assistant IDs
+const DEFAULT_DISCUSSION_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
+const DEFAULT_ASSESSMENT_ASSISTANT_ID = "asst_68CAVYvKmjbpqFpCa9D0TiRU";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Route to get the assistant ID
+  // Route to get the assistant IDs
   app.get("/api/assistant-config", (req, res) => {
     res.json({
-      assistantId: process.env.OPENAI_ASSISTANT_ID || ""
+      discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || "",
+      assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || ""
     });
   });
 
@@ -25,14 +27,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { messages, model, temperature, systemPrompt, assistantId } = req.body;
       
       // If an assistantId is provided or we have a default assistant ID, use the assistant API
-      if (assistantId || DEFAULT_ASSISTANT_ID) {
+      if (assistantId || DEFAULT_DISCUSSION_ASSISTANT_ID || DEFAULT_ASSESSMENT_ASSISTANT_ID) {
         const threadId = await createThread();
         
         // Add messages to the thread
         await addMessagesToThread(threadId, messages, systemPrompt);
         
+        // Use the provided assistantId or select an appropriate default
+        const actualAssistantId = assistantId || DEFAULT_DISCUSSION_ASSISTANT_ID || "";
+        
         // Run the assistant
-        const runId = await runAssistant(threadId, assistantId || DEFAULT_ASSISTANT_ID);
+        const runId = await runAssistant(threadId, actualAssistantId);
         
         // Wait for the run to complete and get messages
         const response = await getAssistantResponse(threadId, runId);

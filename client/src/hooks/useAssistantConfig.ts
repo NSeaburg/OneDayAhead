@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 
 interface AssistantConfig {
-  assistantId: string;
+  discussionAssistantId: string;
+  assessmentAssistantId: string;
 }
 
 export function useAssistantConfig() {
-  const [assistantId, setAssistantId] = useState<string>('');
+  const [discussionAssistantId, setDiscussionAssistantId] = useState<string>('');
+  const [assessmentAssistantId, setAssessmentAssistantId] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +18,8 @@ export function useAssistantConfig() {
         setIsLoading(true);
         const response = await apiRequest('GET', '/api/assistant-config');
         const data = await response.json() as AssistantConfig;
-        setAssistantId(data.assistantId);
+        setDiscussionAssistantId(data.discussionAssistantId);
+        setAssessmentAssistantId(data.assessmentAssistantId);
         setError(null);
       } catch (err) {
         console.error('Error fetching assistant config:', err);
@@ -29,5 +32,10 @@ export function useAssistantConfig() {
     fetchAssistantConfig();
   }, []);
 
-  return { assistantId, isLoading, error };
+  return { 
+    discussionAssistantId, 
+    assessmentAssistantId, 
+    isLoading, 
+    error 
+  };
 }
