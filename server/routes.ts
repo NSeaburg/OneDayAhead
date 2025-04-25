@@ -56,8 +56,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("ThreadId included in N8N payload:", threadId);
       
       // Extract the nextAssistantId from the N8N response if available
-      const nextAssistantId = response.data?.nextAssistantId;
-      console.log("Next Assistant ID received from N8N:", nextAssistantId || "None provided");
+      let nextAssistantId = response.data?.nextAssistantId;
+      
+      // Validate that the nextAssistantId is a valid OpenAI assistant ID format
+      // Valid assistant IDs start with "asst_" and only contain letters, numbers, underscores, or dashes
+      const validAssistantIdPattern = /^asst_[a-zA-Z0-9_-]+$/;
+      
+      if (!nextAssistantId || !validAssistantIdPattern.test(nextAssistantId)) {
+        console.log("Invalid or missing assistant ID format received:", nextAssistantId);
+        nextAssistantId = null; // Set to null to trigger fallback
+      }
+      
+      console.log("Next Assistant ID received from N8N:", nextAssistantId || "None provided (or invalid format)");
       
       return res.json({ 
         success: true, 

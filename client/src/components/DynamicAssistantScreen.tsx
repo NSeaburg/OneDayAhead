@@ -19,10 +19,18 @@ export default function DynamicAssistantScreen({
 }: DynamicAssistantScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   
+  // Check if this is likely using a fallback assistant ID
+  const isUsingFallback = assistantId.includes("{{$json") || !assistantId.startsWith("asst_");
+  
+  // Choose the appropriate initial message based on whether we're using a fallback
+  const initialMessage = isUsingFallback
+    ? "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant because of a configuration issue with the N8N integration. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?"
+    : "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
+  
   const { messages, sendMessage, isLoading, threadId } = useChatMessages({
     assistantId,
     systemPrompt,
-    initialMessage: "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?"
+    initialMessage
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,16 +40,27 @@ export default function DynamicAssistantScreen({
       setInputMessage("");
     }
   };
-
+  
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Specialized Guidance</h1>
       <div className="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         <div className="p-4 bg-gray-50 border-b border-gray-200">
           <h2 className="font-semibold text-lg text-gray-800">Dynamic Assistant</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Assistant ID: {assistantId.substring(0, 15)}...
-          </p>
+          {isUsingFallback ? (
+            <div className="mt-1">
+              <p className="text-sm text-amber-600 font-medium">
+                Using fallback assistant (N8N returned invalid ID format)
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                ID: {assistantId.length > 20 ? `${assistantId.substring(0, 20)}...` : assistantId}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 mt-1">
+              Assistant ID: {assistantId.substring(0, 15)}...
+            </p>
+          )}
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
           {messages.map((message, index) => (
