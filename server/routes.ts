@@ -62,9 +62,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Valid assistant IDs start with "asst_" and only contain letters, numbers, underscores, or dashes
       const validAssistantIdPattern = /^asst_[a-zA-Z0-9_-]+$/;
       
-      if (!nextAssistantId || !validAssistantIdPattern.test(nextAssistantId)) {
-        console.log("Invalid or missing assistant ID format received:", nextAssistantId);
+      if (!nextAssistantId) {
+        console.log("Missing assistant ID in N8N response");
         nextAssistantId = null; // Set to null to trigger fallback
+      } else if (nextAssistantId.includes("{{$json") || !validAssistantIdPattern.test(nextAssistantId)) {
+        console.log("Invalid assistant ID format received:", nextAssistantId);
+        nextAssistantId = null; // Set to null to trigger fallback
+      } else {
+        console.log("Valid assistant ID received from N8N:", nextAssistantId);
       }
       
       console.log("Next Assistant ID received from N8N:", nextAssistantId || "None provided (or invalid format)");
