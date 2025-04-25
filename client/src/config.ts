@@ -1,7 +1,7 @@
 // App configuration
 export const config = {
   // Video screen configuration
-  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Default video URL, can be updated
+  videoUrl: "https://www.youtube.com/embed/ybxSgIBbBh8", // Updated video URL
 
   // Article content
   articleContent: `
