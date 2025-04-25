@@ -1,0 +1,49 @@
+Build me a simple web app with the following features:
+
+This is a linear, single-user learning app. No login or user management.
+
+The student will move through four main screens in this order:
+	1.	Video screen – a fullscreen YouTube video embed.
+	2.	Article + Chatbot screen – a split screen with an article on the left and an OpenAI chatbot on the right.
+	3.	Assessment Bot screen – a fullscreen chatbot powered by OpenAI.
+	4.	Final Routed Bot screen – a fullscreen chatbot that gets selected based on a routing decision made by an external tool (N8N). For now, this can just be a placeholder.
+
+Each screen has a “Next” button at the bottom to move to the next screen.
+
+Screen Details:
+	1.	Video Screen
+
+	•	Fullscreen YouTube embed (use a placeholder link).
+	•	“Next” button at the bottom.
+
+	2.	Article + Chatbot Screen
+
+	•	Left side: scrollable area with an article (use placeholder text).
+	•	Right side: OpenAI chatbot embedded using the OpenAI API (use GPT-4 or GPT-3.5).
+	•	No controls or options—just the chat window.
+	•	“Next” button at the bottom.
+
+	3.	Assessment Bot Screen
+
+	•	Fullscreen OpenAI chatbot (different persona/assistant ID than above).
+	•	No controls.
+	•	The routing logic happens externally once a special keyword is detected in the conversation, so the frontend doesn’t need to handle anything here.
+	•	“Next” button at the bottom.
+
+	4.	Final Bot Screen
+
+	•	Fullscreen chatbot again.
+	•	The assistant used here will be decided externally (in N8N). For now, just create a placeholder space to load the assistant using a passed-in ID.
+	•	No “Next” button here; this is the last screen for now.
+
+Technical Notes:
+	•	Use vanilla JavaScript, HTML, and CSS unless you really need a framework.
+	•	If using a framework, go with something simple like React and style it cleanly (Tailwind is fine if you like).
+	•	Everything should be built to be embedded in an iframe, so it needs to be responsive and self-contained.
+	•	YouTube videos, article content, and chatbot IDs should all be easy to update later (variables or config file is fine).
+
+Extra Notes:
+	•	No login or backend.
+	•	No database.
+	•	No memory or context between bots unless we decide to add that later.
+	•	No need to show scores yet—but there will be a feedback screen in the future after N8N finishes routing.
