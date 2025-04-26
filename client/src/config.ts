@@ -1,4 +1,31 @@
 // App configuration
+import { CourseInfo, ContentInfo, TechnicalInfo } from '@shared/schema';
+
+// N8N Integration Config
+export const n8nConfig = {
+  course: {
+    name: "Gravity",
+    topic: "Effective Learning Techniques",
+    module: "Learning Methods Assessment",
+    level: "Beginner",
+    instructor: "Learning Expert Team"
+  } as CourseInfo,
+  
+  content: {
+    articleTitle: "Effective Learning Techniques",
+    videoTitle: "Introduction to Learning Methods",
+    contentType: "assessment" as const,
+    contentId: "learning-methods-101",
+    contentVersion: "v1.0.0"
+  } as ContentInfo,
+  
+  technical: {
+    platform: "web",
+    appVersion: "1.0.0",
+    deviceType: "browser"
+  } as TechnicalInfo
+};
+
 export const config = {
   // Video screen configuration
   videoUrl: "https://www.youtube.com/embed/ybxSgIBbBh8", // Updated video URL
