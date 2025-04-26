@@ -13,6 +13,10 @@ const openai = new OpenAI({
 const DEFAULT_DISCUSSION_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
 const DEFAULT_ASSESSMENT_ASSISTANT_ID = "asst_68CAVYvKmjbpqFpCa9D0TiRU";
 
+// N8N Webhook URLs
+const ASSESSMENT_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
+const DYNAMIC_ASSISTANT_WEBHOOK_URL = process.env.N8N_DYNAMIC_WEBHOOK_URL; // New webhook URL for the dynamic assistant
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Route to get the assistant IDs
   app.get("/api/assistant-config", (req, res) => {
@@ -34,10 +38,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Get N8N webhook URL from environment variable
-      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
-      
-      if (!n8nWebhookUrl) {
+      // Get N8N webhook URL for assessment
+      if (!ASSESSMENT_WEBHOOK_URL) {
         console.warn("N8N_WEBHOOK_URL environment variable not set");
         return res.status(500).json({ 
           error: "N8N webhook URL not configured" 
@@ -46,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Send data to N8N webhook with the threadId included
-        const response = await axios.post(n8nWebhookUrl, {
+        const response = await axios.post(ASSESSMENT_WEBHOOK_URL, {
           conversationData,
           threadId, // Include the thread ID in the N8N payload
           timestamp: new Date().toISOString(),
@@ -102,6 +104,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Error in N8N integration, continuing with fallback",
         error: error.message || String(error),
         nextAssistantId: null // Use fallback assistant
+      });
+    }
+  });
+  
+  // Route to send dynamic assistant (teaching bot) data to N8N
+  app.post("/api/send-teaching-data", async (req, res) => {
+    try {
+      const { conversationData, threadId } = req.body;
+      
+      // Verify we have data to send
+      if (!conversationData || !Array.isArray(conversationData)) {
+        return res.status(400).json({ 
+          error: "Invalid conversation data. Expected an array of messages." 
+        });
+      }
+      
+      // Get N8N webhook URL for dynamic assistant
+      if (!DYNAMIC_ASSISTANT_WEBHOOK_URL) {
+        console.warn("N8N_DYNAMIC_WEBHOOK_URL environment variable not set");
+        return res.status(500).json({ 
+          error: "Dynamic assistant webhook URL not configured" 
+        });
+      }
+      
+      try {
+        // Send data to N8N webhook with the threadId included
+        const response = await axios.post(DYNAMIC_ASSISTANT_WEBHOOK_URL, {
+          conversationData,
+          threadId, // Include the thread ID in the N8N payload
+          timestamp: new Date().toISOString(),
+          source: "learning-app-teaching" // Different source identifier
+        });
+        
+        console.log("Successfully sent teaching bot data to N8N:", response.status);
+        console.log("ThreadId included in teaching bot N8N payload:", threadId);
+        
+        return res.json({ 
+          success: true, 
+          message: "Teaching data sent to N8N successfully"
+        });
+      } catch (axiosError: any) {
+        // Handle N8N webhook errors but allow the application to continue
+        console.error("Teaching bot N8N webhook error:", axiosError.response?.data || axiosError.message);
+        
+        // Return a response that allows the client to continue
+        return res.json({ 
+          success: false, 
+          message: "N8N workflow error for teaching data, continuing anyway",
+          error: axiosError.response?.data?.message || "N8N workflow execution failed"
+        });
+      }
+    } catch (error: any) {
+      console.error("Error in teaching bot N8N integration:", error);
+      
+      // Return a response that allows the client to continue
+      return res.json({ 
+        success: false, 
+        message: "Error in teaching bot N8N integration, continuing anyway",
+        error: error.message || String(error)
       });
     }
   });

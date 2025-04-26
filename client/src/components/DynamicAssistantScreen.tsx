@@ -3,6 +3,8 @@ import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatMessages } from "@/hooks/useChatMessages";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface DynamicAssistantScreenProps {
   assistantId: string;
@@ -18,6 +20,8 @@ export default function DynamicAssistantScreen({
   onPrevious
 }: DynamicAssistantScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
+  const [isSendingToN8N, setIsSendingToN8N] = useState(false);
+  const { toast } = useToast();
   
   // Check if this is using a fallback assistant ID (not starting with "asst_")
   const isUsingFallback = !assistantId.startsWith("asst_");
@@ -38,6 +42,57 @@ export default function DynamicAssistantScreen({
     if (inputMessage.trim()) {
       sendMessage(inputMessage);
       setInputMessage("");
+    }
+  };
+  
+  const handleNext = async () => {
+    try {
+      setIsSendingToN8N(true);
+      
+      // Send conversation data to N8N before proceeding to the next screen
+      const response = await apiRequest("POST", "/api/send-teaching-data", {
+        conversationData: messages,
+        threadId: threadId // Include the thread ID for N8N to process
+      });
+      
+      const result = await response.json();
+      console.log("Teaching bot N8N integration result:", result);
+      console.log("Thread ID sent to N8N:", threadId);
+      
+      if (result.success) {
+        // Show success toast
+        toast({
+          title: "Teaching data sent",
+          description: "Your conversation data has been successfully sent to the learning system.",
+        });
+      } else {
+        // Handle the case where N8N returned a non-error response but with success: false
+        console.log("Teaching bot N8N integration failed:", result.message);
+        
+        // Show warning toast
+        toast({
+          title: "Data integration issue",
+          description: "There was an issue sending your data, but you can continue with the learning journey.",
+          variant: "default"
+        });
+      }
+      
+      // Call the onNext function to move to the next screen
+      onNext();
+    } catch (error) {
+      console.error("Failed to send teaching data to N8N:", error);
+      
+      // Show error toast
+      toast({
+        title: "Error sending teaching data",
+        description: "There was a problem sending your conversation data. You can still continue.",
+        variant: "destructive"
+      });
+      
+      // Still allow the user to proceed to the next screen even if N8N integration fails
+      onNext();
+    } finally {
+      setIsSendingToN8N(false);
     }
   };
   
@@ -128,11 +183,12 @@ export default function DynamicAssistantScreen({
         ) : <div></div>}
         
         <Button
-          onClick={onNext}
+          onClick={handleNext}
+          disabled={isLoading || isSendingToN8N}
           className="bg-primary hover:bg-primary/90 text-white"
         >
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {isSendingToN8N ? "Sending..." : "Next"}
+          {!isSendingToN8N && <ArrowRight className="ml-2 h-4 w-4" />}
         </Button>
       </div>
     </div>
