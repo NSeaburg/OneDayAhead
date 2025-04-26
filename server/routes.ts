@@ -45,44 +45,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        // Import the configuration from frontend to reuse
-        const config = await import('../client/src/config');
-        
-        // Enhanced payload with additional course and learning data using our schema definitions
+        // Send data to N8N webhook with the threadId included
         const response = await axios.post(n8nWebhookUrl, {
-          // Core assessment data
           conversationData,
           threadId, // Include the thread ID in the N8N payload
-          
-          // Course information - using configuration from n8nConfig
-          course: {
-            ...config.n8nConfig.course,
-            // Override module if needed for the current screen
-            module: req.body.module || config.n8nConfig.course.module
-          },
-          
-          // Content metadata - using configuration from n8nConfig
-          content: {
-            ...config.n8nConfig.content,
-            // We can override the content type based on the current screen
-            contentType: "assessment"
-          },
-          
-          // Technical data - using configuration from n8nConfig
-          technical: {
-            ...config.n8nConfig.technical,
-            // Add dynamic technical information
-            sessionStartTime: new Date(Date.now() - 600000).toISOString(),
-            sessionEndTime: new Date().toISOString(),
-            interactionCount: conversationData.length
-          },
-          
-          // Standard metadata
           timestamp: new Date().toISOString(),
-          source: "learning-app-assessment",
-          
-          // Additional user data if available
-          userId: req.body.userId || "anonymous"
+          source: "learning-app-assessment"
         });
         
         console.log("Successfully sent assessment data to N8N:", response.status);
