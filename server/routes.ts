@@ -243,10 +243,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // OpenAI chat completions endpoint
+  // OpenAI chat completions endpoint with streaming support
   app.post("/api/chat", async (req, res) => {
     try {
-      const { messages, model, temperature, systemPrompt, assistantId } = req.body;
+      const { messages, model, temperature, systemPrompt, assistantId, stream = false } = req.body;
+      
+      // Set up proper headers if streaming
+      if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+      }
       
       // If an assistantId is provided or we have a default assistant ID, use the assistant API
       if (assistantId || DEFAULT_DISCUSSION_ASSISTANT_ID || DEFAULT_ASSESSMENT_ASSISTANT_ID) {
@@ -261,40 +268,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Run the assistant
         const runId = await runAssistant(threadId, actualAssistantId);
         
-        // Wait for the run to complete and get messages
-        const response = await getAssistantResponse(threadId, runId);
-        
-        res.json({
-          choices: [
-            {
-              message: {
-                content: response,
-                role: "assistant"
+        if (stream) {
+          // Start streaming the response
+          streamAssistantResponse(res, threadId, runId);
+        } else {
+          // Wait for the run to complete and get messages
+          const response = await getAssistantResponse(threadId, runId);
+          
+          res.json({
+            choices: [
+              {
+                message: {
+                  content: response,
+                  role: "assistant"
+                }
               }
-            }
-          ],
-          threadId: threadId // Include the thread ID in the response
-        });
+            ],
+            threadId: threadId // Include the thread ID in the response
+          });
+        }
       } else {
         // Fallback to direct chat completion if no assistant ID is provided
         const messagesWithSystem = systemPrompt 
           ? [{ role: "system", content: systemPrompt }, ...messages] 
           : messages;
         
-        const response = await openai.chat.completions.create({
-          model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-          messages: messagesWithSystem,
-          temperature: temperature || 0.7,
-        });
-        
-        res.json(response);
+        if (stream) {
+          // Use streaming API for regular completions
+          const stream = await openai.chat.completions.create({
+            model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            messages: messagesWithSystem,
+            temperature: temperature || 0.7,
+            stream: true,
+          });
+          
+          // Stream each chunk as it comes in
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            }
+          }
+          
+          // End the stream
+          res.write('data: [DONE]\n\n');
+          res.end();
+        } else {
+          // Regular non-streaming response
+          const response = await openai.chat.completions.create({
+            model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            messages: messagesWithSystem,
+            temperature: temperature || 0.7,
+          });
+          
+          res.json(response);
+        }
       }
     } catch (error: any) {
       console.error("Error calling OpenAI:", error);
-      res.status(500).json({ 
-        error: "Failed to process chat request",
-        details: error.message || String(error)
-      });
+      
+      // If streaming, send error in the stream format
+      if (req.body.stream) {
+        res.write(`data: ${JSON.stringify({ error: "Failed to process chat request" })}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } else {
+        res.status(500).json({ 
+          error: "Failed to process chat request",
+          details: error.message || String(error)
+        });
+      }
     }
   });
   
@@ -392,6 +435,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error getting assistant response:", error);
       throw new Error(error.message || String(error));
+    }
+  }
+  
+  // Stream the assistant response in chunks for a typing effect
+  async function streamAssistantResponse(res: any, threadId: string, runId: string) {
+    try {
+      // Start by checking run status
+      let run = await openai.beta.threads.runs.retrieve(threadId, runId);
+      let previousMessages = await openai.beta.threads.messages.list(threadId);
+      let previousMessageCount = previousMessages.data.length;
+      
+      // Keep track of messages we've already sent to avoid duplication
+      const sentMessageIds = new Set();
+      
+      // Wait for the run to complete, periodically checking for new messages
+      while (run.status === "queued" || run.status === "in_progress") {
+        // Get any new messages
+        const currentMessages = await openai.beta.threads.messages.list(threadId);
+        
+        // Find assistant messages we haven't sent yet
+        const newAssistantMessages = currentMessages.data
+          .filter(msg => msg.role === "assistant" && !sentMessageIds.has(msg.id))
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          
+        // If we have new messages, send them in chunks simulating typing
+        for (const message of newAssistantMessages) {
+          // Mark this message as sent
+          sentMessageIds.add(message.id);
+          
+          // Get text content from the message
+          for (const contentPart of message.content) {
+            if (contentPart.type === 'text') {
+              const text = contentPart.text.value;
+              
+              // Break text into words to simulate typing
+              const words = text.split(' ');
+              
+              // Send chunks of 1-3 words to simulate typing
+              for (let i = 0; i < words.length; i += 2) {
+                const chunk = words.slice(i, i + 2).join(' ') + ' ';
+                
+                // Send the chunk
+                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                
+                // Add a small random delay between chunks (50-150ms)
+                await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+              }
+            }
+          }
+        }
+        
+        // Wait for 500ms before checking again
+        await new Promise(resolve => setTimeout(resolve, 500));
+        run = await openai.beta.threads.runs.retrieve(threadId, runId);
+      }
+      
+      // Final check for any new messages after run completes
+      if (run.status === "completed") { // Complete status check
+        const finalMessages = await openai.beta.threads.messages.list(threadId);
+        
+        // Find any remaining assistant messages we haven't sent
+        const remainingMessages = finalMessages.data
+          .filter(msg => msg.role === "assistant" && !sentMessageIds.has(msg.id))
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          
+        // Send any remaining chunks
+        for (const message of remainingMessages) {
+          sentMessageIds.add(message.id);
+          
+          for (const contentPart of message.content) {
+            if (contentPart.type === 'text') {
+              const text = contentPart.text.value;
+              const words = text.split(' ');
+              
+              for (let i = 0; i < words.length; i += 2) {
+                const chunk = words.slice(i, i + 2).join(' ') + ' ';
+                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+              }
+            }
+          }
+        }
+      } else {
+        // For any other run status (failed, cancelled, etc)
+        res.write(`data: ${JSON.stringify({ error: `Run ended with status: ${run.status}` })}\n\n`);
+      }
+      
+      // Include the threadId in the final message
+      res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (error: any) {
+      console.error("Error streaming assistant response:", error);
+      res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
     }
   }
 

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useChatMessages } from "@/hooks/useChatMessages";
+import { useStreamingChat } from "@/hooks/useStreamingChat";
 
 interface ArticleChatScreenProps {
   articleContent: string;
@@ -20,12 +20,25 @@ export default function ArticleChatScreen({
   onPrevious
 }: ArticleChatScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { messages, sendMessage, isLoading, threadId } = useChatMessages({
+  const { 
+    messages, 
+    sendMessage, 
+    isLoading, 
+    threadId, 
+    currentStreamingMessage, 
+    isTyping 
+  } = useStreamingChat({
     assistantId,
     systemPrompt,
     initialMessage: "Hello! I'm your learning assistant for this module. Feel free to ask any questions about the article content or related topics, and I'll help clarify concepts or provide additional information."
   });
+
+  // Scroll to bottom of messages when new messages appear or when typing
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, currentStreamingMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +68,7 @@ export default function ArticleChatScreen({
             <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-290px)] md:h-[calc(100vh-260px)] space-y-4">
+            {/* Regular messages */}
             {messages.map((message, index) => (
               <div key={index} className="message-appear flex flex-col">
                 <div className="flex items-start mb-1">
@@ -78,7 +92,27 @@ export default function ArticleChatScreen({
                 </div>
               </div>
             ))}
-            {isLoading && (
+            
+            {/* Currently streaming message */}
+            {isTyping && currentStreamingMessage && (
+              <div className="message-appear flex flex-col">
+                <div className="flex items-start mb-1">
+                  <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-2 flex-shrink-0">
+                    <i className="ri-robot-line"></i>
+                  </div>
+                  <span className="text-xs text-gray-500 mt-1">
+                    Assistant
+                  </span>
+                </div>
+                <div className="ml-10 bg-gray-100 rounded-lg p-3 text-gray-700">
+                  {currentStreamingMessage}
+                  <span className="inline-block animate-pulse">▌</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Loading indicator when not streaming yet */}
+            {isLoading && !currentStreamingMessage && (
               <div className="flex items-center justify-center p-4">
                 <div className="animate-pulse flex space-x-2">
                   <div className="w-2 h-2 rounded-full bg-gray-400"></div>
@@ -87,6 +121,9 @@ export default function ArticleChatScreen({
                 </div>
               </div>
             )}
+            
+            {/* Reference for scrolling to bottom */}
+            <div ref={messagesEndRef} />
           </div>
           <div className="p-4 border-t border-gray-200">
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
