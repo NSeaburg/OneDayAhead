@@ -438,142 +438,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
-  // Stream the assistant response in chunks for a typing effect
+  // Stream the assistant response without animation
   async function streamAssistantResponse(res: any, threadId: string, runId: string) {
     try {
-      // Start by checking run status
-      let run = await openai.beta.threads.runs.retrieve(threadId, runId);
-      let previousMessages = await openai.beta.threads.messages.list(threadId);
-      let previousMessageCount = previousMessages.data.length;
+      console.log(`Starting to stream assistant response for thread ${threadId}, run ${runId}`);
       
-      // Keep track of messages we've already sent to avoid duplication
-      const sentMessageIds = new Set();
+      // Set headers for server-sent events
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
       
-      // Wait for the run to complete, periodically checking for new messages
-      while (run.status === "queued" || run.status === "in_progress") {
-        // Get any new messages
-        const currentMessages = await openai.beta.threads.messages.list(threadId);
+      let run: any;
+      
+      // Poll for run completion
+      while (true) {
+        run = await openai.beta.threads.runs.retrieve(threadId, runId);
         
-        // Find assistant messages we haven't sent yet
-        const newAssistantMessages = currentMessages.data
-          .filter(msg => msg.role === "assistant" && !sentMessageIds.has(msg.id))
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-          
-        // If we have new messages, send them in chunks simulating typing
-        for (const message of newAssistantMessages) {
-          // Mark this message as sent
-          sentMessageIds.add(message.id);
-          
-          // Get text content from the message
-          for (const contentPart of message.content) {
-            if (contentPart.type === 'text') {
-              const text = contentPart.text.value;
-              
-              // For very long responses, send the entire text at once to avoid issues
-              if (text.length > 500) {
-                console.log("Streaming: Very long partial response detected - sending entire text at once");
-                res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
-                await new Promise(resolve => setTimeout(resolve, 300));
-              }
-              // For medium length responses, send sentence by sentence
-              else if (text.length > 200) {
-                console.log("Streaming: Medium length response - sending by sentences");
-                const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-                
-                for (const sentence of sentences) {
-                  if (sentence.trim()) {
-                    res.write(`data: ${JSON.stringify({ content: sentence + ' ' })}\n\n`);
-                    await new Promise(resolve => setTimeout(resolve, Math.min(150, sentence.length / 3)));
-                  }
-                }
-              } else {
-                // For shorter responses, use word-by-word streaming
-                console.log("Streaming: Short response - word by word");
-                const words = text.split(' ');
-                
-                // Send words 
-                for (let i = 0; i < words.length; i++) {
-                  if (words[i].trim()) {
-                    const chunk = words[i] + ' ';
-                    res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-                    await new Promise(resolve => setTimeout(resolve, 80));
-                  }
-                }
-              }
-            }
-          }
+        if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled') {
+          console.log(`Run completed with status: ${run.status}`);
+          break;
         }
         
-        // Wait for 500ms before checking again
+        // Wait before polling again
         await new Promise(resolve => setTimeout(resolve, 500));
-        run = await openai.beta.threads.runs.retrieve(threadId, runId);
       }
       
-      // Final check for any new messages after run completes
-      if (run.status === "completed") { // Complete status check
-        const finalMessages = await openai.beta.threads.messages.list(threadId);
+      if (run.status === 'completed') {
+        // Get all messages in the thread
+        const messages = await openai.beta.threads.messages.list(threadId);
+        const assistantMessages = messages.data.filter(msg => msg.role === 'assistant');
         
-        // Find any remaining assistant messages we haven't sent
-        const remainingMessages = finalMessages.data
-          .filter(msg => msg.role === "assistant" && !sentMessageIds.has(msg.id))
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-          
-        // Send any remaining chunks
-        for (const message of remainingMessages) {
-          sentMessageIds.add(message.id);
-          
+        // Just send each message in full - no animations
+        for (const message of assistantMessages) {
           for (const contentPart of message.content) {
             if (contentPart.type === 'text') {
               const text = contentPart.text.value;
-              console.log(`Processing final message with length: ${text.length} characters`);
-              
-              // For very long responses, use a more robust approach to ensure all content is delivered
-              if (text.length > 1000) {
-                // Send entire text at once for extremely long messages
-                // This ensures the message is delivered completely rather than risking truncation
-                console.log("Very long response - sending as complete text");
-                res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
-                await new Promise(resolve => setTimeout(resolve, 300));
-              }
-              else if (text.length > 200) {
-                // For medium-length responses, use sentence-by-sentence approach
-                console.log("Medium length response - sending by sentences");
-                const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-                
-                // Send each sentence with appropriate timing
-                for (const sentence of sentences) {
-                  if (sentence.trim()) {
-                    res.write(`data: ${JSON.stringify({ content: sentence + ' ' })}\n\n`);
-                    await new Promise(resolve => setTimeout(resolve, Math.min(150, sentence.length / 3)));
-                  }
-                }
-              } else {
-                // For shorter responses, use more granular streaming
-                console.log("Short response - sending in small chunks");
-                // Break into words for smoother animation
-                const words = text.split(' ');
-                
-                for (let i = 0; i < words.length; i += 1) {
-                  // Send word by word
-                  const chunk = words[i] + ' ';
-                  res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-                  await new Promise(resolve => setTimeout(resolve, 70));
-                }
-              }
+              console.log(`Sending complete message (${text.length} chars)`);
+              res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
             }
           }
         }
       } else {
-        // For any other run status (failed, cancelled, etc)
+        // Handle non-completed runs
         res.write(`data: ${JSON.stringify({ error: `Run ended with status: ${run.status}` })}\n\n`);
       }
       
-      // Include the threadId in the final message
+      // Include the thread ID in the final message
       res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();
     } catch (error: any) {
-      console.error("Error streaming assistant response:", error);
+      console.error('Error streaming assistant response:', error);
       res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();

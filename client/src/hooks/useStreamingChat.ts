@@ -109,22 +109,11 @@ export function useStreamingChat({
               }
               
               if (parsed.content) {
-                // Check if this is a large content chunk (likely a full response)
-                const isLargeChunk = parsed.content.length > 500;
+                // Accumulate content without streaming animations
+                collectedResponse += parsed.content;
                 
-                // For large chunks, set the full message immediately without animation
-                if (isLargeChunk) {
-                  console.log("Received large content chunk - skipping streaming animation");
-                  collectedResponse = parsed.content; // Replace instead of append
-                  setCurrentStreamingMessage(collectedResponse);
-                  
-                  // If it's a complete response, finish streaming right away
-                  if (parsed.isComplete) {
-                    break;
-                  }
-                } else {
-                  // For smaller chunks, append and stream normally
-                  collectedResponse += parsed.content;
+                // Only update the UI when we have the complete message or a substantial chunk
+                if (parsed.isComplete || parsed.content.length > 200) {
                   setCurrentStreamingMessage(collectedResponse);
                 }
               }

@@ -57,28 +57,30 @@
   }
 }
 
-/* Custom animations for chat typing effect */
+/* Removed complex animations for more reliable message display */
 @keyframes blink {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
 }
 
 .animate-blink {
-  animation: blink 0.85s infinite;
+  animation: blink 1.2s infinite;
+  display: none; /* Hide blinking cursor entirely */
 }
 
 .typing-text {
   display: inline;
-  opacity: 0.95;
-  transition: opacity 0.1s ease-in-out;
+  opacity: 1; /* Full opacity - no fade effect */
 }
 
 .message-appear {
-  animation: fadeIn 0.3s ease-out;
+  animation: none; /* No animation for message appearance */
+  opacity: 1;
 }
 
+/* Simplified fade-in with no motion */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0.8; }
+  to { opacity: 1; }
 }
 
