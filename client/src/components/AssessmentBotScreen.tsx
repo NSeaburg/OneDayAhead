@@ -51,8 +51,7 @@ export default function AssessmentBotScreen({
   } = useStreamingChat({
     assistantId,
     systemPrompt,
-    initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?",
-    enableTypingAnimation: true // Enable typing animation for assessment screen
+    initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?"
   });
   
   // Scroll to bottom of messages when new messages appear or when typing
@@ -183,7 +182,7 @@ export default function AssessmentBotScreen({
               </div>
               <div className="ml-10 bg-green-50 rounded-lg p-3 text-gray-700">
                 <span className="typing-text">{currentStreamingMessage}</span>
-                <span className="typing-cursor assessment-cursor"></span>
+                <span className="inline-block w-[1px] h-4 bg-gray-600 opacity-70 animate-blink ml-[1px]"></span>
               </div>
             </div>
           )}

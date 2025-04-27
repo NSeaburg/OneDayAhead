@@ -5,14 +5,12 @@ interface UseStreamingChatProps {
   assistantId?: string;
   systemPrompt?: string;
   initialMessage?: string;
-  enableTypingAnimation?: boolean; // Flag to enable typing animation
 }
 
 export function useStreamingChat({
   assistantId,
   systemPrompt,
   initialMessage,
-  enableTypingAnimation = false, // Disabled by default
 }: UseStreamingChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,10 +18,6 @@ export function useStreamingChat({
   const [threadId, setThreadId] = useState<string | null>(null);
   const [currentStreamingMessage, setCurrentStreamingMessage] = useState<string>('');
   const [isTyping, setIsTyping] = useState(false);
-  const [fullMessage, setFullMessage] = useState<string>(''); // Store the full message for animation
-
-  // Animation speed - characters per frame (higher = faster typing)
-  const charsPerFrame = 2.5; // Reduced by 50% for slower, more natural typing effect
 
   // Initialize with initial message if provided
   useEffect(() => {
@@ -35,44 +29,6 @@ export function useStreamingChat({
       setMessages([initialUserMessage]);
     }
   }, [initialMessage]);
-  
-  // Handle typing animation effect
-  useEffect(() => {
-    if (!enableTypingAnimation || !fullMessage || !isTyping) return;
-    
-    let displayedLength = currentStreamingMessage.length;
-    const maxLength = fullMessage.length;
-    
-    // If we're already showing everything, stop
-    if (displayedLength >= maxLength) return;
-    
-    // Function to update displayed text with a few more characters
-    const updateDisplayedText = () => {
-      // Vary the typing speed slightly for more natural feel
-      const variableSpeed = charsPerFrame + (Math.random() > 0.7 ? 1 : 0) - (Math.random() > 0.9 ? 1 : 0);
-      displayedLength = Math.min(displayedLength + variableSpeed, maxLength);
-      setCurrentStreamingMessage(fullMessage.substring(0, displayedLength));
-      
-      // Continue animation if we haven't shown all text
-      if (displayedLength < maxLength) {
-        // Add a small random delay to make typing feel more natural
-        const randomDelay = Math.random() * 15; // 0-15ms random delay
-        setTimeout(() => {
-          animationFrameId = requestAnimationFrame(updateDisplayedText);
-        }, randomDelay);
-      }
-    };
-    
-    // Start animation loop
-    let animationFrameId = requestAnimationFrame(updateDisplayedText);
-    
-    // Cleanup animation on unmount or when dependencies change
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [fullMessage, isTyping, currentStreamingMessage, enableTypingAnimation]);
 
   // Function to send a message and get a streaming response
   const sendMessage = useCallback(async (content: string) => {
@@ -90,7 +46,6 @@ export function useStreamingChat({
       // Start typing animation
       setIsTyping(true);
       setCurrentStreamingMessage('');
-      setFullMessage('');
       
       // Create event source for SSE (Server-Sent Events)
       const response = await fetch('/api/chat', {
@@ -154,24 +109,12 @@ export function useStreamingChat({
               }
               
               if (parsed.content) {
-                // Accumulate content
+                // Accumulate content without streaming animations
                 collectedResponse += parsed.content;
                 
-                if (enableTypingAnimation) {
-                  // In typing animation mode, update the full message but let the animation effect handle display
-                  setFullMessage(collectedResponse);
-                  
-                  // If this is the complete message, ensure animation starts from a reasonable point
-                  if (parsed.isComplete && currentStreamingMessage.length === 0) {
-                    // Start showing some initial text to give animation a head start
-                    const initialLength = Math.min(30, collectedResponse.length);
-                    setCurrentStreamingMessage(collectedResponse.substring(0, initialLength));
-                  }
-                } else {
-                  // For non-animated mode, just display the accumulated content
-                  if (parsed.isComplete || parsed.content.length > 200) {
-                    setCurrentStreamingMessage(collectedResponse);
-                  }
+                // Only update the UI when we have the complete message or a substantial chunk
+                if (parsed.isComplete || parsed.content.length > 200) {
+                  setCurrentStreamingMessage(collectedResponse);
                 }
               }
             } catch (e) {
@@ -187,25 +130,20 @@ export function useStreamingChat({
         content: collectedResponse
       };
       
-      // Wait a moment before updating to ensure animation completes
-      setTimeout(() => {
-        setMessages(prevMessages => [...prevMessages, assistantMessage]);
-        setCurrentStreamingMessage('');
-        setFullMessage('');
-        setIsTyping(false);
-      }, enableTypingAnimation ? 500 : 0);
+      setMessages(prevMessages => [...prevMessages, assistantMessage]);
+      setCurrentStreamingMessage('');
+      setIsTyping(false);
       
       return { message: assistantMessage, threadId };
     } catch (err: any) {
       console.error('Error in chat completion:', err);
       setError(err.message || 'Something went wrong');
       setIsTyping(false);
-      setFullMessage('');
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [messages, systemPrompt, assistantId, enableTypingAnimation]);
+  }, [messages, systemPrompt, assistantId]);
 
   return {
     messages,
