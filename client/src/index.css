@@ -57,3 +57,28 @@
   }
 }
 
+/* Custom animations for chat typing effect */
+@keyframes blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.animate-blink {
+  animation: blink 0.85s infinite;
+}
+
+.typing-text {
+  display: inline;
+  opacity: 0.95;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.message-appear {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

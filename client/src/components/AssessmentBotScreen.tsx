@@ -179,8 +179,8 @@ export default function AssessmentBotScreen({
                 </span>
               </div>
               <div className="ml-10 bg-green-50 rounded-lg p-3 text-gray-700">
-                {currentStreamingMessage}
-                <span className="inline-block animate-pulse">▌</span>
+                <span className="typing-text">{currentStreamingMessage}</span>
+                <span className="inline-block w-[1px] h-4 bg-gray-600 opacity-70 animate-blink ml-[1px]"></span>
               </div>
             </div>
           )}

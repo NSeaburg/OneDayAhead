@@ -507,12 +507,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const contentPart of message.content) {
             if (contentPart.type === 'text') {
               const text = contentPart.text.value;
-              const words = text.split(' ');
-              
-              for (let i = 0; i < words.length; i += 2) {
-                const chunk = words.slice(i, i + 2).join(' ') + ' ';
+              // Split by characters rather than words for smoother animation
+              // Send small chunks of 1-3 characters at a time
+              let position = 0;
+              while (position < text.length) {
+                // Determine a random small chunk size (1-3 chars)
+                const chunkSize = Math.floor(Math.random() * 3) + 1;
+                const chunk = text.substring(position, position + chunkSize);
+                
                 res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-                await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+                // Slightly variable timing makes it look more natural
+                await new Promise(resolve => setTimeout(resolve, 15 + Math.random() * 30));
+                
+                position += chunkSize;
               }
             }
           }
