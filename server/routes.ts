@@ -52,11 +52,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           conversationData,
           threadId, // Include the thread ID in the N8N payload
           timestamp: new Date().toISOString(),
-          source: "learning-app-assessment"
+          source: "learning-app-assessment",
+          courseName: courseName || "Gravity Course", // Add course name with fallback
+          chatDurationSeconds: chatDurationSeconds || 0 // Add chat duration with fallback
         });
         
         console.log("Successfully sent assessment data to N8N:", response.status);
         console.log("ThreadId included in N8N payload:", threadId);
+        console.log("Course name sent to N8N:", courseName || "Gravity Course");
+        console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         
         // Extract the nextAssistantId from the N8N response if available
         let nextAssistantId = response.data?.nextAssistantId;
@@ -138,11 +142,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           threadId,
           conversationData: messageData, // Use our prepared variable
           timestamp: new Date().toISOString(),
-          source: "learning-app-teaching" // Different source identifier
+          source: "learning-app-teaching", // Different source identifier
+          courseName: courseName || "Gravity Course", // Add course name with fallback
+          chatDurationSeconds: chatDurationSeconds || 0 // Add chat duration with fallback
         });
         
         console.log("Successfully sent teaching bot data to N8N:", response.status);
         console.log("ThreadId included in teaching bot N8N call:", threadId);
+        console.log("Course name sent to N8N:", courseName || "Gravity Course");
+        console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         
         return res.json({ 
           success: true, 
