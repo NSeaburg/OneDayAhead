@@ -29,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Route to send assessment data to N8N
   app.post("/api/send-to-n8n", async (req, res) => {
     try {
-      const { conversationData, threadId } = req.body;
+      const { conversationData, threadId, courseName, chatDurationSeconds } = req.body;
       
       // Verify we have data to send
       if (!conversationData || !Array.isArray(conversationData)) {
@@ -111,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Route to send dynamic assistant (teaching bot) data to N8N
   app.post("/api/send-teaching-data", async (req, res) => {
     try {
-      const { conversationData, threadId } = req.body;
+      const { conversationData, threadId, courseName, chatDurationSeconds } = req.body;
       
       // Verify we have at least the threadId to send
       if (!threadId) {

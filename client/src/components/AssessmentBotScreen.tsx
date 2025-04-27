@@ -21,6 +21,7 @@ export default function AssessmentBotScreen({
 }: AssessmentBotScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
+  const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
   const { toast } = useToast();
   
   const { messages, sendMessage, isLoading, threadId } = useChatMessages({
@@ -41,10 +42,15 @@ export default function AssessmentBotScreen({
     try {
       setIsSendingToN8N(true);
       
+      // Calculate the chat duration in seconds
+      const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
+      
       // Send conversation data to N8N before proceeding to the next screen
       const response = await apiRequest("POST", "/api/send-to-n8n", {
         conversationData: messages,
-        threadId: threadId // Include the thread ID for N8N to process
+        threadId: threadId, // Include the thread ID for N8N to process
+        courseName: "Gravity Course", // Add the course name
+        chatDurationSeconds: chatDurationSeconds // Add the chat duration in seconds
       });
       
       const result = await response.json();
@@ -77,7 +83,7 @@ export default function AssessmentBotScreen({
         });
         
         // Still proceed to the next screen but with no nextAssistantId (will use fallback)
-        onNext(null);
+        onNext(undefined);
       }
     } catch (error) {
       console.error("Failed to send data to N8N:", error);
@@ -90,7 +96,7 @@ export default function AssessmentBotScreen({
       });
       
       // Still allow the user to proceed to the next screen even if N8N integration fails
-      onNext(null); // Explicitly pass null to ensure fallback
+      onNext(undefined); // Use undefined for fallback
     } finally {
       setIsSendingToN8N(false);
     }

@@ -21,6 +21,7 @@ export default function DynamicAssistantScreen({
 }: DynamicAssistantScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
+  const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
   const { toast } = useToast();
   
   // Check if this is using a fallback assistant ID (not starting with "asst_")
@@ -49,10 +50,15 @@ export default function DynamicAssistantScreen({
     try {
       setIsSendingToN8N(true);
       
+      // Calculate the chat duration in seconds
+      const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
+      
       // Send conversation data to N8N before proceeding to the next screen
       const response = await apiRequest("POST", "/api/send-teaching-data", {
         conversationData: messages,
-        threadId: threadId // Include the thread ID for N8N to process
+        threadId: threadId, // Include the thread ID for N8N to process
+        courseName: "Gravity Course", // Add the course name
+        chatDurationSeconds: chatDurationSeconds // Add the chat duration in seconds
       });
       
       const result = await response.json();
