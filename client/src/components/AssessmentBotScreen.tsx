@@ -95,11 +95,7 @@ export default function AssessmentBotScreen({
         // Pass the nextAssistantId when navigating to the next screen
         const nextAssistantId = result.nextAssistantId;
         
-        // Show success toast
-        toast({
-          title: "Assessment data sent",
-          description: "Your assessment data has been successfully sent to the learning system.",
-        });
+        // Silently continue without showing a toast
         
         // Then call the onNext function to move to the next screen with the dynamic assistant ID
         onNext(nextAssistantId);

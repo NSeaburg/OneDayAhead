@@ -117,11 +117,7 @@ export default function DynamicAssistantScreen({
       console.log("Feedback data received:", feedbackData);
       
       if (result.success) {
-        // Show success toast
-        toast({
-          title: "Learning data processed",
-          description: "Your conversation data has been analyzed and feedback is ready.",
-        });
+        // Silently continue without showing a toast
         
         // Store feedback data in window object so it can be retrieved by the feedback screen
         if (feedbackData) {
