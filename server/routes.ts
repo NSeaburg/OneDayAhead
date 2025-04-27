@@ -448,45 +448,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       
-      // Get the run first
-      const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+      // Poll for run completion and continuously check for new messages
+      let run = await openai.beta.threads.runs.retrieve(threadId, runId);
+      let lastMessageCreatedAt = new Date(0); // Start from oldest possible date
+      let sentMessageIds = new Set();
       
-      // Stream the run
-      const stream = await openai.beta.threads.runs.submitToolOutputsStream(
-        threadId,
-        runId
-      );
-      
-      // Listen for events from the stream
-      stream.on('textDelta', (delta, snapshot) => {
-        // Each time a new piece of text arrives, send it to the client
-        if (delta.value) {
-          console.log(`Streaming text delta: ${delta.value.substring(0, 20)}${delta.value.length > 20 ? '...' : ''}`);
-          res.write(`data: ${JSON.stringify({ content: delta.value })}\n\n`);
-        }
-      });
-      
-      // When the run completes successfully
-      stream.on('textDone', () => {
-        console.log('Stream completed successfully');
-      });
-      
-      // Handle errors
-      stream.on('error', (error) => {
-        console.error('Stream error:', error);
-        res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
-      });
-      
-      // When the run finishes (regardless of success or error)
-      stream.on('end', async () => {
-        console.log('Stream ended');
+      while (run.status === 'queued' || run.status === 'in_progress') {
+        // Check for any new messages while the run is in progress
+        const messages = await openai.beta.threads.messages.list(threadId, {});
         
-        // Send the thread ID at the end
-        res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
-        res.write('data: [DONE]\n\n');
-        res.end();
-      });
+        // Find new assistant messages we haven't sent yet
+        const newMessages = messages.data
+          .filter(msg => 
+            msg.role === 'assistant' && 
+            !sentMessageIds.has(msg.id) &&
+            new Date(msg.created_at) > lastMessageCreatedAt
+          )
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        
+        // Send any new message content
+        for (const message of newMessages) {
+          sentMessageIds.add(message.id);
+          lastMessageCreatedAt = new Date(message.created_at);
+          
+          for (const contentPart of message.content) {
+            if (contentPart.type === 'text') {
+              const text = contentPart.text.value;
+              // Send chunks of text to simulate streaming
+              const chunkSize = 8; // Adjust this for smoothness
+              for (let i = 0; i < text.length; i += chunkSize) {
+                const chunk = text.substring(i, i + chunkSize);
+                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                // Small delay for a more natural typing effect
+                await new Promise(resolve => setTimeout(resolve, 10)); 
+              }
+            }
+          }
+        }
+        
+        // Wait before checking again
+        await new Promise(resolve => setTimeout(resolve, 500));
+        run = await openai.beta.threads.runs.retrieve(threadId, runId);
+      }
       
+      // Final check for any remaining messages after run completes
+      if (run.status === 'completed') {
+        const messages = await openai.beta.threads.messages.list(threadId, {});
+        
+        const remainingMessages = messages.data
+          .filter(msg => msg.role === 'assistant' && !sentMessageIds.has(msg.id))
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          
+        for (const message of remainingMessages) {
+          sentMessageIds.add(message.id);
+          
+          for (const contentPart of message.content) {
+            if (contentPart.type === 'text') {
+              const text = contentPart.text.value;
+              // Send chunks of text to simulate streaming
+              const chunkSize = 8; // Adjust this for smoothness
+              for (let i = 0; i < text.length; i += chunkSize) {
+                const chunk = text.substring(i, i + chunkSize);
+                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                // Small delay for a more natural typing effect
+                await new Promise(resolve => setTimeout(resolve, 10)); 
+              }
+            }
+          }
+        }
+      } else {
+        // Handle non-completed runs
+        res.write(`data: ${JSON.stringify({ error: `Run ended with status: ${run.status}` })}\n\n`);
+      }
+      
+      // Send the thread ID at the end
+      res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
     } catch (error: any) {
       console.error('Error streaming assistant response:', error);
       res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
