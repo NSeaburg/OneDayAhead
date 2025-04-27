@@ -160,6 +160,8 @@ export default function Home() {
           <DynamicAssistantScreen 
             assistantId={dynamicAssistantId || discussionAssistantId} // Fallback to discussion assistant if dynamic ID is not available
             systemPrompt={config.systemPrompts.dynamic}
+            assessmentThreadId={assessmentThreadId} // Pass assessment thread ID
+            assessmentConversation={assessmentConversation} // Pass assessment conversation
             onNext={goToNextScreen} 
             onPrevious={goToPreviousScreen}
           />

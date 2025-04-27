@@ -6,6 +6,16 @@ import { useChatMessages } from "@/hooks/useChatMessages";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Add TypeScript declaration for global window property
+declare global {
+  interface Window {
+    __assessmentData?: {
+      threadId?: string;
+      messages?: any[];
+    };
+  }
+}
+
 interface AssessmentBotScreenProps {
   assistantId: string;
   systemPrompt: string;

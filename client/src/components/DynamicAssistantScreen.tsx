@@ -58,6 +58,11 @@ export default function DynamicAssistantScreen({
       // Calculate the chat duration in seconds
       const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
       
+      // Prepare the data for sending
+      console.log("Preparing to send combined conversation data");
+      console.log("Teaching conversation length:", messages.length);
+      console.log("Assessment conversation length:", (assessmentConversation || []).length);
+      
       // Send both conversation datasets to N8N before proceeding to the next screen
       const response = await apiRequest("POST", "/api/send-teaching-data", {
         // Teaching bot data
