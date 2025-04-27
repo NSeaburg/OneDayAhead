@@ -469,33 +469,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (contentPart.type === 'text') {
               const text = contentPart.text.value;
               
-              // For very long responses (paragraphs), break by sentences to ensure 
-              // smooth delivery and prevent UI issues
-              if (text.length > 200) {
-                // Split by sentences (ending with .!?)
+              // For very long responses, send the entire text at once to avoid issues
+              if (text.length > 500) {
+                console.log("Streaming: Very long partial response detected - sending entire text at once");
+                res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
+                await new Promise(resolve => setTimeout(resolve, 300));
+              }
+              // For medium length responses, send sentence by sentence
+              else if (text.length > 200) {
+                console.log("Streaming: Medium length response - sending by sentences");
                 const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
                 
-                // Send sentence by sentence 
                 for (const sentence of sentences) {
                   if (sentence.trim()) {
                     res.write(`data: ${JSON.stringify({ content: sentence + ' ' })}\n\n`);
-                    // Delay proportional to sentence length for more natural reading rhythm
-                    await new Promise(resolve => setTimeout(resolve, Math.min(200, sentence.length / 2)));
+                    await new Promise(resolve => setTimeout(resolve, Math.min(150, sentence.length / 3)));
                   }
                 }
               } else {
-                // For shorter responses, send word by word for a smoother animation
+                // For shorter responses, use word-by-word streaming
+                console.log("Streaming: Short response - word by word");
                 const words = text.split(' ');
                 
-                // Send chunks of 1-3 words 
-                for (let i = 0; i < words.length; i += 2) {
-                  const chunk = words.slice(i, i + 2).join(' ') + ' ';
-                  
-                  // Send the chunk
-                  res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-                  
-                  // Consistent small delay 
-                  await new Promise(resolve => setTimeout(resolve, 80));
+                // Send words 
+                for (let i = 0; i < words.length; i++) {
+                  if (words[i].trim()) {
+                    const chunk = words[i] + ' ';
+                    res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                    await new Promise(resolve => setTimeout(resolve, 80));
+                  }
                 }
               }
             }
@@ -530,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Send entire text at once for extremely long messages
                 // This ensures the message is delivered completely rather than risking truncation
                 console.log("Very long response - sending as complete text");
-                res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+                res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
                 await new Promise(resolve => setTimeout(resolve, 300));
               }
               else if (text.length > 200) {

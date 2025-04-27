@@ -109,9 +109,24 @@ export function useStreamingChat({
               }
               
               if (parsed.content) {
-                // Append to the streaming message
-                collectedResponse += parsed.content;
-                setCurrentStreamingMessage(collectedResponse);
+                // Check if this is a large content chunk (likely a full response)
+                const isLargeChunk = parsed.content.length > 500;
+                
+                // For large chunks, set the full message immediately without animation
+                if (isLargeChunk) {
+                  console.log("Received large content chunk - skipping streaming animation");
+                  collectedResponse = parsed.content; // Replace instead of append
+                  setCurrentStreamingMessage(collectedResponse);
+                  
+                  // If it's a complete response, finish streaming right away
+                  if (parsed.isComplete) {
+                    break;
+                  }
+                } else {
+                  // For smaller chunks, append and stream normally
+                  collectedResponse += parsed.content;
+                  setCurrentStreamingMessage(collectedResponse);
+                }
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
