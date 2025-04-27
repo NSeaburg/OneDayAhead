@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from "openai";
 import axios from "axios";
+import path from "path";
+import fs from "fs";
 
 // Initialize OpenAI client
 const openai = new OpenAI({ 
@@ -22,6 +24,25 @@ console.log("Assessment Webhook URL:", ASSESSMENT_WEBHOOK_URL);
 console.log("Dynamic Assistant Webhook URL:", DYNAMIC_ASSISTANT_WEBHOOK_URL);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Direct routes for embed and example HTML files
+  app.get("/embed.html", (req, res) => {
+    const embedPath = path.resolve(process.cwd(), "public", "embed.html");
+    if (fs.existsSync(embedPath)) {
+      res.sendFile(embedPath);
+    } else {
+      res.status(404).send("Embed file not found");
+    }
+  });
+
+  app.get("/example.html", (req, res) => {
+    const examplePath = path.resolve(process.cwd(), "public", "example.html");
+    if (fs.existsSync(examplePath)) {
+      res.sendFile(examplePath);
+    } else {
+      res.status(404).send("Example file not found");
+    }
+  });
+  
   // Route to get the assistant IDs
   app.get("/api/assistant-config", (req, res) => {
     res.json({
