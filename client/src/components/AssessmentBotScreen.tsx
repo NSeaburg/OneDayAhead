@@ -51,7 +51,8 @@ export default function AssessmentBotScreen({
   } = useStreamingChat({
     assistantId,
     systemPrompt,
-    initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?"
+    initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?",
+    enableTypingAnimation: false // Keep animation off for assessment screen
   });
   
   // Scroll to bottom of messages when new messages appear or when typing

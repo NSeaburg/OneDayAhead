@@ -23,7 +23,7 @@ export function useStreamingChat({
   const [fullMessage, setFullMessage] = useState<string>(''); // Store the full message for animation
 
   // Animation speed - characters per frame (higher = faster typing)
-  const charsPerFrame = 6;
+  const charsPerFrame = 5; // Slightly slower for more natural typing feel
 
   // Initialize with initial message if provided
   useEffect(() => {
@@ -48,12 +48,18 @@ export function useStreamingChat({
     
     // Function to update displayed text with a few more characters
     const updateDisplayedText = () => {
-      displayedLength = Math.min(displayedLength + charsPerFrame, maxLength);
+      // Vary the typing speed slightly for more natural feel
+      const variableSpeed = charsPerFrame + (Math.random() > 0.7 ? 1 : 0) - (Math.random() > 0.9 ? 1 : 0);
+      displayedLength = Math.min(displayedLength + variableSpeed, maxLength);
       setCurrentStreamingMessage(fullMessage.substring(0, displayedLength));
       
       // Continue animation if we haven't shown all text
       if (displayedLength < maxLength) {
-        animationFrameId = requestAnimationFrame(updateDisplayedText);
+        // Add a small random delay to make typing feel more natural
+        const randomDelay = Math.random() * 15; // 0-15ms random delay
+        setTimeout(() => {
+          animationFrameId = requestAnimationFrame(updateDisplayedText);
+        }, randomDelay);
       }
     };
     

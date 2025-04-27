@@ -94,11 +94,14 @@
 
 .typing-cursor {
   display: inline-block;
-  width: 6px;
-  height: 16px;
-  background-color: currentColor;
+  width: 4px;
+  height: 18px;
+  background-color: blue;
   vertical-align: middle;
-  margin-left: 1px;
-  animation: blink 0.85s infinite;
+  margin-left: 2px;
+  animation: blink 0.75s infinite;
+  position: relative;
+  top: 1px;
+  border-radius: 1px;
 }
 
