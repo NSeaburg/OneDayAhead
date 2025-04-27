@@ -113,12 +113,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { conversationData, threadId } = req.body;
       
-      // Verify we have data to send
-      if (!conversationData || !Array.isArray(conversationData)) {
+      // Verify we have at least the threadId to send
+      if (!threadId) {
         return res.status(400).json({ 
-          error: "Invalid conversation data. Expected an array of messages." 
+          error: "Invalid request. Thread ID is required." 
         });
       }
+      
+      // Prepare conversation data (may be null/undefined from client)
+      const messageData = conversationData || [];
       
       // Get N8N webhook URL for dynamic assistant
       if (!DYNAMIC_ASSISTANT_WEBHOOK_URL) {
@@ -130,15 +133,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Send data to N8N webhook with the threadId included
+        console.log("Calling teaching bot webhook with POST request");
         const response = await axios.post(DYNAMIC_ASSISTANT_WEBHOOK_URL, {
-          conversationData,
-          threadId, // Include the thread ID in the N8N payload
+          threadId,
+          conversationData: messageData, // Use our prepared variable
           timestamp: new Date().toISOString(),
           source: "learning-app-teaching" // Different source identifier
         });
         
         console.log("Successfully sent teaching bot data to N8N:", response.status);
-        console.log("ThreadId included in teaching bot N8N payload:", threadId);
+        console.log("ThreadId included in teaching bot N8N call:", threadId);
         
         return res.json({ 
           success: true, 
