@@ -33,7 +33,7 @@ export default function ArticleChatScreen({
     assistantId,
     systemPrompt,
     initialMessage: "Hello! I'm your learning assistant for this module. Feel free to ask any questions about the article content or related topics, and I'll help clarify concepts or provide additional information.",
-    enableTypingAnimation: false // Keep animation off for this screen
+    enableTypingAnimation: true // Enable typing animation for this screen
   });
 
   // Scroll to bottom of messages when new messages appear or when typing
@@ -107,7 +107,7 @@ export default function ArticleChatScreen({
                 </div>
                 <div className="ml-10 bg-gray-100 rounded-lg p-3 text-gray-700">
                   <span className="typing-text">{currentStreamingMessage}</span>
-                  <span className="inline-block w-[1px] h-4 bg-gray-600 opacity-70 animate-blink ml-[1px]"></span>
+                  <span className="typing-cursor article-cursor"></span>
                 </div>
               </div>
             )}

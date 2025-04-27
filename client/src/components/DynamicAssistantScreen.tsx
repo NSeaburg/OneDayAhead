@@ -218,7 +218,7 @@ export default function DynamicAssistantScreen({
               </div>
               <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700 dynamic-assistant-message">
                 <span className="typing-text">{currentStreamingMessage}</span>
-                <span className="typing-cursor"></span>
+                <span className="typing-cursor specialized-cursor"></span>
               </div>
             </div>
           )}

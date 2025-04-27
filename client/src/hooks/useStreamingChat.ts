@@ -23,7 +23,7 @@ export function useStreamingChat({
   const [fullMessage, setFullMessage] = useState<string>(''); // Store the full message for animation
 
   // Animation speed - characters per frame (higher = faster typing)
-  const charsPerFrame = 5; // Slightly slower for more natural typing feel
+  const charsPerFrame = 2.5; // Reduced by 50% for slower, more natural typing effect
 
   // Initialize with initial message if provided
   useEffect(() => {

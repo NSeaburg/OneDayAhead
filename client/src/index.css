@@ -92,6 +92,7 @@
   transition: opacity 0.15s ease;
 }
 
+/* Base cursor styling */
 .typing-cursor {
   display: inline-block;
   width: 4px;
@@ -103,5 +104,18 @@
   position: relative;
   top: 1px;
   border-radius: 1px;
+}
+
+/* Different cursor colors for different screens */
+.article-cursor {
+  background-color: var(--primary); /* Blue cursor for article screen */
+}
+
+.assessment-cursor {
+  background-color: rgb(34, 197, 94); /* Green cursor for assessment screen */
+}
+
+.specialized-cursor {
+  background-color: rgb(59, 130, 246); /* Different blue for specialized guidance */
 }
 
