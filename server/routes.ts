@@ -173,9 +173,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Course name sent to N8N:", courseName || "Gravity Course");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         
+        // Extract feedback data from N8N response if available
+        let feedbackData = {};
+        if (response.data && typeof response.data === 'object') {
+          // Check for feedback fields in the N8N response
+          const { summary, contentKnowledgeScore, writingScore, nextSteps } = response.data;
+          
+          if (summary || contentKnowledgeScore || writingScore || nextSteps) {
+            console.log("Received feedback data from N8N:", response.data);
+            feedbackData = {
+              summary: summary || "No summary provided",
+              contentKnowledgeScore: contentKnowledgeScore || 0,
+              writingScore: writingScore || 0,
+              nextSteps: nextSteps || "No next steps provided"
+            };
+          }
+        }
+        
         return res.json({ 
           success: true, 
-          message: "Combined teaching and assessment data sent to N8N successfully"
+          message: "Combined teaching and assessment data sent to N8N successfully",
+          feedbackData // Include the feedback data in the response
         });
       } catch (axiosError: any) {
         // Handle N8N webhook errors but allow the application to continue

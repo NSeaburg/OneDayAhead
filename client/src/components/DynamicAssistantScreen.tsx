@@ -11,7 +11,7 @@ interface DynamicAssistantScreenProps {
   systemPrompt: string;
   assessmentThreadId?: string; // Assessment bot thread ID
   assessmentConversation?: any[]; // Assessment bot conversation
-  onNext: () => void;
+  onNext: (nextAssistantId?: string, feedbackData?: any) => void;
   onPrevious?: () => void;
 }
 
@@ -83,12 +83,24 @@ export default function DynamicAssistantScreen({
       console.log("Teaching bot Thread ID:", threadId);
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
+      // Extract feedback data if available
+      const feedbackData = result.feedbackData || null;
+      console.log("Feedback data received:", feedbackData);
+      
       if (result.success) {
         // Show success toast
         toast({
-          title: "Teaching data sent",
-          description: "Your conversation data has been successfully sent to the learning system.",
+          title: "Learning data processed",
+          description: "Your conversation data has been analyzed and feedback is ready.",
         });
+        
+        // Store feedback data in window object so it can be retrieved by the feedback screen
+        if (feedbackData) {
+          window.__assessmentData = {
+            ...(window.__assessmentData || {}),
+            feedbackData
+          };
+        }
       } else {
         // Handle the case where N8N returned a non-error response but with success: false
         console.log("Teaching bot N8N integration failed:", result.message);
@@ -96,13 +108,13 @@ export default function DynamicAssistantScreen({
         // Show warning toast
         toast({
           title: "Data integration issue",
-          description: "There was an issue sending your data, but you can continue with the learning journey.",
+          description: "There was an issue processing your data, but you can continue with the learning journey.",
           variant: "default"
         });
       }
       
       // Call the onNext function to move to the next screen
-      onNext();
+      onNext(undefined, feedbackData);
     } catch (error) {
       console.error("Failed to send teaching data to N8N:", error);
       
