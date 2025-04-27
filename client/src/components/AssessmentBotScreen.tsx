@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useChatMessages } from "@/hooks/useChatMessages";
+import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,19 +32,32 @@ export default function AssessmentBotScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  const { messages, sendMessage, isLoading, threadId } = useChatMessages({
+  const { 
+    messages, 
+    sendMessage, 
+    isLoading, 
+    threadId, 
+    currentStreamingMessage, 
+    isTyping 
+  } = useStreamingChat({
     assistantId,
     systemPrompt,
     initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?"
   });
   
+  // Scroll to bottom of messages when new messages appear or when typing
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, currentStreamingMessage]);
+  
   // Expose the assessment data through the window for the next screen
   // This is necessary to pass data between screens
   if (typeof window !== 'undefined') {
     window.__assessmentData = {
-      threadId,
+      threadId: threadId || undefined,
       messages
     };
   }
@@ -129,6 +142,7 @@ export default function AssessmentBotScreen({
           <h2 className="font-semibold text-lg text-gray-800">Assessment Assistant</h2>
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
+          {/* Regular messages */}
           {messages.map((message, index) => (
             <div key={index} className="message-appear flex flex-col">
               <div className="flex items-start mb-1">
@@ -152,7 +166,27 @@ export default function AssessmentBotScreen({
               </div>
             </div>
           ))}
-          {isLoading && (
+          
+          {/* Currently streaming message */}
+          {isTyping && currentStreamingMessage && (
+            <div className="message-appear flex flex-col">
+              <div className="flex items-start mb-1">
+                <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
+                  <i className="ri-question-line"></i>
+                </div>
+                <span className="text-xs text-gray-500 mt-1">
+                  Assessment Bot
+                </span>
+              </div>
+              <div className="ml-10 bg-green-50 rounded-lg p-3 text-gray-700">
+                {currentStreamingMessage}
+                <span className="inline-block animate-pulse">▌</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Loading indicator when not streaming yet */}
+          {isLoading && !currentStreamingMessage && (
             <div className="flex items-center justify-center p-4">
               <div className="animate-pulse flex space-x-2">
                 <div className="w-2 h-2 rounded-full bg-gray-400"></div>
@@ -161,6 +195,9 @@ export default function AssessmentBotScreen({
               </div>
             </div>
           )}
+          
+          {/* Reference for scrolling to bottom */}
+          <div ref={messagesEndRef} />
         </div>
         <div className="p-4 border-t border-gray-200">
           <form onSubmit={handleSubmit} className="flex items-center gap-2">

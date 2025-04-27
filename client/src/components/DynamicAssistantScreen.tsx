@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useChatMessages } from "@/hooks/useChatMessages";
+import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,6 +42,7 @@ export default function DynamicAssistantScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   // We already receive assessmentThreadId as prop, so we don't need a separate state variable
   const { toast } = useToast();
   
@@ -53,11 +54,23 @@ export default function DynamicAssistantScreen({
     ? "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?"
     : "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
   
-  const { messages, sendMessage, isLoading, threadId } = useChatMessages({
+  const { 
+    messages, 
+    sendMessage, 
+    isLoading, 
+    threadId, 
+    currentStreamingMessage, 
+    isTyping
+  } = useStreamingChat({
     assistantId,
     systemPrompt,
     initialMessage
   });
+  
+  // Scroll to bottom of messages when new messages appear or when typing
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, currentStreamingMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
