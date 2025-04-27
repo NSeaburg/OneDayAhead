@@ -507,19 +507,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const contentPart of message.content) {
             if (contentPart.type === 'text') {
               const text = contentPart.text.value;
-              // Split by characters rather than words for smoother animation
-              // Send small chunks of 1-3 characters at a time
-              let position = 0;
-              while (position < text.length) {
-                // Determine a random small chunk size (1-3 chars)
-                const chunkSize = Math.floor(Math.random() * 3) + 1;
-                const chunk = text.substring(position, position + chunkSize);
+              
+              // For longer responses, break into larger chunks and send at a consistent rate
+              // This ensures we don't overload the client or have timing issues with very long responses
+              const sentenceBreaks = text.match(/[.!?]+\s+/g) || [];
+              
+              if (text.length > 500) {
+                // For very long responses, break by sentences or paragraphs
+                let startPos = 0;
                 
-                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-                // Slightly variable timing makes it look more natural
-                await new Promise(resolve => setTimeout(resolve, 15 + Math.random() * 30));
+                // Find natural breaks (sentences, paragraphs)
+                const breakPoints = [];
+                let regex = /[.!?]\s+/g;
+                let match;
                 
-                position += chunkSize;
+                while ((match = regex.exec(text)) !== null) {
+                  breakPoints.push(match.index + match[0].length);
+                }
+                
+                // Add the end as a final break point
+                breakPoints.push(text.length);
+                
+                // Send chunks at natural break points
+                for (let i = 0; i < breakPoints.length; i++) {
+                  const chunk = text.substring(startPos, breakPoints[i]);
+                  if (chunk.trim().length > 0) {
+                    res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                    await new Promise(resolve => setTimeout(resolve, 50 + Math.min(chunk.length / 5, 200)));
+                  }
+                  startPos = breakPoints[i];
+                }
+              } else {
+                // For shorter responses, use character-by-character streaming for a smoother effect
+                let position = 0;
+                while (position < text.length) {
+                  // Use a more consistent chunk size (2-3 chars)
+                  const chunkSize = 2 + Math.floor(Math.random() * 2);
+                  const chunk = text.substring(position, position + chunkSize);
+                  
+                  res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+                  // Use a consistent delay for more reliable streaming
+                  await new Promise(resolve => setTimeout(resolve, 20));
+                  
+                  position += chunkSize;
+                }
               }
             }
           }

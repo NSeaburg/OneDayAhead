@@ -272,8 +272,8 @@ export default function DynamicAssistantScreen({
           disabled={isLoading || isSendingToN8N}
           className="bg-primary hover:bg-primary/90 text-white"
         >
-          {isSendingToN8N ? "Sending..." : "Next"}
-          {!isSendingToN8N && <ArrowRight className="ml-2 h-4 w-4" />}
+          Next
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>
