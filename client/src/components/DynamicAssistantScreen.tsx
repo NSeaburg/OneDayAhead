@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 interface DynamicAssistantScreenProps {
   assistantId: string;
   systemPrompt: string;
+  assessmentThreadId?: string; // Assessment bot thread ID
+  assessmentConversation?: any[]; // Assessment bot conversation
   onNext: () => void;
   onPrevious?: () => void;
 }
@@ -16,12 +18,15 @@ interface DynamicAssistantScreenProps {
 export default function DynamicAssistantScreen({ 
   assistantId,
   systemPrompt,
+  assessmentThreadId,
+  assessmentConversation,
   onNext,
   onPrevious
 }: DynamicAssistantScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
+  const [storedAssessmentThreadId, setStoredAssessmentThreadId] = useState<string>(""); // Store the assessment thread ID
   const { toast } = useToast();
   
   // Check if this is using a fallback assistant ID (not starting with "asst_")
@@ -53,17 +58,25 @@ export default function DynamicAssistantScreen({
       // Calculate the chat duration in seconds
       const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
       
-      // Send conversation data to N8N before proceeding to the next screen
+      // Send both conversation datasets to N8N before proceeding to the next screen
       const response = await apiRequest("POST", "/api/send-teaching-data", {
-        conversationData: messages,
-        threadId: threadId, // Include the thread ID for N8N to process
-        courseName: "Gravity Course", // Add the course name
-        chatDurationSeconds: chatDurationSeconds // Add the chat duration in seconds
+        // Teaching bot data
+        teachingConversation: messages,
+        teachingThreadId: threadId,
+        
+        // Assessment bot data (if available)
+        assessmentConversation: assessmentConversation || [],
+        assessmentThreadId: assessmentThreadId || "",
+        
+        // Common metadata
+        courseName: "Gravity Course",
+        chatDurationSeconds: chatDurationSeconds
       });
       
       const result = await response.json();
       console.log("Teaching bot N8N integration result:", result);
-      console.log("Thread ID sent to N8N:", threadId);
+      console.log("Teaching bot Thread ID:", threadId);
+      console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
       if (result.success) {
         // Show success toast
