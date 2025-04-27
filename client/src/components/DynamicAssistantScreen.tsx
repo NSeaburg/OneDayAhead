@@ -6,6 +6,22 @@ import { useChatMessages } from "@/hooks/useChatMessages";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Define global window interface for storing feedback data
+declare global {
+  interface Window {
+    __assessmentData?: {
+      threadId?: string;
+      messages?: any[];
+      feedbackData?: {
+        summary?: string;
+        contentKnowledgeScore?: number;
+        writingScore?: number;
+        nextSteps?: string;
+      };
+    };
+  }
+}
+
 interface DynamicAssistantScreenProps {
   assistantId: string;
   systemPrompt: string;

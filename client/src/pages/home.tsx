@@ -16,6 +16,12 @@ declare global {
     __assessmentData?: {
       threadId?: string;
       messages?: any[];
+      feedbackData?: {
+        summary?: string;
+        contentKnowledgeScore?: number;
+        writingScore?: number;
+        nextSteps?: string;
+      };
     };
   }
 }
