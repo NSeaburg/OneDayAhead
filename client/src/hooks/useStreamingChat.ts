@@ -74,6 +74,15 @@ export function useStreamingChat({
         throw new Error('Stream reader not available');
       }
       
+      // Start showing typing indicator immediately
+      setIsTyping(true);
+      setCurrentStreamingMessage('');
+      
+      // Create a debounced function to update the UI
+      const updateUIDebounced = (text: string) => {
+        setCurrentStreamingMessage(text);
+      };
+      
       while (true) {
         const { done, value } = await reader.read();
         
@@ -109,13 +118,12 @@ export function useStreamingChat({
               }
               
               if (parsed.content) {
-                // Accumulate content without streaming animations
+                // Add the new content to our collected response
                 collectedResponse += parsed.content;
                 
-                // Only update the UI when we have the complete message or a substantial chunk
-                if (parsed.isComplete || parsed.content.length > 200) {
-                  setCurrentStreamingMessage(collectedResponse);
-                }
+                // Update the UI with each piece of streamed content
+                // This creates the real-time typing effect
+                updateUIDebounced(collectedResponse);
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);

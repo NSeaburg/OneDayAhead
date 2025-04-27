@@ -93,9 +93,9 @@ export default function ArticleChatScreen({
               </div>
             ))}
             
-            {/* Currently streaming message */}
+            {/* Streaming message from OpenAI */}
             {isTyping && currentStreamingMessage && (
-              <div className="message-appear flex flex-col">
+              <div className="flex flex-col">
                 <div className="flex items-start mb-1">
                   <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-2 flex-shrink-0">
                     <i className="ri-robot-line"></i>
@@ -105,13 +105,14 @@ export default function ArticleChatScreen({
                   </span>
                 </div>
                 <div className="ml-10 bg-gray-100 rounded-lg p-3 text-gray-700">
-                  <span className="typing-text">{currentStreamingMessage}</span>
-                  <span className="inline-block w-[1px] h-4 bg-gray-600 opacity-70 animate-blink ml-[1px]"></span>
+                  {currentStreamingMessage}
+                  {/* Simple blinking cursor */}
+                  <span className="inline-block w-[2px] h-4 bg-gray-600 opacity-50 animate-blink ml-[2px]"></span>
                 </div>
               </div>
             )}
             
-            {/* Loading indicator when not streaming yet */}
+            {/* Initial loading indicator */}
             {isLoading && !currentStreamingMessage && (
               <div className="flex items-center justify-center p-4">
                 <div className="animate-pulse flex space-x-2">

@@ -438,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
-  // Stream the assistant response without animation
+  // Stream the assistant response directly from OpenAI
   async function streamAssistantResponse(res: any, threadId: string, runId: string) {
     try {
       console.log(`Starting to stream assistant response for thread ${threadId}, run ${runId}`);
@@ -448,45 +448,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       
-      let run: any;
+      // Get the run first
+      const run = await openai.beta.threads.runs.retrieve(threadId, runId);
       
-      // Poll for run completion
-      while (true) {
-        run = await openai.beta.threads.runs.retrieve(threadId, runId);
-        
-        if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled') {
-          console.log(`Run completed with status: ${run.status}`);
-          break;
+      // Stream the run
+      const stream = await openai.beta.threads.runs.submitToolOutputsStream(
+        threadId,
+        runId
+      );
+      
+      // Listen for events from the stream
+      stream.on('textDelta', (delta, snapshot) => {
+        // Each time a new piece of text arrives, send it to the client
+        if (delta.value) {
+          console.log(`Streaming text delta: ${delta.value.substring(0, 20)}${delta.value.length > 20 ? '...' : ''}`);
+          res.write(`data: ${JSON.stringify({ content: delta.value })}\n\n`);
         }
-        
-        // Wait before polling again
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+      });
       
-      if (run.status === 'completed') {
-        // Get all messages in the thread
-        const messages = await openai.beta.threads.messages.list(threadId);
-        const assistantMessages = messages.data.filter(msg => msg.role === 'assistant');
-        
-        // Just send each message in full - no animations
-        for (const message of assistantMessages) {
-          for (const contentPart of message.content) {
-            if (contentPart.type === 'text') {
-              const text = contentPart.text.value;
-              console.log(`Sending complete message (${text.length} chars)`);
-              res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
-            }
-          }
-        }
-      } else {
-        // Handle non-completed runs
-        res.write(`data: ${JSON.stringify({ error: `Run ended with status: ${run.status}` })}\n\n`);
-      }
+      // When the run completes successfully
+      stream.on('textDone', () => {
+        console.log('Stream completed successfully');
+      });
       
-      // Include the thread ID in the final message
-      res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      res.end();
+      // Handle errors
+      stream.on('error', (error) => {
+        console.error('Stream error:', error);
+        res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
+      });
+      
+      // When the run finishes (regardless of success or error)
+      stream.on('end', async () => {
+        console.log('Stream ended');
+        
+        // Send the thread ID at the end
+        res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      });
+      
     } catch (error: any) {
       console.error('Error streaming assistant response:', error);
       res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
