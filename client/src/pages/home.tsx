@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import VideoScreen from "@/components/VideoScreen";
 import ArticleChatScreen from "@/components/ArticleChatScreen";
@@ -9,6 +9,7 @@ import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import { notifyScreenChange, notifyFeedbackReceived, notifyCourseCompleted } from "@/lib/embedding";
 
 // Add TypeScript declaration for global window property
 declare global {
@@ -42,6 +43,21 @@ export default function Home() {
   
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
+  
+  // Send screen change notification whenever the current screen changes
+  useEffect(() => {
+    // Get the screen name based on index
+    const screenNames = ["Video", "Article", "Assessment", "Teaching", "Feedback"];
+    const screenName = screenNames[currentScreen - 1] || "Unknown";
+    
+    // Notify parent window about screen change
+    notifyScreenChange(screenName, currentScreen);
+    
+    // Send course completion notification when reaching the final screen
+    if (currentScreen === config.totalSteps) {
+      notifyCourseCompleted(feedbackData);
+    }
+  }, [currentScreen, feedbackData]);
   
   // Function to navigate to the next screen
   const goToNextScreen = () => {

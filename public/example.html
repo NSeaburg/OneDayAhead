@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embedding Example - Learning Platform</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      color: #1f2937;
+    }
+    
+    h1 {
+      background: linear-gradient(90deg, #3b82f6, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .example-container {
+      margin: 2rem 0;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .example-iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    
+    .code-block {
+      background-color: #f9fafb;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .highlight {
+      background-color: #dbeafe;
+      padding: 0 3px;
+      border-radius: 3px;
+    }
+    
+    .btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #3b82f6, #6366f1);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 1rem;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <h1>Embedding the Learning Experience</h1>
+  <p>
+    This page demonstrates how to embed our interactive AI-powered learning platform into your own website.
+    The example below shows the learning experience embedded in an iframe.
+  </p>
+  
+  <div class="example-container">
+    <iframe src="/embed.html" class="example-iframe" title="Embedded Learning Experience"></iframe>
+  </div>
+  
+  <h2>How to Embed</h2>
+  <p>
+    To embed this learning experience in your own website, simply add the following HTML code to your page.
+    Make sure to replace <span class="highlight">YOUR_DEPLOYMENT_URL</span> with the actual URL where this application is deployed.
+  </p>
+  
+  <div class="code-block">
+&lt;iframe 
+  src="YOUR_DEPLOYMENT_URL/embed.html" 
+  style="width: 100%; height: 600px; border: none;" 
+  title="Interactive Learning Experience"
+  allow="microphone; camera"
+&gt;&lt;/iframe&gt;
+  </div>
+  
+  <h2>Customization Options</h2>
+  <p>
+    You can customize the appearance of the embedded learning experience by modifying the following parameters:
+  </p>
+  
+  <ul>
+    <li><strong>Height</strong>: Change the height value in the style attribute to fit your layout</li>
+    <li><strong>Width</strong>: Adjust the width percentage to control how much space the iframe takes up</li>
+    <li><strong>Border</strong>: Add a border by changing the border style property</li>
+  </ul>
+  
+  <h2>Advanced Integration</h2>
+  <p>
+    For more advanced integration scenarios, you can also communicate with the learning application using cross-window messaging:
+  </p>
+  
+  <div class="code-block">
+// Listen for messages from the learning application
+window.addEventListener('message', function(event) {
+  // Make sure the message is coming from your application domain
+  if (event.origin === 'YOUR_DEPLOYMENT_URL') {
+    console.log('Message received from learning app:', event.data);
+    
+    // Handle different message types
+    if (event.data.type === 'completion') {
+      // Handle completion event
+      console.log('User completed the learning module!');
+    }
+  }
+});
+  </div>
+  
+  <a href="/embed.html" class="btn" target="_blank">Open Embed in Full Screen</a>
+  
+  <footer>
+    &copy; 2025 Learning Platform | All rights reserved
+  </footer>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learning Experience Embed</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(to right, #3b82f6, #6366f1);
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+    
+    .header-logo {
+      font-size: 1.25rem;
+    }
+    
+    .header-info {
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+    
+    .iframe-container {
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    .footer {
+      background-color: #f9fafb;
+      padding: 8px 20px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #6b7280;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    @media (max-width: 640px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+        padding: 8px;
+      }
+      
+      .header-info {
+        margin-top: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-logo">Interactive Learning Experience</div>
+      <div class="header-info">Powered by AI</div>
+    </div>
+    
+    <div class="iframe-container">
+      <!-- Replace with your actual deployment URL when deploying -->
+      <iframe src="/" allow="microphone; camera"></iframe>
+    </div>
+    
+    <div class="footer">
+      © 2025 Learning Platform | All rights reserved
+    </div>
+  </div>
+  
+  <script>
+    // Adjust iframe height on window resize
+    window.addEventListener('resize', function() {
+      const iframe = document.querySelector('iframe');
+      const container = document.querySelector('.iframe-container');
+      if (iframe && container) {
+        iframe.style.height = container.offsetHeight + 'px';
+      }
+    });
+    
+    // Listen for messages from the iframe content
+    window.addEventListener('message', function(event) {
+      // You can add message handlers here if needed
+      console.log('Message from learning app:', event.data);
+    });
+  </script>
+</body>
+</html>
