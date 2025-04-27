@@ -183,6 +183,7 @@ export default function DynamicAssistantScreen({
           )}
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
+          {/* Regular messages */}
           {messages.map((message, index) => (
             <div key={index} className="message-appear flex flex-col">
               <div className="flex items-start mb-1">
@@ -206,7 +207,27 @@ export default function DynamicAssistantScreen({
               </div>
             </div>
           ))}
-          {isLoading && (
+          
+          {/* Currently streaming message */}
+          {isTyping && currentStreamingMessage && (
+            <div className="message-appear flex flex-col">
+              <div className="flex items-start mb-1">
+                <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
+                  <i className="ri-robot-line"></i>
+                </div>
+                <span className="text-xs text-gray-500 mt-1">
+                  Dynamic Assistant
+                </span>
+              </div>
+              <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700">
+                {currentStreamingMessage}
+                <span className="inline-block animate-pulse">▌</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Loading indicator when not streaming yet */}
+          {isLoading && !currentStreamingMessage && (
             <div className="flex items-center justify-center p-4">
               <div className="animate-pulse flex space-x-2">
                 <div className="w-2 h-2 rounded-full bg-gray-400"></div>
@@ -215,6 +236,9 @@ export default function DynamicAssistantScreen({
               </div>
             </div>
           )}
+          
+          {/* Reference for scrolling to bottom */}
+          <div ref={messagesEndRef} />
         </div>
         <div className="p-4 border-t border-gray-200">
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
