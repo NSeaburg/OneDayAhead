@@ -37,6 +37,9 @@ export default function Home() {
   const [assessmentThreadId, setAssessmentThreadId] = useState<string>("");
   const [assessmentConversation, setAssessmentConversation] = useState<any[]>([]);
   
+  // Store feedback data from N8N
+  const [feedbackData, setFeedbackData] = useState(null);
+  
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
   
@@ -168,7 +171,13 @@ export default function Home() {
             systemPrompt={config.systemPrompts.dynamic}
             assessmentThreadId={assessmentThreadId} // Pass assessment thread ID
             assessmentConversation={assessmentConversation} // Pass assessment conversation
-            onNext={goToNextScreen} 
+            onNext={(nextId, feedbackResult) => {
+              if (feedbackResult) {
+                setFeedbackData(feedbackResult);
+                console.log("Feedback data received:", feedbackResult);
+              }
+              goToNextScreen();
+            }} 
             onPrevious={goToPreviousScreen}
           />
         </div>
@@ -178,6 +187,7 @@ export default function Home() {
           <FinalBotScreen 
             assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.feedback}
+            feedbackData={feedbackData}
             onPrevious={goToPreviousScreen}
           />
         </div>

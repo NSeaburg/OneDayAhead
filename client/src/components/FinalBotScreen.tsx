@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 
 // Define global window interface for accessing feedback data
@@ -82,8 +81,8 @@ export default function FinalBotScreen({
     return "bg-red-100 border-red-200 text-red-800";
   };
 
-  // Helper function to get progress color
-  const getProgressColor = (score: number) => {
+  // Helper function to determine CSS background color class based on score
+  const getProgressColor = (score: number): string => {
     if (score >= 3.5) return "bg-green-500";
     if (score >= 2.5) return "bg-blue-500";
     if (score >= 1.5) return "bg-yellow-500";
@@ -122,10 +121,12 @@ export default function FinalBotScreen({
               {feedbackData.contentKnowledgeScore}/4
             </Badge>
           </div>
-          <Progress 
-            value={(feedbackData.contentKnowledgeScore / 4) * 100}
-            className={`h-2 bg-gray-200 [&>div]:${getProgressColor(feedbackData.contentKnowledgeScore)}`}
-          />
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${getProgressColor(feedbackData.contentKnowledgeScore)}`}
+              style={{ width: `${(feedbackData.contentKnowledgeScore / 4) * 100}%` }}
+            ></div>
+          </div>
         </div>
 
         {/* Writing Score */}
@@ -137,10 +138,12 @@ export default function FinalBotScreen({
               {feedbackData.writingScore}/4
             </Badge>
           </div>
-          <Progress 
-            value={(feedbackData.writingScore / 4) * 100} 
-            className={`h-2 bg-gray-200 [&>div]:${getProgressColor(feedbackData.writingScore)}`}
-          />
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${getProgressColor(feedbackData.writingScore)}`}
+              style={{ width: `${(feedbackData.writingScore / 4) * 100}%` }}
+            ></div>
+          </div>
         </div>
       </div>
 
