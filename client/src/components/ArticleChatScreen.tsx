@@ -32,7 +32,8 @@ export default function ArticleChatScreen({
   } = useStreamingChat({
     assistantId,
     systemPrompt,
-    initialMessage: "Hello! I'm your learning assistant for this module. Feel free to ask any questions about the article content or related topics, and I'll help clarify concepts or provide additional information."
+    initialMessage: "Hello! I'm your learning assistant for this module. Feel free to ask any questions about the article content or related topics, and I'll help clarify concepts or provide additional information.",
+    enableTypingAnimation: false // Keep animation off for this screen
   });
 
   // Scroll to bottom of messages when new messages appear or when typing

@@ -64,7 +64,8 @@ export default function DynamicAssistantScreen({
   } = useStreamingChat({
     assistantId,
     systemPrompt,
-    initialMessage
+    initialMessage,
+    enableTypingAnimation: true // Enable typing animation for this screen only
   });
   
   // Scroll to bottom of messages when new messages appear or when typing

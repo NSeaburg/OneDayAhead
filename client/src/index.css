@@ -57,30 +57,48 @@
   }
 }
 
-/* Removed complex animations for more reliable message display */
+/* Smooth typing animation for Specialized Guidance page */
 @keyframes blink {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 .animate-blink {
-  animation: blink 1.2s infinite;
-  display: none; /* Hide blinking cursor entirely */
+  animation: blink 0.85s infinite;
+  margin-left: 2px;
+  display: inline-block;
+  width: 6px;
+  height: 16px;
+  background-color: currentColor;
+  vertical-align: middle;
 }
 
 .typing-text {
   display: inline;
-  opacity: 1; /* Full opacity - no fade effect */
-}
-
-.message-appear {
-  animation: none; /* No animation for message appearance */
   opacity: 1;
 }
 
-/* Simplified fade-in with no motion */
+.message-appear {
+  animation: fadeIn 0.3s ease-out;
+}
+
 @keyframes fadeIn {
-  from { opacity: 0.8; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Additional classes for dynamic assistant screen specifically */
+.dynamic-assistant-message {
+  transition: opacity 0.15s ease;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 16px;
+  background-color: currentColor;
+  vertical-align: middle;
+  margin-left: 1px;
+  animation: blink 0.85s infinite;
 }
 
