@@ -10,12 +10,26 @@ import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 
+// Add TypeScript declaration for global window property
+declare global {
+  interface Window {
+    __assessmentData?: {
+      threadId?: string;
+      messages?: any[];
+    };
+  }
+}
+
 export default function Home() {
   // Track the current screen in the learning flow
   const [currentScreen, setCurrentScreen] = useState(1);
   
   // Store the dynamic assistant ID received from N8N
   const [dynamicAssistantId, setDynamicAssistantId] = useState<string | null>(null);
+  
+  // Store the assessment thread ID and conversation data for passing to the teaching bot
+  const [assessmentThreadId, setAssessmentThreadId] = useState<string>("");
+  const [assessmentConversation, setAssessmentConversation] = useState<any[]>([]);
   
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
@@ -123,6 +137,18 @@ export default function Home() {
               } else {
                 console.log("No nextAssistantId provided, using fallback");
               }
+              
+              // Capture the assessment conversation and thread ID from the component's state
+              // This will be accessed through window.__assessmentData global
+              if (window.__assessmentData) {
+                setAssessmentThreadId(window.__assessmentData.threadId || "");
+                setAssessmentConversation(window.__assessmentData.messages || []);
+                console.log("Captured assessment thread ID:", window.__assessmentData.threadId);
+                console.log("Captured assessment conversation length:", window.__assessmentData.messages?.length || 0);
+              } else {
+                console.log("No assessment data available");
+              }
+              
               goToNextScreen();
             }} 
             onPrevious={goToPreviousScreen}

@@ -26,7 +26,7 @@ export default function DynamicAssistantScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
-  const [storedAssessmentThreadId, setStoredAssessmentThreadId] = useState<string>(""); // Store the assessment thread ID
+  // We already receive assessmentThreadId as prop, so we don't need a separate state variable
   const { toast } = useToast();
   
   // Check if this is using a fallback assistant ID (not starting with "asst_")

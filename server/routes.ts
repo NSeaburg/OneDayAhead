@@ -112,20 +112,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route to send dynamic assistant (teaching bot) data to N8N
+  // Route to send dynamic assistant (teaching bot) data to N8N (including assessment data)
   app.post("/api/send-teaching-data", async (req, res) => {
     try {
-      const { conversationData, threadId, courseName, chatDurationSeconds } = req.body;
+      const { 
+        // Teaching bot data
+        teachingConversation, 
+        teachingThreadId,
+        
+        // Assessment bot data
+        assessmentConversation,
+        assessmentThreadId,
+        
+        // Common metadata
+        courseName, 
+        chatDurationSeconds 
+      } = req.body;
       
-      // Verify we have at least the threadId to send
-      if (!threadId) {
+      // Verify we have at least the teaching thread ID to send
+      if (!teachingThreadId) {
         return res.status(400).json({ 
-          error: "Invalid request. Thread ID is required." 
+          error: "Invalid request. Teaching Thread ID is required." 
         });
       }
       
       // Prepare conversation data (may be null/undefined from client)
-      const messageData = conversationData || [];
+      const teachingData = teachingConversation || [];
+      const assessmentData = assessmentConversation || [];
       
       // Get N8N webhook URL for dynamic assistant
       if (!DYNAMIC_ASSISTANT_WEBHOOK_URL) {
@@ -136,25 +149,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        // Send data to N8N webhook with the threadId included
-        console.log("Calling teaching bot webhook with POST request");
+        // Send complete data package to N8N webhook
+        console.log("Calling teaching bot webhook with POST request (including assessment data)");
         const response = await axios.post(DYNAMIC_ASSISTANT_WEBHOOK_URL, {
-          threadId,
-          conversationData: messageData, // Use our prepared variable
+          // Teaching bot data
+          teachingThreadId,
+          teachingConversation: teachingData,
+          
+          // Assessment bot data (if available)
+          assessmentThreadId: assessmentThreadId || "",
+          assessmentConversation: assessmentData,
+          
+          // Common metadata
           timestamp: new Date().toISOString(),
-          source: "learning-app-teaching", // Different source identifier
-          courseName: courseName || "Gravity Course", // Add course name with fallback
-          chatDurationSeconds: chatDurationSeconds || 0 // Add chat duration with fallback
+          source: "learning-app-teaching",
+          courseName: courseName || "Gravity Course",
+          chatDurationSeconds: chatDurationSeconds || 0
         });
         
-        console.log("Successfully sent teaching bot data to N8N:", response.status);
-        console.log("ThreadId included in teaching bot N8N call:", threadId);
+        console.log("Successfully sent combined data to N8N:", response.status);
+        console.log("Teaching Thread ID:", teachingThreadId);
+        console.log("Assessment Thread ID:", assessmentThreadId || "Not available");
         console.log("Course name sent to N8N:", courseName || "Gravity Course");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         
         return res.json({ 
           success: true, 
-          message: "Teaching data sent to N8N successfully"
+          message: "Combined teaching and assessment data sent to N8N successfully"
         });
       } catch (axiosError: any) {
         // Handle N8N webhook errors but allow the application to continue

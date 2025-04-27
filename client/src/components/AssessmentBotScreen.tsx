@@ -29,6 +29,15 @@ export default function AssessmentBotScreen({
     systemPrompt,
     initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?"
   });
+  
+  // Expose the assessment data through the window for the next screen
+  // This is necessary to pass data between screens
+  if (typeof window !== 'undefined') {
+    window.__assessmentData = {
+      threadId,
+      messages
+    };
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
