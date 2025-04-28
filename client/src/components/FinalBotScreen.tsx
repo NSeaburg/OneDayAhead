@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle, Award, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle, Award, Sparkles, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import html2pdf from 'html2pdf.js';
 
 // Define global window interface for accessing feedback data
 declare global {

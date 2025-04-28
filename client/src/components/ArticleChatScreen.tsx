@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import html2pdf from 'html2pdf.js';
 
 interface ArticleChatScreenProps {
   articleContent: string;
@@ -48,6 +49,22 @@ export default function ArticleChatScreen({
       sendMessage(inputMessage);
       setInputMessage("");
     }
+  };
+  
+  // Function to handle PDF download
+  const handleDownloadPDF = () => {
+    const element = document.createElement('div');
+    element.innerHTML = htmlContent;
+    
+    const options = {
+      margin: 10,
+      filename: 'down-with-gravity-lesson.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf().from(element).set(options).save();
   };
 
   // HTML Content for the learning material
@@ -180,8 +197,17 @@ export default function ArticleChatScreen({
       <div className="flex-grow flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Article Section - Now showing HTML content */}
         <div className="md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="font-semibold text-lg text-gray-800">Learning Material</h2>
+            <Button 
+              onClick={handleDownloadPDF}
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-1 text-xs"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Download PDF
+            </Button>
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-230px)] md:h-[calc(100vh-200px)]">
             <iframe 
