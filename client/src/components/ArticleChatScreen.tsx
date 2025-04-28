@@ -88,7 +88,7 @@ export default function ArticleChatScreen({
                     ? 'bg-gray-100' 
                     : 'bg-white border border-gray-200'
                 } rounded-lg p-3 text-gray-700`}>
-                  {message.content}
+                  <div className="typing-text">{message.content}</div>
                 </div>
               </div>
             ))}
@@ -105,7 +105,7 @@ export default function ArticleChatScreen({
                   </span>
                 </div>
                 <div className="ml-10 bg-gray-100 rounded-lg p-3 text-gray-700">
-                  {currentStreamingMessage}
+                  <div className="typing-text">{currentStreamingMessage}</div>
                 </div>
               </div>
             )}
