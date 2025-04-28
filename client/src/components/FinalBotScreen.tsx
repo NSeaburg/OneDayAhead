@@ -3,6 +3,8 @@ import { ArrowLeft, CheckCircle, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // Define global window interface for accessing feedback data
 declare global {
@@ -105,9 +107,9 @@ export default function FinalBotScreen({
           <CheckCircle className="h-5 w-5 mr-2 text-blue-600" />
           Overall Feedback
         </h2>
-        <p className="text-gray-700 leading-relaxed">
-          {feedbackData.summary}
-        </p>
+        <div className="text-gray-700 leading-relaxed markdown-content">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{feedbackData.summary}</ReactMarkdown>
+        </div>
       </div>
 
       {/* Score cards */}
@@ -153,9 +155,9 @@ export default function FinalBotScreen({
           <Sparkles className="h-5 w-5 mr-2 text-yellow-600" />
           What's Next for You
         </h2>
-        <p className="text-gray-700 leading-relaxed">
-          {feedbackData.nextSteps}
-        </p>
+        <div className="text-gray-700 leading-relaxed markdown-content">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{feedbackData.nextSteps}</ReactMarkdown>
+        </div>
       </Card>
 
       {/* Back button */}
