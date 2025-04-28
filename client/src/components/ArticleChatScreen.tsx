@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { ArrowRight, ArrowLeft, Send, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
@@ -23,6 +23,16 @@ export default function ArticleChatScreen({
 }: ArticleChatScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [pdfLoading, setPdfLoading] = useState<boolean>(true);
+  
+  // Handle PDF loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPdfLoading(false);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   const { 
     messages, 
@@ -58,9 +68,27 @@ export default function ArticleChatScreen({
         <div className="md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             <h2 className="font-semibold text-lg text-gray-800">Learning Material</h2>
+            <div className="flex items-center justify-between mt-2">
+              <div className="text-sm text-gray-500">
+                {pdfLoading ? 'Loading PDF...' : 'PDF Document'}
+              </div>
+            </div>
           </div>
-          <div className="p-4 md:p-6 overflow-y-auto h-[calc(100vh-230px)] md:h-[calc(100vh-200px)] font-serif">
-            <article dangerouslySetInnerHTML={{ __html: articleContent }} />
+          <div className="p-0 overflow-hidden h-[calc(100vh-230px)] md:h-[calc(100vh-200px)]">
+            {/* PDF Document using iframe */}
+            {pdfLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <FileText className="h-12 w-12 text-gray-300 mb-4" />
+                <p className="text-gray-500">Loading PDF document...</p>
+              </div>
+            ) : (
+              <iframe
+                src="/api/pdf-proxy?id=1w4C07DcOvjA5CmBJNCLwV1DLev7DAe0f"
+                className="w-full h-full border-0"
+                title="PDF Document"
+                sandbox="allow-same-origin allow-scripts"
+              />
+            )}
           </div>
         </div>
         

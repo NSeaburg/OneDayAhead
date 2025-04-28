@@ -43,6 +43,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Route to proxy PDF from Google Drive to bypass CORS restrictions
+  app.get("/api/pdf-proxy", async (req, res) => {
+    try {
+      const googleDriveId = req.query.id;
+      
+      if (!googleDriveId) {
+        return res.status(400).json({ error: "Missing Google Drive file ID parameter" });
+      }
+      
+      const googleDriveUrl = `https://drive.google.com/uc?export=download&id=${googleDriveId}`;
+      
+      // Fetch the PDF from Google Drive
+      const response = await axios.get(googleDriveUrl, {
+        responseType: 'arraybuffer',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="document.pdf"');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      
+      // Send the PDF data
+      res.send(Buffer.from(response.data, 'binary'));
+    } catch (error) {
+      console.error("Error proxying PDF:", error);
+      res.status(500).json({ error: "Failed to fetch PDF document" });
+    }
+  });
+  
   // Route to get the assistant IDs
   app.get("/api/assistant-config", (req, res) => {
     res.json({
