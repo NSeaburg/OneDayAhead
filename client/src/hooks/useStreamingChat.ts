@@ -113,10 +113,11 @@ export function useStreamingChat({
               }
               
               if (parsed.content) {
-                // For token-by-token streaming, just append the new token
+                // For token-by-token streaming, handle formatting
                 collectedResponse += parsed.content;
                 
                 // Update the UI immediately with each token
+                // We preserve the formatting on the client side as well
                 setCurrentStreamingMessage(collectedResponse);
               }
             } catch (e) {

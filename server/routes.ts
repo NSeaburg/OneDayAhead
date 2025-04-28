@@ -485,18 +485,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const text = content.text.value;
               latestContentIndex = i;
               
-              // Process the content token by token (word by word)
-              // This gives the appearance of streaming
-              const words = text.split(/(\s+)/);  // Split on whitespace but keep delimiters
+              // Process the content with preservation of formatting
+              // Split text into chunks that preserve newlines
+              const chunks = [];
               
-              for (const word of words) {
-                // Don't send empty tokens
-                if (word) {
-                  // Send each "token" (word) immediately
-                  res.write(`data: ${JSON.stringify({ content: word })}\n\n`);
+              // Split by newlines first, to preserve paragraph breaks
+              const paragraphs = text.split(/(\n+)/);
+              
+              // Then split each paragraph into words
+              for (const paragraph of paragraphs) {
+                if (paragraph.match(/^\n+$/)) {
+                  // This is just newlines, send as is to preserve formatting
+                  chunks.push(paragraph);
+                } else if (paragraph.trim() !== '') {
+                  // Split non-empty paragraphs into words
+                  const words = paragraph.split(/(\s+)/);
+                  chunks.push(...words);
+                }
+              }
+              
+              // Send each chunk with appropriate timing
+              for (const chunk of chunks) {
+                if (chunk) {
+                  // Send chunk with formatting preserved
+                  res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
                   
-                  // Small delay between words for more natural appearance
-                  await new Promise(resolve => setTimeout(resolve, 15));
+                  // Adjust timing based on chunk type
+                  if (chunk.match(/^\n+$/)) {
+                    // Newlines - send quickly
+                    await new Promise(resolve => setTimeout(resolve, 5));
+                  } else {
+                    // Words - slightly longer delay
+                    await new Promise(resolve => setTimeout(resolve, 15));
+                  }
                 }
               }
             }
