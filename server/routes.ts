@@ -438,54 +438,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
-  // Stream the assistant response with token-by-token streaming using the Beta Assistants API
+  // Enhanced streaming function with rapid polling for real-time updates
   async function streamAssistantResponse(res: any, threadId: string, runId: string) {
     try {
-      console.log(`Starting token-by-token stream for thread ${threadId}, run ${runId}`);
+      console.log(`Starting enhanced streaming for thread ${threadId}, run ${runId}`);
       
       // Set headers for server-sent events
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       
-      // Use the new Beta Streaming API
-      const stream = await openai.beta.threads.runs.stream(
-        threadId,
-        runId
-      );
+      // Track the run status and gather latest messages
+      let run = await openai.beta.threads.runs.retrieve(threadId, runId);
       
-      // Listen for token deltas (individual tokens/chunks of text as they are generated)
-      stream.on('textDelta', (delta) => {
-        if (delta.value) {
-          // Send each token immediately to the client
-          res.write(`data: ${JSON.stringify({ content: delta.value })}\n\n`);
-          console.log(`Streamed token: "${delta.value.length > 20 ? delta.value.substring(0, 20) + '...' : delta.value}"`);
-        }
-      });
+      // Keep track of which messages we've already processed
+      let processedContentParts = new Set();
+      let latestMessageId = '';
+      let latestContentIndex = -1;  // Index within a message's content parts
       
-      // Handle text completion
-      stream.on('textDone', () => {
-        console.log('Token streaming completed');
-      });
-      
-      // Handle errors during streaming
-      stream.on('error', (error) => {
-        console.error('Stream error:', error);
-        res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
-      });
-      
-      // When the stream ends (regardless of success or error)
-      stream.on('end', async () => {
-        console.log('Stream ended, run completed');
+      // Poll rapidly while the run is processing
+      while (run.status === 'queued' || run.status === 'in_progress') {
+        // Get the latest messages
+        const messagesResponse = await openai.beta.threads.messages.list(threadId, { 
+          order: 'desc',  // Get newest messages first
+          limit: 10       // Reasonable limit for recent messages
+        });
         
-        // Send the thread ID at the end
-        res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
-        res.write('data: [DONE]\n\n');
-        res.end();
-      });
+        // Process each message's content incrementally
+        for (const message of messagesResponse.data) {
+          // Only process assistant messages
+          if (message.role !== 'assistant') continue;
+          
+          // If this is a new message or we're still on the same message
+          if (message.id !== latestMessageId) {
+            // Reset state for the new message
+            latestMessageId = message.id;
+            latestContentIndex = -1;
+          }
+          
+          // Process any new content parts since our last check
+          for (let i = 0; i < message.content.length; i++) {
+            const content = message.content[i];
+            
+            // Only process if it's text content and we haven't processed it before
+            if (content.type === 'text' && i > latestContentIndex) {
+              const text = content.text.value;
+              latestContentIndex = i;
+              
+              // Process the content token by token (word by word)
+              // This gives the appearance of streaming
+              const words = text.split(/(\s+)/);  // Split on whitespace but keep delimiters
+              
+              for (const word of words) {
+                // Don't send empty tokens
+                if (word) {
+                  // Send each "token" (word) immediately
+                  res.write(`data: ${JSON.stringify({ content: word })}\n\n`);
+                  
+                  // Small delay between words for more natural appearance
+                  await new Promise(resolve => setTimeout(resolve, 15));
+                }
+              }
+            }
+          }
+        }
+        
+        // Check the run status again
+        run = await openai.beta.threads.runs.retrieve(threadId, runId);
+        
+        // Brief pause to avoid hammering the API
+        if (run.status === 'queued' || run.status === 'in_progress') {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
       
+      // Final check for any last messages when the run completes
+      if (run.status === 'completed') {
+        // Get the final messages to be sure we have everything
+        const finalMessages = await openai.beta.threads.messages.list(threadId, { order: 'desc', limit: 5 });
+        
+        // Process any new content we might have missed
+        for (const message of finalMessages.data) {
+          if (message.role === 'assistant' && message.id !== latestMessageId) {
+            for (const content of message.content) {
+              if (content.type === 'text') {
+                const text = content.text.value;
+                
+                // Send any final text that might have been missed
+                res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+              }
+            }
+          }
+        }
+      } else {
+        // Handle non-completed runs
+        res.write(`data: ${JSON.stringify({ error: `Run ended with status: ${run.status}` })}\n\n`);
+      }
+      
+      // Send the thread ID at the end
+      res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      res.end();
     } catch (error: any) {
-      console.error('Error setting up streaming:', error);
+      console.error('Error streaming assistant response:', error);
       res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();
