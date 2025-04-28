@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send, FileText } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
@@ -23,16 +23,6 @@ export default function ArticleChatScreen({
 }: ArticleChatScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [pdfLoading, setPdfLoading] = useState<boolean>(true);
-  
-  // Handle PDF loading state
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPdfLoading(false);
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, []);
   
   const { 
     messages, 
@@ -60,35 +50,146 @@ export default function ArticleChatScreen({
     }
   };
 
+  // HTML Content for the learning material
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Down With Gravity</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        padding: 0;
+        margin: 0;
+      }
+      h1, h2 {
+        color: #004080;
+      }
+      ul {
+        padding-left: 1.5rem;
+      }
+      .section {
+        margin-bottom: 1.5rem;
+      }
+      .vocab {
+        background-color: #f0f8ff;
+        padding: 0.8rem;
+        border-radius: 8px;
+      }
+      .questions {
+        background-color: #f9f9f9;
+        padding: 0.8rem;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Down With Gravity</h1>
+
+    <div class="section">
+      <p><strong>Objective:</strong> Explore that gravity is an attraction between objects with mass.</p>
+      <p><strong>Grade:</strong> 5</p>
+    </div>
+
+    <div class="section">
+      <h2>Materials</h2>
+      <ul>
+        <li>Pencil</li>
+        <li>String</li>
+        <li>Paper Clips</li>
+        <li>Scissors</li>
+        <li>Water Bottle (Full and Half Empty)</li>
+        <li>Food Coloring (Optional)</li>
+        <li>Paper (Flat and Crumpled)</li>
+        <li>Disposable Cup</li>
+        <li>Sink or Bathtub</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Activity 1: Gravity Pencil Demo</h2>
+      <p><strong>What to Do:</strong></p>
+      <ul>
+        <li>Tie one end of the string to the pencil, and the other to a paperclip so it dangles freely.</li>
+        <li>Move the pencil and observe how the paperclips move.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Activity 2: Water Bottle and Paper Experiments</h2>
+      <p><strong>Gravity: Water Bottle Experiment</strong></p>
+      <ul>
+        <li>Hold the full and half-empty water bottles at the same height and drop them simultaneously.</li>
+      </ul>
+
+      <p><strong>Air Resistance and Gravity on Earth</strong></p>
+      <ul>
+        <li>Drop a flat paper and a crumpled paper ball from the same height.</li>
+        <li>Observe that the crumpled paper lands first because air resistance slows the flat paper.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Activity 3: Gravity in a Cup</h2>
+      <ul>
+        <li>Poke a hole in the bottom of a disposable cup (ask an adult if needed).</li>
+        <li>Cover the hole, fill the cup with water, and then release the hole to observe.</li>
+        <li>Hypothesize what will happen when you release the water and cup simultaneously over a sink.</li>
+      </ul>
+    </div>
+
+    <div class="section vocab">
+      <h2>Vocabulary</h2>
+      <ul>
+        <li><strong>Gravity:</strong> The force that attracts all objects toward one another.</li>
+        <li><strong>Force:</strong> A push or pull.</li>
+        <li><strong>Mass:</strong> The amount of matter in an object.</li>
+        <li><strong>Air Resistance:</strong> The frictional force air exerts against a moving object.</li>
+      </ul>
+    </div>
+
+    <div class="section questions">
+      <h2>Student Reflection Questions</h2>
+      <ul>
+        <li>How does gravity pull different masses (heavy and light)?</li>
+        <li>How does air resistance affect the rate that objects fall?</li>
+        <li>What would happen if the hole was bigger or smaller in the cup experiment?</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>What's Happening?</h2>
+      <p>Gravity is a force that pulls objects together. Its strength depends on the mass of the objects. Larger mass = stronger pull. Earth's massive size overpowers our personal gravitational pull. In space, without nearby large masses, personal gravity becomes noticeable.</p>
+      <p>Other forces like air resistance also affect how objects move, especially when falling.</p>
+    </div>
+
+    <div class="section">
+      <p>Check out more activities at <a href="https://www.nysci.org" target="_blank">www.nysci.org</a>.</p>
+    </div>
+  </body>
+  </html>
+  `;
+
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Article & Discussion</h1>
       <div className="flex-grow flex flex-col md:flex-row gap-4 md:gap-6">
-        {/* Article Section */}
+        {/* Article Section - Now showing HTML content */}
         <div className="md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             <h2 className="font-semibold text-lg text-gray-800">Learning Material</h2>
-            <div className="flex items-center justify-between mt-2">
-              <div className="text-sm text-gray-500">
-                {pdfLoading ? 'Loading PDF...' : 'PDF Document'}
-              </div>
-            </div>
           </div>
-          <div className="p-0 overflow-hidden h-[calc(100vh-230px)] md:h-[calc(100vh-200px)]">
-            {/* PDF Document using iframe */}
-            {pdfLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <FileText className="h-12 w-12 text-gray-300 mb-4" />
-                <p className="text-gray-500">Loading PDF document...</p>
-              </div>
-            ) : (
-              <iframe
-                src="/api/pdf-proxy?id=1w4C07DcOvjA5CmBJNCLwV1DLev7DAe0f"
-                className="w-full h-full border-0"
-                title="PDF Document"
-                sandbox="allow-same-origin allow-scripts"
-              />
-            )}
+          <div className="p-4 overflow-y-auto h-[calc(100vh-230px)] md:h-[calc(100vh-200px)]">
+            <iframe 
+              srcDoc={htmlContent}
+              title="Learning Material"
+              className="w-full h-full border-0"
+              sandbox="allow-same-origin allow-scripts"
+            />
           </div>
         </div>
         
