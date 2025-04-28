@@ -169,7 +169,7 @@ export default function AssessmentBotScreen({
             </div>
           ))}
           
-          {/* Streaming message from OpenAI */}
+          {/* Streaming message - plain text display with no animations */}
           {isTyping && currentStreamingMessage && (
             <div className="flex flex-col">
               <div className="flex items-start mb-1">
@@ -182,8 +182,6 @@ export default function AssessmentBotScreen({
               </div>
               <div className="ml-10 bg-green-50 rounded-lg p-3 text-gray-700">
                 {currentStreamingMessage}
-                {/* Simple blinking cursor */}
-                <span className="inline-block w-[2px] h-4 bg-gray-600 opacity-50 animate-blink ml-[2px]"></span>
               </div>
             </div>
           )}

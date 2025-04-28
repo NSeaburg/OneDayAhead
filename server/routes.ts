@@ -438,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
-  // Stream the assistant response directly from OpenAI
+  // Stream the assistant response directly from OpenAI without artificial chunking
   async function streamAssistantResponse(res: any, threadId: string, runId: string) {
     try {
       console.log(`Starting to stream assistant response for thread ${threadId}, run ${runId}`);
@@ -450,48 +450,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Poll for run completion and continuously check for new messages
       let run = await openai.beta.threads.runs.retrieve(threadId, runId);
-      let lastMessageCreatedAt = new Date(0); // Start from oldest possible date
       let sentMessageIds = new Set();
       
+      // Check every 500ms until the run completes or fails
       while (run.status === 'queued' || run.status === 'in_progress') {
-        // Check for any new messages while the run is in progress
+        // Get current messages
         const messages = await openai.beta.threads.messages.list(threadId, {});
         
-        // Find new assistant messages we haven't sent yet
+        // Get only unsent assistant messages
         const newMessages = messages.data
-          .filter(msg => 
-            msg.role === 'assistant' && 
-            !sentMessageIds.has(msg.id) &&
-            new Date(msg.created_at) > lastMessageCreatedAt
-          )
+          .filter(msg => msg.role === 'assistant' && !sentMessageIds.has(msg.id))
           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         
-        // Send any new message content
+        // Send any new complete messages directly without chunking or delays
         for (const message of newMessages) {
           sentMessageIds.add(message.id);
-          lastMessageCreatedAt = new Date(message.created_at);
           
           for (const contentPart of message.content) {
             if (contentPart.type === 'text') {
               const text = contentPart.text.value;
-              // Send chunks of text to simulate streaming
-              const chunkSize = 8; // Adjust this for smoothness
-              for (let i = 0; i < text.length; i += chunkSize) {
-                const chunk = text.substring(i, i + chunkSize);
-                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-                // Small delay for a more natural typing effect
-                await new Promise(resolve => setTimeout(resolve, 10)); 
-              }
+              // Send the entire text directly
+              res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
             }
           }
         }
         
-        // Wait before checking again
+        // Check again after a short delay
         await new Promise(resolve => setTimeout(resolve, 500));
         run = await openai.beta.threads.runs.retrieve(threadId, runId);
       }
       
-      // Final check for any remaining messages after run completes
+      // Final check for any remaining messages when run completes
       if (run.status === 'completed') {
         const messages = await openai.beta.threads.messages.list(threadId, {});
         
@@ -505,14 +494,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const contentPart of message.content) {
             if (contentPart.type === 'text') {
               const text = contentPart.text.value;
-              // Send chunks of text to simulate streaming
-              const chunkSize = 8; // Adjust this for smoothness
-              for (let i = 0; i < text.length; i += chunkSize) {
-                const chunk = text.substring(i, i + chunkSize);
-                res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-                // Small delay for a more natural typing effect
-                await new Promise(resolve => setTimeout(resolve, 10)); 
-              }
+              // Send entire text directly
+              res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
             }
           }
         }

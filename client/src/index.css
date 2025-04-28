@@ -57,30 +57,15 @@
   }
 }
 
-/* Removed complex animations for more reliable message display */
-@keyframes blink {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
-}
+/* All custom animations removed for direct text display */
 
-.animate-blink {
-  animation: blink 1.2s infinite;
-  display: none; /* Hide blinking cursor entirely */
-}
-
-.typing-text {
-  display: inline;
-  opacity: 1; /* Full opacity - no fade effect */
-}
-
+/* Basic styling for chat messages - no animations */
 .message-appear {
-  animation: none; /* No animation for message appearance */
   opacity: 1;
 }
 
-/* Simplified fade-in with no motion */
-@keyframes fadeIn {
-  from { opacity: 0.8; }
-  to { opacity: 1; }
+/* Chat messages should appear as normal text */
+.typing-text {
+  display: inline;
 }
 
