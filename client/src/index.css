@@ -102,12 +102,82 @@
   font-size: 1.25rem;
 }
 
+/* Additional specific Markdown heading rules for triple hash format */
+.markdown-content p strong {
+  display: inline-block;  
+}
+
+/* Handle special case for headings with ### */
+.markdown-content p:has(strong:first-child:contains("#")) {
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Style for text that starts with ### */
+.markdown-content p strong:first-child:contains("#") {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a202c;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
 /* Handle custom hash-based headings like ### */
-.markdown-content p:has(code:first-child:last-child) {
+.markdown-content p {
+  margin-bottom: 0.75rem;
+}
+
+/* Style lines that start with ### as headings */
+.markdown-content p code:first-child:last-child {
+  display: block;
   font-weight: 600;
   font-size: 1.25rem;
   margin-top: 1.25rem;
   margin-bottom: 0.75rem;
+  background: none;
+  color: #1a202c;
+  border: none;
+  padding: 0;
+}
+
+/* Style lines with # as h1, ## as h2, ### as h3 */
+.markdown-content p:first-child:nth-last-child(1) {
+  margin-bottom: 0.75rem;
+}
+
+/* Special handling for the "###" syntax that might not be properly parsed by Markdown */
+.markdown-content p:has(> code):not(:has(> code + *)) {
+  margin-top: 1.5rem;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #1a202c;
+  line-height: 1.2;
+}
+
+/* Direct handling for Markdown text that starts with ### */
+.markdown-content p:first-child {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Alternative approach for hash headings using a class - we'll add client logic to detect these */
+.markdown-content p.hash-heading {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #1a202c;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Make code blocks inside these special paragraphs look like headings */
+.markdown-content p:has(> code):not(:has(> code + *)) code {
+  background: none;
+  padding: 0;
+  border: none;
+  font-family: inherit;
+  color: inherit;
 }
 
 /* List styles */
@@ -150,10 +220,7 @@
   margin: 0.75rem 0;
 }
 
-/* Paragraph spacing */
-.markdown-content p {
-  margin-bottom: 0.75rem;
-}
+/* Extra paragraph styling already defined above */
 
 /* Bold and italic text */
 .markdown-content strong {
