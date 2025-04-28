@@ -6,6 +6,7 @@ import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // Add TypeScript declaration for global window property
 declare global {
@@ -166,7 +167,7 @@ export default function AssessmentBotScreen({
                   : 'bg-white border border-gray-200'
               } rounded-lg p-3 text-gray-700`}>
                 <div className="typing-text markdown-content">
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                 </div>
               </div>
             </div>
@@ -185,7 +186,7 @@ export default function AssessmentBotScreen({
               </div>
               <div className="ml-10 bg-green-50 rounded-lg p-3 text-gray-700">
                 <div className="typing-text markdown-content">
-                  <ReactMarkdown>{currentStreamingMessage}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamingMessage}</ReactMarkdown>
                 </div>
               </div>
             </div>

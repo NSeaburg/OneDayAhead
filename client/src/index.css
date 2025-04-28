@@ -206,3 +206,69 @@
   font-style: italic;
 }
 
+/* Tables (GitHub Flavored Markdown) */
+.markdown-content table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+.markdown-content table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  text-align: left;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.markdown-content table tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Strikethrough */
+.markdown-content del {
+  text-decoration: line-through;
+}
+
+/* Task lists */
+.markdown-content ul.contains-task-list {
+  list-style-type: none;
+  padding-left: 0.5rem;
+}
+
+.markdown-content ul.contains-task-list input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+/* Footnotes */
+.markdown-content .footnotes {
+  font-size: 0.875rem;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 2rem;
+  padding-top: 1rem;
+}
+
+.markdown-content .footnotes ol {
+  padding-left: 1rem;
+}
+
+.markdown-content .footnote-ref,
+.markdown-content .footnote-backref {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0;
+}
+
