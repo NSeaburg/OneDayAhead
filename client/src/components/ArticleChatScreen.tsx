@@ -3,6 +3,7 @@ import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
+import ReactMarkdown from "react-markdown";
 
 interface ArticleChatScreenProps {
   articleContent: string;
@@ -88,7 +89,9 @@ export default function ArticleChatScreen({
                     ? 'bg-gray-100' 
                     : 'bg-white border border-gray-200'
                 } rounded-lg p-3 text-gray-700`}>
-                  <div className="typing-text">{message.content}</div>
+                  <div className="typing-text markdown-content">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
                 </div>
               </div>
             ))}
@@ -105,7 +108,9 @@ export default function ArticleChatScreen({
                   </span>
                 </div>
                 <div className="ml-10 bg-gray-100 rounded-lg p-3 text-gray-700">
-                  <div className="typing-text">{currentStreamingMessage}</div>
+                  <div className="typing-text markdown-content">
+                    <ReactMarkdown>{currentStreamingMessage}</ReactMarkdown>
+                  </div>
                 </div>
               </div>
             )}

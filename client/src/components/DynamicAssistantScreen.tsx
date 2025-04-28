@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
 
 // Define global window interface for storing feedback data
 declare global {
@@ -199,7 +200,9 @@ export default function DynamicAssistantScreen({
                   ? 'bg-blue-50' 
                   : 'bg-white border border-gray-200'
               } rounded-lg p-3 text-gray-700`}>
-                <div className="typing-text">{message.content}</div>
+                <div className="typing-text markdown-content">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
               </div>
             </div>
           ))}
@@ -216,7 +219,9 @@ export default function DynamicAssistantScreen({
                 </span>
               </div>
               <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700">
-                <div className="typing-text">{currentStreamingMessage}</div>
+                <div className="typing-text markdown-content">
+                  <ReactMarkdown>{currentStreamingMessage}</ReactMarkdown>
+                </div>
               </div>
             </div>
           )}
