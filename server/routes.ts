@@ -438,78 +438,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
   
-  // Stream the assistant response directly from OpenAI without artificial chunking
+  // Stream the assistant response with token-by-token streaming using the Beta Assistants API
   async function streamAssistantResponse(res: any, threadId: string, runId: string) {
     try {
-      console.log(`Starting to stream assistant response for thread ${threadId}, run ${runId}`);
+      console.log(`Starting token-by-token stream for thread ${threadId}, run ${runId}`);
       
       // Set headers for server-sent events
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       
-      // Poll for run completion and continuously check for new messages
-      let run = await openai.beta.threads.runs.retrieve(threadId, runId);
-      let sentMessageIds = new Set();
+      // Use the new Beta Streaming API
+      const stream = await openai.beta.threads.runs.stream(
+        threadId,
+        runId
+      );
       
-      // Check every 500ms until the run completes or fails
-      while (run.status === 'queued' || run.status === 'in_progress') {
-        // Get current messages
-        const messages = await openai.beta.threads.messages.list(threadId, {});
-        
-        // Get only unsent assistant messages
-        const newMessages = messages.data
-          .filter(msg => msg.role === 'assistant' && !sentMessageIds.has(msg.id))
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        
-        // Send any new complete messages directly without chunking or delays
-        for (const message of newMessages) {
-          sentMessageIds.add(message.id);
-          
-          for (const contentPart of message.content) {
-            if (contentPart.type === 'text') {
-              const text = contentPart.text.value;
-              // Send the entire text directly
-              res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
-            }
-          }
+      // Listen for token deltas (individual tokens/chunks of text as they are generated)
+      stream.on('textDelta', (delta) => {
+        if (delta.value) {
+          // Send each token immediately to the client
+          res.write(`data: ${JSON.stringify({ content: delta.value })}\n\n`);
+          console.log(`Streamed token: "${delta.value.length > 20 ? delta.value.substring(0, 20) + '...' : delta.value}"`);
         }
-        
-        // Check again after a short delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        run = await openai.beta.threads.runs.retrieve(threadId, runId);
-      }
+      });
       
-      // Final check for any remaining messages when run completes
-      if (run.status === 'completed') {
-        const messages = await openai.beta.threads.messages.list(threadId, {});
-        
-        const remainingMessages = messages.data
-          .filter(msg => msg.role === 'assistant' && !sentMessageIds.has(msg.id))
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-          
-        for (const message of remainingMessages) {
-          sentMessageIds.add(message.id);
-          
-          for (const contentPart of message.content) {
-            if (contentPart.type === 'text') {
-              const text = contentPart.text.value;
-              // Send entire text directly
-              res.write(`data: ${JSON.stringify({ content: text, isComplete: true })}\n\n`);
-            }
-          }
-        }
-      } else {
-        // Handle non-completed runs
-        res.write(`data: ${JSON.stringify({ error: `Run ended with status: ${run.status}` })}\n\n`);
-      }
+      // Handle text completion
+      stream.on('textDone', () => {
+        console.log('Token streaming completed');
+      });
       
-      // Send the thread ID at the end
-      res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      res.end();
+      // Handle errors during streaming
+      stream.on('error', (error) => {
+        console.error('Stream error:', error);
+        res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
+      });
+      
+      // When the stream ends (regardless of success or error)
+      stream.on('end', async () => {
+        console.log('Stream ended, run completed');
+        
+        // Send the thread ID at the end
+        res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      });
+      
     } catch (error: any) {
-      console.error('Error streaming assistant response:', error);
+      console.error('Error setting up streaming:', error);
       res.write(`data: ${JSON.stringify({ error: error.message || String(error) })}\n\n`);
       res.write('data: [DONE]\n\n');
       res.end();

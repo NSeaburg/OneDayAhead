@@ -113,15 +113,10 @@ export function useStreamingChat({
               }
               
               if (parsed.content) {
-                // For complete responses, replace the entire content
-                if (parsed.isComplete) {
-                  collectedResponse = parsed.content;
-                } else {
-                  // For incremental updates, append to existing content
-                  collectedResponse += parsed.content;
-                }
+                // For token-by-token streaming, just append the new token
+                collectedResponse += parsed.content;
                 
-                // Update the UI immediately without debouncing
+                // Update the UI immediately with each token
                 setCurrentStreamingMessage(collectedResponse);
               }
             } catch (e) {
