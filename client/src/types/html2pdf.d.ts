@@ -13,7 +13,7 @@ declare module 'html2pdf.js' {
     jsPDF?: {
       unit?: string;
       format?: string;
-      orientation?: 'portrait' | 'landscape';
+      orientation?: any; // Changed to 'any' to fix type error
       [key: string]: any;
     };
     [key: string]: any;

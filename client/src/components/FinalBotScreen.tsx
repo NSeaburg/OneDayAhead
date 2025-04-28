@@ -91,15 +91,101 @@ export default function FinalBotScreen({
     if (score >= 1.5) return "bg-yellow-500";
     return "bg-red-500";
   };
+  
+  // Function to handle PDF download of learning results
+  const handleDownloadPDF = () => {
+    // Create a container for the content
+    const element = document.createElement('div');
+    element.style.padding = '20px';
+    element.style.fontFamily = 'Arial, sans-serif';
+    
+    // Create HTML content for the PDF
+    element.innerHTML = `
+      <h1 style="color: #4F46E5; font-size: 24px; margin-bottom: 20px;">Learning Results - Down With Gravity</h1>
+      
+      <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h2 style="color: #2563EB; font-size: 18px; margin-bottom: 10px;">Overall Feedback</h2>
+        <p style="color: #374151; line-height: 1.6;">${feedbackData.summary}</p>
+      </div>
+      
+      <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+        <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
+          <h3 style="font-size: 16px; margin-bottom: 10px;">Content Knowledge</h3>
+          <p>Score: ${feedbackData.contentKnowledgeScore}/4</p>
+        </div>
+        
+        <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
+          <h3 style="font-size: 16px; margin-bottom: 10px;">Writing Quality</h3>
+          <p>Score: ${feedbackData.writingScore}/4</p>
+        </div>
+      </div>
+      
+      <div style="background-color: #FFFBEB; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h2 style="color: #D97706; font-size: 18px; margin-bottom: 10px;">What's Next for You</h2>
+        <p style="color: #374151; line-height: 1.6;">${feedbackData.nextSteps}</p>
+      </div>
+      
+      <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px;">
+        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Down With Gravity - Learning Content</h2>
+        <p><strong>Objective:</strong> Explore that gravity is an attraction between objects with mass.</p>
+        <p><strong>Grade:</strong> 5</p>
+        
+        <h3 style="margin-top: 15px;">Materials</h3>
+        <ul>
+          <li>Pencil</li>
+          <li>String</li>
+          <li>Paper Clips</li>
+          <li>Scissors</li>
+          <li>Water Bottle (Full and Half Empty)</li>
+          <li>Paper (Flat and Crumpled)</li>
+          <li>Disposable Cup</li>
+        </ul>
+        
+        <h3 style="margin-top: 15px;">Key Concepts</h3>
+        <ul>
+          <li><strong>Gravity:</strong> The force that attracts all objects toward one another.</li>
+          <li><strong>Force:</strong> A push or pull.</li>
+          <li><strong>Mass:</strong> The amount of matter in an object.</li>
+          <li><strong>Air Resistance:</strong> The frictional force air exerts against a moving object.</li>
+        </ul>
+      </div>
+      
+      <p style="color: #6B7280; font-size: 12px; margin-top: 30px; text-align: center;">
+        Downloaded on ${new Date().toLocaleDateString()} - Learning Platform
+      </p>
+    `;
+    
+    // Configure PDF options
+    const options = {
+      margin: 10,
+      filename: 'learning-results-gravity.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    // Generate and save the PDF
+    html2pdf().from(element).set(options).save();
+  };
 
   return (
     <div className="flex flex-col p-4 md:p-6 h-full max-w-3xl mx-auto">
       {/* Heading section */}
-      <div className="flex items-center mb-6">
-        <Award className="text-yellow-500 mr-3 h-8 w-8" />
-        <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-          Your Learning Results
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Award className="text-yellow-500 mr-3 h-8 w-8" />
+          <h1 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+            Your Learning Results
+          </h1>
+        </div>
+        <Button 
+          onClick={handleDownloadPDF}
+          variant="outline" 
+          className="flex items-center gap-1.5"
+        >
+          <FileDown className="h-4 w-4" />
+          Save as PDF
+        </Button>
       </div>
 
       {/* Overall feedback section */}
