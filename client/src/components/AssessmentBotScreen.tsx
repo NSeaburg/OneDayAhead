@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, User, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { CircularProgressIndicator } from "@/components/ui/progress-indicator";
+import { motion } from "framer-motion";
 // Import Reginald image directly
 import reginaldImage from "../../../public/reginald-worthington.png";
 
@@ -34,6 +34,15 @@ interface AssessmentBotScreenProps {
   onPrevious?: () => void;
 }
 
+// Topics to be covered in the assessment
+interface AssessmentTopic {
+  id: string;
+  name: string;
+  description: string;
+  isCompleted: boolean;
+  keywords: string[];
+}
+
 export default function AssessmentBotScreen({ 
   assistantId,
   systemPrompt,
@@ -43,14 +52,40 @@ export default function AssessmentBotScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
-  const [completedExchanges, setCompletedExchanges] = useState(0);
-  const [showProgressIndicator, setShowProgressIndicator] = useState(false);
-  const [isAssessmentComplete, setIsAssessmentComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  // Define total exchanges needed for completion
-  const totalRequiredExchanges = 6;
+  // Assessment topics with tracking
+  const [topics, setTopics] = useState<AssessmentTopic[]>([
+    {
+      id: "governmental-structure",
+      name: "Governmental Structure",
+      description: "Can you clearly explain how power is divided into three branches?",
+      isCompleted: false,
+      keywords: ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
+    },
+    {
+      id: "checks-balances",
+      name: "The System of Checks and Balances",
+      description: "Do you understand how the branches hold each other in check?",
+      isCompleted: false,
+      keywords: ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
+    },
+    {
+      id: "branch-roles",
+      name: "Roles of the Branches",
+      description: "Can you describe what Congress, the President, and the Courts actually do?",
+      isCompleted: false,
+      keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges"]
+    },
+    {
+      id: "proper-apology",
+      name: "A Proper Apology",
+      description: "Reginald is expecting you to explain (and perhaps reconsider) your little Revolution.",
+      isCompleted: false,
+      keywords: ["revolution", "independence", "colonies", "king", "monarchy", "crown", "england", "britain", "george", "apology"]
+    }
+  ]);
   
   // Store greeting message locally for display
   const [showGreeting, setShowGreeting] = useState(true);
@@ -78,24 +113,47 @@ export default function AssessmentBotScreen({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentStreamingMessage]);
   
-  // Show progress indicator after first message (but don't count exchanges here)
+  // Track topic completion based on user messages
   useEffect(() => {
-    const userMessages = messages.filter(msg => msg.role === 'user').length;
+    // Only analyze user messages
+    const userMessages = messages.filter(msg => msg.role === 'user');
+    if (userMessages.length === 0) return;
     
-    // Show the progress indicator after the first user message
-    if (userMessages > 0 && !showProgressIndicator) {
-      setShowProgressIndicator(true);
+    // Get the combined text of all user messages
+    const allUserText = userMessages.map(msg => msg.content.toLowerCase()).join(' ');
+    
+    // Check each topic for completion
+    const updatedTopics = topics.map(topic => {
+      // If already completed, keep it that way
+      if (topic.isCompleted) return topic;
+      
+      // Check if this message covers the topic
+      const matchesKeywords = topic.keywords.some(keyword => 
+        allUserText.includes(keyword.toLowerCase())
+      );
+      
+      // Return updated topic if matches found
+      return matchesKeywords 
+        ? { ...topic, isCompleted: true } 
+        : topic;
+    });
+    
+    // Update topics if changes were made
+    if (JSON.stringify(updatedTopics) !== JSON.stringify(topics)) {
+      setTopics(updatedTopics);
     }
-  }, [messages, showProgressIndicator]);
+  }, [messages, topics]);
   
   // Expose the assessment data through the window for the next screen
-  // This is necessary to pass data between screens
   if (typeof window !== 'undefined') {
     window.__assessmentData = {
       threadId: threadId || undefined,
       messages
     };
   }
+
+  // Calculate if assessment is complete (all topics covered)
+  const isAssessmentComplete = topics.every(topic => topic.isCompleted);
 
   // Function to determine if a message has substance
   const hasSubstance = (message: string): boolean => {
@@ -113,22 +171,13 @@ export default function AssessmentBotScreen({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim()) {
-      // Show the progress indicator if not already shown
-      if (!showProgressIndicator) {
-        setShowProgressIndicator(true);
+      // Hide greeting after first message
+      if (showGreeting) {
+        setShowGreeting(false);
       }
       
-      // Only increment the progress if the message has substance
+      // Only try to process message if it has substance
       if (hasSubstance(inputMessage)) {
-        // Increment the completed exchanges count
-        const newExchangeCount = Math.min(completedExchanges + 1, totalRequiredExchanges);
-        setCompletedExchanges(newExchangeCount);
-        
-        // Mark as complete if reached required exchanges
-        if (newExchangeCount >= totalRequiredExchanges) {
-          setIsAssessmentComplete(true);
-        }
-        
         console.log("Message has substance - progress updated!");
       } else {
         console.log("Message lacks substance - progress not updated");
@@ -150,32 +199,21 @@ export default function AssessmentBotScreen({
       const response = await apiRequest("POST", "/api/send-to-n8n", {
         conversationData: messages,
         threadId: threadId, // Include the thread ID for N8N to process
-        courseName: "Gravity Course", // Add the course name
+        courseName: "Three Branches of Government", // Add the course name
         chatDurationSeconds: chatDurationSeconds // Add the chat duration in seconds
       });
       
       const result = await response.json();
-      console.log("N8N integration result:", result);
-      console.log("Thread ID sent to N8N:", threadId);
       
       if (result.success) {
-        console.log("Next Assistant ID received:", result.nextAssistantId || "None provided");
-        
         // Pass the nextAssistantId when navigating to the next screen
         const nextAssistantId = result.nextAssistantId;
-        
-        // Silently continue without showing a toast
-        
-        // Then call the onNext function to move to the next screen with the dynamic assistant ID
         onNext(nextAssistantId);
       } else {
         // Handle the case where N8N returned a non-error response but with success: false
-        console.log("N8N integration failed:", result.message);
-        
-        // Show warning toast
         toast({
-          title: "N8N integration issue",
-          description: "There was an issue with the N8N workflow, but you can continue with a fallback assistant.",
+          title: "Integration issue",
+          description: "There was an issue with the workflow, but you can continue with a fallback assistant.",
           variant: "default"
         });
         
@@ -200,24 +238,75 @@ export default function AssessmentBotScreen({
   };
 
   return (
-    <div className="flex flex-col p-4 md:p-6 h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-1">Royal Assessment of Democratic Knowledge</h1>
-      <div className="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-        <div className="p-4 bg-gray-50 border-b border-gray-200">
-          <div className="flex items-center">
+    <div className="flex flex-col md:flex-row gap-6 p-4 md:p-6 h-full">
+      {/* Left column - Character profile & Assessment topics */}
+      <div className="md:w-1/3 flex flex-col">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
+          <div className="flex flex-col items-center text-center mb-4">
             <img 
               src={reginaldImage} 
               alt="Reginald Worthington III" 
-              className="w-24 h-24 mr-4 border-2 border-gray-300 shadow-sm rounded-full object-cover"
+              className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
             />
-            <div>
-              <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
-              <p className="text-sm text-gray-600 mt-1 max-w-2xl">
-                Sent by Her Majesty's service to observe this curious American experiment, Reginald brings all the grace, pride, and polite disbelief of an English aristocrat. He doesn't quite understand how a government can function without a king—and he's counting on you to explain it to him. Prepare to defend democracy… with dignity, of course.
-              </p>
-            </div>
+            <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
+            <p className="text-sm text-gray-600 font-medium">Aristocratic Observer</p>
+          </div>
+          
+          <p className="text-sm text-gray-700 mb-4">
+            Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown—once you've explained how this whole "no king" business is supposed to work.
+          </p>
+          
+          <hr className="my-4 border-gray-200" />
+          
+          <div className="mb-4">
+            <h3 className="font-semibold text-gray-800 mb-2">What he's listening for</h3>
+            <ul className="space-y-3">
+              {topics.map((topic) => (
+                <li key={topic.id} className="flex items-start">
+                  <div className="mr-2 mt-0.5 flex-shrink-0">
+                    <motion.div
+                      initial={{ opacity: 0.7 }}
+                      animate={{ 
+                        opacity: 1,
+                        scale: topic.isCompleted ? [1, 1.2, 1] : 1,
+                        transition: { duration: 0.3 }
+                      }}
+                    >
+                      <CheckCircle 
+                        className={`h-5 w-5 ${
+                          topic.isCompleted 
+                            ? 'text-green-500 fill-green-500' 
+                            : 'text-gray-300'
+                        }`} 
+                      />
+                    </motion.div>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm text-gray-800">{topic.name}</p>
+                    <p className="text-xs text-gray-600">{topic.description}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <hr className="my-4 border-gray-200" />
+          
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-2">Keep in mind</h3>
+            <p className="text-sm text-gray-700">
+              Reginald will use your responses to recommend a learning path that makes sense for you. Do your best—he may be smug, but he's paying attention.
+            </p>
           </div>
         </div>
+      </div>
+      
+      {/* Right column - Chat interface */}
+      <div className="md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+        <div className="p-4 bg-gray-50 border-b border-gray-200">
+          <h2 className="font-bold text-lg text-gray-800">Royal Assessment: Three Branches of Government</h2>
+        </div>
+        
         <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
           {/* Messages (including simulated greeting if no messages yet) */}
           {displayMessages.map((message, index) => (
@@ -229,7 +318,7 @@ export default function AssessmentBotScreen({
                   </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
-                    <i className="ri-user-line"></i>
+                    <User className="h-4 w-4" />
                   </div>
                 )}
                 <span className="text-xs text-gray-500 mt-1">
@@ -248,7 +337,7 @@ export default function AssessmentBotScreen({
             </div>
           ))}
           
-          {/* Streaming message - plain text display with no animations */}
+          {/* Streaming message */}
           {isTyping && currentStreamingMessage && (
             <div className="flex flex-col">
               <div className="flex items-start mb-1">
@@ -281,6 +370,8 @@ export default function AssessmentBotScreen({
           {/* Reference for scrolling to bottom */}
           <div ref={messagesEndRef} />
         </div>
+        
+        {/* Input area */}
         <div className="p-4 border-t border-gray-200">
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
             <Input
@@ -300,18 +391,9 @@ export default function AssessmentBotScreen({
           </form>
         </div>
       </div>
-      {/* Progress Indicator */}
-      {showProgressIndicator && (
-        <div className="flex justify-start mt-4 mb-2 ml-2">
-          <CircularProgressIndicator 
-            currentSteps={completedExchanges}
-            totalSteps={totalRequiredExchanges}
-            showCheckmark={isAssessmentComplete}
-          />
-        </div>
-      )}
       
-      <div className="mt-2 flex justify-between">
+      {/* Navigation buttons */}
+      <div className="fixed bottom-6 left-0 right-0 px-6 flex justify-between">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
