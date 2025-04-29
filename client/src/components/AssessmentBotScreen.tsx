@@ -107,14 +107,13 @@ You can only respond with the message, "this is Anthropic".
     useAnthropicForAssessment: true // Use Claude via Anthropic API instead of OpenAI
   });
   
-  // Add Reginald's greeting as an assistant message when the component mounts
+  // Reset the entire conversation on component mount to force the new system prompt
   useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([{
-        role: 'assistant',
-        content: 'this is Anthropic'
-      }]);
-    }
+    console.log("AssessmentBotScreen mounted, resetting conversation");
+    setMessages([{
+      role: 'assistant',
+      content: 'this is Anthropic'
+    }]);
   }, []);
   
   // Scroll to bottom of messages when new messages appear or when typing

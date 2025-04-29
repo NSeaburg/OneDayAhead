@@ -55,6 +55,8 @@ export function useStreamingChat({
       try {
         let collectedResponse = '';
         
+        console.log("Sending system prompt to Claude:", systemPrompt);
+        
         const result = await streamChatCompletionWithClaude(
           { 
             messages: messageHistory,

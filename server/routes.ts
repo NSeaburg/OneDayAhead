@@ -312,6 +312,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const systemMessage = messages.find((msg: any) => msg.role === 'system');
       const finalSystemPrompt = systemMessage?.content || systemPrompt || '';
       
+      console.log("Received system prompt on server:", finalSystemPrompt);
+      
       // Handle streaming response
       if (stream) {
         // Create stream with Anthropic
