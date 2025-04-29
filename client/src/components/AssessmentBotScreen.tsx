@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send, User, CheckCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, User, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
@@ -147,6 +147,17 @@ export default function AssessmentBotScreen({
 
   // Calculate if assessment is complete (all topics covered)
   const isAssessmentComplete = topics.every(topic => topic.isCompleted);
+  
+  // Custom checkmark component
+  const TopicCheckmark = ({ completed }: { completed: boolean }) => (
+    completed ? (
+      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center drop-shadow-sm">
+        <Check className="h-3.5 w-3.5 text-white" />
+      </div>
+    ) : (
+      <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+    )
+  );
 
   // Function to determine if a message has substance
   const hasSubstance = (message: string): boolean => {
@@ -265,13 +276,13 @@ export default function AssessmentBotScreen({
                         transition: { duration: 0.3 }
                       }}
                     >
-                      <CheckCircle 
-                        className={`h-5 w-5 ${
-                          topic.isCompleted 
-                            ? 'text-green-500 fill-green-500 stroke-[1.5] drop-shadow-sm' 
-                            : 'text-gray-300'
-                        }`} 
-                      />
+                      {topic.isCompleted ? (
+                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center drop-shadow-sm">
+                          <Check className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                      )}
                     </motion.div>
                   </div>
                   <div>
