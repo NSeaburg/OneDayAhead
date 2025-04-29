@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -268,18 +269,26 @@ export default function HighBotWithArticleScreen({
             <div ref={messagesEndRef} />
           </div>
           <div className="p-4 border-t border-gray-200">
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
-              <Input
+            <form onSubmit={handleSubmit} className="flex items-start gap-2">
+              <AutoResizeTextarea
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask about the article..."
                 className="flex-grow focus:border-purple-500"
+                maxRows={5}
+                onKeyDown={(e) => {
+                  // Submit on Enter key without Shift key
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
               />
               <Button 
                 type="submit"
                 size="icon"
                 disabled={isLoading}
-                className="p-2 bg-purple-600 hover:bg-purple-700 text-white"
+                className="p-2 bg-purple-600 hover:bg-purple-700 text-white mt-1"
               >
                 <Send className="h-4 w-4" />
               </Button>
