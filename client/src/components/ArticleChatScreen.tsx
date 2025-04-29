@@ -54,11 +54,11 @@ export default function ArticleChatScreen({
   // Function to handle PDF download
   const handleDownloadPDF = () => {
     const element = document.createElement('div');
-    element.innerHTML = htmlContent;
+    element.innerHTML = articleContent;
     
     const options = {
       margin: 10,
-      filename: 'down-with-gravity-lesson.pdf',
+      filename: 'three-branches-of-government.pdf',
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -210,11 +210,9 @@ export default function ArticleChatScreen({
             </Button>
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-230px)] md:h-[calc(100vh-200px)]">
-            <iframe 
-              srcDoc={htmlContent}
-              title="Learning Material"
-              className="w-full h-full border-0"
-              sandbox="allow-same-origin allow-scripts"
+            <div 
+              className="article-content"
+              dangerouslySetInnerHTML={{ __html: articleContent }}
             />
           </div>
         </div>
