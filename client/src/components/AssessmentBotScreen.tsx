@@ -179,7 +179,7 @@ export default function AssessmentBotScreen({
             <img 
               src="/reginald-worthington.png" 
               alt="Reginald Worthington III" 
-              className="w-24 h-24 mr-4"
+              className="w-24 h-24 mr-4 border-2 border-gray-300 shadow-sm"
             />
             <div>
               <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
@@ -195,8 +195,8 @@ export default function AssessmentBotScreen({
             <div key={index} className="message-appear flex flex-col">
               <div className="flex items-start mb-1">
                 {message.role === 'assistant' ? (
-                  <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
-                    <i className="ri-award-line"></i>
+                  <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm text-xs font-bold">
+                    RW
                   </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
@@ -223,8 +223,8 @@ export default function AssessmentBotScreen({
           {isTyping && currentStreamingMessage && (
             <div className="flex flex-col">
               <div className="flex items-start mb-1">
-                <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
-                  <i className="ri-award-line"></i>
+                <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm text-xs font-bold">
+                  RW
                 </div>
                 <span className="text-xs text-gray-500 mt-1">
                   Reginald Worthington III
