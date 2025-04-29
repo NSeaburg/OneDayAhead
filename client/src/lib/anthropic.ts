@@ -28,7 +28,7 @@ const convertToAnthropicMessages = (messages: Message[], systemPrompt?: string) 
     system: finalSystemPrompt,
     model: defaultModel,
     max_tokens: DEFAULT_MAX_TOKENS,
-    temperature: 0.7,
+    temperature: 1.0,
   };
 };
 
