@@ -6,7 +6,7 @@ interface UseStreamingChatProps {
   assistantId?: string;
   systemPrompt?: string;
   initialMessage?: string;
-  useAnthropicForAssessment?: boolean;
+  useAnthropicForAssessment?: boolean; // Keeping for backward compatibility, but now using Claude by default
 }
 
 export function useStreamingChat({
@@ -50,141 +50,47 @@ export function useStreamingChat({
       setIsTyping(true);
       setCurrentStreamingMessage('');
       
-      // For the assessment bot, use Anthropic Claude directly from browser
-      if (useAnthropicForAssessment) {
-        try {
-          let collectedResponse = '';
-          
-          const result = await streamChatCompletionWithClaude(
-            { 
-              messages: messageHistory,
-              systemPrompt
-            },
-            // Handle each chunk of the stream
-            (chunk) => {
-              collectedResponse += chunk;
-              setCurrentStreamingMessage(collectedResponse);
-            },
-            // Handle completion
-            (fullMessage) => {
-              // Add the complete assistant message
-              const assistantMessage: Message = {
-                role: 'assistant',
-                content: fullMessage,
-              };
-              
-              setMessages(prevMessages => [...prevMessages, assistantMessage]);
-              setIsTyping(false);
-              setCurrentStreamingMessage('');
-            }
-          );
-          
-          if (result.threadId) {
-            setThreadId(result.threadId);
-          }
-          
-          // Return a basic result structure for consistency
-          return { 
-            message: { role: 'assistant', content: collectedResponse },
-            threadId: result.threadId
-          };
-        } catch (error) {
-          console.error('Error with Anthropic API:', error);
-          throw error;
-        }
-      } else {
-        // Use the server-side API for OpenAI streaming (for other assistants)
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messages: messageHistory,
-            systemPrompt,
-            assistantId,
-            stream: true,
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Network error: ${response.status}`);
-        }
-        
-        // Get the thread ID from the headers
-        const responseThreadId = response.headers.get('X-Thread-Id');
-        if (responseThreadId) {
-          setThreadId(responseThreadId);
-        }
-        
-        const reader = response.body?.getReader();
-        let partialLine = '';
+      // We're now using Anthropic/Claude for all assistants
+      // The useAnthropicForAssessment parameter is kept for backward compatibility
+      try {
         let collectedResponse = '';
         
-        if (!reader) {
-          throw new Error('Stream reader not available');
+        const result = await streamChatCompletionWithClaude(
+          { 
+            messages: messageHistory,
+            systemPrompt
+          },
+          // Handle each chunk of the stream
+          (chunk) => {
+            collectedResponse += chunk;
+            setCurrentStreamingMessage(collectedResponse);
+          },
+          // Handle completion
+          (fullMessage) => {
+            // Add the complete assistant message
+            const assistantMessage: Message = {
+              role: 'assistant',
+              content: fullMessage,
+            };
+            
+            setMessages(prevMessages => [...prevMessages, assistantMessage]);
+            setIsTyping(false);
+            setCurrentStreamingMessage('');
+          }
+        );
+        
+        if (result.threadId) {
+          setThreadId(result.threadId);
         }
         
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            break;
-          }
-          
-          // Convert the uint8array to text
-          const text = new TextDecoder().decode(value);
-          const lines = (partialLine + text).split('\n\n');
-          partialLine = lines.pop() || '';
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              
-              if (data === '[DONE]') {
-                // Stream is done
-                continue;
-              }
-              
-              try {
-                const parsed = JSON.parse(data);
-                
-                if (parsed.error) {
-                  setError(parsed.error);
-                  continue;
-                }
-                
-                if (parsed.threadId) {
-                  setThreadId(parsed.threadId);
-                  continue;
-                }
-                
-                if (parsed.content) {
-                  // For token-by-token streaming, handle formatting
-                  collectedResponse += parsed.content;
-                  
-                  // Update the UI immediately with each token
-                  // We preserve the formatting on the client side as well
-                  setCurrentStreamingMessage(collectedResponse);
-                }
-              } catch (e) {
-                console.error('Error parsing SSE data:', e);
-              }
-            }
-          }
-        }
-        
-        // Stream is complete, add the full response to messages
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: collectedResponse
+        // Return a basic result structure for consistency
+        return { 
+          message: { role: 'assistant', content: collectedResponse },
+          threadId: result.threadId
         };
-        
-        setMessages(prevMessages => [...prevMessages, assistantMessage]);
-        setCurrentStreamingMessage('');
-        setIsTyping(false);
-        
-        return { message: assistantMessage, threadId: responseThreadId || null };
+      } catch (error) {
+        console.error('Error with Anthropic API:', error);
+        throw error;
       }
     } catch (err: any) {
       console.error('Error in chat completion:', err);
@@ -194,7 +100,7 @@ export function useStreamingChat({
     } finally {
       setIsLoading(false);
     }
-  }, [messages, systemPrompt, assistantId, useAnthropicForAssessment]);
+  }, [messages, systemPrompt, assistantId]);
 
   return {
     messages,

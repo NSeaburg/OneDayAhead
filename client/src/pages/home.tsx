@@ -184,19 +184,34 @@ export default function Home() {
           <AssessmentBotScreen 
             assistantId={assessmentAssistantId}
             systemPrompt={config.systemPrompts.assessment}
-            onNext={(nextAssistantId) => {
-              // Store the dynamic assistant ID received from N8N webhook
-              if (nextAssistantId) {
-                setDynamicAssistantId(nextAssistantId);
-                console.log("Set dynamic assistant ID:", nextAssistantId);
+            onNext={(teachingAssistanceData) => {
+              // Store the teaching assistance data from N8N webhook
+              if (teachingAssistanceData) {
+                setTeachingAssistance(teachingAssistanceData);
+                console.log(`Received teaching assistance level: ${teachingAssistanceData.level}`);
+                console.log("Received Claude-specific system prompt for teaching");
                 
-                // Check if this is a High Bot ID
-                const highBotIds = ["asst_lUweN1vW36yeAORIXCWDopm9", "asst_87DSLhfnAK7elvmsiL0aTPH4"];
-                if (highBotIds.includes(nextAssistantId) || nextAssistantId?.includes("High")) {
-                  console.log("High Bot detected - will use side-by-side layout");
+                // Set a specific assistant ID based on proficiency level
+                // This is primarily for maintaining backward compatibility with the High Bot layout feature
+                const assistantIdByLevel: Record<string, string> = {
+                  'high': 'asst_87DSLhfnAK7elvmsiL0aTPH4', // Use high bot ID for high level
+                  'medium': 'claude_medium',
+                  'low': 'claude_low'
+                };
+                
+                // Set the appropriate dynamic assistant ID
+                const newAssistantId = assistantIdByLevel[teachingAssistanceData.level] || 'claude_default';
+                setDynamicAssistantId(newAssistantId);
+                
+                // Check if this is a High Bot level
+                if (teachingAssistanceData.level === 'high') {
+                  console.log("High proficiency level detected - will use side-by-side layout");
+                } else {
+                  console.log(`Using regular layout for ${teachingAssistanceData.level} proficiency level`);
                 }
               } else {
-                console.log("No nextAssistantId provided, using fallback");
+                console.log("No teaching assistance data provided, using fallback");
+                setDynamicAssistantId(null);
               }
               
               // Capture the assessment conversation and thread ID from the component's state
@@ -222,7 +237,7 @@ export default function Home() {
             // High Bot with Article side-by-side layout
             <HighBotWithArticleScreen 
               assistantId={dynamicAssistantId || discussionAssistantId}
-              systemPrompt={config.systemPrompts.dynamic}
+              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
               articleUrl="/nixon-article.html"
               assessmentThreadId={assessmentThreadId}
               assessmentConversation={assessmentConversation}
@@ -239,9 +254,10 @@ export default function Home() {
             // Regular dynamic assistant screen
             <DynamicAssistantScreen 
               assistantId={dynamicAssistantId || discussionAssistantId}
-              systemPrompt={config.systemPrompts.dynamic}
+              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
               assessmentThreadId={assessmentThreadId}
               assessmentConversation={assessmentConversation}
+              teachingAssistance={teachingAssistance}
               onNext={(nextId, feedbackResult) => {
                 if (feedbackResult) {
                   setFeedbackData(feedbackResult);
