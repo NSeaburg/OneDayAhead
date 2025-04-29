@@ -68,30 +68,15 @@ export default function AssessmentBotScreen({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentStreamingMessage]);
   
-  // Track completed exchanges
+  // Show progress indicator after first message (but don't count exchanges here)
   useEffect(() => {
-    // Check if there are enough messages to form a complete exchange
-    // A complete exchange is a user message followed by an assistant response
-    // We divide by 2 and floor to get the number of complete exchanges
     const userMessages = messages.filter(msg => msg.role === 'user').length;
-    const assistantMessages = messages.filter(msg => msg.role === 'assistant').length;
-    const exchanges = Math.min(userMessages, assistantMessages) - 1; // Subtract 1 to exclude initial assistant message
     
     // Show the progress indicator after the first user message
     if (userMessages > 0 && !showProgressIndicator) {
       setShowProgressIndicator(true);
     }
-    
-    // Update the completed exchanges count
-    if (exchanges > 0) {
-      setCompletedExchanges(exchanges);
-    }
-    
-    // Check if assessment is complete (reached required exchanges)
-    if (exchanges >= totalRequiredExchanges) {
-      setIsAssessmentComplete(true);
-    }
-  }, [messages, showProgressIndicator, totalRequiredExchanges]);
+  }, [messages, showProgressIndicator]);
   
   // Expose the assessment data through the window for the next screen
   // This is necessary to pass data between screens
@@ -105,6 +90,20 @@ export default function AssessmentBotScreen({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim()) {
+      // Show the progress indicator if not already shown
+      if (!showProgressIndicator) {
+        setShowProgressIndicator(true);
+      }
+      
+      // Increment the completed exchanges count immediately when user sends a message
+      const newExchangeCount = Math.min(completedExchanges + 1, totalRequiredExchanges);
+      setCompletedExchanges(newExchangeCount);
+      
+      // Mark as complete if reached required exchanges
+      if (newExchangeCount >= totalRequiredExchanges) {
+        setIsAssessmentComplete(true);
+      }
+      
       sendMessage(inputMessage);
       setInputMessage("");
     }
@@ -273,7 +272,7 @@ export default function AssessmentBotScreen({
       </div>
       {/* Progress Indicator */}
       {showProgressIndicator && (
-        <div className="flex justify-center mt-4 mb-2">
+        <div className="flex justify-start mt-4 mb-2 ml-2">
           <CircularProgressIndicator 
             currentSteps={completedExchanges}
             totalSteps={totalRequiredExchanges}
