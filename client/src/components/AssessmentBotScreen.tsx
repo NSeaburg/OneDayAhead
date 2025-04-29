@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
+import { Message } from "@/lib/openai";
 // Import Reginald image directly
 import reginaldImage from "../../../public/reginald-worthington.png";
 
@@ -113,13 +114,23 @@ If the student engages with your fictional persona, fully play along. If the stu
     isLoading, 
     threadId, 
     currentStreamingMessage, 
-    isTyping
+    isTyping,
+    setMessages
   } = useStreamingChat({
     assistantId,
     systemPrompt: claudeSystemPrompt,
-    initialMessage: 'Reginald Worthington III at your service, sent by His Majesty to study this curious experiment you call democracy. Would you be willing to enlighten me on how this peculiar system of yours functions? I assure you I shall take meticulous notes. *adjusts cravat importantly*',
     useAnthropicForAssessment: true // Use Claude via Anthropic API instead of OpenAI
   });
+  
+  // Add Reginald's greeting as an assistant message when the component mounts
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages([{
+        role: 'assistant',
+        content: 'Reginald Worthington III at your service, sent by His Majesty to study this curious experiment you call democracy. Would you be willing to enlighten me on how this peculiar system of yours functions? I assure you I shall take meticulous notes. *adjusts cravat importantly*'
+      }]);
+    }
+  }, []);
   
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {
