@@ -434,7 +434,7 @@ If the student engages with your fictional persona, fully play along. If the stu
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Type your response here..."
               className="flex-grow focus:border-green-500"
-              maxRows={5}
+              maxRows={7}
               onKeyDown={(e) => {
                 // Submit on Enter key without Shift key
                 if (e.key === 'Enter' && !e.shiftKey) {

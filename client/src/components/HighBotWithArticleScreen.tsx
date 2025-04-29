@@ -275,7 +275,7 @@ export default function HighBotWithArticleScreen({
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask about the article..."
                 className="flex-grow focus:border-purple-500"
-                maxRows={5}
+                maxRows={7}
                 onKeyDown={(e) => {
                   // Submit on Enter key without Shift key
                   if (e.key === 'Enter' && !e.shiftKey) {

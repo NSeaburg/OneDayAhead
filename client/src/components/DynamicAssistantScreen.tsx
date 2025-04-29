@@ -288,7 +288,7 @@ export default function DynamicAssistantScreen({
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Type your message here..."
               className="flex-grow focus:border-blue-500"
-              maxRows={5}
+              maxRows={7}
               onKeyDown={(e) => {
                 // Submit on Enter key without Shift key
                 if (e.key === 'Enter' && !e.shiftKey) {
