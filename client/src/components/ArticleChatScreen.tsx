@@ -209,7 +209,7 @@ export default function ArticleChatScreen({
               Download PDF
             </Button>
           </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-230px)] md:h-[calc(100vh-200px)]">
+          <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)]">
             <div 
               className="article-content"
               dangerouslySetInnerHTML={{ __html: articleContent }}
@@ -222,7 +222,7 @@ export default function ArticleChatScreen({
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
           </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-290px)] md:h-[calc(100vh-260px)] space-y-4">
+          <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
             {/* Regular messages */}
             {messages.map((message, index) => (
               <div key={index} className="message-appear flex flex-col">

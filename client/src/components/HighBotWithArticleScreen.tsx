@@ -171,7 +171,7 @@ export default function HighBotWithArticleScreen({
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             <h2 className="font-semibold text-lg text-gray-800">Article</h2>
           </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-240px)] md:h-[calc(100vh-210px)]">
+          <div className="p-4 overflow-y-auto h-[calc(100vh-320px)] md:h-[calc(100vh-290px)]">
             <div className="article-content prose max-w-none">
               <h1>United States v. Nixon: A Case Study in Checks and Balances</h1>
 
