@@ -28,10 +28,16 @@ declare global {
   }
 }
 
+// Teaching assistance level response from N8N webhook
+interface TeachingAssistance {
+  level: 'low' | 'medium' | 'high';
+  systemPrompt: string;
+}
+
 interface AssessmentBotScreenProps {
   assistantId: string;
   systemPrompt: string;
-  onNext: (nextAssistantId?: string) => void;
+  onNext: (teachingAssistance?: TeachingAssistance) => void;
   onPrevious?: () => void;
 }
 
@@ -236,9 +242,27 @@ If the student engages with your fictional persona, fully play along. If the stu
       const result = await response.json();
       
       if (result.success) {
-        // Pass the nextAssistantId when navigating to the next screen
-        const nextAssistantId = result.nextAssistantId;
-        onNext(nextAssistantId);
+        // New structure from N8N - teaching assistance with level and system prompt
+        if (result.teachingAssistance && result.teachingAssistance.level && result.teachingAssistance.systemPrompt) {
+          const teachingAssistance: TeachingAssistance = {
+            level: result.teachingAssistance.level,
+            systemPrompt: result.teachingAssistance.systemPrompt
+          };
+          
+          console.log(`Received teaching assistance level: ${teachingAssistance.level}`);
+          console.log("Proceeding with Claude system prompt for this level");
+          
+          onNext(teachingAssistance);
+        } else {
+          // Fallback to basic level if structure is missing
+          console.log("Missing teachingAssistance structure in response, using fallback");
+          toast({
+            title: "Integration response incomplete",
+            description: "Using a default teaching approach instead.",
+            variant: "default"
+          });
+          onNext(undefined);
+        }
       } else {
         // Handle the case where N8N returned a non-error response but with success: false
         toast({
