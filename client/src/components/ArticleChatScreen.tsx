@@ -212,7 +212,7 @@ export default function ArticleChatScreen({
       <div className="flex-grow flex flex-col md:flex-row gap-4 md:gap-6 mb-24">
         {/* Article Section */}
         <motion.div 
-          className={`${isChatOpen ? 'md:w-3/5' : 'w-full'} bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
+          className={`${isChatOpen ? 'md:w-[60%]' : 'w-full'} bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
           layout
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
@@ -240,7 +240,7 @@ export default function ArticleChatScreen({
         <AnimatePresence>
           {isChatOpen && (
             <motion.div 
-              className="md:w-2/5 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
+              className="md:w-[40%] bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
               exit={{ opacity: 0, width: 0 }}
