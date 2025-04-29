@@ -110,19 +110,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
-        // Send data to N8N webhook with the threadId included
+        // Generate the full transcript of the conversation
+        const transcript = conversationData
+          .map(msg => `${msg.role === 'assistant' ? 'Reginald Worthington III' : 'Student'}: ${msg.content}`)
+          .join('\n\n');
+        
+        console.log("Sending full transcript to N8N webhook");
+          
+        // Send data to N8N webhook with the full transcript
         const response = await axios.post(ASSESSMENT_WEBHOOK_URL, {
           conversationData,
-          threadId, // Include the thread ID in the N8N payload
+          transcript, // Include the full transcript instead of just the thread ID
           timestamp: new Date().toISOString(),
           source: "learning-app-assessment",
-          courseName: courseName || "Gravity Course", // Add course name with fallback
+          courseName: courseName || "Three Branches of Government", // Add course name with fallback
           chatDurationSeconds: chatDurationSeconds || 0 // Add chat duration with fallback
         });
         
         console.log("Successfully sent assessment data to N8N:", response.status);
-        console.log("ThreadId included in N8N payload:", threadId);
-        console.log("Course name sent to N8N:", courseName || "Gravity Course");
+        console.log("Full transcript included in N8N payload:", transcript.length, "characters");
+        console.log("Course name sent to N8N:", courseName || "Three Branches of Government");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         
         // Extract the nextAssistantId from the N8N response if available
