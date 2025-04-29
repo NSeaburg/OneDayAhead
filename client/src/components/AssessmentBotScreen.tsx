@@ -52,6 +52,9 @@ export default function AssessmentBotScreen({
   // Define total exchanges needed for completion
   const totalRequiredExchanges = 6;
   
+  // Store greeting message locally for display
+  const [showGreeting, setShowGreeting] = useState(true);
+  
   const { 
     messages, 
     sendMessage, 
@@ -61,9 +64,14 @@ export default function AssessmentBotScreen({
     isTyping 
   } = useStreamingChat({
     assistantId,
-    systemPrompt,
-    initialMessage: "Greetings, subject— ah, I mean, citizen."
+    systemPrompt
   });
+  
+  // Combine greeting and regular messages for display
+  // This will show the greeting as an assistant message without actually modifying the messages array
+  const displayMessages = showGreeting && messages.length === 0 
+    ? [{ role: 'assistant', content: 'Greetings, subject— ah, I mean, citizen.' }] 
+    : messages;
   
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {
@@ -200,7 +208,7 @@ export default function AssessmentBotScreen({
             <img 
               src={reginaldImage} 
               alt="Reginald Worthington III" 
-              className="w-24 h-24 mr-4 border-2 border-gray-300 shadow-sm"
+              className="w-24 h-24 mr-4 border-2 border-gray-300 shadow-sm rounded-full object-cover"
             />
             <div>
               <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
@@ -211,13 +219,13 @@ export default function AssessmentBotScreen({
           </div>
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
-          {/* Regular messages */}
-          {messages.map((message, index) => (
+          {/* Messages (including simulated greeting if no messages yet) */}
+          {displayMessages.map((message, index) => (
             <div key={index} className="message-appear flex flex-col">
               <div className="flex items-start mb-1">
                 {message.role === 'assistant' ? (
-                  <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm text-xs font-bold">
-                    RW
+                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                    <img src={reginaldImage} alt="RW" className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
@@ -244,8 +252,8 @@ export default function AssessmentBotScreen({
           {isTyping && currentStreamingMessage && (
             <div className="flex flex-col">
               <div className="flex items-start mb-1">
-                <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm text-xs font-bold">
-                  RW
+                <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                  <img src={reginaldImage} alt="RW" className="w-full h-full object-cover" />
                 </div>
                 <span className="text-xs text-gray-500 mt-1">
                   Reginald Worthington III
