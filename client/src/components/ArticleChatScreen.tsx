@@ -209,12 +209,14 @@ export default function ArticleChatScreen({
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">
         {isChatOpen ? "Article & Discussion" : "Article"}
       </h1>
-      <div className="flex-grow flex flex-col md:flex-row gap-4 md:gap-6 mb-24">
+      <div className="flex-grow flex flex-col md:flex-row md:flex-nowrap gap-4 md:gap-6 mb-24 relative">
         {/* Article Section */}
         <motion.div 
-          className={`${isChatOpen ? 'md:w-[60%]' : 'w-full'} bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
-          layout
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className={`${isChatOpen ? 'md:flex-1' : 'w-full'} bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
+          style={{ flexBasis: isChatOpen ? '60%' : 'auto' }}
+          layout="position"
+          layoutId="article-container"
+          transition={{ type: "spring", stiffness: 200, damping: 25 }}
         >
           <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="font-semibold text-lg text-gray-800">Learning Material</h2>
@@ -240,11 +242,12 @@ export default function ArticleChatScreen({
         <AnimatePresence>
           {isChatOpen && (
             <motion.div 
-              className="md:w-[40%] bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
+              style={{ flex: "0 0 40%" }}
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
               exit={{ opacity: 0, width: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
             >
               {/* Close button for the chat section */}
               <button
