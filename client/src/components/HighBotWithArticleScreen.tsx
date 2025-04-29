@@ -58,18 +58,34 @@ export default function HighBotWithArticleScreen({
     ? "Hello! I'm your specialized High Bot assistant for this part of the learning journey. I'll be discussing the article about the United States v. Nixon case that appears on the left. Feel free to ask any questions about the case or the checks and balances in the U.S. government."
     : "Hello! I'm your specialized High Bot assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance on the article about United States v. Nixon that appears on the left. Feel free to ask any questions about the case or how it demonstrates the checks and balances in the U.S. government.";
   
+  // Log which system prompt we're using
+  console.log(`HighBotWithArticleScreen using system prompt with length: ${systemPrompt?.length || 0} characters`);
+  
   const { 
     messages, 
     sendMessage, 
     isLoading, 
     threadId, 
     currentStreamingMessage, 
-    isTyping
+    isTyping,
+    setMessages
   } = useStreamingChat({
     assistantId,
     systemPrompt,
-    initialMessage
+    initialMessage,
+    useAnthropicForAssessment: true // Ensure we're using Claude exclusively
   });
+  
+  // Reset conversation on mount to ensure system prompt is applied
+  useEffect(() => {
+    console.log("HighBotWithArticleScreen mounted - resetting conversation to ensure proper system prompt");
+    
+    // Clear existing messages and set the initial welcome
+    setMessages([{
+      role: 'assistant',
+      content: initialMessage
+    }]);
+  }, []);
   
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {
