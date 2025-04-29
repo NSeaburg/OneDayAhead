@@ -131,17 +131,33 @@ export default function ArticleChatScreen({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Chat functionality
+  // Log which system prompt we're using
+  console.log(`ArticleChatScreen using system prompt with length: ${systemPrompt?.length || 0} characters`);
+  
   const { 
     messages, 
     sendMessage, 
     isLoading, 
     currentStreamingMessage, 
-    isTyping 
+    isTyping,
+    setMessages
   } = useStreamingChat({
     assistantId,
     systemPrompt,
-    initialMessage: INITIAL_BOT_MESSAGE
+    initialMessage: INITIAL_BOT_MESSAGE,
+    useAnthropicForAssessment: true // Ensure we're using Claude exclusively
   });
+  
+  // Reset conversation on mount to ensure system prompt is applied
+  useEffect(() => {
+    console.log("ArticleChatScreen mounted - resetting conversation to ensure proper system prompt");
+    
+    // Clear existing messages and set the initial welcome
+    setMessages([{
+      role: 'assistant',
+      content: INITIAL_BOT_MESSAGE
+    }]);
+  }, []);
 
   // Effects
   useEffect(() => {

@@ -80,7 +80,8 @@ export default function DynamicAssistantScreen({
   const activeSystemPrompt = teachingAssistance?.systemPrompt || systemPrompt;
   
   // Log which system prompt we're using
-  console.log(`Using ${teachingAssistance ? 'Claude-specific' : 'default'} system prompt for level: ${proficiencyLevel}`);
+  console.log(`DynamicAssistantScreen using ${teachingAssistance ? 'Claude-specific' : 'default'} system prompt for level: ${proficiencyLevel}`);
+  console.log(`System prompt length: ${activeSystemPrompt?.length || 0} characters`);
   
   const { 
     messages, 
@@ -88,13 +89,25 @@ export default function DynamicAssistantScreen({
     isLoading, 
     threadId, 
     currentStreamingMessage, 
-    isTyping
+    isTyping,
+    setMessages
   } = useStreamingChat({
     assistantId,
     systemPrompt: activeSystemPrompt,
     initialMessage,
     useAnthropicForAssessment: true // Use Claude/Anthropic exclusively
   });
+  
+  // Reset conversation on mount to ensure system prompt is applied
+  useEffect(() => {
+    console.log("DynamicAssistantScreen mounted - resetting conversation to ensure proper system prompt");
+    
+    // Clear existing messages and set the initial welcome
+    setMessages([{
+      role: 'assistant',
+      content: initialMessage
+    }]);
+  }, []);
   
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {
