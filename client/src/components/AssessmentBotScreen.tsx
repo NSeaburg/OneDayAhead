@@ -76,14 +76,7 @@ export default function AssessmentBotScreen({
       name: "Roles of the Branches",
       description: "Can you describe what Congress, the President, and the Courts actually do?",
       isCompleted: false,
-      keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges"]
-    },
-    {
-      id: "proper-apology",
-      name: "A Proper Apology",
-      description: "Reginald is expecting you to explain (and perhaps reconsider) your little Revolution.",
-      isCompleted: false,
-      keywords: ["revolution", "independence", "colonies", "king", "monarchy", "crown", "england", "britain", "george", "apology"]
+      keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
     }
   ]);
   
@@ -253,7 +246,7 @@ export default function AssessmentBotScreen({
           </div>
           
           <p className="text-sm text-gray-700 mb-4">
-            Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown—once you've explained how this whole "no king" business is supposed to work.
+            Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown—once you've explained how this whole "no king" business is supposed to work. He is fully expecting you to explain (and perhaps reconsider) your little Revolution.
           </p>
           
           <hr className="my-4 border-gray-200" />
@@ -275,7 +268,7 @@ export default function AssessmentBotScreen({
                       <CheckCircle 
                         className={`h-5 w-5 ${
                           topic.isCompleted 
-                            ? 'text-green-500 fill-green-500' 
+                            ? 'text-green-500 fill-green-500 stroke-[1.5] drop-shadow-sm' 
                             : 'text-gray-300'
                         }`} 
                       />
