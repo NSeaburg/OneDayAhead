@@ -176,15 +176,11 @@ export default function AssessmentBotScreen({
       <div className="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         <div className="p-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center">
-            <div className="w-32 h-32 mr-4 flex-shrink-0 bg-red-50 border-2 border-red-200 rounded-lg flex flex-col items-center justify-center text-red-800 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-8 bg-red-700 flex items-center justify-center">
-                <span className="text-white text-xs font-bold uppercase tracking-wider">Royal Crest</span>
-              </div>
-              <div className="mt-6 flex flex-col items-center">
-                <span className="text-2xl mb-1 font-serif">R</span>
-                <span className="text-xs text-center font-medium">Reginald<br/>Worthington III</span>
-              </div>
-            </div>
+            <img 
+              src="https://drive.google.com/uc?export=download&id=1VvNnJZPynv6j0kiBqPqUqNNFFmLmIEWz" 
+              alt="Reginald Worthington III" 
+              className="w-32 h-32 mr-4"
+            />
             <div>
               <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
               <p className="text-sm text-gray-600 mt-1 max-w-2xl">
