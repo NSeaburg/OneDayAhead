@@ -173,19 +173,16 @@ export default function HighBotWithArticleScreen({
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-240px)] md:h-[calc(100vh-210px)]">
             <div className="article-content prose max-w-none">
-              <h1>The Three Branches of Government: How the Pieces Fit Together</h1>
+              <h1>United States v. Nixon: A Case Study in Checks and Balances</h1>
 
-              <h2>Why Split It Up?</h2>
-              <p>When the Founders wrote the Constitution, they were fresh off a bad breakup—with King George III. They had seen firsthand what happens when too much power sits in one place. So they designed a government that splits power into three different groups, each with its own special job: Congress makes the laws, the President enforces them, and the Courts interpret them. It's like building a three-legged stool—knock one leg out, and the whole thing wobbles. The idea was simple but powerful: make sure no single person or group can take over.</p>
+              <h2>Background</h2>
+              <p>In the early 1970s, a major political scandal known as the Watergate scandal rocked the United States. During the 1972 presidential election, operatives connected to President Richard Nixon's re-election campaign were caught breaking into the Democratic Party's headquarters at the Watergate building. Investigators uncovered efforts to cover up the break-in, leading to questions about how far the wrongdoing reached. As the investigation moved forward, it became clear that secret recordings of conversations inside the White House might contain crucial evidence.</p>
 
-              <h2>Congress: The Playbook Writers</h2>
-              <p>Congress is the lawmaking branch—the people who write the rules of the game. It's made up of two parts: the House of Representatives and the Senate. Together, they decide what laws the country needs, how to spend its money, and even when to go to war. Think of Congress like the team's head strategists, crafting the game plan. But writing the laws doesn't mean they automatically happen—that job belongs to someone else.</p>
+              <h2>The Case</h2>
+              <p>A special prosecutor investigating the scandal demanded access to the White House tapes. President Nixon refused, claiming "executive privilege"—the idea that the President could withhold certain information to protect the confidentiality of internal discussions. Nixon argued that turning over the tapes would weaken the Presidency and violate the separation of powers. The case quickly escalated to the United States Supreme Court, raising critical questions about whether any branch of government could limit the President's power to keep secrets.</p>
 
-              <h2>The President: The Enforcer on the Field</h2>
-              <p>The President leads the Executive Branch, whose main job is to carry out the laws Congress passes. That means everything from leading the military to making sure food safety standards are actually followed. If Congress is the playbook writer, the President is the coach—and sometimes the quarterback—making real-time decisions. The President can also veto laws (send them back to Congress unsigned) and make deals with other countries. But while the President is powerful, they still have to follow the Constitution's rules.</p>
-
-              <h2>The Courts: Keeping Everyone Honest</h2>
-              <p>The Judicial Branch, led by the Supreme Court, acts as the referee. Judges look at laws and government actions and decide whether they follow the Constitution—the highest rulebook of all. If Congress or the President tries to bend the rules too far, the courts can blow the whistle and stop it. It's a powerful job, but it relies on trust: courts don't have armies or budgets to enforce their decisions. They depend on people respecting the system. When the three branches work together properly, each keeps the others from getting too powerful.</p>
+              <h2>The Ruling</h2>
+              <p>In 1974, the Supreme Court issued a unanimous decision against President Nixon. The Court ruled that executive privilege is not absolute and cannot be used to block evidence needed for a criminal trial. Nixon was ordered to turn over the tapes. Within days, the tapes revealed serious misconduct, and Nixon resigned from office. The case demonstrated how all three branches—Congress investigating, the Courts ruling, and the President resisting—interacted under the Constitution. It remains a landmark example of how checks and balances work, even at the highest levels of government.</p>
             </div>
           </div>
         </div>

@@ -225,7 +225,7 @@ export default function Home() {
             <HighBotWithArticleScreen 
               assistantId={dynamicAssistantId || discussionAssistantId}
               systemPrompt={config.systemPrompts.dynamic}
-              articleUrl="/government-article.html"
+              articleUrl="/nixon-article.html"
               assessmentThreadId={assessmentThreadId}
               assessmentConversation={assessmentConversation}
               onNext={(nextId, feedbackResult) => {
