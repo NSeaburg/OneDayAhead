@@ -180,7 +180,7 @@ export default function DynamicAssistantScreen({
             </p>
           )}
         </div>
-        <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
+        <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
           {/* Regular messages */}
           {messages.map((message, index) => (
             <div key={index} className="message-appear flex flex-col">

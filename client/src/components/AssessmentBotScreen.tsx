@@ -218,7 +218,7 @@ export default function AssessmentBotScreen({
             </div>
           </div>
         </div>
-        <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
+        <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
           {/* Messages (including simulated greeting if no messages yet) */}
           {displayMessages.map((message, index) => (
             <div key={index} className="message-appear flex flex-col">
