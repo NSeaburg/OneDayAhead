@@ -60,7 +60,7 @@ export default function AssessmentBotScreen({
   } = useStreamingChat({
     assistantId,
     systemPrompt,
-    initialMessage: "I'm your assessment assistant. I'll be asking you a series of questions about the material you just learned. Please answer to the best of your ability, and I'll provide guidance as needed. Let's start with your understanding of the key concepts. What are the main learning methods mentioned in the article?"
+    initialMessage: "Greetings, subject— ah, I mean, citizen."
   });
   
   // Scroll to bottom of messages when new messages appear or when typing
@@ -172,30 +172,44 @@ export default function AssessmentBotScreen({
 
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Knowledge Assessment</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-1">Royal Assessment of Democratic Knowledge</h1>
       <div className="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         <div className="p-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="font-semibold text-lg text-gray-800">Assessment Assistant</h2>
+          <div className="flex items-center">
+            <img 
+              src="/reginald-worthington.png" 
+              alt="Reginald Worthington III" 
+              className="w-16 h-16 rounded-full object-cover mr-4 border-2 border-gray-300 shadow-sm"
+            />
+            <div>
+              <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
+              <p className="text-sm text-gray-600 mt-1 max-w-2xl">
+                Sent by Her Majesty's service to observe this curious American experiment, Reginald brings all the grace, pride, and polite disbelief of an English aristocrat. He doesn't quite understand how a government can function without a king—and he's counting on you to explain it to him. Prepare to defend democracy… with dignity, of course.
+              </p>
+            </div>
+          </div>
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100vh-260px)] md:h-[calc(100vh-230px)] space-y-4">
           {/* Regular messages */}
           {messages.map((message, index) => (
             <div key={index} className="message-appear flex flex-col">
               <div className="flex items-start mb-1">
-                <div className={`w-8 h-8 rounded-full ${
-                  message.role === 'assistant' 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                } flex items-center justify-center mr-2 flex-shrink-0`}>
-                  <i className={message.role === 'assistant' ? 'ri-question-line' : 'ri-user-line'}></i>
-                </div>
+                {message.role === 'assistant' ? (
+                  <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                    <i className="ri-award-line"></i>
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
+                    <i className="ri-user-line"></i>
+                  </div>
+                )}
                 <span className="text-xs text-gray-500 mt-1">
-                  {message.role === 'assistant' ? 'Assessment Bot' : 'You'}
+                  {message.role === 'assistant' ? 'Reginald Worthington III' : 'You'}
                 </span>
               </div>
               <div className={`ml-10 ${
                 message.role === 'assistant' 
-                  ? 'bg-green-50' 
+                  ? 'bg-red-50 border border-red-100' 
                   : 'bg-white border border-gray-200'
               } rounded-lg p-3 text-gray-700`}>
                 <div className="typing-text markdown-content">
@@ -209,14 +223,14 @@ export default function AssessmentBotScreen({
           {isTyping && currentStreamingMessage && (
             <div className="flex flex-col">
               <div className="flex items-start mb-1">
-                <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
-                  <i className="ri-question-line"></i>
+                <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                  <i className="ri-award-line"></i>
                 </div>
                 <span className="text-xs text-gray-500 mt-1">
-                  Assessment Bot
+                  Reginald Worthington III
                 </span>
               </div>
-              <div className="ml-10 bg-green-50 rounded-lg p-3 text-gray-700">
+              <div className="ml-10 bg-red-50 border border-red-100 rounded-lg p-3 text-gray-700">
                 <div className="typing-text markdown-content">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamingMessage}</ReactMarkdown>
                 </div>
