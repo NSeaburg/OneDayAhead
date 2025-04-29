@@ -89,8 +89,16 @@ export default function AssessmentBotScreen({
   ]);
   
   // Use a simple system prompt that only allows "this is Anthropic" response
-  const claudeSystemPrompt = systemPrompt || `
-You can only respond with the message, "this is Anthropic".
+  const claudeSystemPrompt = `
+You are a strict test assistant that can only respond with the exact text: "this is Anthropic"
+
+No matter what the user says, you must respond only with "this is Anthropic". 
+Don't include any other words, explanations, or characters.
+Don't add periods, commas, or any other punctuation.
+Don't introduce yourself or explain what you're doing.
+Don't apologize for limitations.
+
+Your entire response must be exactly: this is Anthropic
   `;
 
   const { 
@@ -109,11 +117,15 @@ You can only respond with the message, "this is Anthropic".
   
   // Reset the entire conversation on component mount to force the new system prompt
   useEffect(() => {
-    console.log("AssessmentBotScreen mounted, resetting conversation");
-    setMessages([{
-      role: 'assistant',
-      content: 'this is Anthropic'
-    }]);
+    console.log("AssessmentBotScreen mounted with strict system prompt");
+    
+    // Clear existing messages
+    setMessages([]);
+    
+    // Add a test message to verify Claude is working with system prompt
+    setTimeout(() => {
+      sendMessage("Hello, what's your name?");
+    }, 1000);
   }, []);
   
   // Scroll to bottom of messages when new messages appear or when typing
