@@ -26,7 +26,17 @@ export default function ArticleChatScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isBubbleDismissed, setIsBubbleDismissed] = useState(false);
+  const [shouldPulse, setShouldPulse] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Stop pulsing after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShouldPulse(false);
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   const { 
     messages, 
@@ -199,10 +209,10 @@ export default function ArticleChatScreen({
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">
         {isChatOpen ? "Article & Discussion" : "Article"}
       </h1>
-      <div className="flex-grow flex flex-col md:flex-row gap-4 md:gap-6">
+      <div className="flex-grow flex flex-col md:flex-row gap-4 md:gap-6 mb-24">
         {/* Article Section */}
         <motion.div 
-          className={`${isChatOpen ? 'md:w-1/2' : 'w-full'} bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
+          className={`${isChatOpen ? 'md:w-3/5' : 'w-full'} bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
           layout
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
@@ -218,7 +228,7 @@ export default function ArticleChatScreen({
               Download PDF
             </Button>
           </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)]">
+          <div className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]">
             <div 
               className="article-content"
               dangerouslySetInnerHTML={{ __html: articleContent }}
@@ -230,16 +240,24 @@ export default function ArticleChatScreen({
         <AnimatePresence>
           {isChatOpen && (
             <motion.div 
-              className="md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col"
+              className="md:w-2/5 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
               exit={{ opacity: 0, width: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
+              {/* Close button for the chat section */}
+              <button
+                className="absolute top-2 right-2 rounded-full bg-gray-100 p-1 hover:bg-gray-200 z-10"
+                onClick={() => setIsChatOpen(false)}
+              >
+                <X className="h-4 w-4 text-gray-600" />
+              </button>
+              
               <div className="p-4 bg-gray-50 border-b border-gray-200">
                 <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
               </div>
-              <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
+              <div className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)] space-y-4">
                 {/* Regular messages */}
                 {messages.map((message, index) => (
                   <div key={index} className="message-appear flex flex-col">
@@ -330,7 +348,7 @@ export default function ArticleChatScreen({
       <AnimatePresence>
         {!isChatOpen && !isBubbleDismissed && (
           <motion.div 
-            className="fixed bottom-6 right-6 z-10"
+            className="fixed bottom-24 right-6 z-10"
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
@@ -341,7 +359,10 @@ export default function ArticleChatScreen({
                 className="flex items-center gap-2 px-5 py-4 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors"
                 onClick={() => setIsChatOpen(true)}
                 initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
+                animate={shouldPulse ? 
+                  { scale: [1, 1.05, 1], transition: { repeat: Infinity, duration: 1.5 } } : 
+                  { scale: 1 }
+                }
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -360,7 +381,7 @@ export default function ArticleChatScreen({
       </AnimatePresence>
 
       {/* Navigation buttons */}
-      <div className="mt-4 flex justify-between">
+      <div className="fixed bottom-6 left-0 right-0 px-6 flex justify-between">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
