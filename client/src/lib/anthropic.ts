@@ -127,7 +127,8 @@ export const streamChatCompletionWithClaude = async (
           const data = line.slice(6);
           
           if (data === '[DONE]') {
-            // Stream is done
+            // Stream is done - don't add this marker to the message content
+            console.log("Received [DONE] marker, stream finished");
             continue;
           }
           

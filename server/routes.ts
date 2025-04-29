@@ -346,8 +346,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Signal the end of the stream
-        sendEvent('done', { content: '[DONE]' });
+        // Signal the end of the stream without including content
+        res.write('data: [DONE]\n\n');
         res.end();
       } else {
         // Non-streaming response
