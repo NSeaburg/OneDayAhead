@@ -87,6 +87,19 @@ export default function AssessmentBotScreen({
     };
   }
 
+  // Function to determine if a message has substance
+  const hasSubstance = (message: string): boolean => {
+    // Check for minimum word count (requires at least 8 words)
+    const wordCount = message.split(/\s+/).filter(word => word.length > 0).length;
+    if (wordCount < 8) return false;
+    
+    // Check for punctuation (complete sentences)
+    const hasPunctuation = /[.?!]/.test(message);
+    if (!hasPunctuation) return false;
+    
+    return true;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim()) {
@@ -95,13 +108,20 @@ export default function AssessmentBotScreen({
         setShowProgressIndicator(true);
       }
       
-      // Increment the completed exchanges count immediately when user sends a message
-      const newExchangeCount = Math.min(completedExchanges + 1, totalRequiredExchanges);
-      setCompletedExchanges(newExchangeCount);
-      
-      // Mark as complete if reached required exchanges
-      if (newExchangeCount >= totalRequiredExchanges) {
-        setIsAssessmentComplete(true);
+      // Only increment the progress if the message has substance
+      if (hasSubstance(inputMessage)) {
+        // Increment the completed exchanges count
+        const newExchangeCount = Math.min(completedExchanges + 1, totalRequiredExchanges);
+        setCompletedExchanges(newExchangeCount);
+        
+        // Mark as complete if reached required exchanges
+        if (newExchangeCount >= totalRequiredExchanges) {
+          setIsAssessmentComplete(true);
+        }
+        
+        console.log("Message has substance - progress updated!");
+      } else {
+        console.log("Message lacks substance - progress not updated");
       }
       
       sendMessage(inputMessage);
