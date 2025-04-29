@@ -172,12 +172,18 @@ export default function HighBotWithArticleScreen({
             <h2 className="font-semibold text-lg text-gray-800">Article</h2>
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-240px)] md:h-[calc(100vh-210px)]">
-            <iframe 
-              src={articleUrl} 
-              title="United States v. Nixon Article"
-              className="w-full h-full border-0"
-              sandbox="allow-same-origin allow-scripts"
-            />
+            <div className="article-content prose max-w-none">
+              <h1>United States v. Nixon: A Case Study in Checks and Balances</h1>
+
+              <h2>Background</h2>
+              <p>In the early 1970s, a major political scandal known as the Watergate scandal rocked the United States. During the 1972 presidential election, operatives connected to President Richard Nixon's re-election campaign were caught breaking into the Democratic Party's headquarters at the Watergate building. Investigators uncovered efforts to cover up the break-in, leading to questions about how far the wrongdoing reached. As the investigation moved forward, it became clear that secret recordings of conversations inside the White House might contain crucial evidence.</p>
+
+              <h2>The Case</h2>
+              <p>A special prosecutor investigating the scandal demanded access to the White House tapes. President Nixon refused, claiming "executive privilege"—the idea that the President could withhold certain information to protect the confidentiality of internal discussions. Nixon argued that turning over the tapes would weaken the Presidency and violate the separation of powers. The case quickly escalated to the United States Supreme Court, raising critical questions about whether any branch of government could limit the President's power to keep secrets.</p>
+
+              <h2>The Ruling</h2>
+              <p>In 1974, the Supreme Court issued a unanimous decision against President Nixon. The Court ruled that executive privilege is not absolute and cannot be used to block evidence needed for a criminal trial. Nixon was ordered to turn over the tapes. Within days, the tapes revealed serious misconduct, and Nixon resigned from office. The case demonstrated how all three branches—Congress investigating, the Courts ruling, and the President resisting—interacted under the Constitution. It remains a landmark example of how checks and balances work, even at the highest levels of government.</p>
+            </div>
           </div>
         </div>
         
