@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CircularProgressIndicator } from "@/components/ui/progress-indicator";
+// Import Reginald image directly
+import reginaldImage from "../../../public/reginald-worthington.png";
 
 // Add TypeScript declaration for global window property
 declare global {
@@ -196,7 +198,7 @@ export default function AssessmentBotScreen({
         <div className="p-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center">
             <img 
-              src="/reginald-worthington.png" 
+              src={reginaldImage} 
               alt="Reginald Worthington III" 
               className="w-24 h-24 mr-4 border-2 border-gray-300 shadow-sm"
             />
