@@ -282,18 +282,26 @@ export default function DynamicAssistantScreen({
           <div ref={messagesEndRef} />
         </div>
         <div className="p-4 border-t border-gray-200">
-          <form onSubmit={handleSubmit} className="flex items-center gap-2">
-            <Input
+          <form onSubmit={handleSubmit} className="flex items-start gap-2">
+            <AutoResizeTextarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Type your message here..."
               className="flex-grow focus:border-blue-500"
+              maxRows={5}
+              onKeyDown={(e) => {
+                // Submit on Enter key without Shift key
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
             />
             <Button 
               type="submit"
               size="icon"
               disabled={isLoading}
-              className="p-2 bg-blue-500 hover:bg-blue-600 text-white"
+              className="p-2 bg-blue-500 hover:bg-blue-600 text-white mt-1"
             >
               <Send className="h-4 w-4" />
             </Button>
