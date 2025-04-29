@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowRight, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
