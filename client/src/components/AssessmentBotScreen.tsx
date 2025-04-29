@@ -89,9 +89,9 @@ export default function AssessmentBotScreen({
 
   // Function to determine if a message has substance
   const hasSubstance = (message: string): boolean => {
-    // Check for minimum word count (requires at least 8 words)
+    // Check for minimum word count (requires at least 4 words)
     const wordCount = message.split(/\s+/).filter(word => word.length > 0).length;
-    if (wordCount < 8) return false;
+    if (wordCount < 4) return false;
     
     // Check for punctuation (complete sentences)
     const hasPunctuation = /[.?!]/.test(message);
