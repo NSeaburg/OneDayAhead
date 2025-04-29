@@ -4,6 +4,7 @@ import VideoScreen from "@/components/VideoScreen";
 import ArticleChatScreen from "@/components/ArticleChatScreen";
 import AssessmentBotScreen from "@/components/AssessmentBotScreen";
 import DynamicAssistantScreen from "@/components/DynamicAssistantScreen";
+import HighBotWithArticleScreen from "@/components/HighBotWithArticleScreen";
 import FinalBotScreen from "@/components/FinalBotScreen";
 import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
@@ -39,7 +40,12 @@ export default function Home() {
   const [assessmentConversation, setAssessmentConversation] = useState<any[]>([]);
   
   // Store feedback data from N8N
-  const [feedbackData, setFeedbackData] = useState(null);
+  const [feedbackData, setFeedbackData] = useState<{
+    summary?: string;
+    contentKnowledgeScore?: number;
+    writingScore?: number;
+    nextSteps?: string;
+  } | undefined>(undefined);
   
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
@@ -111,6 +117,10 @@ export default function Home() {
     );
   }
 
+  // Check if the assistant ID corresponds to the "High Bot"
+  // You can update this condition based on how you identify the High Bot
+  const isHighBot = dynamicAssistantId?.includes("High") || dynamicAssistantId === "asst_lUweN1vW36yeAORIXCWDopm9";
+
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
       {/* Progress indicator showing current position in the learning flow */}
@@ -180,22 +190,42 @@ export default function Home() {
           />
         </div>
         
-        {/* Dynamic Assistant Screen (4) - Assistant ID determined by N8N */}
+        {/* Dynamic Assistant Screen OR High Bot with Article Side-by-Side (4) */}
         <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
-          <DynamicAssistantScreen 
-            assistantId={dynamicAssistantId || discussionAssistantId} // Fallback to discussion assistant if dynamic ID is not available
-            systemPrompt={config.systemPrompts.dynamic}
-            assessmentThreadId={assessmentThreadId} // Pass assessment thread ID
-            assessmentConversation={assessmentConversation} // Pass assessment conversation
-            onNext={(nextId, feedbackResult) => {
-              if (feedbackResult) {
-                setFeedbackData(feedbackResult);
-                console.log("Feedback data received:", feedbackResult);
-              }
-              goToNextScreen();
-            }} 
-            onPrevious={goToPreviousScreen}
-          />
+          {isHighBot ? (
+            // High Bot with Article side-by-side layout
+            <HighBotWithArticleScreen 
+              assistantId={dynamicAssistantId || discussionAssistantId}
+              systemPrompt={config.systemPrompts.dynamic}
+              articleUrl="/nixon-article.html"
+              assessmentThreadId={assessmentThreadId}
+              assessmentConversation={assessmentConversation}
+              onNext={(nextId, feedbackResult) => {
+                if (feedbackResult) {
+                  setFeedbackData(feedbackResult);
+                  console.log("Feedback data received:", feedbackResult);
+                }
+                goToNextScreen();
+              }}
+              onPrevious={goToPreviousScreen}
+            />
+          ) : (
+            // Regular dynamic assistant screen
+            <DynamicAssistantScreen 
+              assistantId={dynamicAssistantId || discussionAssistantId}
+              systemPrompt={config.systemPrompts.dynamic}
+              assessmentThreadId={assessmentThreadId}
+              assessmentConversation={assessmentConversation}
+              onNext={(nextId, feedbackResult) => {
+                if (feedbackResult) {
+                  setFeedbackData(feedbackResult);
+                  console.log("Feedback data received:", feedbackResult);
+                }
+                goToNextScreen();
+              }}
+              onPrevious={goToPreviousScreen}
+            />
+          )}
         </div>
         
         {/* Final Feedback Bot Screen (5) */}
