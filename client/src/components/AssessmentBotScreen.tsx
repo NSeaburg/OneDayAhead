@@ -7,6 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { CircularProgressIndicator } from "@/components/ui/progress-indicator";
 
 // Add TypeScript declaration for global window property
 declare global {
@@ -40,8 +41,14 @@ export default function AssessmentBotScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
+  const [completedExchanges, setCompletedExchanges] = useState(0);
+  const [showProgressIndicator, setShowProgressIndicator] = useState(false);
+  const [isAssessmentComplete, setIsAssessmentComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // Define total exchanges needed for completion
+  const totalRequiredExchanges = 6;
   
   const { 
     messages, 
@@ -60,6 +67,31 @@ export default function AssessmentBotScreen({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentStreamingMessage]);
+  
+  // Track completed exchanges
+  useEffect(() => {
+    // Check if there are enough messages to form a complete exchange
+    // A complete exchange is a user message followed by an assistant response
+    // We divide by 2 and floor to get the number of complete exchanges
+    const userMessages = messages.filter(msg => msg.role === 'user').length;
+    const assistantMessages = messages.filter(msg => msg.role === 'assistant').length;
+    const exchanges = Math.min(userMessages, assistantMessages) - 1; // Subtract 1 to exclude initial assistant message
+    
+    // Show the progress indicator after the first user message
+    if (userMessages > 0 && !showProgressIndicator) {
+      setShowProgressIndicator(true);
+    }
+    
+    // Update the completed exchanges count
+    if (exchanges > 0) {
+      setCompletedExchanges(exchanges);
+    }
+    
+    // Check if assessment is complete (reached required exchanges)
+    if (exchanges >= totalRequiredExchanges) {
+      setIsAssessmentComplete(true);
+    }
+  }, [messages, showProgressIndicator, totalRequiredExchanges]);
   
   // Expose the assessment data through the window for the next screen
   // This is necessary to pass data between screens
@@ -225,7 +257,18 @@ export default function AssessmentBotScreen({
           </form>
         </div>
       </div>
-      <div className="mt-4 flex justify-between">
+      {/* Progress Indicator */}
+      {showProgressIndicator && (
+        <div className="flex justify-center mt-4 mb-2">
+          <CircularProgressIndicator 
+            currentSteps={completedExchanges}
+            totalSteps={totalRequiredExchanges}
+            showCheckmark={isAssessmentComplete}
+          />
+        </div>
+      )}
+      
+      <div className="mt-2 flex justify-between">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
@@ -240,7 +283,7 @@ export default function AssessmentBotScreen({
         <Button
           onClick={handleNext}
           disabled={isLoading || isSendingToN8N}
-          className="bg-primary hover:bg-primary/90 text-white"
+          className={`${isAssessmentComplete ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-primary/90'} text-white`}
         >
           Next
           <ArrowRight className="ml-2 h-4 w-4" />
