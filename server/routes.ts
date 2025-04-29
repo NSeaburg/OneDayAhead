@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           system: finalSystemPrompt,
           model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
           max_tokens: 4096,
-          temperature: 0.7,
+          temperature: 1.0,
           stream: true
         });
         
@@ -354,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           system: finalSystemPrompt,
           model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
           max_tokens: 4096,
-          temperature: 0.7
+          temperature: 1.0
         });
         
         // Extract the response content
@@ -436,7 +436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const stream = await openai.chat.completions.create({
             model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
             messages: messagesWithSystem,
-            temperature: temperature || 0.7,
+            temperature: temperature || 1.0,
             stream: true,
           });
           
@@ -456,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const response = await openai.chat.completions.create({
             model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
             messages: messagesWithSystem,
-            temperature: temperature || 0.7,
+            temperature: temperature || 1.0,
           });
           
           res.json(response);
