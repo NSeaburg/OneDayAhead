@@ -1,16 +1,19 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Message } from '@/lib/openai';
+import { streamChatCompletionWithClaude } from '@/lib/anthropic';
 
 interface UseStreamingChatProps {
   assistantId?: string;
   systemPrompt?: string;
   initialMessage?: string;
+  useAnthropicForAssessment?: boolean;
 }
 
 export function useStreamingChat({
   assistantId,
   systemPrompt,
   initialMessage,
+  useAnthropicForAssessment = false,
 }: UseStreamingChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,97 +50,142 @@ export function useStreamingChat({
       setIsTyping(true);
       setCurrentStreamingMessage('');
       
-      // Create event source for SSE (Server-Sent Events)
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: messageHistory,
-          systemPrompt,
-          assistantId,
-          stream: true,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Network error: ${response.status}`);
-      }
-      
-      // Handle the streaming response
-      const reader = response.body?.getReader();
-      let partialLine = '';
-      let collectedResponse = '';
-      
-      if (!reader) {
-        throw new Error('Stream reader not available');
-      }
-      
-      // Start showing typing indicator immediately
-      setIsTyping(true);
-      setCurrentStreamingMessage('');
-      
-      while (true) {
-        const { done, value } = await reader.read();
+      // For the assessment bot, use Anthropic Claude directly from browser
+      if (useAnthropicForAssessment) {
+        try {
+          let collectedResponse = '';
+          
+          const result = await streamChatCompletionWithClaude(
+            { 
+              messages: messageHistory,
+              systemPrompt
+            },
+            // Handle each chunk of the stream
+            (chunk) => {
+              collectedResponse += chunk;
+              setCurrentStreamingMessage(collectedResponse);
+            },
+            // Handle completion
+            (fullMessage) => {
+              // Add the complete assistant message
+              const assistantMessage: Message = {
+                role: 'assistant',
+                content: fullMessage,
+              };
+              
+              setMessages(prevMessages => [...prevMessages, assistantMessage]);
+              setIsTyping(false);
+              setCurrentStreamingMessage('');
+            }
+          );
+          
+          if (result.threadId) {
+            setThreadId(result.threadId);
+          }
+          
+          // Return a basic result structure for consistency
+          return { 
+            message: { role: 'assistant', content: collectedResponse },
+            threadId: result.threadId
+          };
+        } catch (error) {
+          console.error('Error with Anthropic API:', error);
+          throw error;
+        }
+      } else {
+        // Use the server-side API for OpenAI streaming (for other assistants)
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: messageHistory,
+            systemPrompt,
+            assistantId,
+            stream: true,
+          }),
+        });
         
-        if (done) {
-          break;
+        if (!response.ok) {
+          throw new Error(`Network error: ${response.status}`);
         }
         
-        // Convert the uint8array to text
-        const text = new TextDecoder().decode(value);
-        const lines = (partialLine + text).split('\n\n');
-        partialLine = lines.pop() || '';
+        // Get the thread ID from the headers
+        const responseThreadId = response.headers.get('X-Thread-Id');
+        if (responseThreadId) {
+          setThreadId(responseThreadId);
+        }
         
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            
-            if (data === '[DONE]') {
-              // Stream is done
-              continue;
-            }
-            
-            try {
-              const parsed = JSON.parse(data);
+        const reader = response.body?.getReader();
+        let partialLine = '';
+        let collectedResponse = '';
+        
+        if (!reader) {
+          throw new Error('Stream reader not available');
+        }
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            break;
+          }
+          
+          // Convert the uint8array to text
+          const text = new TextDecoder().decode(value);
+          const lines = (partialLine + text).split('\n\n');
+          partialLine = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
               
-              if (parsed.error) {
-                setError(parsed.error);
+              if (data === '[DONE]') {
+                // Stream is done
                 continue;
               }
               
-              if (parsed.threadId) {
-                setThreadId(parsed.threadId);
-                continue;
-              }
-              
-              if (parsed.content) {
-                // For token-by-token streaming, handle formatting
-                collectedResponse += parsed.content;
+              try {
+                const parsed = JSON.parse(data);
                 
-                // Update the UI immediately with each token
-                // We preserve the formatting on the client side as well
-                setCurrentStreamingMessage(collectedResponse);
+                if (parsed.error) {
+                  setError(parsed.error);
+                  continue;
+                }
+                
+                if (parsed.threadId) {
+                  setThreadId(parsed.threadId);
+                  continue;
+                }
+                
+                if (parsed.content) {
+                  // For token-by-token streaming, handle formatting
+                  collectedResponse += parsed.content;
+                  
+                  // Update the UI immediately with each token
+                  // We preserve the formatting on the client side as well
+                  setCurrentStreamingMessage(collectedResponse);
+                }
+              } catch (e) {
+                console.error('Error parsing SSE data:', e);
               }
-            } catch (e) {
-              console.error('Error parsing SSE data:', e);
             }
           }
         }
+        
+        // Stream is complete, add the full response to messages
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: collectedResponse
+        };
+        
+        setMessages(prevMessages => [...prevMessages, assistantMessage]);
+        setCurrentStreamingMessage('');
+        setIsTyping(false);
+        
+        return { message: assistantMessage, threadId: responseThreadId || null };
       }
-      
-      // Stream is complete, add the full response to messages
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: collectedResponse
-      };
-      
-      setMessages(prevMessages => [...prevMessages, assistantMessage]);
-      setCurrentStreamingMessage('');
-      setIsTyping(false);
-      
-      return { message: assistantMessage, threadId };
     } catch (err: any) {
       console.error('Error in chat completion:', err);
       setError(err.message || 'Something went wrong');
@@ -146,7 +194,7 @@ export function useStreamingChat({
     } finally {
       setIsLoading(false);
     }
-  }, [messages, systemPrompt, assistantId]);
+  }, [messages, systemPrompt, assistantId, useAnthropicForAssessment]);
 
   return {
     messages,
