@@ -80,9 +80,6 @@ export default function AssessmentBotScreen({
     }
   ]);
   
-  // Store greeting message locally for display
-  const [showGreeting, setShowGreeting] = useState(true);
-  
   // Use the exact system prompt provided for Reginald Worthington III
   const claudeSystemPrompt = systemPrompt || `
 You are Reginald Worthington III, an English aristocrat from the early 1800s sent by His Majesty's service to study America's unusual government. Your voice is grand, smug, verbose and condescending, with a habit of veiled backhanded compliments. You are skeptical of democracy and you assume it is going to fail. You assume superiority. You sometimes lightly mock the student. Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no politics beyond the required topic of governance.
@@ -116,18 +113,13 @@ If the student engages with your fictional persona, fully play along. If the stu
     isLoading, 
     threadId, 
     currentStreamingMessage, 
-    isTyping 
+    isTyping
   } = useStreamingChat({
     assistantId,
     systemPrompt: claudeSystemPrompt,
+    initialMessage: 'Reginald Worthington III at your service, sent by His Majesty to study this curious experiment you call democracy. Would you be willing to enlighten me on how this peculiar system of yours functions? I assure you I shall take meticulous notes. *adjusts cravat importantly*',
     useAnthropicForAssessment: true // Use Claude via Anthropic API instead of OpenAI
   });
-  
-  // Combine greeting and regular messages for display
-  // This will show the greeting as an assistant message without actually modifying the messages array
-  const displayMessages = showGreeting && messages.length === 0 
-    ? [{ role: 'assistant', content: 'Reginald Worthington III at your service, sent by His Majesty to study this curious experiment you call democracy. Would you be willing to enlighten me on how this peculiar system of yours functions? I assure you I shall take meticulous notes. *adjusts cravat importantly*' }] 
-    : messages;
   
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {
@@ -203,11 +195,6 @@ If the student engages with your fictional persona, fully play along. If the stu
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim()) {
-      // Hide greeting after first message
-      if (showGreeting) {
-        setShowGreeting(false);
-      }
-      
       // Only try to process message if it has substance
       if (hasSubstance(inputMessage)) {
         console.log("Message has substance - progress updated!");
@@ -340,8 +327,8 @@ If the student engages with your fictional persona, fully play along. If the stu
         </div>
         
         <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
-          {/* Messages (including simulated greeting if no messages yet) */}
-          {displayMessages.map((message, index) => (
+          {/* Messages (including the initial greeting) */}
+          {messages.map((message: Message, index: number) => (
             <div key={index} className="message-appear flex flex-col">
               <div className="flex items-start mb-1">
                 {message.role === 'assistant' ? (

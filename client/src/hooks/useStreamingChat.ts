@@ -204,5 +204,6 @@ export function useStreamingChat({
     threadId,
     currentStreamingMessage,
     isTyping,
+    setMessages, // Export this for components that need it
   };
 }
