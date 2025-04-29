@@ -24,11 +24,17 @@ declare global {
   }
 }
 
+interface TeachingAssistance {
+  level: 'low' | 'medium' | 'high';
+  systemPrompt: string;
+}
+
 interface DynamicAssistantScreenProps {
   assistantId: string;
   systemPrompt: string;
   assessmentThreadId?: string; // Assessment bot thread ID
   assessmentConversation?: any[]; // Assessment bot conversation
+  teachingAssistance?: TeachingAssistance; // New teaching assistance data from N8N
   onNext: (nextAssistantId?: string, feedbackData?: any) => void;
   onPrevious?: () => void;
 }
@@ -38,6 +44,7 @@ export default function DynamicAssistantScreen({
   systemPrompt,
   assessmentThreadId,
   assessmentConversation,
+  teachingAssistance,
   onNext,
   onPrevious
 }: DynamicAssistantScreenProps) {
@@ -51,10 +58,28 @@ export default function DynamicAssistantScreen({
   // Check if this is using a fallback assistant ID (not starting with "asst_")
   const isUsingFallback = !assistantId.startsWith("asst_");
   
-  // Choose the appropriate initial message based on whether we're using a fallback
-  const initialMessage = isUsingFallback
-    ? "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?"
-    : "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
+  // Get proficiency level from teachingAssistance if available
+  const proficiencyLevel = teachingAssistance?.level || "unknown";
+
+  // Choose the appropriate initial message based on proficiency level and fallback status
+  let initialMessage = "";
+  if (isUsingFallback) {
+    initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?";
+  } else if (proficiencyLevel === "high") {
+    initialMessage = "Hello! I'm your advanced learning guide. Based on your assessment, you've shown a strong grasp of the core concepts. I'll help you explore more complex aspects and nuances of the material. What specific areas would you like to delve deeper into?";
+  } else if (proficiencyLevel === "medium") {
+    initialMessage = "Hello! I'm your learning assistant. Your assessment showed good understanding of the material with a few areas to strengthen. I can help clarify concepts or answer questions about what you've learned. What would you like me to explain or discuss?";
+  } else if (proficiencyLevel === "low") {
+    initialMessage = "Hello! I'm your learning coach. I'll help you build a solid foundation of the material. Let's start with the key concepts and make sure you're comfortable with the basics. What's one thing from the article that you'd like me to explain further?";
+  } else {
+    initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
+  }
+  
+  // Use the teachingAssistance systemPrompt if available, otherwise use the default
+  const activeSystemPrompt = teachingAssistance?.systemPrompt || systemPrompt;
+  
+  // Log which system prompt we're using
+  console.log(`Using ${teachingAssistance ? 'Claude-specific' : 'default'} system prompt for level: ${proficiencyLevel}`);
   
   const { 
     messages, 
@@ -65,8 +90,9 @@ export default function DynamicAssistantScreen({
     isTyping
   } = useStreamingChat({
     assistantId,
-    systemPrompt,
-    initialMessage
+    systemPrompt: activeSystemPrompt,
+    initialMessage,
+    useAnthropicForAssessment: true // Use Claude/Anthropic exclusively
   });
   
   // Scroll to bottom of messages when new messages appear or when typing
@@ -164,20 +190,33 @@ export default function DynamicAssistantScreen({
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Specialized Guidance</h1>
       <div className="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
         <div className="p-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="font-semibold text-lg text-gray-800">Dynamic Assistant</h2>
-          {isUsingFallback ? (
-            <div className="mt-1">
-              <p className="text-sm text-amber-600 font-medium">
-                Using fallback assistant (Invalid assistant ID format)
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                ID: {assistantId.length > 20 ? `${assistantId.substring(0, 20)}...` : assistantId}
+          <h2 className="font-semibold text-lg text-gray-800">
+            {proficiencyLevel === "high" ? "Advanced Learning Guide" :
+             proficiencyLevel === "medium" ? "Intermediate Learning Assistant" :
+             proficiencyLevel === "low" ? "Learning Coach" : "Dynamic Assistant"}
+          </h2>
+          
+          {proficiencyLevel !== "unknown" && (
+            <div className="flex items-center mt-1">
+              <div className={`w-2 h-2 rounded-full mr-2 ${
+                proficiencyLevel === "high" ? "bg-green-500" :
+                proficiencyLevel === "medium" ? "bg-blue-500" :
+                proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
+              }`}></div>
+              <p className="text-sm text-gray-600">
+                {proficiencyLevel === "high" ? "Advanced level assistance" :
+                 proficiencyLevel === "medium" ? "Intermediate level assistance" :
+                 proficiencyLevel === "low" ? "Foundational level assistance" : "Standard assistance"}
               </p>
             </div>
-          ) : (
-            <p className="text-sm text-gray-600 mt-1">
-              Assistant ID: {assistantId.substring(0, 15)}...
-            </p>
+          )}
+          
+          {isUsingFallback && (
+            <div className="mt-1">
+              <p className="text-sm text-amber-600 font-medium">
+                Using fallback assistant (technical issue)
+              </p>
+            </div>
           )}
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">

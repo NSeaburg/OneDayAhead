@@ -39,6 +39,13 @@ export default function Home() {
   const [assessmentThreadId, setAssessmentThreadId] = useState<string>("");
   const [assessmentConversation, setAssessmentConversation] = useState<any[]>([]);
   
+  // Teaching assistance data from N8N (Claude-specific)
+  interface TeachingAssistance {
+    level: 'low' | 'medium' | 'high';
+    systemPrompt: string;
+  }
+  const [teachingAssistance, setTeachingAssistance] = useState<TeachingAssistance | undefined>(undefined);
+  
   // Store feedback data from N8N
   const [feedbackData, setFeedbackData] = useState<{
     summary?: string;
