@@ -73,7 +73,7 @@ export const createChatCompletionWithClaude = async (
 };
 
 /**
- * Stream chat completion using Anthropic's Claude API
+ * Stream chat completion using Anthropic's Claude API (via server endpoint)
  */
 export const streamChatCompletionWithClaude = async (
   request: { messages: Message[], systemPrompt?: string },
@@ -81,42 +81,80 @@ export const streamChatCompletionWithClaude = async (
   onComplete: (fullMessage: string) => void
 ): Promise<{ threadId: string }> => {
   try {
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+    // Connect to the server-side Claude API endpoint
+    const response = await fetch('/api/claude-chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: request.messages,
+        systemPrompt: request.systemPrompt,
+        stream: true,
+      }),
     });
-
-    const anthropicRequest = convertToAnthropicMessages(request.messages, request.systemPrompt);
     
-    // Collect the full message
+    if (!response.ok) {
+      throw new Error(`Network error: ${response.status}`);
+    }
+    
+    // Get the thread ID from the headers
+    const responseThreadId = response.headers.get('X-Thread-Id');
+    let threadId = responseThreadId || 'claude-session-' + Date.now();
+    
+    const reader = response.body?.getReader();
+    let partialLine = '';
     let fullMessage = '';
-    let messageId = '';
     
-    // Make the streaming API call to Anthropic
-    const stream = await anthropic.messages.create({
-      messages: anthropicRequest.messages,
-      system: anthropicRequest.system,
-      model: anthropicRequest.model,
-      max_tokens: anthropicRequest.max_tokens,
-      temperature: anthropicRequest.temperature,
-      stream: true,
-    });
+    if (!reader) {
+      throw new Error('Stream reader not available');
+    }
     
-    // Process the stream
-    for await (const chunk of stream) {
-      // Store the message ID from the first chunk if available
-      if (!messageId && 'message_id' in chunk && typeof chunk.message_id === 'string') {
-        messageId = chunk.message_id;
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) {
+        break;
       }
       
-      // Handle content block deltas that contain text
-      if (chunk.type === 'content_block_delta' && 
-          'delta' in chunk && 
-          'text' in chunk.delta && 
-          typeof chunk.delta.text === 'string') {
-        
-        const textChunk = chunk.delta.text;
-        fullMessage += textChunk;
-        onMessageChunk(textChunk);
+      // Convert the uint8array to text
+      const text = new TextDecoder().decode(value);
+      const lines = (partialLine + text).split('\n\n');
+      partialLine = lines.pop() || '';
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          
+          if (data === '[DONE]') {
+            // Stream is done
+            continue;
+          }
+          
+          try {
+            const parsed = JSON.parse(data);
+            
+            if (parsed.error) {
+              console.error('Error in Claude API stream:', parsed.error);
+              continue;
+            }
+            
+            if (parsed.threadId) {
+              threadId = parsed.threadId;
+              continue;
+            }
+            
+            if (parsed.content) {
+              // For token-by-token streaming, handle formatting
+              fullMessage += parsed.content;
+              
+              // Call the chunk handler with each piece
+              onMessageChunk(parsed.content);
+            }
+          } catch (e) {
+            console.error('Error parsing SSE data:', e);
+          }
+        }
       }
     }
     
@@ -124,7 +162,7 @@ export const streamChatCompletionWithClaude = async (
     onComplete(fullMessage);
     
     return {
-      threadId: messageId || 'claude-session-' + Date.now()
+      threadId: threadId
     };
   } catch (error) {
     console.error('Error streaming from Anthropic API:', error);

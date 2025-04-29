@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import axios from "axios";
 import path from "path";
 import fs from "fs";
@@ -9,6 +10,11 @@ import fs from "fs";
 // Initialize OpenAI client
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY 
+});
+
+// Initialize Anthropic client
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY
 });
 
 // Default Assistant IDs
@@ -275,6 +281,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Anthropic Claude API endpoint with streaming support
+  app.post("/api/claude-chat", async (req, res) => {
+    try {
+      const { messages, systemPrompt, stream = false } = req.body;
+      
+      // Set up proper headers if streaming
+      if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+      }
+      
+      // Create a message ID to use as a thread ID
+      const messageId = `claude-${Date.now()}`;
+      
+      // Set thread ID in response headers for client reference
+      res.setHeader('X-Thread-Id', messageId);
+      
+      // Process the messages and system prompt for Claude format
+      // Filter out system messages as Anthropic handles them separately
+      const anthropicMessages = messages
+        .filter((msg: any) => msg.role !== 'system')
+        .map((msg: any) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
+      
+      // Get the system prompt (either from messages or directly provided)
+      const systemMessage = messages.find((msg: any) => msg.role === 'system');
+      const finalSystemPrompt = systemMessage?.content || systemPrompt || '';
+      
+      // Handle streaming response
+      if (stream) {
+        // Create stream with Anthropic
+        const stream = await anthropic.messages.create({
+          messages: anthropicMessages,
+          system: finalSystemPrompt,
+          model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
+          max_tokens: 4096,
+          temperature: 0.7,
+          stream: true
+        });
+        
+        // Function to send a streaming event to the client
+        const sendEvent = (event: string, data: any) => {
+          res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+        
+        // Send the thread ID as the first event
+        sendEvent('threadId', { threadId: messageId });
+        
+        // Process each chunk
+        for await (const chunk of stream) {
+          if (chunk.type === 'content_block_delta' && 
+              'delta' in chunk && 
+              'text' in chunk.delta && 
+              typeof chunk.delta.text === 'string') {
+            
+            // Send the content chunk
+            sendEvent('content', { content: chunk.delta.text });
+          }
+        }
+        
+        // Signal the end of the stream
+        sendEvent('done', { content: '[DONE]' });
+        res.end();
+      } else {
+        // Non-streaming response
+        const completion = await anthropic.messages.create({
+          messages: anthropicMessages,
+          system: finalSystemPrompt,
+          model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
+          max_tokens: 4096,
+          temperature: 0.7
+        });
+        
+        // Extract the response content
+        const content = completion.content[0].type === 'text' 
+          ? completion.content[0].text 
+          : '';
+        
+        // Return response in OpenAI-compatible format for easy integration
+        return res.json({
+          choices: [
+            {
+              message: {
+                content,
+                role: 'assistant'
+              }
+            }
+          ],
+          threadId: messageId
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in Claude API call:', error);
+      res.status(500).json({ error: error.message || 'An error occurred with the Claude API' });
+    }
+  });
+  
   // OpenAI chat completions endpoint with streaming support
   app.post("/api/chat", async (req, res) => {
     try {
