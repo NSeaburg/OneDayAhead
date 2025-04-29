@@ -177,9 +177,9 @@ export default function AssessmentBotScreen({
         <div className="p-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center">
             <img 
-              src="https://drive.google.com/uc?export=download&id=1VvNnJZPynv6j0kiBqPqUqNNFFmLmIEWz" 
+              src="https://drive.google.com/uc?export=view&id=1VvNnJZPynv6j0kiBqPqUqNNFFmLmIEWz" 
               alt="Reginald Worthington III" 
-              className="w-32 h-32 mr-4"
+              className="w-24 h-24 mr-4"
             />
             <div>
               <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
