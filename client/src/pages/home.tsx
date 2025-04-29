@@ -50,6 +50,19 @@ export default function Home() {
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
   
+  // List of High Bot assistant IDs (move this outside hooks)
+  const highBotAssistantIds = [
+    "asst_lUweN1vW36yeAORIXCWDopm9",  // Original High Bot ID
+    "asst_87DSLhfnAK7elvmsiL0aTPH4"    // Additional High Bot ID specified by user
+  ];
+  
+  // Check if the current assistant ID is a High Bot
+  // (Using a calculated value rather than a hook to avoid hook order issues)
+  const isHighBot = dynamicAssistantId !== null && (
+    dynamicAssistantId.includes("High") || 
+    highBotAssistantIds.includes(dynamicAssistantId)
+  );
+  
   // Send screen change notification whenever the current screen changes
   useEffect(() => {
     // Get the screen name based on index
@@ -64,6 +77,19 @@ export default function Home() {
       notifyCourseCompleted(feedbackData);
     }
   }, [currentScreen, feedbackData]);
+  
+  // Debug logging when we enter screen 4
+  useEffect(() => {
+    if (currentScreen === 4) {
+      console.log("Teaching screen loaded with assistant ID:", dynamicAssistantId);
+      console.log("Using High Bot layout:", isHighBot ? "YES" : "NO");
+      if (isHighBot) {
+        console.log("Side-by-side article layout will be shown");
+      } else {
+        console.log("Regular teaching bot layout will be shown");
+      }
+    }
+  }, [currentScreen, dynamicAssistantId, isHighBot]);
   
   // Function to navigate to the next screen
   const goToNextScreen = () => {
@@ -117,10 +143,6 @@ export default function Home() {
     );
   }
 
-  // Check if the assistant ID corresponds to the "High Bot"
-  // You can update this condition based on how you identify the High Bot
-  const isHighBot = dynamicAssistantId?.includes("High") || dynamicAssistantId === "asst_lUweN1vW36yeAORIXCWDopm9";
-
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
       {/* Progress indicator showing current position in the learning flow */}
@@ -169,6 +191,12 @@ export default function Home() {
               if (nextAssistantId) {
                 setDynamicAssistantId(nextAssistantId);
                 console.log("Set dynamic assistant ID:", nextAssistantId);
+                
+                // Check if this is a High Bot ID
+                const highBotIds = ["asst_lUweN1vW36yeAORIXCWDopm9", "asst_87DSLhfnAK7elvmsiL0aTPH4"];
+                if (highBotIds.includes(nextAssistantId) || nextAssistantId?.includes("High")) {
+                  console.log("High Bot detected - will use side-by-side layout");
+                }
               } else {
                 console.log("No nextAssistantId provided, using fallback");
               }
