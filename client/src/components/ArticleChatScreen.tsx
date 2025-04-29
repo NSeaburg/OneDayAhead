@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send, FileDown } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, FileDown, MessageSquare, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import html2pdf from 'html2pdf.js';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ArticleChatScreenProps {
   articleContent: string;
@@ -23,6 +24,8 @@ export default function ArticleChatScreen({
   onPrevious
 }: ArticleChatScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isBubbleDismissed, setIsBubbleDismissed] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { 
@@ -192,11 +195,17 @@ export default function ArticleChatScreen({
   `;
 
   return (
-    <div className="flex flex-col p-4 md:p-6 h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Article & Discussion</h1>
+    <div className="flex flex-col p-4 md:p-6 h-full relative">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+        {isChatOpen ? "Article & Discussion" : "Article"}
+      </h1>
       <div className="flex-grow flex flex-col md:flex-row gap-4 md:gap-6">
-        {/* Article Section - Now showing HTML content */}
-        <div className="md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+        {/* Article Section */}
+        <motion.div 
+          className={`${isChatOpen ? 'md:w-1/2' : 'w-full'} bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
+          layout
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
           <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="font-semibold text-lg text-gray-800">Learning Material</h2>
             <Button 
@@ -215,94 +224,142 @@ export default function ArticleChatScreen({
               dangerouslySetInnerHTML={{ __html: articleContent }}
             />
           </div>
-        </div>
+        </motion.div>
         
-        {/* Chat Section */}
-        <div className="md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
-          </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
-            {/* Regular messages */}
-            {messages.map((message, index) => (
-              <div key={index} className="message-appear flex flex-col">
-                <div className="flex items-start mb-1">
-                  <div className={`w-8 h-8 rounded-full ${
-                    message.role === 'assistant' 
-                      ? 'bg-primary-100 text-primary-600' 
-                      : 'bg-gray-200 text-gray-600'
-                  } flex items-center justify-center mr-2 flex-shrink-0`}>
-                    <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
-                  </div>
-                  <span className="text-xs text-gray-500 mt-1">
-                    {message.role === 'assistant' ? 'Assistant' : 'You'}
-                  </span>
-                </div>
-                <div className={`ml-10 ${
-                  message.role === 'assistant' 
-                    ? 'bg-gray-100' 
-                    : 'bg-white border border-gray-200'
-                } rounded-lg p-3 text-gray-700`}>
-                  <div className="typing-text markdown-content">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                  </div>
-                </div>
+        {/* Chat Section - Only visible when chat is open */}
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div 
+              className="md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col"
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
               </div>
-            ))}
-            
-            {/* Streaming message - plain text display with no animations */}
-            {isTyping && currentStreamingMessage && (
-              <div className="flex flex-col">
-                <div className="flex items-start mb-1">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-2 flex-shrink-0">
-                    <i className="ri-robot-line"></i>
+              <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
+                {/* Regular messages */}
+                {messages.map((message, index) => (
+                  <div key={index} className="message-appear flex flex-col">
+                    <div className="flex items-start mb-1">
+                      <div className={`w-8 h-8 rounded-full ${
+                        message.role === 'assistant' 
+                          ? 'bg-primary-100 text-primary-600' 
+                          : 'bg-gray-200 text-gray-600'
+                      } flex items-center justify-center mr-2 flex-shrink-0 text-xs font-medium`}>
+                        {message.role === 'assistant' ? 
+                          <MessageSquare className="h-4 w-4" /> : 
+                          "You"}
+                      </div>
+                      <span className="text-xs text-gray-500 mt-1">
+                        {message.role === 'assistant' ? 'Assistant' : 'You'}
+                      </span>
+                    </div>
+                    <div className={`ml-10 ${
+                      message.role === 'assistant' 
+                        ? 'bg-gray-100' 
+                        : 'bg-white border border-gray-200'
+                    } rounded-lg p-3 text-gray-700`}>
+                      <div className="typing-text markdown-content">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-500 mt-1">
-                    Assistant
-                  </span>
-                </div>
-                <div className="ml-10 bg-gray-100 rounded-lg p-3 text-gray-700">
-                  <div className="typing-text markdown-content">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamingMessage}</ReactMarkdown>
+                ))}
+                
+                {/* Streaming message */}
+                {isTyping && currentStreamingMessage && (
+                  <div className="flex flex-col">
+                    <div className="flex items-start mb-1">
+                      <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mr-2 flex-shrink-0 text-xs font-medium">
+                        <MessageSquare className="h-4 w-4" />
+                      </div>
+                      <span className="text-xs text-gray-500 mt-1">
+                        Assistant
+                      </span>
+                    </div>
+                    <div className="ml-10 bg-gray-100 rounded-lg p-3 text-gray-700">
+                      <div className="typing-text markdown-content">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamingMessage}</ReactMarkdown>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
+                
+                {/* Initial loading indicator */}
+                {isLoading && !currentStreamingMessage && (
+                  <div className="flex items-center justify-center p-4">
+                    <div className="animate-pulse flex space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Reference for scrolling to bottom */}
+                <div ref={messagesEndRef} />
               </div>
-            )}
-            
-            {/* Initial loading indicator */}
-            {isLoading && !currentStreamingMessage && (
-              <div className="flex items-center justify-center p-4">
-                <div className="animate-pulse flex space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                </div>
+              <div className="p-4 border-t border-gray-200">
+                <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                  <Input
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Type your message here..."
+                    className="flex-grow focus:border-primary-500"
+                    autoFocus
+                  />
+                  <Button 
+                    type="submit" 
+                    size="icon"
+                    disabled={isLoading}
+                    className="p-2 bg-primary hover:bg-primary/90 text-white"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </form>
               </div>
-            )}
-            
-            {/* Reference for scrolling to bottom */}
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="p-4 border-t border-gray-200">
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type your message here..."
-                className="flex-grow focus:border-primary-500"
-              />
-              <Button 
-                type="submit" 
-                size="icon"
-                disabled={isLoading}
-                className="p-2 bg-primary hover:bg-primary/90 text-white"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* Floating chat bubble - only visible when chat is not open and bubble is not dismissed */}
+      <AnimatePresence>
+        {!isChatOpen && !isBubbleDismissed && (
+          <motion.div 
+            className="fixed bottom-6 right-6 z-10"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          >
+            <div className="relative">
+              <motion.button
+                className="flex items-center gap-2 px-5 py-4 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors"
+                onClick={() => setIsChatOpen(true)}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span className="font-medium">Want to chat with this article?</span>
+              </motion.button>
+              <button
+                className="absolute -top-2 -right-2 rounded-full bg-white shadow-md p-1 hover:bg-gray-100"
+                onClick={() => setIsBubbleDismissed(true)}
+              >
+                <X className="h-4 w-4 text-gray-600" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Navigation buttons */}
       <div className="mt-4 flex justify-between">
         {onPrevious ? (
           <Button
