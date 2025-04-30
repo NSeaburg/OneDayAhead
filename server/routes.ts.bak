@@ -135,84 +135,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Course name sent to N8N:", courseName || "Three Branches of Government");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         
-        // Log the full response data for debugging
-        console.log("N8N complete response:", JSON.stringify(response.data, null, 2));
+        // Log the response data to help with debugging
+        console.log("N8N response data format:", typeof response.data);
+        console.log("N8N raw response:", JSON.stringify(response.data, null, 2));
         
-        // COMPLETELY SIMPLIFIED APPROACH: Directly look for level and systemPrompt anywhere in the response
+        // If data is in JSON format, check for various expected formats
         const responseData = response.data;
         
-        // If the response is an array, extract the first item
-        let dataToCheck = responseData;
+        // Check for webhook data array format (preferred format) first
         if (Array.isArray(responseData) && responseData.length > 0) {
-          dataToCheck = responseData[0];
-          console.log("Extracted first item from array response");
+          console.log("N8N returned an array response with", responseData.length, "items");
+          console.log("First item:", JSON.stringify(responseData[0], null, 2));
+          
+          // Return the array directly so client can process it
+          return res.json({
+            success: true,
+            message: "Assessment data sent to N8N successfully",
+            webhookData: responseData // Include the webhook data array in the response
+          });
         }
         
-        // Now handle the direct object case (which we're seeing in production)
-        let level = null;
-        let systemPrompt = null;
+        // Check for webhookData property (might be nested in response)
+        if (responseData && responseData.webhookData && Array.isArray(responseData.webhookData)) {
+          console.log("N8N returned a nested webhookData array with", responseData.webhookData.length, "items");
+          console.log("First item:", JSON.stringify(responseData.webhookData[0], null, 2));
+          
+          return res.json({
+            success: true,
+            message: "Assessment data sent to N8N successfully",
+            webhookData: responseData.webhookData
+          });
+        }
         
-        // Try to extract level and systemPrompt from wherever they might be
-        if (dataToCheck && typeof dataToCheck === 'object') {
-          if (dataToCheck.level && dataToCheck.systemPrompt) {
-            level = dataToCheck.level;
-            systemPrompt = dataToCheck.systemPrompt;
-            console.log("Found level and systemPrompt directly in the response object");
-          } else if (dataToCheck.teachingAssistance && dataToCheck.teachingAssistance.level && dataToCheck.teachingAssistance.systemPrompt) {
-            level = dataToCheck.teachingAssistance.level;
-            systemPrompt = dataToCheck.teachingAssistance.systemPrompt;
-            console.log("Found level and systemPrompt in teachingAssistance property");
-          } else if (dataToCheck.assessment && dataToCheck.assessment.level && dataToCheck.assessment.systemPrompt) {
-            level = dataToCheck.assessment.level;
-            systemPrompt = dataToCheck.assessment.systemPrompt;
-            console.log("Found level and systemPrompt in assessment property");
-          } else if (dataToCheck.immediateResult && dataToCheck.immediateResult.level && dataToCheck.immediateResult.systemPrompt) {
-            level = dataToCheck.immediateResult.level;
-            systemPrompt = dataToCheck.immediateResult.systemPrompt;
-            console.log("Found level and systemPrompt in immediateResult property");
+        // Check for immediateResult property (another possible format)
+        if (responseData && responseData.immediateResult) {
+          console.log("N8N returned an immediateResult:", typeof responseData.immediateResult);
+          console.log("immediateResult:", JSON.stringify(responseData.immediateResult, null, 2));
+          
+          // If immediateResult contains level and systemPrompt, return it as teachingAssistance
+          if (responseData.immediateResult.level && responseData.immediateResult.systemPrompt) {
+            return res.json({
+              success: true,
+              message: "Assessment data sent to N8N successfully",
+              teachingAssistance: responseData.immediateResult
+            });
           }
         }
         
-        // If we found both level and systemPrompt, return them
-        if (level && systemPrompt) {
-          console.log(`Found teaching assistance with level: ${level}`);
-          console.log(`System prompt length: ${systemPrompt.length} characters`);
+        // CRITICAL FIX: Handle direct format where the response itself has level and systemPrompt
+        // This addresses the case where N8N returns a direct object with level and systemPrompt
+        if (responseData && responseData.level && responseData.systemPrompt) {
+          console.log("N8N returned a direct object with level and systemPrompt");
+          console.log("Level:", responseData.level);
+          console.log("System prompt length:", responseData.systemPrompt.length, "characters");
+          console.log("About to return teachingAssistance - this should prevent reaching the nextAssistantId response");
           
           const responseObject = {
             success: true,
             message: "Assessment data sent to N8N successfully",
             teachingAssistance: {
-              level: level as 'low' | 'medium' | 'high',
-              systemPrompt: systemPrompt
+              level: responseData.level as 'low' | 'medium' | 'high',
+              systemPrompt: responseData.systemPrompt
             }
           };
           
-          // Send the response with the teaching assistance data
-          console.log("Sending complete response with teachingAssistance");
-          return res.json(responseObject);
+          console.log("Sending response to client:", JSON.stringify(responseObject, null, 2));
+          
+          // This should be the only response sent back to the client when we find level and systemPrompt
+          const result = res.json(responseObject);
+          console.log("Response sent, preventing further execution");
+          return result;
         }
         
-        // If we couldn't find level and systemPrompt, check for nextAssistantId as a fallback
-        console.log("Could not find level and systemPrompt in response, checking for nextAssistantId");
-        let nextAssistantId = null;
-        
-        if (dataToCheck && dataToCheck.nextAssistantId) {
-          nextAssistantId = dataToCheck.nextAssistantId;
-        }
+        // Otherwise check for legacy nextAssistantId format
+        let nextAssistantId = responseData?.nextAssistantId;
         
         // Validate that the nextAssistantId is a valid OpenAI assistant ID format
+        // Valid assistant IDs start with "asst_" and only contain letters, numbers, underscores, or dashes
         const validAssistantIdPattern = /^asst_[a-zA-Z0-9_-]+$/;
-        if (nextAssistantId && !validAssistantIdPattern.test(nextAssistantId)) {
+        
+        if (!nextAssistantId) {
+          console.log("Missing assistant ID in N8N response");
+          nextAssistantId = null; // Set to null to trigger fallback
+        } else if (nextAssistantId.includes("{{$json") || !validAssistantIdPattern.test(nextAssistantId)) {
           console.log("Invalid assistant ID format received:", nextAssistantId);
           nextAssistantId = null; // Set to null to trigger fallback
+        } else {
+          console.log("Valid assistant ID received from N8N:", nextAssistantId);
         }
         
-        // Respond with nextAssistantId (or null) if we didn't find teachingAssistance data
-        console.log("Falling back to nextAssistantId:", nextAssistantId || "null");
+        console.log("Next Assistant ID received from N8N:", nextAssistantId || "None provided (or invalid format)");
+        
         return res.json({ 
           success: true, 
           message: "Assessment data sent to N8N successfully",
-          nextAssistantId: nextAssistantId
+          nextAssistantId: nextAssistantId // Include the next assistant ID in the response
         });
       } catch (axiosError: any) {
         // Handle N8N webhook errors but allow the application to continue
