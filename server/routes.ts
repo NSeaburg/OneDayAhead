@@ -104,8 +104,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get N8N webhook URL for assessment
       if (!ASSESSMENT_WEBHOOK_URL) {
         console.warn("N8N_WEBHOOK_URL environment variable not set");
-        return res.status(500).json({ 
-          error: "N8N webhook URL not configured" 
+        // Still return a success response with a fallback to prevent blocking the UI
+        return res.json({ 
+          success: false, 
+          message: "N8N webhook URL not configured, continuing with fallback",
+          nextAssistantId: null // Use fallback assistant
         });
       }
       
@@ -213,8 +216,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get N8N webhook URL for dynamic assistant
       if (!DYNAMIC_ASSISTANT_WEBHOOK_URL) {
         console.warn("N8N_DYNAMIC_WEBHOOK_URL environment variable not set");
-        return res.status(500).json({ 
-          error: "Dynamic assistant webhook URL not configured" 
+        // Still return a success response with a warning to prevent blocking the UI
+        return res.json({ 
+          success: false, 
+          message: "Dynamic assistant webhook URL not configured, continuing anyway",
+          feedbackData: {
+            summary: "You've completed this learning module successfully!",
+            contentKnowledgeScore: 0,
+            writingScore: 0,
+            nextSteps: "Continue exploring more topics to expand your knowledge."
+          }
         });
       }
       
@@ -290,21 +301,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Anthropic Claude API endpoint with streaming support
   app.post("/api/claude-chat", async (req, res) => {
+    // Flag to track if headers have been sent to avoid errors
+    let headersSent = false;
+    let responseEnded = false;
+    
     try {
       const { messages, systemPrompt, stream = false } = req.body;
       
-      // Set up proper headers if streaming
+      // Set up proper headers for streaming
       if (stream) {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
+        try {
+          res.setHeader('Content-Type', 'text/event-stream');
+          res.setHeader('Cache-Control', 'no-cache');
+          res.setHeader('Connection', 'keep-alive');
+          headersSent = true;
+        } catch (headerError) {
+          console.error('Error setting headers:', headerError);
+          // If headers were already sent, we'll handle this gracefully
+          headersSent = true;
+        }
       }
       
       // Create a message ID to use as a thread ID
       const messageId = `claude-${Date.now()}`;
       
-      // Set thread ID in response headers for client reference
-      res.setHeader('X-Thread-Id', messageId);
+      // Set thread ID in response headers if possible
+      if (!headersSent) {
+        try {
+          res.setHeader('X-Thread-Id', messageId);
+        } catch (headerError) {
+          console.error('Error setting thread ID header:', headerError);
+          // Headers already sent, continue without setting this header
+          headersSent = true;
+        }
+      }
       
       // Process the messages and system prompt for Claude format
       // Filter out system messages as Anthropic handles them separately
@@ -323,70 +353,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle streaming response
       if (stream) {
-        // Create stream with Anthropic
-        const stream = await anthropic.messages.create({
-          messages: anthropicMessages,
-          system: finalSystemPrompt,
-          model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
-          max_tokens: 4096,
-          temperature: 1.0,
-          stream: true
-        });
-        
-        // Function to send a streaming event to the client
-        const sendEvent = (event: string, data: any) => {
-          res.write(`data: ${JSON.stringify(data)}\n\n`);
-        };
-        
-        // Send the thread ID as the first event
-        sendEvent('threadId', { threadId: messageId });
-        
-        // Process each chunk
-        for await (const chunk of stream) {
-          if (chunk.type === 'content_block_delta' && 
-              'delta' in chunk && 
-              'text' in chunk.delta && 
-              typeof chunk.delta.text === 'string') {
+        // Defensive stream handler
+        const handleStreamSafely = async () => {
+          try {
+            // Create stream with Anthropic
+            const stream = await anthropic.messages.create({
+              messages: anthropicMessages,
+              system: finalSystemPrompt,
+              model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
+              max_tokens: 4096,
+              temperature: 1.0,
+              stream: true
+            });
             
-            // Send the content chunk
-            sendEvent('content', { content: chunk.delta.text });
-          }
-        }
-        
-        // Signal the end of the stream without including content
-        res.write('data: [DONE]\n\n');
-        res.end();
-      } else {
-        // Non-streaming response
-        const completion = await anthropic.messages.create({
-          messages: anthropicMessages,
-          system: finalSystemPrompt,
-          model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
-          max_tokens: 4096,
-          temperature: 1.0
-        });
-        
-        // Extract the response content
-        const content = completion.content[0].type === 'text' 
-          ? completion.content[0].text 
-          : '';
-        
-        // Return response in OpenAI-compatible format for easy integration
-        return res.json({
-          choices: [
-            {
-              message: {
-                content,
-                role: 'assistant'
+            // Track response status
+            responseEnded = !!res.writableEnded;
+            
+            // Set up early termination handling
+            res.on('close', () => {
+              responseEnded = true;
+              if (!res.writableEnded) {
+                try {
+                  res.end();
+                } catch (endError) {
+                  console.error('Error ending response on close:', endError);
+                }
+              }
+            });
+            
+            // Function to safely send events
+            const sendEvent = (event: string, data: any) => {
+              if (responseEnded || res.writableEnded) return;
+              try {
+                res.write(`data: ${JSON.stringify(data)}\n\n`);
+              } catch (writeError) {
+                console.error('Error writing response chunk:', writeError);
+                responseEnded = true;
+              }
+            };
+            
+            // Send the thread ID as the first event
+            sendEvent('threadId', { threadId: messageId });
+            
+            // Process each chunk safely
+            for await (const chunk of stream) {
+              if (responseEnded || res.writableEnded) break;
+              
+              try {
+                if (chunk.type === 'content_block_delta' && 
+                    'delta' in chunk && 
+                    'text' in chunk.delta && 
+                    typeof chunk.delta.text === 'string') {
+                  
+                  // Send the content chunk
+                  sendEvent('content', { content: chunk.delta.text });
+                }
+              } catch (chunkError) {
+                console.error('Error processing chunk:', chunkError);
+                // Continue with next chunk despite error
               }
             }
-          ],
-          threadId: messageId
-        });
+            
+            // Signal the end of the stream safely
+            if (!responseEnded && !res.writableEnded) {
+              try {
+                res.write('data: [DONE]\n\n');
+                res.end();
+                responseEnded = true;
+              } catch (endError) {
+                console.error('Error ending stream:', endError);
+              }
+            }
+          } catch (streamError: any) {
+            // Handle stream initialization errors
+            console.error('Error during Claude streaming:', streamError);
+            
+            const isOverloaded = streamError.message && 
+                                (streamError.message.includes("overloaded") || 
+                                 streamError.message.includes("Overloaded"));
+            
+            const errorType = isOverloaded ? 'service_overloaded' : 'streaming_error';
+            const errorMessage = isOverloaded ? 
+                               'Claude API is currently overloaded. Please try again in a moment.' :
+                               (streamError.message || 'Error during Claude API streaming');
+            
+            // Safely send error response depending on header state
+            if (!headersSent && !responseEnded && !res.writableEnded) {
+              // If headers not sent, send error response
+              try {
+                res.status(503).json({ 
+                  error: errorType,
+                  message: errorMessage,
+                });
+                responseEnded = true;
+              } catch (jsonError) {
+                console.error('Error sending error response:', jsonError);
+              }
+            } else if (!responseEnded && !res.writableEnded) {
+              // If headers sent but response not ended, send error in SSE format
+              try {
+                res.write(`data: ${JSON.stringify({ error: true, message: errorMessage })}\n\n`);
+                res.write('data: [DONE]\n\n');
+                res.end();
+                responseEnded = true;
+              } catch (sseError) {
+                console.error('Error sending error in SSE format:', sseError);
+              }
+            }
+          }
+        };
+        
+        // Execute the stream handler
+        await handleStreamSafely();
+        
+      } else {
+        // Non-streaming response with defensive handling
+        try {
+          // Attempt to get completion
+          const completion = await anthropic.messages.create({
+            messages: anthropicMessages,
+            system: finalSystemPrompt,
+            model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
+            max_tokens: 4096,
+            temperature: 1.0
+          });
+          
+          // Extract the response content
+          const content = completion.content[0]?.type === 'text' 
+            ? completion.content[0].text 
+            : 'No response content available';
+          
+          // Only attempt to respond if we haven't already
+          if (!responseEnded && !res.writableEnded) {
+            res.json({
+              choices: [
+                {
+                  message: {
+                    content,
+                    role: 'assistant'
+                  }
+                }
+              ],
+              threadId: messageId
+            });
+            responseEnded = true;
+          }
+        } catch (completionError: any) {
+          console.error('Error in Claude API completion call:', completionError);
+          
+          // Only attempt to respond if we haven't already
+          if (!responseEnded && !res.writableEnded) {
+            // Provide a more useful error message for overload
+            const isOverloaded = completionError.message && 
+                                (completionError.message.includes("overloaded") || 
+                                 completionError.message.includes("Overloaded"));
+            
+            res.status(isOverloaded ? 503 : 500).json({ 
+              error: isOverloaded ? 'service_overloaded' : 'api_error',
+              message: isOverloaded ? 
+                      'Claude API is currently overloaded. Please try again in a moment.' :
+                      (completionError.message || 'An error occurred with the Claude API')
+            });
+            responseEnded = true;
+          }
+        }
       }
     } catch (error: any) {
-      console.error('Error in Claude API call:', error);
-      res.status(500).json({ error: error.message || 'An error occurred with the Claude API' });
+      console.error('Unhandled error in Claude API endpoint:', error);
+      
+      // Only attempt to respond if we haven't already
+      if (!responseEnded && !res.writableEnded) {
+        try {
+          // If streaming headers were sent, respond in SSE format
+          if (headersSent) {
+            res.write(`data: ${JSON.stringify({ 
+              error: true, 
+              message: 'An unexpected error occurred with the Claude API' 
+            })}\n\n`);
+            res.write('data: [DONE]\n\n');
+            res.end();
+          } else {
+            // Otherwise send normal JSON error
+            res.status(500).json({ 
+              error: 'unexpected_error',
+              message: error.message || 'An unexpected error occurred with the Claude API' 
+            });
+          }
+        } catch (responseError) {
+          console.error('Failed to send error response:', responseError);
+          // Last resort attempt to end the response
+          try {
+            if (!res.writableEnded) {
+              res.end();
+            }
+          } catch (endError) {
+            console.error('Failed to end response:', endError);
+          }
+        }
+      }
     }
   });
   
