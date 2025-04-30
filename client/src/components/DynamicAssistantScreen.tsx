@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, BookOpen, Lightbulb, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
@@ -8,6 +8,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+// Import placeholder images for the teachers - these will be updated with real images later
+// We'll use placeholders for now until the user provides the actual images
+const mrWhitakerPlaceholder = "https://placehold.co/400x400?text=Mr.Whitaker";
+const mrsBannermanPlaceholder = "https://placehold.co/400x400?text=Mrs.Bannerman";
+const mrsPartonPlaceholder = "https://placehold.co/400x400?text=Mrs.Parton";
 
 // Define global window interface for storing feedback data
 declare global {
@@ -68,11 +74,11 @@ export default function DynamicAssistantScreen({
   if (isUsingFallback) {
     initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?";
   } else if (proficiencyLevel === "high") {
-    initialMessage = "Hello! I'm your advanced learning guide. Based on your assessment, you've shown a strong grasp of the core concepts. I'll help you explore more complex aspects and nuances of the material. What specific areas would you like to delve deeper into?";
+    initialMessage = "Hello! I'm Mrs. Parton, your advanced learning guide. Based on your assessment, you've shown a strong grasp of the core concepts. I'll help you explore more complex aspects and nuances of government systems. What specific areas would you like to delve deeper into?";
   } else if (proficiencyLevel === "medium") {
     initialMessage = "Hello there! I'm Mrs. Bannerman, a retired civics teacher. Your assessment showed good understanding of the material with a few areas we can strengthen together. I've been teaching government concepts for 35 years, and I'd be happy to help clarify or expand on what you've learned. What would you like me to explain or discuss?";
   } else if (proficiencyLevel === "low") {
-    initialMessage = "Hello! I'm your learning coach. I'll help you build a solid foundation of the material. Let's start with the key concepts and make sure you're comfortable with the basics. What's one thing from the article that you'd like me to explain further?";
+    initialMessage = "Hello! I'm Mr. Whitaker, a retired civics teacher. I'll help you build a solid foundation of government concepts. Let's start with the key ideas and make sure you're comfortable with the basics. What's one thing from the article that you'd like me to explain further?";
   } else {
     initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
   }
@@ -202,130 +208,243 @@ export default function DynamicAssistantScreen({
     }
   };
   
+  // Helper function to get the correct teacher image based on proficiency level
+  const getTeacherImage = () => {
+    if (proficiencyLevel === "high") return mrsPartonPlaceholder;
+    if (proficiencyLevel === "medium") return mrsBannermanPlaceholder;
+    if (proficiencyLevel === "low") return mrWhitakerPlaceholder;
+    return mrsBannermanPlaceholder; // Default fallback
+  };
+
+  // Helper function to get the teacher name based on proficiency level
+  const getTeacherName = () => {
+    if (proficiencyLevel === "high") return "Mrs. Parton";
+    if (proficiencyLevel === "medium") return "Mrs. Bannerman";
+    if (proficiencyLevel === "low") return "Mr. Whitaker";
+    return "Learning Assistant"; // Default fallback
+  };
+
+  // Helper function to get teacher title/role based on proficiency level
+  const getTeacherTitle = () => {
+    if (proficiencyLevel === "high") return "Advanced Civics Educator";
+    if (proficiencyLevel === "medium") return "Retired Civics Teacher";
+    if (proficiencyLevel === "low") return "Civics Educator";
+    return "Learning Guide"; // Default fallback
+  };
+
+  // Helper function to get teacher description based on proficiency level
+  const getTeacherDescription = () => {
+    if (proficiencyLevel === "high") {
+      return "With over 40 years of teaching experience, Mrs. Parton specializes in helping advanced students explore the nuances of government systems. She's known for challenging her students to think critically about complex civic concepts and historical connections.";
+    }
+    if (proficiencyLevel === "medium") {
+      return "A retired civics and American history teacher with 35 years of classroom experience. Mrs. Bannerman explains complex ideas patiently, using real-world examples and occasionally sharing anecdotes from her teaching career. She's warm, supportive, and knows how to make government concepts accessible.";
+    }
+    if (proficiencyLevel === "low") {
+      return "After teaching civics for over 30 years, Mr. Whitaker now helps students build strong foundations in government concepts. He's known for his clear explanations, helpful analogies, and patient approach to learning. He breaks down complex ideas into manageable parts.";
+    }
+    return "Your specialized learning assistant has been selected to guide you through this material based on your assessment results."; // Default fallback
+  };
+
+  // Helper function to get guidance approach based on proficiency level
+  const getGuidanceApproach = () => {
+    if (proficiencyLevel === "high") {
+      return "Mrs. Parton will challenge you to think critically about advanced civics concepts and historical connections that go beyond the basics. She'll help you explore nuanced ideas about government systems.";
+    }
+    if (proficiencyLevel === "medium") {
+      return "Mrs. Bannerman will help strengthen your understanding of government concepts, clarify any misunderstandings, and introduce some more advanced ideas when you're ready.";
+    }
+    if (proficiencyLevel === "low") {
+      return "Mr. Whitaker will focus on building a solid foundation of key government concepts through clear explanations, helpful metaphors, and guided activities.";
+    }
+    return "Your learning assistant will guide you through the key concepts from the material you've just studied."; // Default fallback
+  };
+
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Specialized Guidance</h1>
-      <div className="flex-grow bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-        <div className="p-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="font-semibold text-lg text-gray-800">
-            {proficiencyLevel === "high" ? "Advanced Learning Guide" :
-             proficiencyLevel === "medium" ? "Intermediate Learning Assistant" :
-             proficiencyLevel === "low" ? "Learning Coach" : "Dynamic Assistant"}
-          </h2>
-          
-          {proficiencyLevel !== "unknown" && (
-            <div className="flex items-center mt-1">
-              <div className={`w-2 h-2 rounded-full mr-2 ${
-                proficiencyLevel === "high" ? "bg-green-500" :
-                proficiencyLevel === "medium" ? "bg-blue-500" :
-                proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
-              }`}></div>
-              <p className="text-sm text-gray-600">
-                {proficiencyLevel === "high" ? "Advanced level assistance" :
-                 proficiencyLevel === "medium" ? "Intermediate level assistance" :
-                 proficiencyLevel === "low" ? "Foundational level assistance" : "Standard assistance"}
+      
+      <div className="flex flex-col md:flex-row gap-6 flex-grow">
+        {/* Left column - Teacher profile */}
+        {proficiencyLevel !== "unknown" && (
+          <div className="md:w-1/3 flex flex-col">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4 h-fit">
+              <div className="flex flex-col items-center text-center mb-4">
+                <img 
+                  src={getTeacherImage()} 
+                  alt={getTeacherName()} 
+                  className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
+                />
+                <h2 className="font-bold text-xl text-gray-800">{getTeacherName()}</h2>
+                <p className="text-sm text-gray-600 font-medium">{getTeacherTitle()}</p>
+              </div>
+              
+              <p className="text-sm text-gray-700 mb-4">
+                {getTeacherDescription()}
               </p>
-            </div>
-          )}
-          
-          {isUsingFallback && (
-            <div className="mt-1">
-              <p className="text-sm text-amber-600 font-medium">
-                Using fallback assistant (technical issue)
-              </p>
-            </div>
-          )}
-        </div>
-        <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
-          {/* Regular messages */}
-          {messages.map((message, index) => (
-            <div key={index} className="message-appear flex flex-col">
-              <div className="flex items-start mb-1">
-                <div className={`w-8 h-8 rounded-full ${
-                  message.role === 'assistant' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                } flex items-center justify-center mr-2 flex-shrink-0`}>
-                  <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
-                </div>
-                <span className="text-xs text-gray-500 mt-1">
-                  {message.role === 'assistant' 
-                    ? (proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 'Dynamic Assistant') 
-                    : 'You'}
-                </span>
+              
+              <hr className="my-4 border-gray-200" />
+              
+              <div className="mb-4">
+                <h3 className="font-semibold text-gray-800 mb-2">Guidance Approach</h3>
+                <p className="text-sm text-gray-700">
+                  {getGuidanceApproach()}
+                </p>
               </div>
-              <div className={`ml-10 ${
-                message.role === 'assistant' 
-                  ? 'bg-blue-50' 
-                  : 'bg-white border border-gray-200'
-              } rounded-lg p-3 text-gray-700`}>
-                <div className="typing-text markdown-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+              
+              <hr className="my-4 border-gray-200" />
+              
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-2">Learning Level</h3>
+                <div className="flex items-center">
+                  <div className={`w-3 h-3 rounded-full mr-2 ${
+                    proficiencyLevel === "high" ? "bg-green-500" :
+                    proficiencyLevel === "medium" ? "bg-blue-500" :
+                    proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
+                  }`}></div>
+                  <p className="text-sm text-gray-700">
+                    {proficiencyLevel === "high" ? "Advanced" :
+                    proficiencyLevel === "medium" ? "Intermediate" :
+                    proficiencyLevel === "low" ? "Foundational" : "Standard"}
+                  </p>
                 </div>
               </div>
             </div>
-          ))}
-          
-          {/* Streaming message - plain text display with no animations */}
-          {isTyping && currentStreamingMessage && (
-            <div className="flex flex-col">
-              <div className="flex items-start mb-1">
-                <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
-                  <i className="ri-robot-line"></i>
+          </div>
+        )}
+        
+        {/* Right column - Chat interface */}
+        <div className={`${proficiencyLevel !== "unknown" ? 'md:w-2/3' : 'w-full'} flex-grow flex flex-col`}>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+            <div className="p-4 bg-gray-50 border-b border-gray-200">
+              <h2 className="font-semibold text-lg text-gray-800">
+                {proficiencyLevel === "high" ? "Mrs. Parton" :
+                 proficiencyLevel === "medium" ? "Mrs. Bannerman" :
+                 proficiencyLevel === "low" ? "Mr. Whitaker" : "Dynamic Assistant"}
+              </h2>
+              
+              {proficiencyLevel !== "unknown" && (
+                <div className="flex items-center mt-1">
+                  <div className={`w-2 h-2 rounded-full mr-2 ${
+                    proficiencyLevel === "high" ? "bg-green-500" :
+                    proficiencyLevel === "medium" ? "bg-blue-500" :
+                    proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
+                  }`}></div>
+                  <p className="text-sm text-gray-600">
+                    {proficiencyLevel === "high" ? "Advanced level assistance" :
+                     proficiencyLevel === "medium" ? "Intermediate level assistance" :
+                     proficiencyLevel === "low" ? "Foundational level assistance" : "Standard assistance"}
+                  </p>
                 </div>
-                <span className="text-xs text-gray-500 mt-1">
-                  {proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 'Dynamic Assistant'}
-                </span>
-              </div>
-              <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700">
-                <div className="typing-text markdown-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamingMessage}</ReactMarkdown>
+              )}
+              
+              {isUsingFallback && (
+                <div className="mt-1">
+                  <p className="text-sm text-amber-600 font-medium">
+                    Using fallback assistant (technical issue)
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
-          )}
-          
-          {/* Loading indicator when not streaming yet */}
-          {isLoading && !currentStreamingMessage && (
-            <div className="flex items-center justify-center p-4">
-              <div className="animate-pulse flex space-x-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-              </div>
+            
+            <div className="p-4 overflow-y-auto flex-grow space-y-4">
+              {/* Regular messages */}
+              {messages.map((message, index) => (
+                <div key={index} className="message-appear flex flex-col">
+                  <div className="flex items-start mb-1">
+                    <div className={`w-8 h-8 rounded-full ${
+                      message.role === 'assistant' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-600'
+                    } flex items-center justify-center mr-2 flex-shrink-0`}>
+                      <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
+                    </div>
+                    <span className="text-xs text-gray-500 mt-1">
+                      {message.role === 'assistant' 
+                        ? (proficiencyLevel === "high" ? 'Mrs. Parton' : 
+                           proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 
+                           proficiencyLevel === "low" ? 'Mr. Whitaker' : 'Assistant') 
+                        : 'You'}
+                    </span>
+                  </div>
+                  <div className={`ml-10 ${
+                    message.role === 'assistant' 
+                      ? 'bg-blue-50' 
+                      : 'bg-white border border-gray-200'
+                  } rounded-lg p-3 text-gray-700`}>
+                    <div className="typing-text markdown-content">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Streaming message */}
+              {isTyping && currentStreamingMessage && (
+                <div className="flex flex-col">
+                  <div className="flex items-start mb-1">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
+                      <i className="ri-robot-line"></i>
+                    </div>
+                    <span className="text-xs text-gray-500 mt-1">
+                      {proficiencyLevel === "high" ? 'Mrs. Parton' : 
+                       proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 
+                       proficiencyLevel === "low" ? 'Mr. Whitaker' : 'Assistant'}
+                    </span>
+                  </div>
+                  <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700">
+                    <div className="typing-text markdown-content">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamingMessage}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Loading indicator */}
+              {isLoading && !currentStreamingMessage && (
+                <div className="flex items-center justify-center p-4">
+                  <div className="animate-pulse flex space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Reference for scrolling to bottom */}
+              <div ref={messagesEndRef} />
             </div>
-          )}
-          
-          {/* Reference for scrolling to bottom */}
-          <div ref={messagesEndRef} />
-        </div>
-        <div className="p-4 border-t border-gray-200">
-          <form onSubmit={handleSubmit} className="flex items-start gap-2">
-            <AutoResizeTextarea
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type your message here..."
-              className="flex-grow focus:border-blue-500"
-              maxRows={7}
-              onKeyDown={(e) => {
-                // Submit on Enter key without Shift key
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-            />
-            <Button 
-              type="submit"
-              size="icon"
-              disabled={isLoading}
-              className="p-2 bg-blue-500 hover:bg-blue-600 text-white mt-1"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
+            
+            <div className="p-4 border-t border-gray-200">
+              <form onSubmit={handleSubmit} className="flex items-start gap-2">
+                <AutoResizeTextarea
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Type your message here..."
+                  className="flex-grow focus:border-blue-500"
+                  maxRows={7}
+                  onKeyDown={(e) => {
+                    // Submit on Enter key without Shift key
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
+                />
+                <Button 
+                  type="submit"
+                  size="icon"
+                  disabled={isLoading}
+                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white mt-1"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
+      
       <div className="mt-4 flex justify-between">
         {onPrevious ? (
           <Button
