@@ -182,6 +182,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
+        // CRITICAL FIX: Handle direct format where the response itself has level and systemPrompt
+        // This addresses the case where N8N returns a direct object with level and systemPrompt
+        if (responseData && responseData.level && responseData.systemPrompt) {
+          console.log("N8N returned a direct object with level and systemPrompt");
+          console.log("Level:", responseData.level);
+          console.log("System prompt length:", responseData.systemPrompt.length, "characters");
+          
+          return res.json({
+            success: true,
+            message: "Assessment data sent to N8N successfully",
+            teachingAssistance: {
+              level: responseData.level,
+              systemPrompt: responseData.systemPrompt
+            }
+          });
+        }
+        
         // Otherwise check for legacy nextAssistantId format
         let nextAssistantId = responseData?.nextAssistantId;
         
