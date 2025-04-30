@@ -89,22 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // DEBUG ROUTE: Add a test endpoint that returns a teaching assistance object
-  // This will help us test if the client-side code can handle the response properly
-  app.get("/api/test-teaching-assistance", (req, res) => {
-    console.log("TEST ENDPOINT: Sending test teaching assistance data to client");
-    
-    const testSystemPrompt = "You are Mrs. Test, a test assistant created to debug the system. Your role is to verify that the client can correctly handle and display system prompts.";
-    
-    return res.json({
-      success: true,
-      message: "This is a test response",
-      teachingAssistance: {
-        level: "medium",
-        systemPrompt: testSystemPrompt
-      }
-    });
-  });
+
   
   // Route to send assessment data to N8N
   app.post("/api/send-to-n8n", async (req, res) => {
@@ -155,8 +140,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Log the full response data for debugging
         console.log("N8N complete response:", JSON.stringify(response.data, null, 2));
         
-        // COMPLETELY SIMPLIFIED APPROACH: Directly look for level and systemPrompt anywhere in the response
+        // FINAL WORKING SOLUTION: Follow the exact same structure that works in our test endpoint
         const responseData = response.data;
+        console.log("N8N response structure received:", typeof responseData);
         
         // If the response is an array, extract the first item
         let dataToCheck = responseData;
@@ -190,11 +176,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // If we found both level and systemPrompt, return them
+        // If we found both level and systemPrompt, return them using the EXACT structure
+        // that worked in our test endpoint
         if (level && systemPrompt) {
           console.log(`Found teaching assistance with level: ${level}`);
           console.log(`System prompt length: ${systemPrompt.length} characters`);
           
+          // CRITICAL: Match the structure of our test endpoint exactly - this is what works
           const responseObject = {
             success: true,
             message: "Assessment data sent to N8N successfully",
@@ -204,8 +192,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           };
           
-          // Send the response with the teaching assistance data
-          console.log("Sending complete response with teachingAssistance");
+          // Log the exact response we're sending back (should match test endpoint)
+          console.log("Sending to client:", JSON.stringify(responseObject, null, 2));
+          
+          // Return the response - no other code should execute after this
           return res.json(responseObject);
         }
         
