@@ -229,9 +229,59 @@ If the student engages with your fictional persona, fully play along. If the stu
     }
   };
   
+  // DEBUG: Add a test function that calls our test endpoint
+  const testTeachingAssistanceEndpoint = async () => {
+    try {
+      console.log("DEBUG: Calling test endpoint at /api/test-teaching-assistance");
+      const response = await apiRequest("GET", "/api/test-teaching-assistance");
+      const result = await response.json();
+      console.log("DEBUG: Test endpoint response:", result);
+      
+      // Try to extract teachingAssistance from the test response
+      if (result.teachingAssistance) {
+        console.log("DEBUG: Found teachingAssistance in test response:", result.teachingAssistance);
+        
+        // Test if we can use this data with onNext
+        if (result.teachingAssistance.level && result.teachingAssistance.systemPrompt) {
+          const testData = {
+            level: result.teachingAssistance.level as 'low' | 'medium' | 'high',
+            systemPrompt: result.teachingAssistance.systemPrompt
+          };
+          console.log("DEBUG: Test successful, would call onNext with:", testData);
+          
+          // Actually call onNext with the test data
+          toast({
+            title: "Test successful",
+            description: `Found teaching assistance with level: ${testData.level}`,
+            variant: "default"
+          });
+          
+          onNext(testData);
+          return true;
+        }
+      }
+      
+      console.log("DEBUG: Test failed, teachingAssistance not found or incomplete");
+      return false;
+    } catch (error) {
+      console.error("DEBUG: Test endpoint error:", error);
+      return false;
+    }
+  };
+
   const handleNext = async () => {
     try {
       setIsSendingToN8N(true);
+      
+      // DEBUG: First try the test endpoint to see if client can handle teachingAssistance properly
+      const testResult = await testTeachingAssistanceEndpoint();
+      if (testResult) {
+        console.log("DEBUG: Test endpoint succeeded, skipping N8N call");
+        setIsSendingToN8N(false);
+        return;
+      }
+      
+      console.log("DEBUG: Test endpoint didn't work, falling back to regular N8N flow");
       
       // Calculate the chat duration in seconds
       const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);

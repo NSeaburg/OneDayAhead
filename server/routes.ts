@@ -89,6 +89,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // DEBUG ROUTE: Add a test endpoint that returns a teaching assistance object
+  // This will help us test if the client-side code can handle the response properly
+  app.get("/api/test-teaching-assistance", (req, res) => {
+    console.log("TEST ENDPOINT: Sending test teaching assistance data to client");
+    
+    const testSystemPrompt = "You are Mrs. Test, a test assistant created to debug the system. Your role is to verify that the client can correctly handle and display system prompts.";
+    
+    return res.json({
+      success: true,
+      message: "This is a test response",
+      teachingAssistance: {
+        level: "medium",
+        systemPrompt: testSystemPrompt
+      }
+    });
+  });
+  
   // Route to send assessment data to N8N
   app.post("/api/send-to-n8n", async (req, res) => {
     try {
