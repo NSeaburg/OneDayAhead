@@ -248,38 +248,64 @@ If the student engages with your fictional persona, fully play along. If the stu
       console.log("N8N webhook response:", result);
       
       if (result.success) {
-        // First check the webhook data in the response directly (returned in N8N webhook response)
+        // Log result to help with debugging in client
+        console.log("Full webhook response structure:", JSON.stringify(result, null, 2));
+        let teachingAssistanceData: TeachingAssistance | undefined = undefined;
+        
+        // CASE 1: Check for webhookData array in the response
         if (result.webhookData && Array.isArray(result.webhookData) && result.webhookData.length > 0) {
           // Extract the first item from the array (assuming it's our assessment result)
           const assessmentResult = result.webhookData[0];
-          console.log("Found webhook data array in response:", assessmentResult);
+          console.log("Found webhookData array in response:", assessmentResult);
           
           if (assessmentResult.level && assessmentResult.systemPrompt) {
-            const teachingAssistance: TeachingAssistance = {
+            teachingAssistanceData = {
               level: assessmentResult.level as 'low' | 'medium' | 'high',
               systemPrompt: assessmentResult.systemPrompt
             };
-            
-            console.log(`Received teaching assistance level: ${teachingAssistance.level}`);
-            console.log(`System prompt length: ${teachingAssistance.systemPrompt.length} characters`);
-            console.log("Proceeding with Claude system prompt for this level");
-            
-            onNext(teachingAssistance);
-            return;
           }
         }
         
-        // If we didn't find webhook data array, try the teachingAssistance format
-        if (result.teachingAssistance && result.teachingAssistance.level && result.teachingAssistance.systemPrompt) {
-          const teachingAssistance: TeachingAssistance = {
-            level: result.teachingAssistance.level,
-            systemPrompt: result.teachingAssistance.systemPrompt
+        // CASE 2: Direct object in response (without array wrapper)
+        if (!teachingAssistanceData && result.level && result.systemPrompt) {
+          console.log("Found direct teaching assistance data in response");
+          teachingAssistanceData = {
+            level: result.level as 'low' | 'medium' | 'high',
+            systemPrompt: result.systemPrompt
           };
+        }
+        
+        // CASE 3: Check for teachingAssistance nested object
+        if (!teachingAssistanceData && result.teachingAssistance) {
+          console.log("Found teachingAssistance object in response");
           
-          console.log(`Received teaching assistance level: ${teachingAssistance.level}`);
+          if (result.teachingAssistance.level && result.teachingAssistance.systemPrompt) {
+            teachingAssistanceData = {
+              level: result.teachingAssistance.level as 'low' | 'medium' | 'high',
+              systemPrompt: result.teachingAssistance.systemPrompt
+            };
+          }
+        }
+        
+        // CASE 4: Check for assessment object with nested level and systemPrompt
+        if (!teachingAssistanceData && result.assessment) {
+          console.log("Found assessment object in response");
+          
+          if (result.assessment.level && result.assessment.systemPrompt) {
+            teachingAssistanceData = {
+              level: result.assessment.level as 'low' | 'medium' | 'high', 
+              systemPrompt: result.assessment.systemPrompt
+            };
+          }
+        }
+        
+        // If we found teaching assistance data in any format, use it
+        if (teachingAssistanceData) {
+          console.log(`Received teaching assistance level: ${teachingAssistanceData.level}`);
+          console.log(`System prompt length: ${teachingAssistanceData.systemPrompt.length} characters`);
           console.log("Proceeding with Claude system prompt for this level");
           
-          onNext(teachingAssistance);
+          onNext(teachingAssistanceData);
         } else {
           // Fallback to basic level if structure is missing
           console.log("Missing teachingAssistance structure in response, using fallback");

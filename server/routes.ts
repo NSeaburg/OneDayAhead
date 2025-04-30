@@ -137,6 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log the response data to help with debugging
         console.log("N8N response data format:", typeof response.data);
+        console.log("N8N raw response:", JSON.stringify(response.data, null, 2));
         
         // If data is in JSON format, check for various expected formats
         const responseData = response.data;
@@ -144,6 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check for webhook data array format (preferred format) first
         if (Array.isArray(responseData) && responseData.length > 0) {
           console.log("N8N returned an array response with", responseData.length, "items");
+          console.log("First item:", JSON.stringify(responseData[0], null, 2));
           
           // Return the array directly so client can process it
           return res.json({
@@ -151,6 +153,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: "Assessment data sent to N8N successfully",
             webhookData: responseData // Include the webhook data array in the response
           });
+        }
+        
+        // Check for webhookData property (might be nested in response)
+        if (responseData && responseData.webhookData && Array.isArray(responseData.webhookData)) {
+          console.log("N8N returned a nested webhookData array with", responseData.webhookData.length, "items");
+          console.log("First item:", JSON.stringify(responseData.webhookData[0], null, 2));
+          
+          return res.json({
+            success: true,
+            message: "Assessment data sent to N8N successfully",
+            webhookData: responseData.webhookData
+          });
+        }
+        
+        // Check for immediateResult property (another possible format)
+        if (responseData && responseData.immediateResult) {
+          console.log("N8N returned an immediateResult:", typeof responseData.immediateResult);
+          console.log("immediateResult:", JSON.stringify(responseData.immediateResult, null, 2));
+          
+          // If immediateResult contains level and systemPrompt, return it as teachingAssistance
+          if (responseData.immediateResult.level && responseData.immediateResult.systemPrompt) {
+            return res.json({
+              success: true,
+              message: "Assessment data sent to N8N successfully",
+              teachingAssistance: responseData.immediateResult
+            });
+          }
         }
         
         // Otherwise check for legacy nextAssistantId format
