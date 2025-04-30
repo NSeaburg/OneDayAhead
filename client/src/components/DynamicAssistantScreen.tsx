@@ -82,6 +82,7 @@ export default function DynamicAssistantScreen({
   // Log which system prompt we're using
   console.log(`DynamicAssistantScreen using ${teachingAssistance ? 'Claude-specific' : 'default'} system prompt for level: ${proficiencyLevel}`);
   console.log(`System prompt length: ${activeSystemPrompt?.length || 0} characters`);
+  console.log(`Teaching assistance data:`, teachingAssistance ? JSON.stringify(teachingAssistance, null, 2) : 'Not provided');
   
   const { 
     messages, 
@@ -98,16 +99,17 @@ export default function DynamicAssistantScreen({
     useAnthropicForAssessment: true // Use Claude/Anthropic exclusively
   });
   
-  // Reset conversation on mount to ensure system prompt is applied
+  // Reset conversation on mount or when teachingAssistance changes to ensure system prompt is applied
   useEffect(() => {
-    console.log("DynamicAssistantScreen mounted - resetting conversation to ensure proper system prompt");
+    console.log("DynamicAssistantScreen mounted/updated - resetting conversation to ensure proper system prompt");
+    console.log("Using system prompt with level:", proficiencyLevel);
     
     // Clear existing messages and set the initial welcome
     setMessages([{
       role: 'assistant',
       content: initialMessage
     }]);
-  }, []);
+  }, [teachingAssistance, initialMessage]);
   
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {

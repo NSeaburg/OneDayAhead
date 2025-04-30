@@ -135,8 +135,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Course name sent to N8N:", courseName || "Three Branches of Government");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         
-        // Extract the nextAssistantId from the N8N response if available
-        let nextAssistantId = response.data?.nextAssistantId;
+        // Log the response data to help with debugging
+        console.log("N8N response data format:", typeof response.data);
+        
+        // If data is in JSON format, check for various expected formats
+        const responseData = response.data;
+        
+        // Check for webhook data array format (preferred format) first
+        if (Array.isArray(responseData) && responseData.length > 0) {
+          console.log("N8N returned an array response with", responseData.length, "items");
+          
+          // Return the array directly so client can process it
+          return res.json({
+            success: true,
+            message: "Assessment data sent to N8N successfully",
+            webhookData: responseData // Include the webhook data array in the response
+          });
+        }
+        
+        // Otherwise check for legacy nextAssistantId format
+        let nextAssistantId = responseData?.nextAssistantId;
         
         // Validate that the nextAssistantId is a valid OpenAI assistant ID format
         // Valid assistant IDs start with "asst_" and only contain letters, numbers, underscores, or dashes

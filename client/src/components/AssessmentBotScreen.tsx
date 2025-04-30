@@ -245,9 +245,31 @@ If the student engages with your fictional persona, fully play along. If the stu
       });
       
       const result = await response.json();
+      console.log("N8N webhook response:", result);
       
       if (result.success) {
-        // New structure from N8N - teaching assistance with level and system prompt
+        // First check the webhook data in the response directly (returned in N8N webhook response)
+        if (result.webhookData && Array.isArray(result.webhookData) && result.webhookData.length > 0) {
+          // Extract the first item from the array (assuming it's our assessment result)
+          const assessmentResult = result.webhookData[0];
+          console.log("Found webhook data array in response:", assessmentResult);
+          
+          if (assessmentResult.level && assessmentResult.systemPrompt) {
+            const teachingAssistance: TeachingAssistance = {
+              level: assessmentResult.level as 'low' | 'medium' | 'high',
+              systemPrompt: assessmentResult.systemPrompt
+            };
+            
+            console.log(`Received teaching assistance level: ${teachingAssistance.level}`);
+            console.log(`System prompt length: ${teachingAssistance.systemPrompt.length} characters`);
+            console.log("Proceeding with Claude system prompt for this level");
+            
+            onNext(teachingAssistance);
+            return;
+          }
+        }
+        
+        // If we didn't find webhook data array, try the teachingAssistance format
         if (result.teachingAssistance && result.teachingAssistance.level && result.teachingAssistance.systemPrompt) {
           const teachingAssistance: TeachingAssistance = {
             level: result.teachingAssistance.level,
