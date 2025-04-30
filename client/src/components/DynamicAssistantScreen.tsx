@@ -56,8 +56,9 @@ export default function DynamicAssistantScreen({
   // We already receive assessmentThreadId as prop, so we don't need a separate state variable
   const { toast } = useToast();
   
-  // Check if this is using a fallback assistant ID (not starting with "asst_")
-  const isUsingFallback = !assistantId.startsWith("asst_");
+  // Check if this is using a fallback assistant ID OR if we have no teaching assistance
+  // Only show fallback message if we're using a fallback ID AND we didn't get teaching data
+  const isUsingFallback = !assistantId.startsWith("asst_") && !teachingAssistance;
   
   // Get proficiency level from teachingAssistance if available
   const proficiencyLevel = teachingAssistance?.level || "unknown";
@@ -69,7 +70,7 @@ export default function DynamicAssistantScreen({
   } else if (proficiencyLevel === "high") {
     initialMessage = "Hello! I'm your advanced learning guide. Based on your assessment, you've shown a strong grasp of the core concepts. I'll help you explore more complex aspects and nuances of the material. What specific areas would you like to delve deeper into?";
   } else if (proficiencyLevel === "medium") {
-    initialMessage = "Hello! I'm your learning assistant. Your assessment showed good understanding of the material with a few areas to strengthen. I can help clarify concepts or answer questions about what you've learned. What would you like me to explain or discuss?";
+    initialMessage = "Hello there! I'm Mrs. Bannerman, a retired civics teacher. Your assessment showed good understanding of the material with a few areas we can strengthen together. I've been teaching government concepts for 35 years, and I'd be happy to help clarify or expand on what you've learned. What would you like me to explain or discuss?";
   } else if (proficiencyLevel === "low") {
     initialMessage = "Hello! I'm your learning coach. I'll help you build a solid foundation of the material. Let's start with the key concepts and make sure you're comfortable with the basics. What's one thing from the article that you'd like me to explain further?";
   } else {
@@ -248,7 +249,9 @@ export default function DynamicAssistantScreen({
                   <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
                 </div>
                 <span className="text-xs text-gray-500 mt-1">
-                  {message.role === 'assistant' ? 'Dynamic Assistant' : 'You'}
+                  {message.role === 'assistant' 
+                    ? (proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 'Dynamic Assistant') 
+                    : 'You'}
                 </span>
               </div>
               <div className={`ml-10 ${
@@ -271,7 +274,7 @@ export default function DynamicAssistantScreen({
                   <i className="ri-robot-line"></i>
                 </div>
                 <span className="text-xs text-gray-500 mt-1">
-                  Dynamic Assistant
+                  {proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 'Dynamic Assistant'}
                 </span>
               </div>
               <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700">
