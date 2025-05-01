@@ -163,7 +163,7 @@ export default function ArticleChatScreen({
       <div className="flex-grow flex flex-col md:flex-row md:flex-nowrap gap-4 md:gap-6 mb-24 relative">
         {/* Article Section */}
         <motion.div 
-          className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
+          className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col"
           initial={{ width: isChatOpen ? "60%" : "100%" }}
           animate={{
             width: isChatOpen ? "60%" : "100%",
@@ -190,7 +190,7 @@ export default function ArticleChatScreen({
           </div>
         </motion.div>
         
-        {/* Chat Section - Using shared layoutId with ChatBubble for morphing effect */}
+        {/* Chat Section - Using AnimatePresence for animation */}
         <AnimatePresence mode="sync">
           {isChatOpen && (
             <motion.div 
@@ -280,7 +280,7 @@ export default function ArticleChatScreen({
         </AnimatePresence>
       </div>
 
-      {/* Floating chat bubble - with shared layoutId for morphing into chat panel */}
+      {/* Floating chat bubble */}
       <AnimatePresence mode="wait">
         {!isChatOpen && !isBubbleDismissed && (
           <motion.div 
