@@ -36,7 +36,7 @@ export default function DevNav() {
               icon={<MessageSquare className="h-4 w-4" />}
               label="Article Chat Bot"
               onClick={() => {
-                navigate('/?screen=article-chat');
+                window.location.href = '/?screen=article-chat'; // Use direct window.location.href instead of navigate
                 setIsOpen(false);
               }}
             />
@@ -45,7 +45,7 @@ export default function DevNav() {
               icon={<Users className="h-4 w-4" />}
               label="Reginald Assessment Bot"
               onClick={() => {
-                navigate('/?screen=assessment');
+                window.location.href = '/?screen=assessment';
                 setIsOpen(false);
               }}
             />
@@ -54,7 +54,7 @@ export default function DevNav() {
               icon={<Book className="h-4 w-4 text-amber-600" />}
               label="Mr. Whitaker (Low)"
               onClick={() => {
-                navigate('/?screen=teacher-low');
+                window.location.href = '/?screen=teacher-low';
                 setIsOpen(false);
               }}
             />
@@ -63,7 +63,7 @@ export default function DevNav() {
               icon={<Book className="h-4 w-4 text-blue-600" />}
               label="Mrs. Bannerman (Medium)"
               onClick={() => {
-                navigate('/?screen=teacher-medium');
+                window.location.href = '/?screen=teacher-medium';
                 setIsOpen(false);
               }}
             />
@@ -72,7 +72,7 @@ export default function DevNav() {
               icon={<Book className="h-4 w-4 text-green-600" />}
               label="Mrs. Parton (High)"
               onClick={() => {
-                navigate('/?screen=teacher-high');
+                window.location.href = '/?screen=teacher-high';
                 setIsOpen(false);
               }}
             />
@@ -81,7 +81,7 @@ export default function DevNav() {
               icon={<Award className="h-4 w-4" />}
               label="Final Feedback Screen"
               onClick={() => {
-                navigate('/?screen=feedback');
+                window.location.href = '/?screen=feedback';
                 setIsOpen(false);
               }}
             />
@@ -91,7 +91,7 @@ export default function DevNav() {
             <button 
               className="flex items-center w-full text-xs text-gray-600 hover:text-gray-900 py-1 px-2 rounded hover:bg-gray-50"
               onClick={() => {
-                navigate('/');
+                window.location.href = '/';
                 setIsOpen(false);
               }}
             >
