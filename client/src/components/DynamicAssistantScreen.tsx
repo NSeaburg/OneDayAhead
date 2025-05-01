@@ -9,9 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Import placeholder images for the teachers - these will be updated with real images later
-// We'll use placeholders for now until the user provides the actual images
-const mrWhitakerPlaceholder = "https://placehold.co/400x400?text=Mr.Whitaker";
+// Import Mr. Whitaker's image
+import mrWhitakerImage from "../../../public/Mr. Whitaker.png";
+
+// Placeholder images for teachers without actual images yet
 const mrsBannermanPlaceholder = "https://placehold.co/400x400?text=Mrs.Bannerman";
 const mrsPartonPlaceholder = "https://placehold.co/400x400?text=Mrs.Parton";
 
@@ -212,7 +213,7 @@ export default function DynamicAssistantScreen({
   const getTeacherImage = () => {
     if (proficiencyLevel === "high") return mrsPartonPlaceholder;
     if (proficiencyLevel === "medium") return mrsBannermanPlaceholder;
-    if (proficiencyLevel === "low") return mrWhitakerPlaceholder;
+    if (proficiencyLevel === "low") return mrWhitakerImage;
     return mrsBannermanPlaceholder; // Default fallback
   };
 
