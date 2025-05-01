@@ -9,9 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Import Mrs. Parton image directly
-import mrsPartonImage from "../assets/new-Mrs-Parton.png";
-
 // Define global window interface for storing feedback data
 declare global {
   interface Window {

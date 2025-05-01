@@ -10,7 +10,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
 import { Message } from "@/lib/openai";
-// Using a character icon instead of an image for Reginald Worthington
+// Import Reginald image directly
+import reginaldImage from "../../../public/reginald-worthington.png";
 
 // Add TypeScript declaration for global window property
 declare global {
@@ -377,9 +378,11 @@ If the student engages with your fictional persona, fully play along. If the stu
       <div className="md:w-1/3 flex flex-col">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
           <div className="flex flex-col items-center text-center mb-4">
-            <div className="w-28 h-28 bg-amber-100 rounded-full flex items-center justify-center border-2 border-amber-300 shadow-sm mb-3">
-              <span className="text-amber-800 text-4xl font-serif">R</span>
-            </div>
+            <img 
+              src={reginaldImage} 
+              alt="Reginald Worthington III" 
+              className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
+            />
             <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
             <p className="text-sm text-gray-600 font-medium">Aristocratic Observer</p>
           </div>
@@ -445,8 +448,8 @@ If the student engages with your fictional persona, fully play along. If the stu
             <div key={index} className="message-appear flex flex-col">
               <div className="flex items-start mb-1">
                 {message.role === 'assistant' ? (
-                  <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mr-2 flex-shrink-0 border border-amber-300 shadow-sm">
-                    <span className="font-serif text-sm">R</span>
+                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                    <img src={reginaldImage} alt="RW" className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
@@ -473,8 +476,8 @@ If the student engages with your fictional persona, fully play along. If the stu
           {isTyping && currentStreamingMessage && (
             <div className="flex flex-col">
               <div className="flex items-start mb-1">
-                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mr-2 flex-shrink-0 border border-amber-300 shadow-sm">
-                  <span className="font-serif text-sm">R</span>
+                <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                  <img src={reginaldImage} alt="RW" className="w-full h-full object-cover" />
                 </div>
                 <span className="text-xs text-gray-500 mt-1">
                   Reginald Worthington III
