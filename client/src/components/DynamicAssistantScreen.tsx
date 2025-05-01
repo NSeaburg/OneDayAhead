@@ -10,9 +10,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 // Import teacher images from public folder
-const mrWhitakerImage = "/Mr.%20Whitaker.png"; // URL encoded spaces
-const mrsPartonImage = "/Mrs.%20Parton.png"; // URL encoded spaces
-const mrsBannermanImage = "/Mrs.%20Bannerman.png"; // URL encoded spaces
+const mrWhitakerImage = "/mr-whitaker.png"; // Using hyphenated filenames without spaces
+const mrsPartonImage = "/mrs-parton.png"; // Using hyphenated filenames without spaces
+const mrsBannermanImage = "/mrs-bannerman.png"; // Using hyphenated filenames without spaces
 
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";
