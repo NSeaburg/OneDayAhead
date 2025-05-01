@@ -209,7 +209,7 @@ export default function DynamicAssistantScreen({
   
   // Helper function to get the correct teacher image based on proficiency level
   const getTeacherImage = () => {
-    if (proficiencyLevel === "high") return mrsPartonImage;
+    if (proficiencyLevel === "high") return "/Mrs. Parton.png";
     if (proficiencyLevel === "medium") return mrsBannermanPlaceholder;
     if (proficiencyLevel === "low") return mrWhitakerImage;
     return mrsBannermanPlaceholder; // Default fallback
