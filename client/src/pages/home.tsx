@@ -30,12 +30,10 @@ declare global {
 
 export default function Home() {
   // Track the current screen in the learning flow
-  // TEMPORARY FOR TESTING - Set to screen 4 to show Mr. Whitaker teaching bot directly
-  const [currentScreen, setCurrentScreen] = useState(4);
+  const [currentScreen, setCurrentScreen] = useState(1);
   
   // Store the dynamic assistant ID received from N8N
-  // TEMPORARY FOR TESTING - Setting this to the low level ID
-  const [dynamicAssistantId, setDynamicAssistantId] = useState<string>("claude_low");
+  const [dynamicAssistantId, setDynamicAssistantId] = useState<string>("");
   
   // Store the assessment thread ID and conversation data for passing to the teaching bot
   const [assessmentThreadId, setAssessmentThreadId] = useState<string>("");
@@ -46,11 +44,7 @@ export default function Home() {
     level: 'low' | 'medium' | 'high';
     systemPrompt: string;
   }
-  // TEMPORARY FOR TESTING - Force Mr. Whitaker to appear (low level)
-  const [teachingAssistance, setTeachingAssistance] = useState<TeachingAssistance>({
-    level: 'low',
-    systemPrompt: 'You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government.'
-  });
+  const [teachingAssistance, setTeachingAssistance] = useState<TeachingAssistance | undefined>(undefined);
   
   // Store feedback data from N8N
   const [feedbackData, setFeedbackData] = useState<{
