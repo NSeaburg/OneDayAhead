@@ -236,12 +236,40 @@ If the student engages with your fictional persona, fully play along. If the stu
       // Calculate the chat duration in seconds
       const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
       
+      // Enhanced logging for Claude/Anthropic integration
+      console.log(`Sending Claude/Anthropic conversation data to N8N with ${messages.length} messages`);
+      console.log(`Chat duration: ${chatDurationSeconds} seconds`);
+      
+      // Add more detailed logging for troubleshooting
+      if (messages.length > 0) {
+        console.log("First message role:", messages[0].role);
+        console.log("Last message role:", messages[messages.length - 1].role);
+        console.log("First message content length:", messages[0].content.length);
+        console.log("Last message content length:", messages[messages.length - 1].content.length);
+        
+        // Generate and log a preview of the conversation transcript
+        const previewTranscript = messages
+          .slice(0, 2) // Just the first two messages for preview
+          .map((msg: { role: string; content: string }) => 
+            `${msg.role === 'assistant' ? 'Reginald Worthington III' : 'Student'}: ${msg.content.substring(0, 50)}...`)
+          .join('\n\n');
+        console.log("Conversation preview:", previewTranscript);
+      }
+      
       // Send conversation data to N8N before proceeding to the next screen
       const response = await apiRequest("POST", "/api/send-to-n8n", {
+        // Complete conversation data (raw messages)
         conversationData: messages,
-        threadId: threadId, // Include the thread ID for N8N to process
-        courseName: "Three Branches of Government", // Add the course name
-        chatDurationSeconds: chatDurationSeconds // Add the chat duration in seconds
+        
+        // Thread ID (for backward compatibility) or generate a Claude-specific one
+        threadId: threadId || `claude-${Date.now()}`,
+        
+        // Metadata
+        courseName: "Three Branches of Government",
+        chatDurationSeconds: chatDurationSeconds,
+        
+        // Flag to indicate we're using Claude/Anthropic
+        usingClaudeAI: true
       });
       
       const result = await response.json();

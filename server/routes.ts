@@ -143,10 +143,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...(threadId ? { threadId } : { threadId: `claude-${Date.now()}` })
         });
         
-        console.log("Successfully sent assessment data to N8N:", response.status);
+        console.log("Successfully sent Claude/Anthropic assessment data to N8N:", response.status);
         console.log("Full transcript included in N8N payload:", transcript.length, "characters");
+        console.log("Full conversation data included. Message count:", conversationData.length);
         console.log("Course name sent to N8N:", courseName || "Three Branches of Government");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
+        console.log("Using Claude AI flag set to:", true);
+        
+        // Log message roles to help with debugging
+        if (conversationData.length > 0) {
+          const roles = conversationData.map((msg: { role: string }) => msg.role);
+          console.log("Message roles sequence:", roles.join(", "));
+          
+          // Log first and last message snippets for context
+          const firstMsg = conversationData[0];
+          const lastMsg = conversationData[conversationData.length - 1];
+          
+          console.log("First message:", {
+            role: firstMsg.role,
+            contentPreview: firstMsg.content.substring(0, 50) + "..."
+          });
+          
+          console.log("Last message:", {
+            role: lastMsg.role,
+            contentPreview: lastMsg.content.substring(0, 50) + "..."
+          });
+        }
         
         // Log the full response data for debugging
         console.log("N8N complete response:", JSON.stringify(response.data, null, 2));
@@ -335,11 +357,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           chatDurationSeconds: chatDurationSeconds || 0
         });
         
-        console.log("Successfully sent combined data to N8N:", response.status);
-        console.log("Teaching Thread ID:", teachingThreadId);
-        console.log("Assessment Thread ID:", assessmentThreadId || "Not available");
+        console.log("Successfully sent Claude/Anthropic teaching data to N8N:", response.status);
+        console.log("Teaching conversation data included. Message count:", teachingData.length);
+        console.log("Teaching transcript length:", teachingTranscript.length, "characters");
+        console.log("Assessment conversation data included. Message count:", assessmentData.length);
+        console.log("Assessment transcript length:", assessmentTranscript.length, "characters");
+        console.log("Teaching Thread ID (kept for backward compatibility):", teachingThreadId);
+        console.log("Assessment Thread ID (if any):", assessmentThreadId || "Not available");
         console.log("Course name sent to N8N:", courseName || "Gravity Course");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
+        console.log("Using Claude AI flag set to:", true);
+        
+        // Log message roles to help with debugging
+        if (teachingData.length > 0) {
+          const roles = teachingData.map((msg: { role: string }) => msg.role);
+          console.log("Teaching message roles sequence:", roles.join(", "));
+          
+          // Log first and last teaching message snippets for context
+          const firstMsg = teachingData[0];
+          const lastMsg = teachingData[teachingData.length - 1];
+          
+          console.log("First teaching message:", {
+            role: firstMsg.role,
+            contentPreview: firstMsg.content.substring(0, 50) + "..."
+          });
+          
+          console.log("Last teaching message:", {
+            role: lastMsg.role,
+            contentPreview: lastMsg.content.substring(0, 50) + "..."
+          });
+        }
+        
+        // Log assessment data if available
+        if (assessmentData.length > 0) {
+          const roles = assessmentData.map((msg: { role: string }) => msg.role);
+          console.log("Assessment message roles sequence:", roles.join(", "));
+        }
         
         // Extract feedback data from N8N response if available
         let feedbackData = {};
