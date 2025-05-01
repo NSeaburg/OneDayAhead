@@ -270,8 +270,12 @@ export default function HighBotWithArticleScreen({
             {isTyping && currentStreamingMessage && (
               <div className="flex flex-col">
                 <div className="flex items-start mb-1">
-                  <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center mr-2 flex-shrink-0">
-                    <i className="ri-robot-line"></i>
+                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                    <img 
+                      src={mrsPartonImage} 
+                      alt="Mrs. Parton" 
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                   <span className="text-xs text-gray-500 mt-1">
                     Mrs. Parton
