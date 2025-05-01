@@ -16,8 +16,7 @@ export function useAssistantConfig() {
     const fetchAssistantConfig = async () => {
       try {
         setIsLoading(true);
-        const response = await apiRequest('GET', '/api/assistant-config');
-        const data = await response.json() as AssistantConfig;
+        const data = await apiRequest<AssistantConfig>('GET', '/api/assistant-config');
         setDiscussionAssistantId(data.discussionAssistantId);
         setAssessmentAssistantId(data.assessmentAssistantId);
         setError(null);
