@@ -12,7 +12,10 @@ import remarkGfm from "remark-gfm";
 // Teacher images - using URL paths for public folder images
 const mrWhitakerImage = "/Mr. Whitaker.png";
 const mrsPartonImage = "/Mrs. Parton.png";
-const mrsBannermanPlaceholder = "https://placehold.co/400x400?text=Mrs.Bannerman";
+const mrsBannermanImage = "/Mrs. Bannerman.png";
+
+// Default placeholder image for fallback purposes
+const placeholderImage = "https://placehold.co/400x400?text=Assistant";
 
 // Define global window interface for storing feedback data
 declare global {
@@ -210,9 +213,9 @@ export default function DynamicAssistantScreen({
   // Helper function to get the correct teacher image based on proficiency level
   const getTeacherImage = () => {
     if (proficiencyLevel === "high") return "/Mrs. Parton.png";
-    if (proficiencyLevel === "medium") return mrsBannermanPlaceholder;
+    if (proficiencyLevel === "medium") return mrsBannermanImage;
     if (proficiencyLevel === "low") return mrWhitakerImage;
-    return mrsBannermanPlaceholder; // Default fallback
+    return mrsBannermanImage; // Default fallback
   };
 
   // Helper function to get the teacher name based on proficiency level
