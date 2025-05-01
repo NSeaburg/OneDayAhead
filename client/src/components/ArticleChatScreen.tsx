@@ -12,7 +12,7 @@ import { Message } from "@/lib/openai";
 
 // Constants
 const PULSE_DURATION = 5000;
-const INITIAL_BOT_MESSAGE = "Hello! I'm your learning assistant for this module. Feel free to ask any questions about the article content or related topics, and I'll help clarify concepts or provide additional information.";
+const INITIAL_BOT_MESSAGE = "Hi! We are reading about the three branches of government. Hit me up if you want to chat about the article or if you have any questions.";
 const PDF_OPTIONS = {
   margin: 10,
   filename: 'learning-material.pdf',
