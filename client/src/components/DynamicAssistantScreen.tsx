@@ -9,12 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Import Mr. Whitaker's image
-import mrWhitakerImage from "../../../public/Mr. Whitaker.png";
-
-// Placeholder images for teachers without actual images yet
+// Teacher images - using URL paths for public folder images
+const mrWhitakerImage = "/Mr. Whitaker.png";
+const mrsPartonImage = "/Mrs. Parton.png";
 const mrsBannermanPlaceholder = "https://placehold.co/400x400?text=Mrs.Bannerman";
-const mrsPartonPlaceholder = "https://placehold.co/400x400?text=Mrs.Parton";
 
 // Define global window interface for storing feedback data
 declare global {
@@ -211,7 +209,7 @@ export default function DynamicAssistantScreen({
   
   // Helper function to get the correct teacher image based on proficiency level
   const getTeacherImage = () => {
-    if (proficiencyLevel === "high") return mrsPartonPlaceholder;
+    if (proficiencyLevel === "high") return mrsPartonImage;
     if (proficiencyLevel === "medium") return mrsBannermanPlaceholder;
     if (proficiencyLevel === "low") return mrWhitakerImage;
     return mrsBannermanPlaceholder; // Default fallback
