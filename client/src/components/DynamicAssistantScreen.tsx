@@ -365,13 +365,29 @@ export default function DynamicAssistantScreen({
               {messages.map((message, index) => (
                 <div key={index} className="message-appear flex flex-col">
                   <div className="flex items-start mb-1">
-                    <div className={`w-8 h-8 rounded-full ${
-                      message.role === 'assistant' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-200 text-gray-600'
-                    } flex items-center justify-center mr-2 flex-shrink-0`}>
-                      <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
-                    </div>
+                    {message.role === 'assistant' ? (
+                      <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-blue-100">
+                        <img 
+                          src={
+                            proficiencyLevel === "high" ? mrsPartonImage : 
+                            proficiencyLevel === "medium" ? mrsBannermanImage : 
+                            proficiencyLevel === "low" ? mrWhitakerImage : 
+                            placeholderImage
+                          } 
+                          alt={
+                            proficiencyLevel === "high" ? "Mrs. Parton" : 
+                            proficiencyLevel === "medium" ? "Mrs. Bannerman" : 
+                            proficiencyLevel === "low" ? "Mr. Whitaker" : 
+                            "Assistant"
+                          }
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
+                        <i className="ri-user-line"></i>
+                      </div>
+                    )}
                     <span className="text-xs text-gray-500 mt-1">
                       {message.role === 'assistant' 
                         ? (proficiencyLevel === "high" ? 'Mrs. Parton' : 
@@ -396,8 +412,22 @@ export default function DynamicAssistantScreen({
               {isTyping && currentStreamingMessage && (
                 <div className="flex flex-col">
                   <div className="flex items-start mb-1">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
-                      <i className="ri-robot-line"></i>
+                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-blue-100">
+                      <img 
+                        src={
+                          proficiencyLevel === "high" ? mrsPartonImage : 
+                          proficiencyLevel === "medium" ? mrsBannermanImage : 
+                          proficiencyLevel === "low" ? mrWhitakerImage : 
+                          placeholderImage
+                        } 
+                        alt={
+                          proficiencyLevel === "high" ? "Mrs. Parton" : 
+                          proficiencyLevel === "medium" ? "Mrs. Bannerman" : 
+                          proficiencyLevel === "low" ? "Mr. Whitaker" : 
+                          "Assistant"
+                        }
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
                     <span className="text-xs text-gray-500 mt-1">
                       {proficiencyLevel === "high" ? 'Mrs. Parton' : 
