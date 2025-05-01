@@ -10,9 +10,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 // Import teacher images directly
-import mrWhitakerImage from "../assets/Mr. Whitaker.png";
-import mrsPartonImage from "../assets/Mrs. Parton.png";
-import mrsBannermanImage from "../assets/Mrs. Bannerman.png";
+import mrWhitakerImage from "../assets/new-Mr-Whitaker.png";
+import mrsPartonImage from "../assets/new-Mrs-Parton.png";
+import mrsBannermanImage from "../assets/new-Mrs-Bannerman.png";
 
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";
