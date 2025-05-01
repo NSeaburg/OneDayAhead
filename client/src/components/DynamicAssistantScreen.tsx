@@ -9,10 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Teacher images - using URL paths for public folder images
-const mrWhitakerImage = "/Mr. Whitaker.png";
-const mrsPartonImage = "/Mrs. Parton.png";
-const mrsBannermanImage = "/Mrs. Bannerman.png";
+// Teacher images - using URL encoded paths for public folder images
+const mrWhitakerImage = "/Mr.%20Whitaker.png";
+const mrsPartonImage = "/Mrs.%20Parton.png";
+const mrsBannermanImage = "/Mrs.%20Bannerman.png";
 
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";
@@ -223,7 +223,7 @@ export default function DynamicAssistantScreen({
   
   // Helper function to get the correct teacher image based on proficiency level
   const getTeacherImage = () => {
-    if (proficiencyLevel === "high") return "/Mrs. Parton.png";
+    if (proficiencyLevel === "high") return mrsPartonImage;
     if (proficiencyLevel === "medium") return mrsBannermanImage;
     if (proficiencyLevel === "low") return mrWhitakerImage;
     return mrsBannermanImage; // Default fallback
