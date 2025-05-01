@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send, BookOpen, Lightbulb, GraduationCap } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, BookOpen, Lightbulb, GraduationCap, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
@@ -10,9 +10,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 // Teacher images - using URL paths for public folder images
-const mrWhitakerImage = "/Mr. Whitaker.png";
-const mrsPartonImage = "/Mrs. Parton.png";
-const mrsBannermanImage = "/Mrs. Bannerman.png";
+const mrWhitakerImage = "/Whitaker.png";
+const mrsPartonImage = "/Parton.png";
+const mrsBannermanImage = "/Bannerman.png";
 
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";
@@ -223,7 +223,7 @@ export default function DynamicAssistantScreen({
   
   // Helper function to get the correct teacher image based on proficiency level
   const getTeacherImage = () => {
-    if (proficiencyLevel === "high") return "/Mrs. Parton.png";
+    if (proficiencyLevel === "high") return mrsPartonImage;
     if (proficiencyLevel === "medium") return mrsBannermanImage;
     if (proficiencyLevel === "low") return mrWhitakerImage;
     return mrsBannermanImage; // Default fallback
@@ -365,13 +365,19 @@ export default function DynamicAssistantScreen({
               {messages.map((message, index) => (
                 <div key={index} className="message-appear flex flex-col">
                   <div className="flex items-start mb-1">
-                    <div className={`w-8 h-8 rounded-full ${
-                      message.role === 'assistant' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-200 text-gray-600'
-                    } flex items-center justify-center mr-2 flex-shrink-0`}>
-                      <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
-                    </div>
+                    {message.role === 'assistant' ? (
+                      <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                        <img 
+                          src={getTeacherImage()} 
+                          alt={getTeacherName()} 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
+                        <User className="h-4 w-4" />
+                      </div>
+                    )}
                     <span className="text-xs text-gray-500 mt-1">
                       {message.role === 'assistant' 
                         ? (proficiencyLevel === "high" ? 'Mrs. Parton' : 
@@ -396,8 +402,12 @@ export default function DynamicAssistantScreen({
               {isTyping && currentStreamingMessage && (
                 <div className="flex flex-col">
                   <div className="flex items-start mb-1">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
-                      <i className="ri-robot-line"></i>
+                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
+                      <img 
+                        src={getTeacherImage()} 
+                        alt={getTeacherName()} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
                     <span className="text-xs text-gray-500 mt-1">
                       {proficiencyLevel === "high" ? 'Mrs. Parton' : 
