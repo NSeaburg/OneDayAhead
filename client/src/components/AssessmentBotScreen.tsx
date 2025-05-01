@@ -11,7 +11,7 @@ import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
 import { Message } from "@/lib/openai";
 // Import Reginald image from public folder
-const reginaldImage = "/reginald-worthington.png";
+const reginaldImage = "/reginald-worthington.png"; // Using hyphenated filename without spaces
 
 // Add TypeScript declaration for global window property
 declare global {

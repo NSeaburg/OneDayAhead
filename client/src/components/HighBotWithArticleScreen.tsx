@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 // Import Mrs. Parton image from public folder
-const mrsPartonImage = "/Mrs. Parton.png";
+const mrsPartonImage = "/Mrs.%20Parton.png"; // URL encoded spaces
 
 // Define global window interface for storing feedback data
 declare global {
