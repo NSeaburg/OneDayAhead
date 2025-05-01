@@ -120,16 +120,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .map(msg => `${msg.role === 'assistant' ? 'Reginald Worthington III' : 'Student'}: ${msg.content}`)
           .join('\n\n');
         
-        console.log("Sending full transcript to N8N webhook");
+        console.log("Sending full conversation data and transcript to N8N webhook for Claude/Anthropic");
           
-        // Send data to N8N webhook with the full transcript
+        // Send data to N8N webhook with the full transcript and conversation data
         const response = await axios.post(ASSESSMENT_WEBHOOK_URL, {
+          // Complete conversation data (raw messages)
           conversationData,
-          transcript, // Include the full transcript instead of just the thread ID
+          
+          // Human-readable transcript
+          transcript,
+          
+          // Flag to indicate we're using Claude/Anthropic (no persistent thread API)
+          usingClaudeAI: true,
+          
+          // Metadata
           timestamp: new Date().toISOString(),
           source: "learning-app-assessment",
           courseName: courseName || "Three Branches of Government", // Add course name with fallback
-          chatDurationSeconds: chatDurationSeconds || 0 // Add chat duration with fallback
+          chatDurationSeconds: chatDurationSeconds || 0, // Add chat duration with fallback
+          
+          // Include the threadId for backward compatibility if available
+          ...(threadId ? { threadId } : { threadId: `claude-${Date.now()}` })
         });
         
         console.log("Successfully sent assessment data to N8N:", response.status);
@@ -292,16 +303,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       try {
+        // Generate formatted transcripts for both conversations
+        const teachingTranscript = teachingData
+          .map((msg: { role: string; content: string }) => `${msg.role === 'assistant' ? 'Teacher' : 'Student'}: ${msg.content}`)
+          .join('\n\n');
+          
+        const assessmentTranscript = assessmentData.length > 0 ? 
+          assessmentData.map((msg: { role: string; content: string }) => `${msg.role === 'assistant' ? 'Reginald Worthington III' : 'Student'}: ${msg.content}`)
+          .join('\n\n') : "";
+          
         // Send complete data package to N8N webhook
-        console.log("Calling teaching bot webhook with POST request (including assessment data)");
+        console.log("Calling teaching bot webhook with POST request (including full conversation data for Claude)");
         const response = await axios.post(DYNAMIC_ASSISTANT_WEBHOOK_URL, {
           // Teaching bot data
-          teachingThreadId,
-          teachingConversation: teachingData,
+          teachingThreadId,  // Kept for backward compatibility
+          teachingConversation: teachingData, // Complete conversation data
+          teachingTranscript, // Human-readable transcript
           
           // Assessment bot data (if available)
-          assessmentThreadId: assessmentThreadId || "",
-          assessmentConversation: assessmentData,
+          assessmentThreadId: assessmentThreadId || "", // Kept for backward compatibility
+          assessmentConversation: assessmentData, // Complete conversation data
+          assessmentTranscript, // Human-readable transcript
+          
+          // Flag to indicate we're using Claude/Anthropic (no thread API)
+          usingClaudeAI: true,
           
           // Common metadata
           timestamp: new Date().toISOString(),
