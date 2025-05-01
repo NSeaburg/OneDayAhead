@@ -10,8 +10,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
 import { Message } from "@/lib/openai";
-// Import Reginald image from public folder
-const reginaldImage = "/reginald-worthington.png"; // Using hyphenated filename without spaces
+// Import Reginald image directly
+import reginaldImage from "../../../public/reginald-worthington.png";
 
 // Add TypeScript declaration for global window property
 declare global {

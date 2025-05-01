@@ -168,7 +168,7 @@ export default function ArticleChatScreen({
         {/* Article Section */}
         <motion.div 
           className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
-          initial={{ width: "100%" }}
+          initial={false}
           animate={{
             width: isChatOpen ? "60%" : "100%",
             transition: { type: "spring", stiffness: 300, damping: 30 }
@@ -203,6 +203,8 @@ export default function ArticleChatScreen({
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
               style={{ flex: "0 0 40%" }}
               layoutId="chat-container"
+              initial={{ opacity: 0, width: 0, x: 100, scale: 0.5 }}
+              animate={{ opacity: 1, width: "auto", x: 0, scale: 1 }}
               exit={{ 
                 opacity: 0, 
                 width: 0, 
@@ -247,6 +249,9 @@ export default function ArticleChatScreen({
                   <motion.div 
                     key={index} 
                     className="message-appear"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + (index * 0.1), duration: 0.3 }}
                   >
                     <MessageBubble message={message} />
                   </motion.div>
@@ -310,8 +315,8 @@ export default function ArticleChatScreen({
           <motion.div 
             className="fixed bottom-24 right-6 z-10"
             layoutId="chat-container"
-            initial={{ opacity: 1, scale: 1, borderRadius: "9999px" }}
-            animate={{ opacity: 1, scale: 1, borderRadius: "9999px" }}
+            initial={{ y: 100, opacity: 0, scale: 0.5, borderRadius: "9999px" }}
+            animate={{ y: 0, opacity: 1, scale: 1, borderRadius: "9999px" }}
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{ 
               type: "spring", 

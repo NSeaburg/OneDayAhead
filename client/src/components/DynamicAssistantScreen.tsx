@@ -9,10 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Import teacher images from public folder
-const mrWhitakerImage = "/mr-whitaker.png"; // Using hyphenated filenames without spaces
-const mrsPartonImage = "/mrs-parton.png"; // Using hyphenated filenames without spaces
-const mrsBannermanImage = "/mrs-bannerman.png"; // Using hyphenated filenames without spaces
+// Teacher images - using URL paths for public folder images
+const mrWhitakerImage = "/Mr. Whitaker.png";
+const mrsPartonImage = "/Mrs. Parton.png";
+const mrsBannermanImage = "/Mrs. Bannerman.png";
 
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";
@@ -223,7 +223,7 @@ export default function DynamicAssistantScreen({
   
   // Helper function to get the correct teacher image based on proficiency level
   const getTeacherImage = () => {
-    if (proficiencyLevel === "high") return mrsPartonImage;
+    if (proficiencyLevel === "high") return "/Mrs. Parton.png";
     if (proficiencyLevel === "medium") return mrsBannermanImage;
     if (proficiencyLevel === "low") return mrWhitakerImage;
     return mrsBannermanImage; // Default fallback
@@ -365,29 +365,13 @@ export default function DynamicAssistantScreen({
               {messages.map((message, index) => (
                 <div key={index} className="message-appear flex flex-col">
                   <div className="flex items-start mb-1">
-                    {message.role === 'assistant' ? (
-                      <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-blue-100">
-                        <img 
-                          src={
-                            proficiencyLevel === "high" ? mrsPartonImage : 
-                            proficiencyLevel === "medium" ? mrsBannermanImage : 
-                            proficiencyLevel === "low" ? mrWhitakerImage : 
-                            placeholderImage
-                          } 
-                          alt={
-                            proficiencyLevel === "high" ? "Mrs. Parton" : 
-                            proficiencyLevel === "medium" ? "Mrs. Bannerman" : 
-                            proficiencyLevel === "low" ? "Mr. Whitaker" : 
-                            "Assistant"
-                          }
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
-                        <i className="ri-user-line"></i>
-                      </div>
-                    )}
+                    <div className={`w-8 h-8 rounded-full ${
+                      message.role === 'assistant' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-600'
+                    } flex items-center justify-center mr-2 flex-shrink-0`}>
+                      <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
+                    </div>
                     <span className="text-xs text-gray-500 mt-1">
                       {message.role === 'assistant' 
                         ? (proficiencyLevel === "high" ? 'Mrs. Parton' : 
@@ -412,22 +396,8 @@ export default function DynamicAssistantScreen({
               {isTyping && currentStreamingMessage && (
                 <div className="flex flex-col">
                   <div className="flex items-start mb-1">
-                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-blue-100">
-                      <img 
-                        src={
-                          proficiencyLevel === "high" ? mrsPartonImage : 
-                          proficiencyLevel === "medium" ? mrsBannermanImage : 
-                          proficiencyLevel === "low" ? mrWhitakerImage : 
-                          placeholderImage
-                        } 
-                        alt={
-                          proficiencyLevel === "high" ? "Mrs. Parton" : 
-                          proficiencyLevel === "medium" ? "Mrs. Bannerman" : 
-                          proficiencyLevel === "low" ? "Mr. Whitaker" : 
-                          "Assistant"
-                        }
-                        className="w-full h-full object-cover" 
-                      />
+                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2 flex-shrink-0">
+                      <i className="ri-robot-line"></i>
                     </div>
                     <span className="text-xs text-gray-500 mt-1">
                       {proficiencyLevel === "high" ? 'Mrs. Parton' : 

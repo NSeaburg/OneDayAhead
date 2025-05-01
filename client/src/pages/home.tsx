@@ -28,9 +28,6 @@ declare global {
   }
 }
 
-// Import our DevNav component
-import DevNav from "@/components/DevNav";
-
 export default function Home() {
   // Track the current screen in the learning flow
   const [currentScreen, setCurrentScreen] = useState(1);
@@ -48,50 +45,6 @@ export default function Home() {
     systemPrompt: string;
   }
   const [teachingAssistance, setTeachingAssistance] = useState<TeachingAssistance | undefined>(undefined);
-  
-  // Check URL parameters for direct navigation to specific screens (developer feature)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const screenParam = params.get('screen');
-    
-    if (screenParam) {
-      switch (screenParam) {
-        case 'article-chat':
-          setCurrentScreen(2); // Article chat screen
-          break;
-        case 'assessment':
-          setCurrentScreen(3); // Assessment screen
-          break;
-        case 'teacher-low':
-          setTeachingAssistance({
-            level: 'low',
-            systemPrompt: config.teacherBotPrompts.low
-          });
-          setCurrentScreen(4); // Teaching bot with low level
-          break;
-        case 'teacher-medium':
-          setTeachingAssistance({
-            level: 'medium',
-            systemPrompt: config.teacherBotPrompts.medium
-          });
-          setCurrentScreen(4); // Teaching bot with medium level
-          break;
-        case 'teacher-high':
-          setTeachingAssistance({
-            level: 'high',
-            systemPrompt: config.teacherBotPrompts.high
-          });
-          setCurrentScreen(4); // Teaching bot with high level
-          break;
-        case 'feedback':
-          setCurrentScreen(5); // Final feedback screen
-          break;
-        default:
-          // No matching screen, stay on default
-          break;
-      }
-    }
-  }, []);
   
   // Store feedback data from N8N
   const [feedbackData, setFeedbackData] = useState<{
@@ -199,9 +152,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
-      {/* Developer Navigation Menu */}
-      <DevNav />
-      
       {/* Progress indicator showing current position in the learning flow */}
       <div className="flex justify-between items-center">
         <ProgressIndicator currentStep={currentScreen} totalSteps={config.totalSteps} />

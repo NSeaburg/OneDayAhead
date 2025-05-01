@@ -9,9 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Import Mrs. Parton image from public folder
-const mrsPartonImage = "/mrs-parton.png"; // Using hyphenated filename without spaces
-
 // Define global window interface for storing feedback data
 declare global {
   interface Window {
@@ -210,43 +207,34 @@ export default function HighBotWithArticleScreen({
         {/* High Bot chat on the right */}
         <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
           <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full overflow-hidden mr-3 border border-purple-200">
-                <img src={mrsPartonImage} alt="Mrs. Parton" className="w-full h-full object-cover" />
+            <h2 className="font-semibold text-lg text-gray-800">Mrs. Parton</h2>
+            {isUsingFallback ? (
+              <div className="mt-1">
+                <p className="text-sm text-amber-600 font-medium">
+                  Using fallback assistant (Invalid assistant ID format)
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  ID: {assistantId.length > 20 ? `${assistantId.substring(0, 20)}...` : assistantId}
+                </p>
               </div>
-              <div>
-                <h2 className="font-semibold text-lg text-gray-800">Mrs. Parton</h2>
-                {isUsingFallback ? (
-                  <div>
-                    <p className="text-sm text-amber-600 font-medium">
-                      Using fallback assistant (Invalid assistant ID format)
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      ID: {assistantId.length > 20 ? `${assistantId.substring(0, 20)}...` : assistantId}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-600">
-                    Retired civics teacher with advanced methods
-                  </p>
-                )}
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-gray-600 mt-1">
+                Assistant ID: {assistantId.substring(0, 15)}...
+              </p>
+            )}
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-320px)] md:h-[calc(100vh-290px)] space-y-4">
             {/* Regular messages */}
             {messages.map((message, index) => (
               <div key={index} className="message-appear flex flex-col">
                 <div className="flex items-start mb-1">
-                  {message.role === 'assistant' ? (
-                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-purple-200">
-                      <img src={mrsPartonImage} alt="Mrs. Parton" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
-                      <i className="ri-user-line"></i>
-                    </div>
-                  )}
+                  <div className={`w-8 h-8 rounded-full ${
+                    message.role === 'assistant' 
+                      ? 'bg-purple-600 text-white' 
+                      : 'bg-gray-200 text-gray-600'
+                  } flex items-center justify-center mr-2 flex-shrink-0`}>
+                    <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
+                  </div>
                   <span className="text-xs text-gray-500 mt-1">
                     {message.role === 'assistant' ? 'Mrs. Parton' : 'You'}
                   </span>
@@ -267,8 +255,8 @@ export default function HighBotWithArticleScreen({
             {isTyping && currentStreamingMessage && (
               <div className="flex flex-col">
                 <div className="flex items-start mb-1">
-                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-purple-200">
-                    <img src={mrsPartonImage} alt="Mrs. Parton" className="w-full h-full object-cover" />
+                  <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center mr-2 flex-shrink-0">
+                    <i className="ri-robot-line"></i>
                   </div>
                   <span className="text-xs text-gray-500 mt-1">
                     Mrs. Parton
