@@ -297,16 +297,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chatDurationSeconds 
       } = req.body;
       
-      // Verify we have at least the teaching thread ID to send
-      if (!teachingThreadId) {
-        return res.status(400).json({ 
-          error: "Invalid request. Teaching Thread ID is required." 
-        });
-      }
-      
       // Prepare conversation data (may be null/undefined from client)
       const teachingData = teachingConversation || [];
       const assessmentData = assessmentConversation || [];
+      
+      // Verify we have at least one of: teaching conversation data or teaching thread ID
+      if (!teachingThreadId && teachingData.length === 0) {
+        return res.status(400).json({ 
+          error: "Invalid request. Either teaching conversation data or thread ID is required." 
+        });
+      }
+      
+      // Generate a placeholder thread ID if we're only using Claude/Anthropic and don't have one
+      const effectiveTeachingThreadId = teachingThreadId || `claude-teaching-${Date.now()}`;
       
       // Get N8N webhook URL for dynamic assistant
       if (!DYNAMIC_ASSISTANT_WEBHOOK_URL) {
@@ -338,12 +341,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Calling teaching bot webhook with POST request (including full conversation data for Claude)");
         const response = await axios.post(DYNAMIC_ASSISTANT_WEBHOOK_URL, {
           // Teaching bot data
-          teachingThreadId,  // Kept for backward compatibility
+          teachingThreadId: effectiveTeachingThreadId,  // Use our effective ID (real or generated)
           teachingConversation: teachingData, // Complete conversation data
           teachingTranscript, // Human-readable transcript
           
           // Assessment bot data (if available)
-          assessmentThreadId: assessmentThreadId || "", // Kept for backward compatibility
+          assessmentThreadId: assessmentThreadId || `claude-assessment-${Date.now()}`, // Generate ID if missing
           assessmentConversation: assessmentData, // Complete conversation data
           assessmentTranscript, // Human-readable transcript
           
@@ -353,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Common metadata
           timestamp: new Date().toISOString(),
           source: "learning-app-teaching",
-          courseName: courseName || "Gravity Course",
+          courseName: courseName || "Three Branches of Government", // Updated default course name
           chatDurationSeconds: chatDurationSeconds || 0
         });
         
@@ -362,9 +365,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Teaching transcript length:", teachingTranscript.length, "characters");
         console.log("Assessment conversation data included. Message count:", assessmentData.length);
         console.log("Assessment transcript length:", assessmentTranscript.length, "characters");
-        console.log("Teaching Thread ID (kept for backward compatibility):", teachingThreadId);
-        console.log("Assessment Thread ID (if any):", assessmentThreadId || "Not available");
-        console.log("Course name sent to N8N:", courseName || "Gravity Course");
+        console.log("Teaching Thread ID:", effectiveTeachingThreadId);
+        console.log("Assessment Thread ID:", assessmentThreadId || `claude-assessment-${Date.now()}`);
+        console.log("Course name sent to N8N:", courseName || "Three Branches of Government");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         console.log("Using Claude AI flag set to:", true);
         
