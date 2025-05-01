@@ -9,10 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Teacher images - using URL paths for public folder images
-const mrWhitakerImage = "/Whitaker.png";
-const mrsPartonImage = "/Parton.png";
-const mrsBannermanImage = "/Bannerman.png";
+// Import teacher images directly
+import mrWhitakerImage from "../../../public/Whitaker.png";
+import mrsPartonImage from "../../../public/Parton.png";
+import mrsBannermanImage from "../../../public/Bannerman.png";
 
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";

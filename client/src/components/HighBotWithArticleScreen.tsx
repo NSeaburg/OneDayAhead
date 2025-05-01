@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowRight, ArrowLeft, Send, User } from "lucide-react";
 
-// Use the new Mrs. Parton image
-const mrsPartonImage = "/Parton.png";
+// Import Mrs. Parton image directly (same as AssessmentBotScreen)
+import mrsPartonImage from "../../../public/Parton.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
