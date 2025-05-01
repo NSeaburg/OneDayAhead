@@ -30,10 +30,12 @@ declare global {
 
 export default function Home() {
   // Track the current screen in the learning flow
-  const [currentScreen, setCurrentScreen] = useState(1);
+  // TEMPORARY FOR TESTING - Set to screen 4 to show Mr. Whitaker teaching bot directly
+  const [currentScreen, setCurrentScreen] = useState(4);
   
   // Store the dynamic assistant ID received from N8N
-  const [dynamicAssistantId, setDynamicAssistantId] = useState<string | null>(null);
+  // TEMPORARY FOR TESTING - Setting this to the low level ID
+  const [dynamicAssistantId, setDynamicAssistantId] = useState<string>("claude_low");
   
   // Store the assessment thread ID and conversation data for passing to the teaching bot
   const [assessmentThreadId, setAssessmentThreadId] = useState<string>("");
@@ -44,7 +46,11 @@ export default function Home() {
     level: 'low' | 'medium' | 'high';
     systemPrompt: string;
   }
-  const [teachingAssistance, setTeachingAssistance] = useState<TeachingAssistance | undefined>(undefined);
+  // TEMPORARY FOR TESTING - Force Mr. Whitaker to appear (low level)
+  const [teachingAssistance, setTeachingAssistance] = useState<TeachingAssistance>({
+    level: 'low',
+    systemPrompt: 'You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government.'
+  });
   
   // Store feedback data from N8N
   const [feedbackData, setFeedbackData] = useState<{
@@ -65,7 +71,7 @@ export default function Home() {
   
   // Check if the current assistant ID is a High Bot
   // (Using a calculated value rather than a hook to avoid hook order issues)
-  const isHighBot = dynamicAssistantId !== null && (
+  const isHighBot = dynamicAssistantId !== "" && (
     dynamicAssistantId.includes("High") || 
     highBotAssistantIds.includes(dynamicAssistantId)
   );
@@ -211,7 +217,7 @@ export default function Home() {
                 }
               } else {
                 console.log("No teaching assistance data provided, using fallback");
-                setDynamicAssistantId(null);
+                setDynamicAssistantId("");
               }
               
               // Capture the assessment conversation and thread ID from the component's state
