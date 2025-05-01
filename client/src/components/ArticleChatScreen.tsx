@@ -146,6 +146,14 @@ export default function ArticleChatScreen({
     element.innerHTML = articleContent;
     html2pdf().from(element).set(PDF_OPTIONS).save();
   };
+  
+  // Handle closing the chat with animation that reverses the opening animation
+  const handleCloseChat = () => {
+    // We'll delay the actual state change to allow the animation to complete
+    setTimeout(() => {
+      setIsChatOpen(false);
+    }, 300); // This delay matches the animation duration
+  };
 
   return (
     <div className="flex flex-col p-4 md:p-6 h-full relative">
@@ -195,20 +203,26 @@ export default function ArticleChatScreen({
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
               style={{ flex: "0 0 40%" }}
               layoutId="chat-container"
-              initial={{ opacity: 0, width: 0, x: 100 }}
-              animate={{ opacity: 1, width: "auto", x: 0 }}
-              exit={{ opacity: 0, width: 0, x: 100 }}
+              initial={{ opacity: 0, width: 0, x: 100, scale: 0.5 }}
+              animate={{ opacity: 1, width: "auto", x: 0, scale: 1 }}
+              exit={{ 
+                opacity: 0, 
+                width: 0, 
+                x: 100, 
+                scale: 0.5,
+                borderRadius: "9999px" // Round it as it exits (like the bubble)
+              }}
               transition={{ 
                 type: "spring", 
-                stiffness: 300, 
-                damping: 30,
-                opacity: { duration: 0.2 }
+                stiffness: 350, 
+                damping: 25,
+                opacity: { duration: 0.3 }
               }}
             >
               {/* Close button for the chat section */}
               <motion.button
                 className="absolute top-2 right-2 rounded-full bg-gray-100 p-1 hover:bg-gray-200 z-10"
-                onClick={() => setIsChatOpen(false)}
+                onClick={handleCloseChat}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3, duration: 0.2 }}
@@ -296,15 +310,20 @@ export default function ArticleChatScreen({
       </div>
 
       {/* Floating chat bubble - with shared layoutId for morphing into chat panel */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {!isChatOpen && !isBubbleDismissed && (
           <motion.div 
             className="fixed bottom-24 right-6 z-10"
             layoutId="chat-container"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            initial={{ y: 100, opacity: 0, scale: 0.5, borderRadius: "9999px" }}
+            animate={{ y: 0, opacity: 1, scale: 1, borderRadius: "9999px" }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 350, 
+              damping: 25,
+              opacity: { duration: 0.3 }
+            }}
           >
             <div className="relative">
               <motion.button
@@ -320,15 +339,18 @@ export default function ArticleChatScreen({
                 <MessageSquare className="h-5 w-5" />
                 <span className="font-medium">Want to chat with this article?</span>
               </motion.button>
-              <button
+              <motion.button
                 className="absolute -top-2 -right-2 rounded-full bg-white shadow-md p-1 hover:bg-gray-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsBubbleDismissed(true);
                 }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.2 }}
               >
                 <X className="h-4 w-4 text-gray-600" />
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         )}
