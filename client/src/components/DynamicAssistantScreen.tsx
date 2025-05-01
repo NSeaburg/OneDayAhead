@@ -140,10 +140,21 @@ export default function DynamicAssistantScreen({
       // Calculate the chat duration in seconds
       const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
       
-      // Prepare the data for sending
-      console.log("Preparing to send combined conversation data");
+      // Prepare the data for sending to N8N (Claude/Anthropic integration)
+      console.log("Preparing to send Claude/Anthropic conversation data to N8N");
       console.log("Teaching conversation length:", messages.length);
       console.log("Assessment conversation length:", (assessmentConversation || []).length);
+      
+      // Add more detailed logging to help with troubleshooting
+      if (messages.length > 0) {
+        console.log("Teaching conversation first message:", messages[0].role);
+        console.log("Teaching conversation last message:", messages[messages.length - 1].role);
+      }
+      
+      if (assessmentConversation && assessmentConversation.length > 0) {
+        console.log("Assessment conversation first message:", assessmentConversation[0].role);
+        console.log("Assessment conversation last message:", assessmentConversation[assessmentConversation.length - 1].role);
+      }
       
       // Send both conversation datasets to N8N before proceeding to the next screen
       const response = await apiRequest("POST", "/api/send-teaching-data", {

@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Generate the full transcript of the conversation
         const transcript = conversationData
-          .map(msg => `${msg.role === 'assistant' ? 'Reginald Worthington III' : 'Student'}: ${msg.content}`)
+          .map((msg: { role: string; content: string }) => `${msg.role === 'assistant' ? 'Reginald Worthington III' : 'Student'}: ${msg.content}`)
           .join('\n\n');
         
         console.log("Sending full conversation data and transcript to N8N webhook for Claude/Anthropic");
