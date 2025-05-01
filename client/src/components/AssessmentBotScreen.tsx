@@ -139,7 +139,7 @@ If the student engages with your fictional persona, fully play along. If the stu
     // Set the initial welcome message from Reginald
     setMessages([{
       role: 'assistant',
-      content: 'Welcome, Colonial! I am Reginald Worthington III, dispatched by His Majesty to observe this most curious experiment you call "democracy." I find myself in need of education on your peculiar system of governance. Would you be so kind as to enlighten me on how your government functions without the guiding hand of a monarch? *adjusts cravat with mild disdain*'
+      content: 'Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty\'s service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call "democracy" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government\'s structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*'
     }]);
   }, []);
   

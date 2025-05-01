@@ -56,7 +56,7 @@ export default function HighBotWithArticleScreen({
   // Choose the appropriate initial message based on whether we're using a fallback
   const initialMessage = isUsingFallback
     ? "Hello! I'm your specialized High Bot assistant for this part of the learning journey. I'll be discussing the article about the United States v. Nixon case that appears on the left. Feel free to ask any questions about the case or the checks and balances in the U.S. government."
-    : "Hello! I'm your specialized High Bot assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance on the article about United States v. Nixon that appears on the left. Feel free to ask any questions about the case or how it demonstrates the checks and balances in the U.S. government.";
+    : "Welcome, young scholars! I'm Mrs. Parton, your retired civics teacher who's still passionate about helping students understand how our government actually works in practice. Today we'll analyze the fascinating United States v. Nixon case to see our three branches of government in action during a real constitutional crisis.\nI believe you're perfectly capable of thoughtful analysis with just a little guidance. We'll keep our discussion focused and meaningful, without lengthy lectures - I promise! I'm here to help you connect what you've learned to how democracy functions when tested in the real world.";
   
   // Log which system prompt we're using
   console.log(`HighBotWithArticleScreen using system prompt with length: ${systemPrompt?.length || 0} characters`);
@@ -207,7 +207,7 @@ export default function HighBotWithArticleScreen({
         {/* High Bot chat on the right */}
         <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
           <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <h2 className="font-semibold text-lg text-gray-800">High Bot</h2>
+            <h2 className="font-semibold text-lg text-gray-800">Mrs. Parton</h2>
             {isUsingFallback ? (
               <div className="mt-1">
                 <p className="text-sm text-amber-600 font-medium">
@@ -236,7 +236,7 @@ export default function HighBotWithArticleScreen({
                     <i className={message.role === 'assistant' ? 'ri-robot-line' : 'ri-user-line'}></i>
                   </div>
                   <span className="text-xs text-gray-500 mt-1">
-                    {message.role === 'assistant' ? 'High Bot' : 'You'}
+                    {message.role === 'assistant' ? 'Mrs. Parton' : 'You'}
                   </span>
                 </div>
                 <div className={`ml-10 ${
@@ -259,7 +259,7 @@ export default function HighBotWithArticleScreen({
                     <i className="ri-robot-line"></i>
                   </div>
                   <span className="text-xs text-gray-500 mt-1">
-                    High Bot
+                    Mrs. Parton
                   </span>
                 </div>
                 <div className="ml-10 bg-purple-50 border border-purple-100 rounded-lg p-3 text-gray-700">
