@@ -157,24 +157,18 @@ export default function ArticleChatScreen({
 
   return (
     <div className="flex flex-col p-4 md:p-6 h-full relative">
-      <motion.h1 
-        className="text-2xl font-semibold text-gray-900 mb-4"
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
+      <h1 className="text-2xl font-semibold text-gray-900 mb-4">
         {isChatOpen ? "Article & Discussion" : "Article"}
-      </motion.h1>
+      </h1>
       <div className="flex-grow flex flex-col md:flex-row md:flex-nowrap gap-4 md:gap-6 mb-24 relative">
         {/* Article Section */}
         <motion.div 
           className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col`}
-          initial={false}
+          initial={{ width: isChatOpen ? "60%" : "100%" }}
           animate={{
             width: isChatOpen ? "60%" : "100%",
-            transition: { type: "spring", stiffness: 300, damping: 30 }
+            transition: { duration: 0.3 }
           }}
-          layout
-          layoutId="article-container"
         >
           <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="font-semibold text-lg text-gray-800">Learning Material</h2>
@@ -202,22 +196,10 @@ export default function ArticleChatScreen({
             <motion.div 
               className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative"
               style={{ flex: "0 0 40%" }}
-              layoutId="chat-container"
-              initial={{ opacity: 0, width: 0, x: 100, scale: 0.5 }}
-              animate={{ opacity: 1, width: "auto", x: 0, scale: 1 }}
-              exit={{ 
-                opacity: 0, 
-                width: 0, 
-                x: 100, 
-                scale: 0.5,
-                borderRadius: "9999px" // Round it as it exits (like the bubble)
-              }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 350, 
-                damping: 25,
-                opacity: { duration: 0.3 }
-              }}
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
             >
               {/* Close button for the chat section */}
               <motion.button
@@ -230,28 +212,22 @@ export default function ArticleChatScreen({
                 <X className="h-4 w-4 text-gray-600" />
               </motion.button>
               
-              <motion.div 
-                className="p-4 bg-gray-50 border-b border-gray-200"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.3 }}
-              >
+              <div className="p-4 bg-gray-50 border-b border-gray-200">
                 <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
-              </motion.div>
+              </div>
               <motion.div 
                 className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)] space-y-4"
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 1 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
               >
                 {/* Regular messages */}
                 {messages.map((message, index) => (
                   <motion.div 
                     key={index} 
                     className="message-appear"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + (index * 0.1), duration: 0.3 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <MessageBubble message={message} />
                   </motion.div>
@@ -272,12 +248,7 @@ export default function ArticleChatScreen({
                 {/* Reference for scrolling to bottom */}
                 <div ref={messagesEndRef} />
               </motion.div>
-              <motion.div 
-                className="p-4 border-t border-gray-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.3 }}
-              >
+              <div className="p-4 border-t border-gray-200">
                 <form onSubmit={handleSubmit} className="flex items-start gap-2">
                   <AutoResizeTextarea
                     value={inputMessage}
@@ -303,7 +274,7 @@ export default function ArticleChatScreen({
                     <Send className="h-4 w-4" />
                   </Button>
                 </form>
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -314,26 +285,20 @@ export default function ArticleChatScreen({
         {!isChatOpen && !isBubbleDismissed && (
           <motion.div 
             className="fixed bottom-24 right-6 z-10"
-            layoutId="chat-container"
-            initial={{ y: 100, opacity: 0, scale: 0.5, borderRadius: "9999px" }}
-            animate={{ y: 0, opacity: 1, scale: 1, borderRadius: "9999px" }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 350, 
-              damping: 25,
-              opacity: { duration: 0.3 }
-            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           >
             <div className="relative">
               <motion.button
                 className="flex items-center gap-2 px-5 py-4 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors"
                 onClick={() => setIsChatOpen(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 animate={shouldPulse ? 
-                  { scale: [1, 1.05, 1], transition: { repeat: Infinity, duration: 1.5 } } : 
-                  { scale: 1 }
+                  { opacity: [0.9, 1, 0.9], transition: { repeat: Infinity, duration: 2 } } : 
+                  { opacity: 1 }
                 }
               >
                 <MessageSquare className="h-5 w-5" />
