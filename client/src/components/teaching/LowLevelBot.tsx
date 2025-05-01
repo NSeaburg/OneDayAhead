@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { TeachingResponseData, FeedbackData } from "@/lib/types";
 
 interface LowLevelBotProps {
   assessmentThreadId?: string;
@@ -124,7 +125,7 @@ Hey there. I'm Mr. Whitaker — retired civics teacher, but I still love helping
   const handleFinish = async () => {
     try {
       // Send conversation data to backend
-      const response = await apiRequest("POST", "/api/send-teaching-data", {
+      const response = await apiRequest<TeachingResponseData>("POST", "/api/send-teaching-data", {
         // Teaching bot data
         teachingConversation: messages,
         teachingThreadId: threadId,
@@ -139,7 +140,7 @@ Hey there. I'm Mr. Whitaker — retired civics teacher, but I still love helping
       });
       
       // Check if we have feedback data in the response
-      if (response.feedbackData) {
+      if (response && response.feedbackData) {
         console.log("Feedback data received:", response.feedbackData);
         onNext(undefined, response.feedbackData);
       } else {
