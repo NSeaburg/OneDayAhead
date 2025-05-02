@@ -12,21 +12,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { notifyScreenChange, notifyFeedbackReceived, notifyCourseCompleted } from "@/lib/embedding";
 
-// Add TypeScript declaration for global window property
-declare global {
-  interface Window {
-    __assessmentData?: {
-      threadId?: string;
-      messages?: any[];
-      feedbackData?: {
-        summary?: string;
-        contentKnowledgeScore?: number;
-        writingScore?: number;
-        nextSteps?: string;
-      };
-    };
-  }
-}
+// Using global interface declared in types.d.ts
 
 export default function Home() {
   // Track the current screen in the learning flow

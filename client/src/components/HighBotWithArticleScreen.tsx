@@ -18,6 +18,7 @@ declare global {
     __assessmentData?: {
       threadId?: string;
       messages?: any[];
+      teachingMessages?: any[]; // Added for storing teaching bot conversation
       feedbackData?: {
         summary?: string;
         contentKnowledgeScore?: number;
