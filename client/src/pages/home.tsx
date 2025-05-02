@@ -210,8 +210,18 @@ export default function Home() {
                   console.log(`Using regular layout for ${teachingAssistanceData.level} proficiency level`);
                 }
               } else {
-                console.log("No teaching assistance data provided, using fallback");
-                setDynamicAssistantId("");
+                console.log("No teaching assistance data provided, using fallback low level");
+                // Create fallback teaching assistance data for Mr. Whitaker (low level)
+                const fallbackAssistance = {
+                  level: 'low' as 'low',
+                  systemPrompt: `You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government.`
+                };
+                
+                // Set fallback assistance data
+                setTeachingAssistance(fallbackAssistance);
+                
+                // Set the low-level teaching assistant ID
+                setDynamicAssistantId('claude_low');
               }
               
               // Capture the assessment conversation and thread ID from the component's state
