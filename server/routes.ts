@@ -435,8 +435,11 @@ When the student has completed both activities, thank them warmly and end the co
         
         // Log the exact N8N response for debugging
         console.log("N8N Response Data:", JSON.stringify(response.data));
+        console.log("N8N Response Status:", response.status);
+        console.log("N8N Response Headers:", JSON.stringify(response.headers));
         console.log("Response Data Type:", typeof response.data);
         console.log("Is Array?", Array.isArray(response.data));
+        console.log("Raw response data (stringified):", JSON.stringify(response.data, null, 2));
         if (Array.isArray(response.data)) {
           console.log("Array Length:", response.data.length);
           
