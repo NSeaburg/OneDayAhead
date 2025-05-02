@@ -59,7 +59,7 @@ export default function HighBotWithArticleScreen({
   // Choose the appropriate initial message based on whether we're using a fallback
   const initialMessage = isUsingFallback
     ? "Hello! I'm your specialized High Bot assistant for this part of the learning journey. I'll be discussing the article about the United States v. Nixon case that appears on the left. Feel free to ask any questions about the case or the checks and balances in the U.S. government."
-    : "Hello there. I'm Mrs. Parton — retired civics teacher, and I'm here to help you apply what you've learned about how our government works when it's put to the test. We'll be using the United States v. Nixon case as our guide today. I'll ask you a few questions to help you think through how each branch played its part. Let's dive in when you're ready. (gathers a folder of well-worn case studies with a fond smile)";
+    : "Hello there. I'm Mrs. Parton — retired civics teacher, and I'm here to help you apply what you've learned about how our government works when it's put to the test. We'll be using the United States v. Nixon case as our guide today.\n\nI'll ask you a few questions to help you think through how each branch played its part. Click the Launch Article link to the left when you are ready to dive in. (gathers a folder of well-worn case studies with a fond smile)";
   
   // Log which system prompt we're using
   console.log(`HighBotWithArticleScreen using system prompt with length: ${systemPrompt?.length || 0} characters`);
