@@ -52,12 +52,7 @@ export default function Home() {
     contentKnowledgeScore?: number;
     writingScore?: number;
     nextSteps?: string;
-  } | undefined>({
-    summary: "You've completed your learning journey on the three branches of government!",
-    contentKnowledgeScore: 85,
-    writingScore: 90,
-    nextSteps: "Next, try exploring how these branches interact in everyday governance situations."
-  });
+  } | undefined>(undefined);
   
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();

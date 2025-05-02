@@ -50,10 +50,10 @@ export default function NewFeedbackScreen({
     writingScore: number;
     nextSteps: string;
   }>({
-    summary: "You've completed this learning module successfully!",
+    summary: "Please wait, loading your results...",
     contentKnowledgeScore: 0,
     writingScore: 0,
-    nextSteps: "Continue exploring more topics to expand your knowledge."
+    nextSteps: "Your personalized recommendations will appear here."
   });
 
   // Log initialization for debugging
