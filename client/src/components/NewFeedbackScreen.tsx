@@ -34,11 +34,15 @@ interface NewFeedbackScreenProps {
     writingScore?: number;
     nextSteps?: string;
   };
+  assessmentConversation?: any[];
+  teachingConversation?: any[];
 }
 
 export default function NewFeedbackScreen({ 
   onPrevious,
-  feedbackData: propsFeedbackData // Feedback data can be passed via props
+  feedbackData: propsFeedbackData, // Feedback data can be passed via props
+  assessmentConversation: propsAssessmentConversation,
+  teachingConversation: propsTeachingConversation
 }: NewFeedbackScreenProps): JSX.Element {
   // State to track component initialization
   const [isInitialized, setIsInitialized] = useState(false);
@@ -330,6 +334,59 @@ export default function NewFeedbackScreen({
         </div>
       </Card>
 
+      {/* Conversation Transcripts */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Conversation Transcripts</h2>
+        
+        {/* Assessment Bot Conversation */}
+        <div className="mb-6">
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-2">
+            <h3 className="font-medium text-blue-800 mb-2">Assessment Conversation</h3>
+            <p className="text-sm text-gray-600 mb-4">This is the conversation with the assessment bot that evaluated your knowledge.</p>
+            
+            <div className="max-h-96 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
+              {(propsAssessmentConversation || window.__assessmentData?.messages || []).length > 0 ? (
+                <div className="space-y-3">
+                  {(propsAssessmentConversation || window.__assessmentData?.messages || []).map((message, index) => (
+                    <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                      <p className="text-xs font-semibold text-gray-600 mb-1">
+                        {message.role === 'assistant' ? 'Assessment Bot' : 'You'}:
+                      </p>
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No assessment conversation data available</p>
+              )}
+            </div>
+          </div>
+          
+          {/* Teaching Bot Conversation */}
+          <div className="bg-green-50 border border-green-100 rounded-lg p-4">
+            <h3 className="font-medium text-green-800 mb-2">Teaching Conversation</h3>
+            <p className="text-sm text-gray-600 mb-4">This is the conversation with the teaching assistant that provided personalized guidance.</p>
+            
+            <div className="max-h-96 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
+              {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).length > 0 ? (
+                <div className="space-y-3">
+                  {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).map((message, index) => (
+                    <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-green-50' : 'bg-gray-50'}`}>
+                      <p className="text-xs font-semibold text-gray-600 mb-1">
+                        {message.role === 'assistant' ? 'Teaching Assistant' : 'You'}:
+                      </p>
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No teaching conversation data available</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {/* Back button */}
       <div className="mt-auto">
         {onPrevious && (

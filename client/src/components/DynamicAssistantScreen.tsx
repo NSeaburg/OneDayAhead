@@ -127,6 +127,20 @@ export default function DynamicAssistantScreen({
     }]);
   }, [teachingAssistance, initialMessage, setMessages]);
   
+  // Store conversation in global window object for the feedback screen
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Initialize the assessment data object if it doesn't exist
+      if (!window.__assessmentData) {
+        window.__assessmentData = {};
+      }
+      
+      // Store the teaching messages
+      window.__assessmentData.teachingMessages = messages;
+      console.log("Stored teaching conversation in global object:", messages.length, "messages");
+    }
+  }, [messages]);
+  
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
