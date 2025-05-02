@@ -233,7 +233,6 @@ export default function NewFeedbackScreen({
       <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
         <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Three Branches of Government - Learning Content</h2>
         <p><strong>Objective:</strong> Understand the three branches of government and how they work together.</p>
-        <p><strong>Grade:</strong> 7-9</p>
         
         <h3 style="margin-top: 15px;">Key Concepts</h3>
         <ul>
