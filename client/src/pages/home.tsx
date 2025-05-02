@@ -293,6 +293,8 @@ export default function Home() {
             assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.feedback}
             feedbackData={feedbackData}
+            assessmentConversation={assessmentConversation}
+            teachingConversation={window.__assessmentData?.teachingMessages || []}
             onPrevious={goToPreviousScreen}
           />
         </div>
