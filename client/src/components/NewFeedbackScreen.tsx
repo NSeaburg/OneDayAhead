@@ -159,19 +159,25 @@ export default function NewFeedbackScreen({
     console.log("Current feedback data state:", feedbackData);
   }, [feedbackData]);
 
-  // Helper function to get color class based on score (0-100 scale)
+  // Helper function to get color class based on score (0-4 scale)
   const getColorClass = (score: number) => {
-    if (score >= 85) return "bg-green-100 border-green-200 text-green-800";
-    if (score >= 70) return "bg-blue-100 border-blue-200 text-blue-800";
-    if (score >= 50) return "bg-yellow-100 border-yellow-200 text-yellow-800";
+    // Convert score to 100-scale for color determination
+    const normalizedScore = score <= 4 ? (score / 4) * 100 : score;
+    
+    if (normalizedScore >= 85) return "bg-green-100 border-green-200 text-green-800";
+    if (normalizedScore >= 70) return "bg-blue-100 border-blue-200 text-blue-800";
+    if (normalizedScore >= 50) return "bg-yellow-100 border-yellow-200 text-yellow-800";
     return "bg-red-100 border-red-200 text-red-800";
   };
 
-  // Helper function to determine CSS background color class based on score (0-100 scale)
+  // Helper function to determine CSS background color class based on score (0-4 scale)
   const getProgressColor = (score: number): string => {
-    if (score >= 85) return "bg-green-500";
-    if (score >= 70) return "bg-blue-500";
-    if (score >= 50) return "bg-yellow-500";
+    // Convert score to 100-scale for color determination
+    const normalizedScore = score <= 4 ? (score / 4) * 100 : score;
+    
+    if (normalizedScore >= 85) return "bg-green-500";
+    if (normalizedScore >= 70) return "bg-blue-500";
+    if (normalizedScore >= 50) return "bg-yellow-500";
     return "bg-red-500";
   };
   
@@ -216,12 +222,12 @@ export default function NewFeedbackScreen({
       <div style="display: flex; gap: 20px; margin-bottom: 20px;">
         <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
           <h3 style="font-size: 16px; margin-bottom: 10px;">Content Knowledge</h3>
-          <p>Score: ${feedbackData.contentKnowledgeScore}/100</p>
+          <p>Score: ${feedbackData.contentKnowledgeScore <= 4 ? `${feedbackData.contentKnowledgeScore}/4` : `${feedbackData.contentKnowledgeScore}/100`}</p>
         </div>
         
         <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
           <h3 style="font-size: 16px; margin-bottom: 10px;">Writing Quality</h3>
-          <p>Score: ${feedbackData.writingScore}/100</p>
+          <p>Score: ${feedbackData.writingScore <= 4 ? `${feedbackData.writingScore}/4` : `${feedbackData.writingScore}/100`}</p>
         </div>
       </div>
       
@@ -317,13 +323,13 @@ export default function NewFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {feedbackData.contentKnowledgeScore}/100
+              {feedbackData.contentKnowledgeScore <= 4 ? `${feedbackData.contentKnowledgeScore}/4` : `${feedbackData.contentKnowledgeScore}/100`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.contentKnowledgeScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.contentKnowledgeScore)}%` }}
+              style={{ width: `${Math.max(1, feedbackData.contentKnowledgeScore <= 4 ? (feedbackData.contentKnowledgeScore / 4) * 100 : feedbackData.contentKnowledgeScore)}%` }}
             ></div>
           </div>
         </div>
@@ -334,13 +340,13 @@ export default function NewFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {feedbackData.writingScore}/100
+              {feedbackData.writingScore <= 4 ? `${feedbackData.writingScore}/4` : `${feedbackData.writingScore}/100`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.writingScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.writingScore)}%` }}
+              style={{ width: `${Math.max(1, feedbackData.writingScore <= 4 ? (feedbackData.writingScore / 4) * 100 : feedbackData.writingScore)}%` }}
             ></div>
           </div>
         </div>
