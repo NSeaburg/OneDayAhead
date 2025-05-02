@@ -444,11 +444,36 @@ When the student has completed both activities, thank them warmly and end the co
             nextSteps: "Continue exploring the checks and balances between branches by reading more about specific historical cases where these powers were exercised."
           };
         } else if (response.data && typeof response.data === 'object') {
-          // Check for feedback fields in the N8N response
-          const { summary, contentKnowledgeScore, writingScore, nextSteps } = response.data;
+          // The response might be an array with a single object, or a direct object
+          // Handle both cases by extracting the data appropriately
+          let dataToProcess = response.data;
           
-          if (summary || contentKnowledgeScore || writingScore || nextSteps) {
-            console.log("Received feedback data from N8N:", response.data);
+          // If the response is an array with at least one item, extract the first item
+          if (Array.isArray(response.data) && response.data.length > 0) {
+            console.log("Detected array response from N8N, extracting first item");
+            dataToProcess = response.data[0];
+          }
+          
+          // Check if the data has a feedbackData field directly
+          if (dataToProcess.feedbackData && typeof dataToProcess.feedbackData === 'object') {
+            console.log("Found feedbackData object in N8N response");
+            const { summary, contentKnowledgeScore, writingScore, nextSteps } = dataToProcess.feedbackData;
+            
+            feedbackData = {
+              summary: summary || "No summary provided",
+              contentKnowledgeScore: contentKnowledgeScore || 0,
+              writingScore: writingScore || 0,
+              nextSteps: nextSteps || "No next steps provided"
+            };
+            
+            console.log("Using feedbackData from N8N:", feedbackData);
+          } 
+          // Check for feedback fields at the top level of the response
+          else if (dataToProcess.summary || dataToProcess.contentKnowledgeScore || 
+                   dataToProcess.writingScore || dataToProcess.nextSteps) {
+            console.log("Found feedback fields at top level of N8N response");
+            const { summary, contentKnowledgeScore, writingScore, nextSteps } = dataToProcess;
+            
             feedbackData = {
               summary: summary || "No summary provided",
               contentKnowledgeScore: contentKnowledgeScore || 0,
