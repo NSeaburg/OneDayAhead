@@ -386,6 +386,9 @@ When the student has completed both activities, thank them warmly and end the co
           // Flag to indicate we're using Claude/Anthropic (no thread API)
           usingClaudeAI: true,
           
+          // Flag to indicate we're expecting feedback data in the response
+          expectFeedbackData: true,
+          
           // Common metadata
           timestamp: new Date().toISOString(),
           source: "learning-app-teaching",

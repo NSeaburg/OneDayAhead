@@ -176,16 +176,14 @@ export default function DynamicAssistantScreen({
       console.log("Teaching bot Thread ID:", threadId);
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
-      // DEMO IMPLEMENTATION: Create a hardcoded version of the expected N8N response
-      // This will be used when N8N returns an empty response
-      const hardcodedN8NData = [{
-        feedbackData: {
-          summary: "The student now understands the basic structure of the American government, including the division into three branches: the legislative, executive, and judicial. They can relate these branches to different roles within a rock band, showcasing an ability to connect abstract concepts to more familiar contexts. **This suggests a solid grasp of the material**, as they can translate and apply these ideas creatively.",
-          contentKnowledgeScore: 85,
-          writingScore: 70,
-          nextSteps: "Great job on grasping the fundamentals of the American government's structure! **You're on the right path**, and it's exciting to see you connecting complex ideas to everyday scenarios. Next, we'll dive into the fascinating world of whales. Get ready to explore these magnificent creatures' social structures and communication methods. **It's going to be a whale of a time!**"
-        }
-      }];
+      // Fallback data when N8N returns an empty response or connection fails
+      // Note: In production, this would be replaced with a more generic message prompting user to retry
+      const fallbackFeedbackData = {
+        summary: "You've completed learning about the three branches of government! You demonstrated understanding of how the legislative, executive, and judicial branches function together with checks and balances.",
+        contentKnowledgeScore: 80,
+        writingScore: 75,
+        nextSteps: "Continue exploring government concepts by researching specific historical examples of how the branches have interacted throughout American history."
+      };
       
       // Extract feedback data if available
       let feedbackData = null;
@@ -198,28 +196,40 @@ export default function DynamicAssistantScreen({
       
       // Check if the response has actual data
       if (Object.keys(result).length === 0) {
-        // Completely empty response, use the hardcoded data
-        console.log("Received completely empty response from webhook, using hardcoded N8N data");
-        feedbackData = hardcodedN8NData[0].feedbackData;
+        // Completely empty response, use the fallback data
+        console.log("Received completely empty response from webhook, using fallback data");
+        feedbackData = fallbackFeedbackData;
       } else if (result.feedbackData) {
         // Direct object format from server (this is the expected format from our backend)
         feedbackData = result.feedbackData;
         console.log("Feedback data received from server's feedbackData property:", feedbackData);
-      } else if (Array.isArray(result) && result.length > 0 && result[0].feedbackData) {
-        // Array format directly from N8N 
-        feedbackData = result[0].feedbackData;
-        console.log("Feedback data received from N8N array format:", feedbackData);
+      } else if (Array.isArray(result) && result.length > 0) {
+        // Array format directly from N8N - check for two common patterns
+        const firstItem = result[0];
+        if (firstItem.feedbackData) {
+          // Case 1: Nested feedbackData property
+          feedbackData = firstItem.feedbackData;
+          console.log("Feedback data received from N8N array format (nested):", feedbackData);
+        } else if (firstItem.summary !== undefined && 
+                  (firstItem.contentKnowledgeScore !== undefined || 
+                   firstItem.writingScore !== undefined)) {
+          // Case 2: Direct properties in array item
+          feedbackData = firstItem;
+          console.log("Feedback data received from N8N array format (direct):", feedbackData);
+        }
       } else if (result.success && !result.feedbackData) {
         // Success response without feedbackData, use what you're sending from N8N 
         console.log("Success response without feedbackData. Checking if result itself is the data");
-        if (result.summary && result.contentKnowledgeScore !== undefined) {
+        if (result.summary && 
+           (result.contentKnowledgeScore !== undefined || 
+            result.writingScore !== undefined)) {
           // The result itself might be the feedback data
           feedbackData = result;
           console.log("Using result object directly as feedbackData");
         } else {
           // Fallback 
-          console.log("No usable feedback data in result. Using hardcoded data");
-          feedbackData = hardcodedN8NData[0].feedbackData;
+          console.log("No usable feedback data in result. Using fallback data");
+          feedbackData = fallbackFeedbackData;
         }
       }
       
