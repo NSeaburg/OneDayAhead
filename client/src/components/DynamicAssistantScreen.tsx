@@ -117,12 +117,15 @@ export default function DynamicAssistantScreen({
     console.log("DynamicAssistantScreen mounted/updated - resetting conversation to ensure proper system prompt");
     console.log("Using system prompt with level:", proficiencyLevel);
     
+    // Always ensure article is hidden on first load
+    setShowArticle(false);
+    
     // Clear existing messages and set the initial welcome
     setMessages([{
       role: 'assistant',
       content: initialMessage
     }]);
-  }, [teachingAssistance, initialMessage]);
+  }, [teachingAssistance, initialMessage, setMessages]);
   
   // Scroll to bottom of messages when new messages appear or when typing
   useEffect(() => {
@@ -391,7 +394,10 @@ export default function DynamicAssistantScreen({
                 <div className="flex justify-between items-center mb-3">
                   <h2 className="font-semibold text-lg text-gray-800">United States v. Nixon</h2>
                   <Button 
-                    onClick={() => setShowArticle(false)}
+                    onClick={() => {
+                      console.log("Back to Profile button clicked, hiding article...");
+                      setShowArticle(false);
+                    }}
                     variant="outline"
                     size="sm"
                     className="text-gray-600 hover:text-gray-800"
@@ -456,7 +462,10 @@ export default function DynamicAssistantScreen({
                   <div className="mt-6">
                     <hr className="my-4 border-gray-200" />
                     <Button
-                      onClick={() => setShowArticle(true)}
+                      onClick={() => {
+                        console.log("Launch Article button clicked, showing article...");
+                        setShowArticle(true);
+                      }}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition-all flex items-center justify-center"
                       disabled={showArticle}
                     >
