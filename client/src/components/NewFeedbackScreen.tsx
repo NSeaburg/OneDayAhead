@@ -78,7 +78,7 @@ export default function NewFeedbackScreen({
   useEffect(() => {
     if (isInitialized) return; // Only run once
     
-    // Add a small delay to ensure all data has been populated
+    // Add a longer delay to ensure all data has been populated
     const timerId = setTimeout(() => {
       console.log("Initializing NewFeedbackScreen data - After 500ms delay");
       console.log("Received propsFeedbackData:", propsFeedbackData);
@@ -127,7 +127,7 @@ export default function NewFeedbackScreen({
       }
       
       setIsInitialized(true);
-    }, 500); // 500ms delay
+    }, 1500); // 1500ms delay to ensure data is fully loaded
     
     // Clean up the timer when the component unmounts
     return () => clearTimeout(timerId);
