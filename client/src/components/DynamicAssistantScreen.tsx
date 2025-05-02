@@ -19,22 +19,7 @@ import mrsBannermanImage from "../../../public/Bannerman.png";
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";
 
-// Define global window interface for storing feedback data
-declare global {
-  interface Window {
-    __assessmentData?: {
-      threadId?: string;
-      messages?: any[];
-      teachingMessages?: any[]; // Added for storing teaching bot conversation
-      feedbackData?: {
-        summary?: string;
-        contentKnowledgeScore?: number;
-        writingScore?: number;
-        nextSteps?: string;
-      };
-    };
-  }
-}
+// Using global interface from types.d.ts
 
 interface TeachingAssistance {
   level: 'low' | 'medium' | 'high';

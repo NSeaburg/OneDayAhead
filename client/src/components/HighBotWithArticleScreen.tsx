@@ -12,22 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// Define global window interface for storing feedback data
-declare global {
-  interface Window {
-    __assessmentData?: {
-      threadId?: string;
-      messages?: any[];
-      teachingMessages?: any[]; // Added for storing teaching bot conversation
-      feedbackData?: {
-        summary?: string;
-        contentKnowledgeScore?: number;
-        writingScore?: number;
-        nextSteps?: string;
-      };
-    };
-  }
-}
+// Using global interface from types.d.ts
 
 interface HighBotWithArticleScreenProps {
   assistantId: string;

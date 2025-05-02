@@ -8,22 +8,7 @@ import remarkGfm from "remark-gfm";
 import html2pdf from 'html2pdf.js';
 import { notifyCourseCompleted } from "@/lib/embedding";
 
-// Define global window interface for accessing feedback data
-declare global {
-  interface Window {
-    __assessmentData?: {
-      threadId?: string;
-      messages?: any[];
-      teachingMessages?: any[]; // Added for storing teaching bot conversation
-      feedbackData?: {
-        summary?: string;
-        contentKnowledgeScore?: number;
-        writingScore?: number;
-        nextSteps?: string;
-      };
-    };
-  }
-}
+// Using global interface from types.d.ts
 
 interface NewFeedbackScreenProps {
   assistantId?: string;
