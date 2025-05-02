@@ -433,18 +433,34 @@ When the student has completed both activities, thank them warmly and end the co
         // Extract feedback data from N8N response if available
         let feedbackData = {};
         
-        // Handle empty response from N8N
+        // Log the exact N8N response for debugging
         console.log("N8N Response Data:", JSON.stringify(response.data));
         console.log("Response Data Type:", typeof response.data);
         console.log("Is Array?", Array.isArray(response.data));
         if (Array.isArray(response.data)) {
           console.log("Array Length:", response.data.length);
+          
+          // Inspect first item if it exists
+          if (response.data.length > 0) {
+            console.log("First Array Item:", JSON.stringify(response.data[0]));
+            if (response.data[0].feedbackData) {
+              console.log("Found feedbackData in array format");
+            }
+          }
         }
         if (typeof response.data === 'object' && response.data !== null) {
           console.log("Object Keys:", Object.keys(response.data));
         }
         
-        if (!response.data || (typeof response.data === 'object' && Object.keys(response.data).length === 0)) {
+        // First check if response data is an array with the expected structure
+        if (Array.isArray(response.data) && response.data.length > 0 && response.data[0].feedbackData) {
+          console.log("MATCH: Processing array-formatted feedbackData from N8N");
+          const firstItem = response.data[0];
+          feedbackData = firstItem.feedbackData;
+          console.log("Extracted feedbackData:", JSON.stringify(feedbackData));
+        }
+        // Then check for empty or null response
+        else if (!response.data || (typeof response.data === 'object' && Object.keys(response.data).length === 0)) {
           console.log("WARNING: Received empty response from teaching webhook. Using fallback feedback data.");
           // Return hardcoded fallback feedback
           feedbackData = {

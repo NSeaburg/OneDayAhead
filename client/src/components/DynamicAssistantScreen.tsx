@@ -177,8 +177,20 @@ export default function DynamicAssistantScreen({
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
       // Extract feedback data if available
-      const feedbackData = result.feedbackData || null;
-      console.log("Feedback data received:", feedbackData);
+      // Handle both formats: direct object or array of objects with feedbackData
+      let feedbackData = null;
+      
+      if (result.feedbackData) {
+        // Direct object format from server
+        feedbackData = result.feedbackData;
+        console.log("Feedback data received from server object:", feedbackData);
+      } else if (Array.isArray(result) && result.length > 0 && result[0].feedbackData) {
+        // Array format directly from N8N
+        feedbackData = result[0].feedbackData;
+        console.log("Feedback data received from N8N array format:", feedbackData);
+      }
+      
+      console.log("Final feedback data to be used:", feedbackData);
       
       if (result.success) {
         // Silently continue without showing a toast
