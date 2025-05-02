@@ -5,7 +5,7 @@ import ArticleChatScreen from "@/components/ArticleChatScreen";
 import AssessmentBotScreen from "@/components/AssessmentBotScreen";
 import DynamicAssistantScreen from "@/components/DynamicAssistantScreen";
 import HighBotWithArticleScreen from "@/components/HighBotWithArticleScreen";
-import FinalBotScreen from "@/components/FinalBotScreen";
+import NewFeedbackScreen from "@/components/NewFeedbackScreen";
 import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 import { Button } from "@/components/ui/button";
@@ -294,7 +294,7 @@ export default function Home() {
         
         {/* Final Feedback Bot Screen (5) */}
         <div className={`absolute inset-0 ${currentScreen === 5 ? 'block' : 'hidden'}`}>
-          <FinalBotScreen 
+          <NewFeedbackScreen 
             assistantId={discussionAssistantId}
             systemPrompt={config.systemPrompts.feedback}
             feedbackData={feedbackData}
