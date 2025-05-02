@@ -451,12 +451,15 @@ When the student has completed both activities, thank them warmly and end the co
           // If the response is an array with at least one item, extract the first item
           if (Array.isArray(response.data) && response.data.length > 0) {
             console.log("Detected array response from N8N, extracting first item");
+            console.log("Array response from N8N:", JSON.stringify(response.data));
             dataToProcess = response.data[0];
+            console.log("Extracted item:", JSON.stringify(dataToProcess));
           }
           
           // Check if the data has a feedbackData field directly
           if (dataToProcess.feedbackData && typeof dataToProcess.feedbackData === 'object') {
             console.log("Found feedbackData object in N8N response");
+            console.log("feedbackData object:", JSON.stringify(dataToProcess.feedbackData));
             const { summary, contentKnowledgeScore, writingScore, nextSteps } = dataToProcess.feedbackData;
             
             feedbackData = {
@@ -466,7 +469,7 @@ When the student has completed both activities, thank them warmly and end the co
               nextSteps: nextSteps || "No next steps provided"
             };
             
-            console.log("Using feedbackData from N8N:", feedbackData);
+            console.log("Using feedbackData from N8N:", JSON.stringify(feedbackData));
           } 
           // Check for feedback fields at the top level of the response
           else if (dataToProcess.summary || dataToProcess.contentKnowledgeScore || 
