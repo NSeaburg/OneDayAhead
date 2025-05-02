@@ -182,6 +182,28 @@ export default function NewFeedbackScreen({
     element.style.padding = '20px';
     element.style.fontFamily = 'Arial, sans-serif';
     
+    // Get assessment conversation data
+    const assessmentConv = propsAssessmentConversation || window.__assessmentData?.messages || [];
+    // Get teaching conversation data
+    const teachingConv = propsTeachingConversation || window.__assessmentData?.teachingMessages || [];
+
+    // Format conversations for the PDF
+    const formatConversation = (messages: any[]) => {
+      return messages.map((msg, index) => {
+        const role = msg.role === 'assistant' ? 'Assistant' : 'Student';
+        const bgColor = msg.role === 'assistant' ? '#F0F7FF' : '#F5F5F5';
+        return `
+          <div style="background-color: ${bgColor}; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+            <strong>${role}:</strong>
+            <p style="white-space: pre-wrap; margin-top: 5px;">${msg.content}</p>
+          </div>
+        `;
+      }).join('');
+    };
+
+    const assessmentConvHTML = formatConversation(assessmentConv);
+    const teachingConvHTML = formatConversation(teachingConv);
+    
     // Create HTML content for the PDF
     element.innerHTML = `
       <h1 style="color: #4F46E5; font-size: 24px; margin-bottom: 20px;">Learning Results - Three Branches of Government</h1>
@@ -208,7 +230,7 @@ export default function NewFeedbackScreen({
         <p style="color: #374151; line-height: 1.6;">${feedbackData.nextSteps}</p>
       </div>
       
-      <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px;">
+      <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
         <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Three Branches of Government - Learning Content</h2>
         <p><strong>Objective:</strong> Understand the three branches of government and how they work together.</p>
         <p><strong>Grade:</strong> 7-9</p>
@@ -221,6 +243,22 @@ export default function NewFeedbackScreen({
           <li><strong>Checks and Balances:</strong> System where each branch limits the power of the others.</li>
           <li><strong>Separation of Powers:</strong> Division of government responsibilities into distinct branches.</li>
         </ul>
+      </div>
+      
+      <!-- Assessment Conversation Transcript -->
+      <div style="margin-bottom: 30px;">
+        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #E5E7EB; padding-bottom: 8px;">
+          Assessment Conversation Transcript
+        </h2>
+        ${assessmentConvHTML}
+      </div>
+      
+      <!-- Teaching Conversation Transcript -->
+      <div style="margin-bottom: 30px;">
+        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #E5E7EB; padding-bottom: 8px;">
+          Teaching Conversation Transcript
+        </h2>
+        ${teachingConvHTML}
       </div>
       
       <p style="color: #6B7280; font-size: 12px; margin-top: 30px; text-align: center;">
