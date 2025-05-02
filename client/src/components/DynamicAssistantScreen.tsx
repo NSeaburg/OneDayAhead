@@ -386,7 +386,7 @@ export default function DynamicAssistantScreen({
         {/* Left column - Teacher profile or Article */}
         {proficiencyLevel !== "unknown" && (
           <div className={`${showArticle && proficiencyLevel === "high" ? 'md:w-3/5' : 'md:w-1/3'} flex flex-col transition-all duration-300`}>
-            {showArticle && proficiencyLevel === "high" ? (
+            {(showArticle && proficiencyLevel === "high") ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 overflow-auto h-full flex flex-col">
                 <div className="flex justify-between items-center mb-3">
                   <h2 className="font-semibold text-lg text-gray-800">United States v. Nixon</h2>
