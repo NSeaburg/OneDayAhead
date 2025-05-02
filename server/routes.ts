@@ -434,6 +434,16 @@ When the student has completed both activities, thank them warmly and end the co
         let feedbackData = {};
         
         // Handle empty response from N8N
+        console.log("N8N Response Data:", JSON.stringify(response.data));
+        console.log("Response Data Type:", typeof response.data);
+        console.log("Is Array?", Array.isArray(response.data));
+        if (Array.isArray(response.data)) {
+          console.log("Array Length:", response.data.length);
+        }
+        if (typeof response.data === 'object' && response.data !== null) {
+          console.log("Object Keys:", Object.keys(response.data));
+        }
+        
         if (!response.data || (typeof response.data === 'object' && Object.keys(response.data).length === 0)) {
           console.log("WARNING: Received empty response from teaching webhook. Using fallback feedback data.");
           // Return hardcoded fallback feedback

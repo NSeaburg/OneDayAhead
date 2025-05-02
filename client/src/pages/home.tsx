@@ -270,8 +270,15 @@ export default function Home() {
               teachingAssistance={teachingAssistance}
               onNext={(nextId, feedbackResult) => {
                 if (feedbackResult) {
+                  console.log("Feedback data received in DynamicAssistantScreen callback:", feedbackResult);
+                  // Set state with the feedback data
                   setFeedbackData(feedbackResult);
-                  console.log("Feedback data received:", feedbackResult);
+                  
+                  // Use an effect to verify the update
+                  // This won't show the updated value immediately due to React's state batching
+                  console.log("Current feedbackData state (will be previous value):", feedbackData);
+                } else {
+                  console.log("No feedback data received from DynamicAssistantScreen");
                 }
                 goToNextScreen();
               }}

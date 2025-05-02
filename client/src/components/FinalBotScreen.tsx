@@ -39,6 +39,12 @@ export default function FinalBotScreen({
   onPrevious,
   feedbackData: propsFeedbackData // Feedback data can be passed via props
 }: FinalBotScreenProps) {
+  // Log when this component mounts to help with debugging
+  useEffect(() => {
+    console.log("FinalBotScreen mounted/rendered");
+    console.log("Received propsFeedbackData:", propsFeedbackData);
+    console.log("Window.__assessmentData:", window.__assessmentData);
+  }, []);
   // First check props, then check window object for feedback data
   const [feedbackData, setFeedbackData] = useState<{
     summary: string;
