@@ -8,6 +8,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Message } from "@/lib/openai";
 
 // Import teacher images directly
 import mrWhitakerImage from "../../../public/Whitaker.png";
@@ -60,9 +62,11 @@ export default function DynamicAssistantScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
+  const [showArticle, setShowArticle] = useState(false); // Track if the article is visible
   const messagesEndRef = useRef<HTMLDivElement>(null);
   // We already receive assessmentThreadId as prop, so we don't need a separate state variable
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Check if this is using a fallback assistant ID OR if we have no teaching assistance
   // Only show fallback message if we're using a fallback ID AND we didn't get teaching data
@@ -76,7 +80,7 @@ export default function DynamicAssistantScreen({
   if (isUsingFallback) {
     initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?";
   } else if (proficiencyLevel === "high") {
-    initialMessage = "Hello there. I'm Mrs. Parton — retired civics teacher, and I'm here to help you apply what you've learned about how our government works when it's put to the test. We'll be using the United States v. Nixon case as our guide today. I'll ask you a few questions to help you think through how each branch played its part. Let's dive in when you're ready. (gathers a folder of well-worn case studies with a fond smile)";
+    initialMessage = "Hello there. I'm Mrs. Parton — retired civics teacher, and I'm here to help you apply what you've learned about how our government works when it's put to the test. We'll be using the United States v. Nixon case as our guide today. When you're ready, please click the 'Launch Article' button in my profile to read about this landmark case. Then, I'll ask you questions to help you think through how each branch played its part. (gathers a folder of well-worn case studies with a fond smile)";
   } else if (proficiencyLevel === "medium") {
     initialMessage = "Hey there. I'm Mrs. Bannerman — retired civics teacher, and I'm here to help you think through some of the \"what ifs\" that shaped our government. We'll be exploring what might happen if just one branch ran the whole show. It's going to be some good old-fashioned critical thinking — no pressure, just ideas and conversation. Ready to get started? (adjusts an old, well-worn lesson plan binder with a fond smile)";
   } else if (proficiencyLevel === "low") {
@@ -301,60 +305,58 @@ export default function DynamicAssistantScreen({
       });
       
       // Still allow the user to proceed to the next screen even if N8N integration fails
-      // If the N8N integration fails, create a fallback data object
-      const fallbackData = {
-        summary: "You've completed learning about the three branches of government! You demonstrated understanding of the core concepts.",
-        contentKnowledgeScore: 75,
-        writingScore: 80,
-        nextSteps: "Continue exploring the relationships between branches by studying historical examples."
-      };
-      
-      // Store fallback data in window object
-      window.__assessmentData = {
-        ...(window.__assessmentData || {}),
-        feedbackData: fallbackData
-      };
-      
-      console.log("Setting fallback feedback data after error:", fallbackData);
-      
-      // Navigate to next screen with fallback data
-      onNext(undefined, fallbackData);
+      onNext();
     } finally {
       setIsSendingToN8N(false);
     }
   };
   
-  // Helper function to get the correct teacher image based on proficiency level
-  const getTeacherImage = () => {
-    if (proficiencyLevel === "high") return mrsPartonImage;
-    if (proficiencyLevel === "medium") return mrsBannermanImage;
-    if (proficiencyLevel === "low") return mrWhitakerImage;
-    return mrsBannermanImage; // Default fallback
-  };
-
-  // Helper function to get the teacher name based on proficiency level
+  // Helper functions for teacher profiles
   const getTeacherName = () => {
-    if (proficiencyLevel === "high") return "Mrs. Parton";
-    if (proficiencyLevel === "medium") return "Mrs. Bannerman";
-    if (proficiencyLevel === "low") return "Mr. Whitaker";
-    return "Learning Assistant"; // Default fallback
-  };
-
-  // Helper function to get teacher title/role based on proficiency level
-  const getTeacherTitle = () => {
-    if (proficiencyLevel === "high") return "Advanced Civics Educator";
-    if (proficiencyLevel === "medium") return "Retired Civics Teacher";
-    if (proficiencyLevel === "low") return "Civics Educator";
-    return "Learning Guide"; // Default fallback
-  };
-
-  // Helper function to get teacher description based on proficiency level
-  const getTeacherDescription = () => {
     if (proficiencyLevel === "high") {
-      return "With over 40 years of teaching experience, Mrs. Parton specializes in helping advanced students explore the nuances of government systems. She's known for challenging her students to think critically about complex civic concepts and historical connections.";
+      return "Mrs. Parton";
     }
     if (proficiencyLevel === "medium") {
-      return "A retired civics and American history teacher with 35 years of classroom experience. Mrs. Bannerman explains complex ideas patiently, using real-world examples and occasionally sharing anecdotes from her teaching career. She's warm, supportive, and knows how to make government concepts accessible.";
+      return "Mrs. Bannerman";
+    }
+    if (proficiencyLevel === "low") {
+      return "Mr. Whitaker";
+    }
+    return "Teaching Assistant"; // Default fallback
+  };
+  
+  const getTeacherImage = () => {
+    if (proficiencyLevel === "high") {
+      return mrsPartonImage;
+    }
+    if (proficiencyLevel === "medium") {
+      return mrsBannermanImage;
+    }
+    if (proficiencyLevel === "low") {
+      return mrWhitakerImage;
+    }
+    return placeholderImage; // Default fallback
+  };
+  
+  const getTeacherTitle = () => {
+    if (proficiencyLevel === "high") {
+      return "Advanced Civics Instructor";
+    }
+    if (proficiencyLevel === "medium") {
+      return "Intermediate Civics Instructor";
+    }
+    if (proficiencyLevel === "low") {
+      return "Foundational Civics Instructor";
+    }
+    return "Teaching Assistant"; // Default fallback
+  };
+  
+  const getTeacherDescription = () => {
+    if (proficiencyLevel === "high") {
+      return "After teaching civics for over 30 years at top high schools, Mrs. Parton specializes in helping students apply core concepts to complex real-world cases. She's known for drawing out deeper connections and challenging students to think critically.";
+    }
+    if (proficiencyLevel === "medium") {
+      return "With 25 years of teaching experience, Mrs. Bannerman excels at helping students build on their foundational knowledge. She uses interesting hypothetical scenarios to help students think about how government structures impact real people.";
     }
     if (proficiencyLevel === "low") {
       return "After teaching civics for over 30 years, Mr. Whitaker now helps students build strong foundations in government concepts. He's known for his clear explanations, helpful analogies, and patient approach to learning. He breaks down complex ideas into manageable parts.";
@@ -381,56 +383,95 @@ export default function DynamicAssistantScreen({
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Specialized Guidance</h1>
       
       <div className="flex flex-col md:flex-row gap-6 flex-grow">
-        {/* Left column - Teacher profile */}
+        {/* Left column - Teacher profile or Article */}
         {proficiencyLevel !== "unknown" && (
-          <div className="md:w-1/3 flex flex-col">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4 h-fit">
-              <div className="flex flex-col items-center text-center mb-4">
-                <img 
-                  src={getTeacherImage()} 
-                  alt={getTeacherName()} 
-                  className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
-                />
-                <h2 className="font-bold text-xl text-gray-800">{getTeacherName()}</h2>
-                <p className="text-sm text-gray-600 font-medium">{getTeacherTitle()}</p>
-              </div>
-              
-              <p className="text-sm text-gray-700 mb-4">
-                {getTeacherDescription()}
-              </p>
-              
-              <hr className="my-4 border-gray-200" />
-              
-              <div className="mb-4">
-                <h3 className="font-semibold text-gray-800 mb-2">Guidance Approach</h3>
-                <p className="text-sm text-gray-700">
-                  {getGuidanceApproach()}
-                </p>
-              </div>
-              
-              <hr className="my-4 border-gray-200" />
-              
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Learning Level</h3>
-                <div className="flex items-center">
-                  <div className={`w-3 h-3 rounded-full mr-2 ${
-                    proficiencyLevel === "high" ? "bg-green-500" :
-                    proficiencyLevel === "medium" ? "bg-blue-500" :
-                    proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
-                  }`}></div>
-                  <p className="text-sm text-gray-700">
-                    {proficiencyLevel === "high" ? "Advanced" :
-                    proficiencyLevel === "medium" ? "Intermediate" :
-                    proficiencyLevel === "low" ? "Foundational" : "Standard"}
-                  </p>
+          <div className={`${showArticle && proficiencyLevel === "high" ? 'md:w-3/5' : 'md:w-1/3'} flex flex-col transition-all duration-300`}>
+            {showArticle && proficiencyLevel === "high" ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 overflow-auto h-full flex flex-col">
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="font-semibold text-lg text-gray-800">United States v. Nixon</h2>
+                  <Button 
+                    onClick={() => setShowArticle(false)}
+                    variant="outline"
+                    size="sm"
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    <ArrowLeft className="h-3 w-3 mr-1" />
+                    Back to Profile
+                  </Button>
+                </div>
+                <div className="flex-grow overflow-auto">
+                  <iframe 
+                    src="/nixon-article.html" 
+                    className="w-full h-full border-0" 
+                    title="United States v. Nixon: A Case Study in Checks and Balances" 
+                  />
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4 h-fit">
+                <div className="flex flex-col items-center text-center mb-4">
+                  <img 
+                    src={getTeacherImage()} 
+                    alt={getTeacherName()} 
+                    className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
+                  />
+                  <h2 className="font-bold text-xl text-gray-800">{getTeacherName()}</h2>
+                  <p className="text-sm text-gray-600 font-medium">{getTeacherTitle()}</p>
+                </div>
+                
+                <p className="text-sm text-gray-700 mb-4">
+                  {getTeacherDescription()}
+                </p>
+                
+                <hr className="my-4 border-gray-200" />
+                
+                <div className="mb-4">
+                  <h3 className="font-semibold text-gray-800 mb-2">Guidance Approach</h3>
+                  <p className="text-sm text-gray-700">
+                    {getGuidanceApproach()}
+                  </p>
+                </div>
+                
+                <hr className="my-4 border-gray-200" />
+                
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">Learning Level</h3>
+                  <div className="flex items-center">
+                    <div className={`w-3 h-3 rounded-full mr-2 ${
+                      proficiencyLevel === "high" ? "bg-green-500" :
+                      proficiencyLevel === "medium" ? "bg-blue-500" :
+                      proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
+                    }`}></div>
+                    <p className="text-sm text-gray-700">
+                      {proficiencyLevel === "high" ? "Advanced" :
+                      proficiencyLevel === "medium" ? "Intermediate" :
+                      proficiencyLevel === "low" ? "Foundational" : "Standard"}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Launch Article Button - Only for high proficiency level (Mrs. Parton) */}
+                {proficiencyLevel === "high" && (
+                  <div className="mt-6">
+                    <hr className="my-4 border-gray-200" />
+                    <Button
+                      onClick={() => setShowArticle(true)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition-all flex items-center justify-center"
+                      disabled={showArticle}
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Launch Article
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
         
         {/* Right column - Chat interface */}
-        <div className={`${proficiencyLevel !== "unknown" ? 'md:w-2/3' : 'w-full'} flex-grow flex flex-col`}>
+        <div className={`${proficiencyLevel === "high" && showArticle ? 'md:w-2/5' : proficiencyLevel !== "unknown" ? 'md:w-2/3' : 'w-full'} flex-grow flex flex-col transition-all duration-300`}>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="font-semibold text-lg text-gray-800">
