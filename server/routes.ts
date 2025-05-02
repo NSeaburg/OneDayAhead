@@ -433,34 +433,68 @@ When the student has completed both activities, thank them warmly and end the co
         // Extract feedback data from N8N response if available
         let feedbackData = {};
         
-        // Log the exact N8N response for debugging
+        // Log the exact N8N response for debugging - comprehensive logging
         console.log("N8N Response Data:", JSON.stringify(response.data));
         console.log("N8N Response Status:", response.status);
         console.log("N8N Response Headers:", JSON.stringify(response.headers));
         console.log("Response Data Type:", typeof response.data);
         console.log("Is Array?", Array.isArray(response.data));
         console.log("Raw response data (stringified):", JSON.stringify(response.data, null, 2));
+        
+        // DEBUG: Log raw request and response to understand what N8N is receiving and sending
+        console.log("DEBUGGING N8N COMMUNICATION");
+        console.log("----------------------------");
+        console.log("We sent to N8N (request body sample):", JSON.stringify({
+          teachingThreadId: effectiveTeachingThreadId,
+          assessmentThreadId: assessmentThreadId || `claude-assessment-${Date.now()}`,
+          // Other fields omitted for brevity
+        }));
+        console.log("We received from N8N:", JSON.stringify(response.data));
+        console.log("----------------------------");
+        
+        // Deeper array inspection
         if (Array.isArray(response.data)) {
           console.log("Array Length:", response.data.length);
           
           // Inspect first item if it exists
           if (response.data.length > 0) {
             console.log("First Array Item:", JSON.stringify(response.data[0]));
+            console.log("First Array Item Type:", typeof response.data[0]);
             if (response.data[0].feedbackData) {
               console.log("Found feedbackData in array format");
+              console.log("feedbackData structure:", Object.keys(response.data[0].feedbackData));
+            } else if (response.data[0].summary !== undefined) {
+              console.log("Found summary directly in first array item");
             }
           }
         }
+        
+        // Object inspection
         if (typeof response.data === 'object' && response.data !== null) {
           console.log("Object Keys:", Object.keys(response.data));
+          
+          // If the object has summary and scores directly
+          if (response.data.summary && response.data.contentKnowledgeScore !== undefined) {
+            console.log("Found direct feedback properties at top level of response");
+          }
         }
         
         // First check if response data is an array with the expected structure
-        if (Array.isArray(response.data) && response.data.length > 0 && response.data[0].feedbackData) {
-          console.log("MATCH: Processing array-formatted feedbackData from N8N");
+        if (Array.isArray(response.data) && response.data.length > 0) {
           const firstItem = response.data[0];
-          feedbackData = firstItem.feedbackData;
-          console.log("Extracted feedbackData:", JSON.stringify(feedbackData));
+          
+          // Check for nested feedbackData
+          if (firstItem.feedbackData) {
+            console.log("MATCH: Processing array-formatted feedbackData from N8N");
+            feedbackData = firstItem.feedbackData;
+            console.log("Extracted nested feedbackData:", JSON.stringify(feedbackData));
+          } 
+          // Check for direct properties in the array item
+          else if (firstItem.summary !== undefined && firstItem.contentKnowledgeScore !== undefined) {
+            console.log("MATCH: Processing array item with direct properties");
+            feedbackData = firstItem;
+            console.log("Using array item directly:", JSON.stringify(feedbackData));
+          }
         }
         // Then check for empty or null response
         else if (!response.data || (typeof response.data === 'object' && Object.keys(response.data).length === 0)) {

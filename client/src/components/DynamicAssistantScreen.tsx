@@ -187,22 +187,40 @@ export default function DynamicAssistantScreen({
         }
       }];
       
-      // Extract feedback data if available - prioritize the hardcoded data for demonstration
+      // Extract feedback data if available
       let feedbackData = null;
       
+      // Log raw result for debugging
+      console.log("Raw result from server:", JSON.stringify(result));
+      console.log("Result type:", typeof result);
+      console.log("Is result an array?", Array.isArray(result));
+      console.log("Result keys:", Object.keys(result));
+      
       // Check if the response has actual data
-      if (Object.keys(result).length === 0 || (result.success && !result.feedbackData)) {
-        // Empty response from N8N webhook, use the hardcoded data
-        console.log("Received empty response from webhook, using hardcoded N8N data for demonstration");
+      if (Object.keys(result).length === 0) {
+        // Completely empty response, use the hardcoded data
+        console.log("Received completely empty response from webhook, using hardcoded N8N data");
         feedbackData = hardcodedN8NData[0].feedbackData;
       } else if (result.feedbackData) {
-        // Direct object format from server
+        // Direct object format from server (this is the expected format from our backend)
         feedbackData = result.feedbackData;
-        console.log("Feedback data received from server object:", feedbackData);
+        console.log("Feedback data received from server's feedbackData property:", feedbackData);
       } else if (Array.isArray(result) && result.length > 0 && result[0].feedbackData) {
-        // Array format directly from N8N
+        // Array format directly from N8N 
         feedbackData = result[0].feedbackData;
         console.log("Feedback data received from N8N array format:", feedbackData);
+      } else if (result.success && !result.feedbackData) {
+        // Success response without feedbackData, use what you're sending from N8N 
+        console.log("Success response without feedbackData. Checking if result itself is the data");
+        if (result.summary && result.contentKnowledgeScore !== undefined) {
+          // The result itself might be the feedback data
+          feedbackData = result;
+          console.log("Using result object directly as feedbackData");
+        } else {
+          // Fallback 
+          console.log("No usable feedback data in result. Using hardcoded data");
+          feedbackData = hardcodedN8NData[0].feedbackData;
+        }
       }
       
       console.log("Final feedback data to be used:", feedbackData);
