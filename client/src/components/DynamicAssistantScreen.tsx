@@ -282,7 +282,8 @@ export default function DynamicAssistantScreen({
       });
       
       // Still allow the user to proceed to the next screen even if N8N integration fails
-      onNext();
+      // If the N8N integration fails, use the fallback data
+      onNext(undefined, fallbackFeedbackData);
     } finally {
       setIsSendingToN8N(false);
     }
