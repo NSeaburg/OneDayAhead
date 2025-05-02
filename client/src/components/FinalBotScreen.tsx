@@ -62,23 +62,31 @@ export default function FinalBotScreen({
     // First check props passed directly
     if (propsFeedbackData) {
       console.log("Using feedback data from props:", propsFeedbackData);
-      setFeedbackData({
-        summary: propsFeedbackData.summary || feedbackData.summary,
-        contentKnowledgeScore: propsFeedbackData.contentKnowledgeScore || feedbackData.contentKnowledgeScore,
-        writingScore: propsFeedbackData.writingScore || feedbackData.writingScore,
-        nextSteps: propsFeedbackData.nextSteps || feedbackData.nextSteps
-      });
+      // Make sure to directly use the props values, not fall back to current state
+      const newFeedbackData = {
+        summary: propsFeedbackData.summary || "No summary provided",
+        contentKnowledgeScore: propsFeedbackData.contentKnowledgeScore || 0,
+        writingScore: propsFeedbackData.writingScore || 0,
+        nextSteps: propsFeedbackData.nextSteps || "No next steps provided"
+      };
+      
+      console.log("Setting new feedback data:", newFeedbackData);
+      setFeedbackData(newFeedbackData);
     } 
     // Then check window object for feedback data
     else if (window.__assessmentData?.feedbackData) {
       const windowData = window.__assessmentData.feedbackData;
       console.log("Using feedback data from window.__assessmentData:", windowData);
-      setFeedbackData({
-        summary: windowData.summary || feedbackData.summary,
-        contentKnowledgeScore: windowData.contentKnowledgeScore || feedbackData.contentKnowledgeScore,
-        writingScore: windowData.writingScore || feedbackData.writingScore,
-        nextSteps: windowData.nextSteps || feedbackData.nextSteps
-      });
+      
+      const newFeedbackData = {
+        summary: windowData.summary || "No summary provided",
+        contentKnowledgeScore: windowData.contentKnowledgeScore || 0,
+        writingScore: windowData.writingScore || 0,
+        nextSteps: windowData.nextSteps || "No next steps provided"
+      };
+      
+      console.log("Setting new feedback data from window:", newFeedbackData);
+      setFeedbackData(newFeedbackData);
     } else {
       console.log("No feedback data found in props or window object. Using default values.");
     }
@@ -120,7 +128,7 @@ export default function FinalBotScreen({
     
     // Create HTML content for the PDF
     element.innerHTML = `
-      <h1 style="color: #4F46E5; font-size: 24px; margin-bottom: 20px;">Learning Results - Down With Gravity</h1>
+      <h1 style="color: #4F46E5; font-size: 24px; margin-bottom: 20px;">Learning Results - Three Branches of Government</h1>
       
       <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h2 style="color: #2563EB; font-size: 18px; margin-bottom: 10px;">Overall Feedback</h2>
@@ -145,27 +153,17 @@ export default function FinalBotScreen({
       </div>
       
       <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px;">
-        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Down With Gravity - Learning Content</h2>
-        <p><strong>Objective:</strong> Explore that gravity is an attraction between objects with mass.</p>
-        <p><strong>Grade:</strong> 5</p>
-        
-        <h3 style="margin-top: 15px;">Materials</h3>
-        <ul>
-          <li>Pencil</li>
-          <li>String</li>
-          <li>Paper Clips</li>
-          <li>Scissors</li>
-          <li>Water Bottle (Full and Half Empty)</li>
-          <li>Paper (Flat and Crumpled)</li>
-          <li>Disposable Cup</li>
-        </ul>
+        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Three Branches of Government - Learning Content</h2>
+        <p><strong>Objective:</strong> Understand the three branches of government and how they work together.</p>
+        <p><strong>Grade:</strong> 7-9</p>
         
         <h3 style="margin-top: 15px;">Key Concepts</h3>
         <ul>
-          <li><strong>Gravity:</strong> The force that attracts all objects toward one another.</li>
-          <li><strong>Force:</strong> A push or pull.</li>
-          <li><strong>Mass:</strong> The amount of matter in an object.</li>
-          <li><strong>Air Resistance:</strong> The frictional force air exerts against a moving object.</li>
+          <li><strong>Executive Branch:</strong> Enforces laws, led by the President.</li>
+          <li><strong>Legislative Branch:</strong> Makes laws, consisting of Congress (House and Senate).</li>
+          <li><strong>Judicial Branch:</strong> Interprets laws, with the Supreme Court at the top.</li>
+          <li><strong>Checks and Balances:</strong> System where each branch limits the power of the others.</li>
+          <li><strong>Separation of Powers:</strong> Division of government responsibilities into distinct branches.</li>
         </ul>
       </div>
       
@@ -177,7 +175,7 @@ export default function FinalBotScreen({
     // Configure PDF options
     const options = {
       margin: 10,
-      filename: 'learning-results-gravity.pdf',
+      filename: 'learning-results-government.pdf',
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
