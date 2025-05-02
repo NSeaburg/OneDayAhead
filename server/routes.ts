@@ -121,8 +121,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .join('\n\n');
         
         console.log("Sending full conversation data and transcript to N8N webhook for Claude/Anthropic");
-          
-        // Send data to N8N webhook with the full transcript and conversation data
+        console.log("Webhook URL being used:", ASSESSMENT_WEBHOOK_URL);  
+        
+        // Add timeout to axios request to prevent long-running requests
         const response = await axios.post(ASSESSMENT_WEBHOOK_URL, {
           // Complete conversation data (raw messages)
           conversationData,
@@ -141,6 +142,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Include the threadId for backward compatibility if available
           ...(threadId ? { threadId } : { threadId: `claude-${Date.now()}` })
+        }, {
+          timeout: 10000, // 10 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
         });
         
         console.log("Successfully sent Claude/Anthropic assessment data to N8N:", response.status);
@@ -372,6 +379,8 @@ When the student has completed both activities, thank them warmly and end the co
           
         // Send complete data package to N8N webhook
         console.log("Calling teaching bot webhook with POST request (including full conversation data for Claude)");
+        console.log("Dynamic webhook URL being used:", DYNAMIC_ASSISTANT_WEBHOOK_URL);
+      
         const response = await axios.post(DYNAMIC_ASSISTANT_WEBHOOK_URL, {
           // Teaching bot data
           teachingThreadId: effectiveTeachingThreadId,  // Use our effective ID (real or generated)
@@ -394,6 +403,12 @@ When the student has completed both activities, thank them warmly and end the co
           source: "learning-app-teaching",
           courseName: courseName || "Three Branches of Government", // Updated default course name
           chatDurationSeconds: chatDurationSeconds || 0
+        }, {
+          timeout: 10000, // 10 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
         });
         
         console.log("Successfully sent Claude/Anthropic teaching data to N8N:", response.status);
