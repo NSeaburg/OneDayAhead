@@ -59,19 +59,40 @@ export default function NewFeedbackScreen({
   // Log initialization for debugging
   useEffect(() => {
     console.log("NewFeedbackScreen mounted/rendered");
+    console.log("Window.__assessmentData at mount time:", window.__assessmentData);
+    console.log("Window.__assessmentData?.feedbackData at mount time:", window.__assessmentData?.feedbackData);
     
     // Notify parent window of course completion
     try {
       if (propsFeedbackData) {
+        console.log("Sending course completion with propsFeedbackData");
         notifyCourseCompleted(propsFeedbackData);
       } else if (window.__assessmentData?.feedbackData) {
+        console.log("Sending course completion with window.__assessmentData.feedbackData");
         notifyCourseCompleted(window.__assessmentData.feedbackData);
       } else {
+        console.log("Sending course completion with no data");
         notifyCourseCompleted();
       }
     } catch (error) {
       console.error("Error sending course completion notification:", error);
     }
+    
+    // Check for global feedback data to help with debugging
+    const checkForFeedbackData = () => {
+      console.log("Polling for window.__assessmentData.feedbackData...");
+      console.log("Current window.__assessmentData:", window.__assessmentData);
+      
+      if (window.__assessmentData?.feedbackData) {
+        console.log("Found feedbackData during polling:", window.__assessmentData.feedbackData);
+      } else {
+        setTimeout(checkForFeedbackData, 500);
+      }
+    };
+    
+    // Start checking for feedback data
+    checkForFeedbackData();
+    
   }, []);
 
   // Data initialization effect with a small delay to ensure window.__assessmentData is populated
@@ -80,7 +101,7 @@ export default function NewFeedbackScreen({
     
     // Add a longer delay to ensure all data has been populated
     const timerId = setTimeout(() => {
-      console.log("Initializing NewFeedbackScreen data - After 500ms delay");
+      console.log("Initializing NewFeedbackScreen data - After 1500ms delay");
       console.log("Received propsFeedbackData:", propsFeedbackData);
       console.log("Type of propsFeedbackData:", typeof propsFeedbackData);
       console.log("Is propsFeedbackData undefined?", propsFeedbackData === undefined);
