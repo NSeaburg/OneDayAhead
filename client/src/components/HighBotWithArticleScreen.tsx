@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Send, User } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, User, BookOpen } from "lucide-react";
 
 // Import Mrs. Parton image directly (same as AssessmentBotScreen)
 import mrsPartonImage from "../../../public/Parton.png";
@@ -180,32 +180,101 @@ export default function HighBotWithArticleScreen({
     }
   };
   
+  // State to control whether to show the article or bio
+  const [showArticle, setShowArticle] = useState(false);
+
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">United States v. Nixon: A Case Study</h1>
       
       {/* Side by side layout for article and chat */}
       <div className="flex flex-col md:flex-row gap-4 flex-grow">
-        {/* Article on the left */}
-        <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <h2 className="font-semibold text-lg text-gray-800">Article</h2>
-          </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-320px)] md:h-[calc(100vh-290px)]">
-            <div className="article-content prose max-w-none">
-              <h1>United States v. Nixon: A Case Study in Checks and Balances</h1>
+        {/* Left side - Article or Teacher Bio */}
+        {showArticle ? (
+          // Article view
+          <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+            <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="font-semibold text-lg text-gray-800">Article</h2>
+              <Button 
+                onClick={() => {
+                  console.log("Back to Profile button clicked, hiding article...");
+                  setShowArticle(false);
+                }}
+                variant="outline"
+                size="sm"
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <ArrowLeft className="h-3 w-3 mr-1" />
+                Back to Profile
+              </Button>
+            </div>
+            <div className="p-4 overflow-y-auto h-[calc(100vh-320px)] md:h-[calc(100vh-290px)]">
+              <div className="article-content prose max-w-none">
+                <h1>United States v. Nixon: A Case Study in Checks and Balances</h1>
 
-              <h2>Background</h2>
-              <p>In the early 1970s, a major political scandal known as the Watergate scandal rocked the United States. During the 1972 presidential election, operatives connected to President Richard Nixon's re-election campaign were caught breaking into the Democratic Party's headquarters at the Watergate building. Investigators uncovered efforts to cover up the break-in, leading to questions about how far the wrongdoing reached. As the investigation moved forward, it became clear that secret recordings of conversations inside the White House might contain crucial evidence.</p>
+                <h2>Background</h2>
+                <p>In the early 1970s, a major political scandal known as the Watergate scandal rocked the United States. During the 1972 presidential election, operatives connected to President Richard Nixon's re-election campaign were caught breaking into the Democratic Party's headquarters at the Watergate building. Investigators uncovered efforts to cover up the break-in, leading to questions about how far the wrongdoing reached. As the investigation moved forward, it became clear that secret recordings of conversations inside the White House might contain crucial evidence.</p>
 
-              <h2>The Case</h2>
-              <p>A special prosecutor investigating the scandal demanded access to the White House tapes. President Nixon refused, claiming "executive privilege"—the idea that the President could withhold certain information to protect the confidentiality of internal discussions. Nixon argued that turning over the tapes would weaken the Presidency and violate the separation of powers. The case quickly escalated to the United States Supreme Court, raising critical questions about whether any branch of government could limit the President's power to keep secrets.</p>
+                <h2>The Case</h2>
+                <p>A special prosecutor investigating the scandal demanded access to the White House tapes. President Nixon refused, claiming "executive privilege"—the idea that the President could withhold certain information to protect the confidentiality of internal discussions. Nixon argued that turning over the tapes would weaken the Presidency and violate the separation of powers. The case quickly escalated to the United States Supreme Court, raising critical questions about whether any branch of government could limit the President's power to keep secrets.</p>
 
-              <h2>The Ruling</h2>
-              <p>In 1974, the Supreme Court issued a unanimous decision against President Nixon. The Court ruled that executive privilege is not absolute and cannot be used to block evidence needed for a criminal trial. Nixon was ordered to turn over the tapes. Within days, the tapes revealed serious misconduct, and Nixon resigned from office. The case demonstrated how all three branches—Congress investigating, the Courts ruling, and the President resisting—interacted under the Constitution. It remains a landmark example of how checks and balances work, even at the highest levels of government.</p>
+                <h2>The Ruling</h2>
+                <p>In 1974, the Supreme Court issued a unanimous decision against President Nixon. The Court ruled that executive privilege is not absolute and cannot be used to block evidence needed for a criminal trial. Nixon was ordered to turn over the tapes. Within days, the tapes revealed serious misconduct, and Nixon resigned from office. The case demonstrated how all three branches—Congress investigating, the Courts ruling, and the President resisting—interacted under the Constitution. It remains a landmark example of how checks and balances work, even at the highest levels of government.</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          // Teacher bio view
+          <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-fit">
+            <div className="flex flex-col items-center text-center mb-4">
+              <img 
+                src={mrsPartonImage} 
+                alt="Mrs. Parton" 
+                className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
+              />
+              <h2 className="font-bold text-xl text-gray-800">Mrs. Parton</h2>
+              <p className="text-sm text-gray-600 font-medium">Advanced Civics Educator</p>
+            </div>
+            
+            <p className="text-sm text-gray-700 mb-4">
+              After teaching civics for over 30 years at top high schools, Mrs. Parton specializes in helping students apply core concepts to complex real-world cases. She's known for drawing out deeper connections and challenging students to think critically.
+            </p>
+            
+            <hr className="my-4 border-gray-200" />
+            
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-800 mb-2">Guidance Approach</h3>
+              <p className="text-sm text-gray-700">
+                Mrs. Parton will challenge you to think critically about advanced civics concepts and historical connections that go beyond the basics. She'll help you explore nuanced ideas about government systems.
+              </p>
+            </div>
+            
+            <hr className="my-4 border-gray-200" />
+            
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-2">Learning Level</h3>
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
+                <p className="text-sm text-gray-700">Advanced</p>
+              </div>
+            </div>
+            
+            {/* Launch Article Button */}
+            <div className="mt-6">
+              <hr className="my-4 border-gray-200" />
+              <Button
+                onClick={() => {
+                  console.log("Launch Article button clicked, showing article...");
+                  setShowArticle(true);
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition-all flex items-center justify-center"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Launch Article
+              </Button>
+            </div>
+          </div>
+        )}
         
         {/* High Bot chat on the right */}
         <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
