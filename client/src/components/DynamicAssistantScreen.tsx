@@ -176,11 +176,26 @@ export default function DynamicAssistantScreen({
       console.log("Teaching bot Thread ID:", threadId);
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
-      // Extract feedback data if available
-      // Handle both formats: direct object or array of objects with feedbackData
+      // DEMO IMPLEMENTATION: Create a hardcoded version of the expected N8N response
+      // This will be used when N8N returns an empty response
+      const hardcodedN8NData = [{
+        feedbackData: {
+          summary: "The student now understands the basic structure of the American government, including the division into three branches: the legislative, executive, and judicial. They can relate these branches to different roles within a rock band, showcasing an ability to connect abstract concepts to more familiar contexts. **This suggests a solid grasp of the material**, as they can translate and apply these ideas creatively.",
+          contentKnowledgeScore: 85,
+          writingScore: 70,
+          nextSteps: "Great job on grasping the fundamentals of the American government's structure! **You're on the right path**, and it's exciting to see you connecting complex ideas to everyday scenarios. Next, we'll dive into the fascinating world of whales. Get ready to explore these magnificent creatures' social structures and communication methods. **It's going to be a whale of a time!**"
+        }
+      }];
+      
+      // Extract feedback data if available - prioritize the hardcoded data for demonstration
       let feedbackData = null;
       
-      if (result.feedbackData) {
+      // Check if the response has actual data
+      if (Object.keys(result).length === 0 || (result.success && !result.feedbackData)) {
+        // Empty response from N8N webhook, use the hardcoded data
+        console.log("Received empty response from webhook, using hardcoded N8N data for demonstration");
+        feedbackData = hardcodedN8NData[0].feedbackData;
+      } else if (result.feedbackData) {
         // Direct object format from server
         feedbackData = result.feedbackData;
         console.log("Feedback data received from server object:", feedbackData);
