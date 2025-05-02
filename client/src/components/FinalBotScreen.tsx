@@ -55,6 +55,7 @@ export default function FinalBotScreen({
   useEffect(() => {
     // First check props passed directly
     if (propsFeedbackData) {
+      console.log("Using feedback data from props:", propsFeedbackData);
       setFeedbackData({
         summary: propsFeedbackData.summary || feedbackData.summary,
         contentKnowledgeScore: propsFeedbackData.contentKnowledgeScore || feedbackData.contentKnowledgeScore,
@@ -65,16 +66,28 @@ export default function FinalBotScreen({
     // Then check window object for feedback data
     else if (window.__assessmentData?.feedbackData) {
       const windowData = window.__assessmentData.feedbackData;
+      console.log("Using feedback data from window.__assessmentData:", windowData);
       setFeedbackData({
         summary: windowData.summary || feedbackData.summary,
         contentKnowledgeScore: windowData.contentKnowledgeScore || feedbackData.contentKnowledgeScore,
         writingScore: windowData.writingScore || feedbackData.writingScore,
         nextSteps: windowData.nextSteps || feedbackData.nextSteps
       });
+    } else {
+      console.log("No feedback data found in props or window object. Using default values.");
     }
     
-    console.log("Feedback data in final screen:", feedbackData);
+    // Log the current state after the effect runs
+    // This won't reflect the latest state due to closures, it will show the previous state
+    console.log("Current feedback data state:", feedbackData);
+    
+    // Use a separate effect to log the updated state
   }, [propsFeedbackData]);
+  
+  // Separate effect to log the updated state after changes
+  useEffect(() => {
+    console.log("Updated feedback data state:", feedbackData);
+  }, [feedbackData]);
 
   // Helper function to get color class based on score
   const getColorClass = (score: number) => {

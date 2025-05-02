@@ -185,10 +185,21 @@ export default function DynamicAssistantScreen({
         
         // Store feedback data in window object so it can be retrieved by the feedback screen
         if (feedbackData) {
+          // Store in window object with full details for debugging
           window.__assessmentData = {
             ...(window.__assessmentData || {}),
             feedbackData
           };
+          
+          // Log explicit contents to help debug
+          console.log("Setting window.__assessmentData.feedbackData with:", {
+            summary: feedbackData.summary,
+            contentKnowledgeScore: feedbackData.contentKnowledgeScore,
+            writingScore: feedbackData.writingScore,
+            nextSteps: feedbackData.nextSteps
+          });
+        } else {
+          console.log("No feedback data received from N8N webhook");
         }
       } else {
         // Handle the case where N8N returned a non-error response but with success: false
@@ -202,7 +213,8 @@ export default function DynamicAssistantScreen({
         });
       }
       
-      // Call the onNext function to move to the next screen
+      // Call the onNext function to move to the next screen with feedback data
+      // Always call onNext just once at the end of the try block
       onNext(undefined, feedbackData);
     } catch (error) {
       console.error("Failed to send teaching data to N8N:", error);
