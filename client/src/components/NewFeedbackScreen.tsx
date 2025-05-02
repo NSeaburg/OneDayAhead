@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle, Award, Sparkles, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ interface NewFeedbackScreenProps {
 export default function NewFeedbackScreen({ 
   onPrevious,
   feedbackData: propsFeedbackData // Feedback data can be passed via props
-}: NewFeedbackScreenProps) {
+}: NewFeedbackScreenProps): JSX.Element {
   // State to track component initialization
   const [isInitialized, setIsInitialized] = useState(false);
   
@@ -74,49 +74,63 @@ export default function NewFeedbackScreen({
     }
   }, []);
 
-  // Data initialization effect
+  // Data initialization effect with a small delay to ensure window.__assessmentData is populated
   useEffect(() => {
     if (isInitialized) return; // Only run once
     
-    console.log("Initializing NewFeedbackScreen data");
-    console.log("Received propsFeedbackData:", propsFeedbackData);
-    console.log("Window.__assessmentData:", window.__assessmentData);
+    // Add a small delay to ensure all data has been populated
+    const timerId = setTimeout(() => {
+      console.log("Initializing NewFeedbackScreen data - After 500ms delay");
+      console.log("Received propsFeedbackData:", propsFeedbackData);
+      console.log("Type of propsFeedbackData:", typeof propsFeedbackData);
+      console.log("Is propsFeedbackData undefined?", propsFeedbackData === undefined);
+      console.log("propsFeedbackData keys:", propsFeedbackData ? Object.keys(propsFeedbackData) : "No keys (undefined)");
+      console.log("Window.__assessmentData:", window.__assessmentData);
     
-    // Priority 1: Use props if available
-    if (propsFeedbackData) {
-      console.log("Using feedback data from props");
+      // The order of priority:
+      // 1. First check window.__assessmentData which should have the freshest data from the webhook
+      // 2. Then check props which might be slightly older
+      // 3. Fall back to default placeholders
       
-      const newFeedbackData = {
-        summary: propsFeedbackData.summary || "No summary provided",
-        contentKnowledgeScore: propsFeedbackData.contentKnowledgeScore || 0,
-        writingScore: propsFeedbackData.writingScore || 0,
-        nextSteps: propsFeedbackData.nextSteps || "No next steps provided"
-      };
+      // Priority 1: Use window.__assessmentData if available (freshest data from webhook)
+      if (window.__assessmentData?.feedbackData) {
+        const windowData = window.__assessmentData.feedbackData;
+        console.log("Using feedback data from window.__assessmentData (PRIORITY 1)");
+        
+        const newFeedbackData = {
+          summary: windowData.summary || "No summary provided",
+          contentKnowledgeScore: windowData.contentKnowledgeScore || 0,
+          writingScore: windowData.writingScore || 0,
+          nextSteps: windowData.nextSteps || "No next steps provided"
+        };
+        
+        console.log("Setting feedback data from window.__assessmentData:", newFeedbackData);
+        setFeedbackData(newFeedbackData);
+      }
+      // Priority 2: Use props if available
+      else if (propsFeedbackData) {
+        console.log("Using feedback data from props (PRIORITY 2)");
+        
+        const newFeedbackData = {
+          summary: propsFeedbackData.summary || "No summary provided",
+          contentKnowledgeScore: propsFeedbackData.contentKnowledgeScore || 0,
+          writingScore: propsFeedbackData.writingScore || 0,
+          nextSteps: propsFeedbackData.nextSteps || "No next steps provided"
+        };
+        
+        console.log("Setting feedback data from props:", newFeedbackData);
+        setFeedbackData(newFeedbackData);
+      } 
+      // Priority 3: Use defaults if nothing else is available
+      else {
+        console.log("No feedback data found in props or window. Using default values.");
+      }
       
-      console.log("Setting feedback data from props:", newFeedbackData);
-      setFeedbackData(newFeedbackData);
-    } 
-    // Priority 2: Use window.__assessmentData if available
-    else if (window.__assessmentData?.feedbackData) {
-      const windowData = window.__assessmentData.feedbackData;
-      console.log("Using feedback data from window.__assessmentData");
-      
-      const newFeedbackData = {
-        summary: windowData.summary || "No summary provided",
-        contentKnowledgeScore: windowData.contentKnowledgeScore || 0,
-        writingScore: windowData.writingScore || 0,
-        nextSteps: windowData.nextSteps || "No next steps provided"
-      };
-      
-      console.log("Setting feedback data from window:", newFeedbackData);
-      setFeedbackData(newFeedbackData);
-    } 
-    // Priority 3: Use defaults if nothing else is available
-    else {
-      console.log("No feedback data found in props or window. Using default values.");
-    }
+      setIsInitialized(true);
+    }, 500); // 500ms delay
     
-    setIsInitialized(true);
+    // Clean up the timer when the component unmounts
+    return () => clearTimeout(timerId);
   }, [propsFeedbackData, isInitialized]);
   
   // Separate effect to log state updates
