@@ -60,6 +60,10 @@ export default function AssessmentBotScreen({
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
+  const [keywordsUsed, setKeywordsUsed] = useState<string[]>([]); // Track unique keywords used
+  const [keywordProgress, setKeywordProgress] = useState(0); // 0-10 progress for progress bar
+  const [progressComplete, setProgressComplete] = useState(false); // Animation trigger
+  const [lastMessageProcessed, setLastMessageProcessed] = useState<string | null>(null); // Track last processed message
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
