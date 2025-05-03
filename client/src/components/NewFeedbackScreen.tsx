@@ -399,7 +399,7 @@ export default function NewFeedbackScreen({
             <div className="max-h-96 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
               {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).length > 0 ? (
                 <div className="space-y-3">
-                  {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).map((message, index) => (
+                  {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).map((message: Message, index: number) => (
                     <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-green-50' : 'bg-gray-50'}`}>
                       <p className="text-xs font-semibold text-gray-600 mb-1">
                         {message.role === 'assistant' ? 'Teaching Assistant' : 'You'}:

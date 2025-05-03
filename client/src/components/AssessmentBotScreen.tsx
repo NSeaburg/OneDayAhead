@@ -152,7 +152,7 @@ If the student engages with your fictional persona, fully play along. If the stu
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentStreamingMessage]);
   
-  // Track topic completion based on user messages
+  // Track topic completion and keyword usage
   useEffect(() => {
     // Only analyze user messages
     const userMessages = messages.filter(msg => msg.role === 'user');
@@ -161,33 +161,74 @@ If the student engages with your fictional persona, fully play along. If the stu
     // Get the combined text of all user messages
     const allUserText = userMessages.map(msg => msg.content.toLowerCase()).join(' ');
     
-    // Check each topic for completion
+    // Get the most recent user message
+    const latestUserMessage = userMessages[userMessages.length - 1].content.toLowerCase();
+    
+    // Only process the latest message once
+    if (latestUserMessage === lastMessageProcessed) return;
+    
+    // Update the last processed message
+    setLastMessageProcessed(latestUserMessage);
+    
+    // Check each topic for keyword matches
     const updatedTopics = topics.map(topic => {
       // If already completed, keep it that way
       if (topic.isCompleted) return topic;
       
-      // Check if this message covers the topic
-      const matchesKeywords = topic.keywords.some(keyword => 
+      // Count how many keywords match in all user messages
+      const matchingKeywords = topic.keywords.filter(keyword => 
         allUserText.includes(keyword.toLowerCase())
       );
       
-      // Return updated topic if matches found
-      return matchesKeywords 
+      // Require at least TWO keywords to mark a topic as completed
+      return matchingKeywords.length >= 2
         ? { ...topic, isCompleted: true } 
         : topic;
     });
+    
+    // Find all keywords used in the latest message for progress bar
+    let newKeywordsFound = false;
+    
+    // Collect all keywords from all topics
+    const allKeywords = topics.flatMap(topic => topic.keywords);
+    
+    // Find which keywords are present in the latest message
+    const keywordsInLatestMessage = allKeywords.filter(keyword => 
+      latestUserMessage.includes(keyword.toLowerCase()) && 
+      !keywordsUsed.includes(keyword.toLowerCase())
+    ).map(keyword => keyword.toLowerCase());
+    
+    // If new keywords were found, add them to the tracked list
+    if (keywordsInLatestMessage.length > 0) {
+      newKeywordsFound = true;
+      // Add newly found keywords to the tracked list
+      const updatedKeywordsUsed = [...keywordsUsed, ...keywordsInLatestMessage];
+      setKeywordsUsed(updatedKeywordsUsed);
+      
+      // Increment progress bar by 1 (only once per message, even if multiple keywords found)
+      if (keywordProgress < 10) {
+        const newProgress = Math.min(10, keywordProgress + 1);
+        setKeywordProgress(newProgress);
+        
+        // Check if progress is now complete
+        if (newProgress === 10 && !progressComplete) {
+          setProgressComplete(true);
+        }
+      }
+    }
     
     // Update topics if changes were made
     if (JSON.stringify(updatedTopics) !== JSON.stringify(topics)) {
       setTopics(updatedTopics);
     }
-  }, [messages, topics]);
+  }, [messages, topics, keywordsUsed, keywordProgress, lastMessageProcessed, progressComplete]);
   
   // Expose the assessment data through the window for the next screen
   if (typeof window !== 'undefined') {
     window.__assessmentData = {
       threadId: threadId || undefined,
-      messages
+      messages,
+      teachingMessages: [] // Initialize empty teaching messages array for later use
     };
   }
 
@@ -223,7 +264,10 @@ If the student engages with your fictional persona, fully play along. If the stu
     if (inputMessage.trim()) {
       // Only try to process message if it has substance
       if (hasSubstance(inputMessage)) {
-        console.log("Message has substance - progress updated!");
+        console.log("Message has substance - checking for keywords");
+        
+        // The automatic keyword tracking will happen in the useEffect that tracks message changes
+        // We just need to send the message and the useEffect will handle the keyword detection
       } else {
         console.log("Message lacks substance - progress not updated");
       }
@@ -427,6 +471,63 @@ If the student engages with your fictional persona, fully play along. If the stu
                 </li>
               ))}
             </ul>
+            
+            {/* Keyword Progress Bar */}
+            <div className="mt-5">
+              <div className="flex justify-between items-center mb-1">
+                <p className="text-xs font-medium text-gray-600">Keyword Progress</p>
+                <p className="text-xs font-medium text-gray-600">{keywordProgress}/10</p>
+              </div>
+              <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full bg-green-500"
+                  initial={{ width: '0%' }}
+                  animate={{ 
+                    width: `${(keywordProgress / 10) * 100}%`,
+                  }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+              
+              {/* Completion Animation and Text */}
+              {progressComplete && (
+                <motion.div 
+                  className="mt-2 flex items-center justify-center"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{
+                    duration: 0.5,
+                    ease: [0, 0.71, 0.2, 1.01],
+                    scale: {
+                      type: "spring",
+                      damping: 5,
+                      stiffness: 100,
+                      restDelta: 0.001
+                    }
+                  }}
+                >
+                  <div className="flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <motion.span
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: [0, 15, -15, 10, -10, 5, -5, 0] }}
+                      transition={{ duration: 0.5 }}
+                      className="mr-1"
+                    >
+                      ✨
+                    </motion.span>
+                    <span>Assessment Complete</span>
+                    <motion.span
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
+                      transition={{ duration: 0.5 }}
+                      className="ml-1"
+                    >
+                      ✨
+                    </motion.span>
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </div>
           
           <hr className="my-4 border-gray-200" />
