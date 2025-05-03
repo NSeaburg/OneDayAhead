@@ -103,10 +103,20 @@ export default function NewFeedbackScreen({
       console.log("Using feedback data from window.__assessmentData:", windowData);
       
       // Ensure we have valid data with fallbacks for empty values
+      // Convert scores to 0-4 scale if they're coming in as 0-100
+      const normalizeScore = (score: number) => {
+        if (score <= 4) return score; // Already on 0-4 scale
+        return Math.round((score / 100) * 4 * 10) / 10; // Convert 0-100 to 0-4 with one decimal
+      };
+      
       const newFeedbackData = {
         summary: windowData.summary || "You've successfully completed the three branches of government learning module.",
-        contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? windowData.contentKnowledgeScore : 85,
-        writingScore: typeof windowData.writingScore === 'number' ? windowData.writingScore : 70,
+        contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' 
+          ? normalizeScore(windowData.contentKnowledgeScore) 
+          : 3.4, // Default on 0-4 scale
+        writingScore: typeof windowData.writingScore === 'number' 
+          ? normalizeScore(windowData.writingScore) 
+          : 2.8, // Default on 0-4 scale
         nextSteps: windowData.nextSteps || "Continue your learning journey by exploring more government topics."
       };
       
@@ -117,11 +127,21 @@ export default function NewFeedbackScreen({
     else if (propsFeedbackData) {
       console.log("Using feedback data from props:", propsFeedbackData);
       
+      // Convert scores to 0-4 scale if they're coming in as 0-100
+      const normalizeScore = (score: number) => {
+        if (score <= 4) return score; // Already on 0-4 scale
+        return Math.round((score / 100) * 4 * 10) / 10; // Convert 0-100 to 0-4 with one decimal
+      };
+      
       // Ensure we have valid data with fallbacks for empty values
       const newFeedbackData = {
         summary: propsFeedbackData.summary || "You've successfully completed the three branches of government learning module.",
-        contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' ? propsFeedbackData.contentKnowledgeScore : 85,
-        writingScore: typeof propsFeedbackData.writingScore === 'number' ? propsFeedbackData.writingScore : 70,
+        contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' 
+          ? normalizeScore(propsFeedbackData.contentKnowledgeScore) 
+          : 3.4, // Default on 0-4 scale
+        writingScore: typeof propsFeedbackData.writingScore === 'number' 
+          ? normalizeScore(propsFeedbackData.writingScore) 
+          : 2.8, // Default on 0-4 scale
         nextSteps: propsFeedbackData.nextSteps || "Continue your learning journey by exploring more government topics."
       };
       
@@ -132,11 +152,17 @@ export default function NewFeedbackScreen({
     else {
       console.log("No feedback data found in props or window. Using hardcoded values:");
       
-      // These values match what we can see in the server logs for proper testing
+      // Convert scores to 0-4 scale if needed
+      const normalizeScore = (score: number) => {
+        if (score <= 4) return score; // Already on 0-4 scale
+        return Math.round((score / 100) * 4 * 10) / 10; // Convert 0-100 to 0-4 with one decimal
+      };
+      
+      // These values use the 0-4 scale for proper testing
       const hardcodedFeedbackData = {
         summary: "The student now understands the basic structure of the U.S. government, specifically the division into three branches: the legislative, executive, and judicial branches. They can articulate how these branches function independently and how they interact with each other to maintain a balance of power.",
-        contentKnowledgeScore: 85,
-        writingScore: 70,
+        contentKnowledgeScore: 3.4, // 3.4/4 (equivalent to 85/100)
+        writingScore: 2.8, // 2.8/4 (equivalent to 70/100)
         nextSteps: "Great job on mastering the basics of government structure! **Next, we're diving into the world of whales.** Get ready to explore these fascinating creatures and learn about their unique characteristics, habitats, and the important role they play in marine ecosystems. It's going to be a whale of a time!"
       };
       
