@@ -267,11 +267,11 @@ export default function DynamicAssistantScreen({
         } else {
           console.log("No feedback data received from N8N webhook");
           
-          // Create fallback data to ensure UI doesn't show placeholders
+          // Create fallback data to ensure UI doesn't show placeholders (using 0-4 scale)
           const fallbackData = {
             summary: "You've completed learning about the three branches of government! You demonstrated understanding of the core concepts.",
-            contentKnowledgeScore: 75,
-            writingScore: 80,
+            contentKnowledgeScore: 3.0,
+            writingScore: 3.0,
             nextSteps: "Continue exploring the relationships between branches by studying historical examples."
           };
           

@@ -517,11 +517,11 @@ When the student has completed both activities, thank them warmly and end the co
         // Then check for empty or null response
         else if (!response.data || (typeof response.data === 'object' && Object.keys(response.data).length === 0)) {
           console.log("WARNING: Received empty response from teaching webhook. Using fallback feedback data.");
-          // Return hardcoded fallback feedback
+          // Return hardcoded fallback feedback (using 0-4 scale)
           feedbackData = {
             summary: "You've completed this learning module with a good understanding of the three branches of government!",
-            contentKnowledgeScore: 85,
-            writingScore: 90,
+            contentKnowledgeScore: 3.5,
+            writingScore: 3.5,
             nextSteps: "Continue exploring the checks and balances between branches by reading more about specific historical cases where these powers were exercised."
           };
         } else if (response.data && typeof response.data === 'object') {
@@ -569,8 +569,8 @@ When the student has completed both activities, thank them warmly and end the co
             console.log("WARNING: No feedback fields found in N8N response. Using fallback feedback data.");
             feedbackData = {
               summary: "You've completed this learning module with a good understanding of the three branches of government!",
-              contentKnowledgeScore: 80,
-              writingScore: 85,
+              contentKnowledgeScore: 3.0,
+              writingScore: 3.25,
               nextSteps: "Continue exploring more about how the branches interact in our government system."
             };
           }
