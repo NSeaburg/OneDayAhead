@@ -1,7 +1,7 @@
 // App configuration
 export const config = {
   // Video screen configuration
-  videoUrl: "https://www.youtube.com/embed/ybxSgIBbBh8", // Updated video URL
+  videoUrl: "https://www.youtube.com/embed/0lrjvIfJeKo", // Updated video URL for Three Branches of Government
 
   // Article content
   articleContent: `

@@ -10,13 +10,13 @@ interface VideoScreenProps {
 export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScreenProps) {
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Introduction Video</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-4">The Three Branches of Government</h1>
       <div className="flex-grow flex flex-col">
         <div className="relative w-full h-0 pb-[56.25%] md:pb-[56.25%] bg-gray-100 rounded-lg overflow-hidden mb-6">
           <iframe 
             className="absolute inset-0 w-full h-full"
             src={videoUrl}
-            title="Learning Module Introduction"
+            title="The Three Branches of Government"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowFullScreen
