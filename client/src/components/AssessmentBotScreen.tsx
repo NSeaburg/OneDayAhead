@@ -478,7 +478,6 @@ If the student engages with your fictional persona, fully play along. If the stu
               <div className="mt-5">
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-xs font-medium text-gray-600">Assessment Progress</p>
-                  <p className="text-xs font-medium text-gray-600">{keywordProgress}/10</p>
                 </div>
                 <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
                   <motion.div 
