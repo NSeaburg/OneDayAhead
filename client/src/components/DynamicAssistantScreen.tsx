@@ -183,12 +183,12 @@ export default function DynamicAssistantScreen({
       console.log("Teaching bot Thread ID:", threadId);
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
-      // Fallback data when N8N returns an empty response or connection fails
+      // Fallback data when N8N returns an empty response or connection fails (using 0-4 scale)
       // Note: In production, this would be replaced with a more generic message prompting user to retry
       const fallbackFeedbackData = {
         summary: "You've completed learning about the three branches of government! You demonstrated understanding of how the legislative, executive, and judicial branches function together with checks and balances.",
-        contentKnowledgeScore: 80,
-        writingScore: 75,
+        contentKnowledgeScore: 3.0,
+        writingScore: 3.0,
         nextSteps: "Continue exploring government concepts by researching specific historical examples of how the branches have interacted throughout American history."
       };
       
@@ -251,8 +251,13 @@ export default function DynamicAssistantScreen({
           // Ensure all properties have valid values to prevent UI issues
           const formattedFeedbackData = {
             summary: feedbackData.summary || "You've completed learning about the three branches of government! You demonstrated understanding of the core concepts.",
-            contentKnowledgeScore: typeof feedbackData.contentKnowledgeScore === 'number' ? feedbackData.contentKnowledgeScore : 75,
-            writingScore: typeof feedbackData.writingScore === 'number' ? feedbackData.writingScore : 80,
+            // Convert scores to 0-4 scale if they're in 0-100 scale
+            contentKnowledgeScore: typeof feedbackData.contentKnowledgeScore === 'number' 
+              ? (feedbackData.contentKnowledgeScore > 4 ? feedbackData.contentKnowledgeScore / 25 : feedbackData.contentKnowledgeScore) 
+              : 3.0,
+            writingScore: typeof feedbackData.writingScore === 'number' 
+              ? (feedbackData.writingScore > 4 ? feedbackData.writingScore / 25 : feedbackData.writingScore) 
+              : 3.0,
             nextSteps: feedbackData.nextSteps || "Continue exploring the relationships between branches by studying historical examples."
           };
           

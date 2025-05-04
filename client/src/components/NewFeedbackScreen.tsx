@@ -323,13 +323,17 @@ export default function NewFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {feedbackData.contentKnowledgeScore <= 4 ? `${feedbackData.contentKnowledgeScore}/4` : `${feedbackData.contentKnowledgeScore}/100`}
+              {feedbackData.contentKnowledgeScore > 4 
+                ? `${(feedbackData.contentKnowledgeScore / 25).toFixed(1)}/4` 
+                : `${feedbackData.contentKnowledgeScore}/4`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.contentKnowledgeScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.contentKnowledgeScore <= 4 ? (feedbackData.contentKnowledgeScore / 4) * 100 : feedbackData.contentKnowledgeScore)}%` }}
+              style={{ width: `${Math.max(1, feedbackData.contentKnowledgeScore > 4 
+                ? (feedbackData.contentKnowledgeScore / 25) * 100  // Convert 0-100 to percentage (via 0-4)
+                : (feedbackData.contentKnowledgeScore / 4) * 100)}%` }}
             ></div>
           </div>
         </div>
@@ -340,13 +344,17 @@ export default function NewFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {feedbackData.writingScore <= 4 ? `${feedbackData.writingScore}/4` : `${feedbackData.writingScore}/100`}
+              {feedbackData.writingScore > 4 
+                ? `${(feedbackData.writingScore / 25).toFixed(1)}/4` 
+                : `${feedbackData.writingScore}/4`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.writingScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.writingScore <= 4 ? (feedbackData.writingScore / 4) * 100 : feedbackData.writingScore)}%` }}
+              style={{ width: `${Math.max(1, feedbackData.writingScore > 4 
+                ? (feedbackData.writingScore / 25) * 100  // Convert 0-100 to percentage (via 0-4)
+                : (feedbackData.writingScore / 4) * 100)}%` }}
             ></div>
           </div>
         </div>
