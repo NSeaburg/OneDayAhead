@@ -13,6 +13,7 @@ declare global {
     __assessmentData?: {
       threadId?: string;
       messages?: any[];
+      teachingMessages?: any[]; // For storing teaching bot conversation
       feedbackData?: {
         summary?: string;
         contentKnowledgeScore?: number;
@@ -138,12 +139,12 @@ export default function FinalBotScreen({
       <div style="display: flex; gap: 20px; margin-bottom: 20px;">
         <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
           <h3 style="font-size: 16px; margin-bottom: 10px;">Content Knowledge</h3>
-          <p>Score: ${feedbackData.contentKnowledgeScore}/100</p>
+          <p>Score: ${feedbackData.contentKnowledgeScore}/4</p>
         </div>
         
         <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
           <h3 style="font-size: 16px; margin-bottom: 10px;">Writing Quality</h3>
-          <p>Score: ${feedbackData.writingScore}/100</p>
+          <p>Score: ${feedbackData.writingScore}/4</p>
         </div>
       </div>
       

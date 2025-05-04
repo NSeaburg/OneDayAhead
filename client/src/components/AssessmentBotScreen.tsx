@@ -19,6 +19,7 @@ declare global {
     __assessmentData?: {
       threadId?: string;
       messages?: any[];
+      teachingMessages?: any[]; // For storing teaching bot conversation
       feedbackData?: {
         summary?: string;
         contentKnowledgeScore?: number;
@@ -61,7 +62,7 @@ export default function AssessmentBotScreen({
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
   const [keywordsUsed, setKeywordsUsed] = useState<string[]>([]); // Track unique keywords used
-  const [keywordProgress, setKeywordProgress] = useState(0); // 0-10 progress for progress bar
+  const [keywordProgress, setKeywordProgress] = useState(0); // 0-8 progress for progress bar
   const [progressComplete, setProgressComplete] = useState(false); // Animation trigger
   const [lastMessageProcessed, setLastMessageProcessed] = useState<string | null>(null); // Track last processed message
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -206,12 +207,12 @@ If the student engages with your fictional persona, fully play along. If the stu
       setKeywordsUsed(updatedKeywordsUsed);
       
       // Increment progress bar by 1 (only once per message, even if multiple keywords found)
-      if (keywordProgress < 10) {
-        const newProgress = Math.min(10, keywordProgress + 1);
+      if (keywordProgress < 8) {
+        const newProgress = Math.min(8, keywordProgress + 1);
         setKeywordProgress(newProgress);
         
         // Check if progress is now complete
-        if (newProgress === 10 && !progressComplete) {
+        if (newProgress === 8 && !progressComplete) {
           setProgressComplete(true);
         }
       }
@@ -484,7 +485,7 @@ If the student engages with your fictional persona, fully play along. If the stu
                     className="h-full bg-green-500"
                     initial={{ width: '0%' }}
                     animate={{ 
-                      width: `${(keywordProgress / 10) * 100}%`,
+                      width: `${(keywordProgress / 8) * 100}%`,
                     }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   />
