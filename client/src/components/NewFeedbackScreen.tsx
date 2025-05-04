@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import html2pdf from 'html2pdf.js';
 import { notifyCourseCompleted } from "@/lib/embedding";
+import { Message } from "@/lib/openai";
 
 // Using global interface from types.d.ts
 
@@ -132,11 +133,11 @@ export default function NewFeedbackScreen({
     else {
       console.log("No feedback data found in props or window. Using hardcoded values:");
       
-      // These values match what we can see in the server logs for proper testing
+      // These values match what we can see in the server logs for proper testing (converted to 0-4 scale)
       const hardcodedFeedbackData = {
         summary: "The student now understands the basic structure of the U.S. government, specifically the division into three branches: the legislative, executive, and judicial branches. They can articulate how these branches function independently and how they interact with each other to maintain a balance of power.",
-        contentKnowledgeScore: 85,
-        writingScore: 70,
+        contentKnowledgeScore: 3.4, // 85/25 = 3.4
+        writingScore: 2.8, // 70/25 = 2.8
         nextSteps: "Great job on mastering the basics of government structure! **Next, we're diving into the world of whales.** Get ready to explore these fascinating creatures and learn about their unique characteristics, habitats, and the important role they play in marine ecosystems. It's going to be a whale of a time!"
       };
       
@@ -222,12 +223,16 @@ export default function NewFeedbackScreen({
       <div style="display: flex; gap: 20px; margin-bottom: 20px;">
         <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
           <h3 style="font-size: 16px; margin-bottom: 10px;">Content Knowledge</h3>
-          <p>Score: ${feedbackData.contentKnowledgeScore <= 4 ? `${feedbackData.contentKnowledgeScore}/4` : `${feedbackData.contentKnowledgeScore}/100`}</p>
+          <p>Score: ${feedbackData.contentKnowledgeScore > 4 
+            ? `${(feedbackData.contentKnowledgeScore / 25).toFixed(1)}/4` 
+            : `${feedbackData.contentKnowledgeScore}/4`}</p>
         </div>
         
         <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
           <h3 style="font-size: 16px; margin-bottom: 10px;">Writing Quality</h3>
-          <p>Score: ${feedbackData.writingScore <= 4 ? `${feedbackData.writingScore}/4` : `${feedbackData.writingScore}/100`}</p>
+          <p>Score: ${feedbackData.writingScore > 4 
+            ? `${(feedbackData.writingScore / 25).toFixed(1)}/4` 
+            : `${feedbackData.writingScore}/4`}</p>
         </div>
       </div>
       
@@ -407,7 +412,7 @@ export default function NewFeedbackScreen({
             <div className="max-h-96 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
               {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).length > 0 ? (
                 <div className="space-y-3">
-                  {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).map((message: Message, index: number) => (
+                  {(propsTeachingConversation || window.__assessmentData?.teachingMessages || []).map((message: any, index: number) => (
                     <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-green-50' : 'bg-gray-50'}`}>
                       <p className="text-xs font-semibold text-gray-600 mb-1">
                         {message.role === 'assistant' ? 'Teaching Assistant' : 'You'}:
