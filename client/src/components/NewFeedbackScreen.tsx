@@ -366,17 +366,24 @@ export default function NewFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {feedbackData.contentKnowledgeScore > 4 
-                ? `${(feedbackData.contentKnowledgeScore / 25).toFixed(1)}/4` 
-                : `${Math.min(4, feedbackData.contentKnowledgeScore)}/4`}
+              {(() => {
+                console.log(`⚠️ DEBUG Badge display - contentKnowledgeScore: ${feedbackData.contentKnowledgeScore}, type: ${typeof feedbackData.contentKnowledgeScore}`);
+                return feedbackData.contentKnowledgeScore > 4 
+                  ? `${(feedbackData.contentKnowledgeScore / 25).toFixed(1)}/4` 
+                  : `${Math.min(4, feedbackData.contentKnowledgeScore)}/4`;
+              })()}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.contentKnowledgeScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.contentKnowledgeScore >= 4 
-                ? 100  // If score is 4 or more, show 100%
-                : (feedbackData.contentKnowledgeScore / 4) * 100)}%` }}
+              style={{ width: (() => {
+                const percentValue = Math.max(1, feedbackData.contentKnowledgeScore >= 4 
+                  ? 100  // If score is 4 or more, show 100%
+                  : (feedbackData.contentKnowledgeScore / 4) * 100);
+                console.log(`⚠️ DEBUG Progress bar - contentKnowledgeScore: ${feedbackData.contentKnowledgeScore}, calculated width: ${percentValue}%`);
+                return `${percentValue}%`;
+              })() }}
             ></div>
           </div>
         </div>
@@ -387,17 +394,24 @@ export default function NewFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {feedbackData.writingScore > 4 
-                ? `${(feedbackData.writingScore / 25).toFixed(1)}/4` 
-                : `${Math.min(4, feedbackData.writingScore)}/4`}
+              {(() => {
+                console.log(`⚠️ DEBUG Badge display - writingScore: ${feedbackData.writingScore}, type: ${typeof feedbackData.writingScore}`);
+                return feedbackData.writingScore > 4 
+                  ? `${(feedbackData.writingScore / 25).toFixed(1)}/4` 
+                  : `${Math.min(4, feedbackData.writingScore)}/4`;
+              })()}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.writingScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.writingScore >= 4 
-                ? 100  // If score is 4 or more, show 100%
-                : (feedbackData.writingScore / 4) * 100)}%` }}
+              style={{ width: (() => {
+                const percentValue = Math.max(1, feedbackData.writingScore >= 4 
+                  ? 100  // If score is 4 or more, show 100%
+                  : (feedbackData.writingScore / 4) * 100);
+                console.log(`⚠️ DEBUG Progress bar - writingScore: ${feedbackData.writingScore}, calculated width: ${percentValue}%`);
+                return `${percentValue}%`;
+              })() }}
             ></div>
           </div>
         </div>

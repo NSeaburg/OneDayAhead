@@ -239,8 +239,15 @@ export default function Home() {
               assessmentConversation={assessmentConversation}
               onNext={(nextId, feedbackResult) => {
                 if (feedbackResult) {
+                  console.log("⚠️ DEBUG - Feedback data from HighBotWithArticleScreen:", 
+                    JSON.stringify({
+                      contentKnowledgeScore: feedbackResult?.contentKnowledgeScore,
+                      writingScore: feedbackResult?.writingScore,
+                      contentKnowledgeScoreType: typeof feedbackResult?.contentKnowledgeScore,
+                      writingScoreType: typeof feedbackResult?.writingScore,
+                    })
+                  );
                   setFeedbackData(feedbackResult);
-                  console.log("Feedback data received:", feedbackResult);
                 }
                 goToNextScreen();
               }}
@@ -256,7 +263,14 @@ export default function Home() {
               teachingAssistance={teachingAssistance}
               onNext={(nextId, feedbackResult) => {
                 if (feedbackResult) {
-                  console.log("Feedback data received in DynamicAssistantScreen callback:", feedbackResult);
+                  console.log("⚠️ DEBUG - Feedback data received in DynamicAssistantScreen callback:", 
+                    JSON.stringify({
+                      contentKnowledgeScore: feedbackResult?.contentKnowledgeScore,
+                      writingScore: feedbackResult?.writingScore,
+                      contentKnowledgeScoreType: typeof feedbackResult?.contentKnowledgeScore,
+                      writingScoreType: typeof feedbackResult?.writingScore,
+                    })
+                  );
                   // Set state with the feedback data
                   setFeedbackData(feedbackResult);
                   
