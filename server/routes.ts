@@ -137,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Metadata
           timestamp: new Date().toISOString(),
           source: "learning-app-assessment",
-          courseName: courseName || "Three Branches of Government", // Add course name with fallback
+          courseName: courseName || "Social Studies Sample", // Add course name with fallback
           chatDurationSeconds: chatDurationSeconds || 0, // Add chat duration with fallback
           
           // Include the threadId for backward compatibility if available
@@ -359,7 +359,7 @@ When the student has completed both activities, thank them warmly and end the co
           success: false, 
           message: "Dynamic assistant webhook URL not configured, continuing anyway",
           feedbackData: {
-            summary: "You've completed this learning module successfully!",
+            summary: "You've completed this Social Studies Sample module successfully!",
             contentKnowledgeScore: 0,
             writingScore: 0,
             nextSteps: "Continue exploring more topics to expand your knowledge."
@@ -519,7 +519,7 @@ When the student has completed both activities, thank them warmly and end the co
           console.log("WARNING: Received empty response from teaching webhook. Using fallback feedback data.");
           // Return hardcoded fallback feedback (using 0-4 scale)
           feedbackData = {
-            summary: "You've completed this learning module with a good understanding of the three branches of government!",
+            summary: "You've completed this Social Studies Sample module with a good understanding of the three branches of government!",
             contentKnowledgeScore: 3.5,
             writingScore: 3.5,
             nextSteps: "Continue exploring the checks and balances between branches by reading more about specific historical cases where these powers were exercised."
@@ -568,7 +568,7 @@ When the student has completed both activities, thank them warmly and end the co
             // No specific feedback fields found, use fallback
             console.log("WARNING: No feedback fields found in N8N response. Using fallback feedback data.");
             feedbackData = {
-              summary: "You've completed this learning module with a good understanding of the three branches of government!",
+              summary: "You've completed this Social Studies Sample module with a good understanding of the three branches of government!",
               contentKnowledgeScore: 3.0,
               writingScore: 3.25,
               nextSteps: "Continue exploring more about how the branches interact in our government system."
