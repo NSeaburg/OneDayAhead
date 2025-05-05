@@ -84,9 +84,21 @@ export default function SimpleFeedbackScreen({
                           window.__assessmentData?.messages || 
                           [];
     
-    const teachingMsgs = globalStorage.getTeachingMessages() || 
-                        window.__assessmentData?.teachingMessages || 
-                        [];
+    // For teaching messages, try multiple sources with detailed logging
+    const globalTeachingMsgs = globalStorage.getTeachingMessages();
+    const windowTeachingMsgs = window.__assessmentData?.teachingMessages;
+    
+    console.log("🔍 Teaching messages from globalStorage:", globalTeachingMsgs);
+    console.log("🔍 Teaching messages from window.__assessmentData:", windowTeachingMsgs);
+    
+    // Use whichever source has messages (prioritize global storage)
+    const teachingMsgs = (globalTeachingMsgs && globalTeachingMsgs.length > 0) 
+      ? globalTeachingMsgs 
+      : (windowTeachingMsgs && windowTeachingMsgs.length > 0)
+        ? windowTeachingMsgs
+        : [];
+    
+    console.log("🔍 Final teaching messages to display:", teachingMsgs);
     
     setAssessmentMessages(assessmentMsgs);
     setTeachingMessages(teachingMsgs);

@@ -101,14 +101,35 @@ export function getAssessmentMessages(): any[] {
  * Set teaching messages
  */
 export function setTeachingMessages(messages: any[]) {
-  storage.teachingMessages = [...messages];
+  console.log("🔴 GLOBAL STORAGE - setTeachingMessages called with", messages.length, "messages");
+  
+  if (!messages || !Array.isArray(messages)) {
+    console.error("🔴 GLOBAL STORAGE - Invalid messages format:", messages);
+    return;
+  }
+  
+  // Create a deep copy
+  storage.teachingMessages = JSON.parse(JSON.stringify(messages));
   
   // Also update window.__assessmentData for backward compatibility
   if (typeof window !== 'undefined') {
     if (!window.__assessmentData) {
-      window.__assessmentData = { teachingMessages: [...messages] };
+      window.__assessmentData = { teachingMessages: JSON.parse(JSON.stringify(messages)) };
     } else {
-      window.__assessmentData.teachingMessages = [...messages];
+      window.__assessmentData.teachingMessages = JSON.parse(JSON.stringify(messages));
+    }
+    
+    console.log("🔴 GLOBAL STORAGE - window.__assessmentData updated with teaching messages:", 
+                window.__assessmentData.teachingMessages?.length || 0, "messages");
+  }
+  
+  // Log the content of the first and last message for debugging
+  if (messages.length > 0) {
+    console.log("🔴 GLOBAL STORAGE - First teaching message:", messages[0].role, messages[0].content.substring(0, 50) + "...");
+    if (messages.length > 1) {
+      console.log("🔴 GLOBAL STORAGE - Last teaching message:", 
+                 messages[messages.length-1].role, 
+                 messages[messages.length-1].content.substring(0, 50) + "...");
     }
   }
 }
@@ -117,7 +138,18 @@ export function setTeachingMessages(messages: any[]) {
  * Get teaching messages
  */
 export function getTeachingMessages(): any[] {
-  return [...storage.teachingMessages];
+  const result = storage.teachingMessages || [];
+  console.log("🔴 GLOBAL STORAGE - getTeachingMessages returning", result.length, "messages");
+  
+  if (result.length === 0) {
+    // Try to get them from window.__assessmentData as a fallback
+    const windowMessages = window.__assessmentData?.teachingMessages || [];
+    console.log("🔴 GLOBAL STORAGE - Fallback: getting", windowMessages.length, 
+                "teaching messages from window.__assessmentData");
+    return [...windowMessages];
+  }
+  
+  return [...result];
 }
 
 /**

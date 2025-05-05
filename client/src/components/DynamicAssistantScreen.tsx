@@ -117,11 +117,12 @@ export default function DynamicAssistantScreen({
   // Store conversation in global storage for the feedback screen
   useEffect(() => {
     if (messages.length > 0) {
-      // Use the globalStorage module to store teaching messages
-      import('@/lib/globalStorage').then(({ default: globalStorage }) => {
-        globalStorage.setTeachingMessages(messages);
-        console.log("🔴 GLOBAL STORAGE - Stored teaching conversation:", messages.length, "messages");
-      });
+      // Store teaching messages directly without dynamic import
+      globalStorage.setTeachingMessages(messages);
+      console.log("🔴 GLOBAL STORAGE - Stored teaching conversation:", messages.length, "messages");
+      
+      // Log the stored messages for debugging
+      console.log("🔴 GLOBAL STORAGE - Teaching messages content:", JSON.stringify(messages));
       
       // Also store in window.__assessmentData for backward compatibility
       if (!window.__assessmentData) {
@@ -131,6 +132,12 @@ export default function DynamicAssistantScreen({
       // Store the teaching messages
       window.__assessmentData.teachingMessages = messages;
       console.log("Stored teaching conversation in window object:", messages.length, "messages");
+      
+      // Verify storage
+      const storedMessages = globalStorage.getTeachingMessages();
+      console.log("🔴 VERIFICATION - Teaching messages after storage:", 
+                 storedMessages ? storedMessages.length : 0, 
+                 "messages retrieved");
     }
   }, [messages]);
   
