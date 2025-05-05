@@ -253,14 +253,14 @@ export default function NewFeedbackScreen({
           <h3 style="font-size: 16px; margin-bottom: 10px;">Content Knowledge</h3>
           <p>Score: ${feedbackData.contentKnowledgeScore > 4 
             ? `${(feedbackData.contentKnowledgeScore / 25).toFixed(1)}/4` 
-            : `${feedbackData.contentKnowledgeScore}/4`}</p>
+            : `${Math.min(4, feedbackData.contentKnowledgeScore)}/4`}</p>
         </div>
         
         <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
           <h3 style="font-size: 16px; margin-bottom: 10px;">Writing Quality</h3>
           <p>Score: ${feedbackData.writingScore > 4 
             ? `${(feedbackData.writingScore / 25).toFixed(1)}/4` 
-            : `${feedbackData.writingScore}/4`}</p>
+            : `${Math.min(4, feedbackData.writingScore)}/4`}</p>
         </div>
       </div>
       
@@ -358,14 +358,14 @@ export default function NewFeedbackScreen({
             <Badge className="bg-white text-gray-800 border border-current">
               {feedbackData.contentKnowledgeScore > 4 
                 ? `${(feedbackData.contentKnowledgeScore / 25).toFixed(1)}/4` 
-                : `${feedbackData.contentKnowledgeScore}/4`}
+                : `${Math.min(4, feedbackData.contentKnowledgeScore)}/4`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.contentKnowledgeScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.contentKnowledgeScore > 4 
-                ? (feedbackData.contentKnowledgeScore / 25) * 100  // Convert 0-100 to percentage (via 0-4)
+              style={{ width: `${Math.max(1, feedbackData.contentKnowledgeScore >= 4 
+                ? 100  // If score is 4 or more, show 100%
                 : (feedbackData.contentKnowledgeScore / 4) * 100)}%` }}
             ></div>
           </div>
@@ -379,14 +379,14 @@ export default function NewFeedbackScreen({
             <Badge className="bg-white text-gray-800 border border-current">
               {feedbackData.writingScore > 4 
                 ? `${(feedbackData.writingScore / 25).toFixed(1)}/4` 
-                : `${feedbackData.writingScore}/4`}
+                : `${Math.min(4, feedbackData.writingScore)}/4`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getProgressColor(feedbackData.writingScore)}`}
-              style={{ width: `${Math.max(1, feedbackData.writingScore > 4 
-                ? (feedbackData.writingScore / 25) * 100  // Convert 0-100 to percentage (via 0-4)
+              style={{ width: `${Math.max(1, feedbackData.writingScore >= 4 
+                ? 100  // If score is 4 or more, show 100%
                 : (feedbackData.writingScore / 4) * 100)}%` }}
             ></div>
           </div>
