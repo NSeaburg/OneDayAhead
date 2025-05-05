@@ -338,13 +338,14 @@ export default function DynamicAssistantScreen({
       
       // Call the onNext function to move to the next screen with feedback data
       // Always call onNext just once at the end of the try block
-      console.log("⚠️ DEBUG - About to call onNext with feedbackData:", 
+      console.log("⚠️ DEBUG CRITICAL - About to call onNext with feedbackData:", 
         JSON.stringify({
           contentKnowledgeScore: feedbackData?.contentKnowledgeScore,
           writingScore: feedbackData?.writingScore,
           contentKnowledgeScoreType: typeof feedbackData?.contentKnowledgeScore,
           writingScoreType: typeof feedbackData?.writingScore,
-        })
+          fullData: feedbackData
+        }, null, 2)
       );
       onNext(undefined, feedbackData);
     } catch (error) {

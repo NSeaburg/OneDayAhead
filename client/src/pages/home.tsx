@@ -40,6 +40,21 @@ export default function Home() {
     nextSteps?: string;
   } | undefined>(undefined);
   
+  // Add a debug log whenever feedbackData changes
+  useEffect(() => {
+    if (feedbackData) {
+      console.log("⚠️ DEBUG CRITICAL - feedbackData state in Home updated:", 
+        JSON.stringify({
+          contentKnowledgeScore: feedbackData.contentKnowledgeScore,
+          writingScore: feedbackData.writingScore,
+          contentKnowledgeScoreType: typeof feedbackData.contentKnowledgeScore,
+          writingScoreType: typeof feedbackData.writingScore,
+          fullData: feedbackData
+        }, null, 2)
+      );
+    }
+  }, [feedbackData]);
+  
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
   

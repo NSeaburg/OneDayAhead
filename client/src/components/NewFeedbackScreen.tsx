@@ -95,6 +95,19 @@ export default function NewFeedbackScreen({
     console.log("Window.__assessmentData at initialization:", window.__assessmentData);
     console.log("Detailed window.__assessmentData?.feedbackData:", JSON.stringify(window.__assessmentData?.feedbackData));
     
+    // CRITICAL DEBUG: Examine propsFeedbackData deeply and with enhanced detail
+    console.log("⚠️ CRITICAL DEBUG - propsFeedbackData inspection:", 
+      JSON.stringify({
+        hasProps: propsFeedbackData ? true : false,
+        propsFeedbackData: propsFeedbackData,
+        propsContentKnowledgeScore: propsFeedbackData?.contentKnowledgeScore,
+        propsWritingScore: propsFeedbackData?.writingScore,
+        propsContentKnowledgeScoreType: typeof propsFeedbackData?.contentKnowledgeScore,
+        propsWritingScoreType: typeof propsFeedbackData?.writingScore,
+        propsKeys: propsFeedbackData ? Object.keys(propsFeedbackData) : []
+      }, null, 2)
+    );
+    
     // Additional debug for webhooks scores
     if (window.__assessmentData?.feedbackData) {
       console.log("⚠️ DEBUG SCORES - contentKnowledgeScore:", 
@@ -145,6 +158,18 @@ export default function NewFeedbackScreen({
       };
       
       console.log("⭐ USING ACTUAL N8N DATA FROM WINDOW:", formattedData);
+      
+      // CRITICAL DEBUG: Verify formattedData before setting state (window data version)
+      console.log("⚠️ CRITICAL DEBUG - window formattedData right before setState:", 
+        JSON.stringify({
+          formattedContentKnowledgeScore: formattedData.contentKnowledgeScore,
+          formattedWritingScore: formattedData.writingScore,
+          formattedContentKnowledgeScoreType: typeof formattedData.contentKnowledgeScore,
+          formattedWritingScoreType: typeof formattedData.writingScore,
+          formattedDataObj: formattedData
+        }, null, 2)
+      );
+      
       setFeedbackData(formattedData);
     }
     // Otherwise check props
@@ -172,6 +197,18 @@ export default function NewFeedbackScreen({
       };
       
       console.log("⭐ USING ACTUAL N8N DATA FROM PROPS:", formattedData);
+      
+      // CRITICAL DEBUG: Verify formattedData before setting state
+      console.log("⚠️ CRITICAL DEBUG - formattedData right before setState:", 
+        JSON.stringify({
+          formattedContentKnowledgeScore: formattedData.contentKnowledgeScore,
+          formattedWritingScore: formattedData.writingScore,
+          formattedContentKnowledgeScoreType: typeof formattedData.contentKnowledgeScore,
+          formattedWritingScoreType: typeof formattedData.writingScore,
+          formattedDataObj: formattedData
+        }, null, 2)
+      );
+      
       setFeedbackData(formattedData);
     }
     // LAST RESORT - only if absolutely no data is available
