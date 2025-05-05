@@ -9,10 +9,10 @@ import html2pdf from 'html2pdf.js';
 import globalStorage from "@/lib/globalStorage";
 
 interface FeedbackData {
-  summary: string;
-  contentKnowledgeScore: number;
-  writingScore: number;
-  nextSteps: string;
+  summary?: string;
+  contentKnowledgeScore?: number;
+  writingScore?: number;
+  nextSteps?: string;
 }
 
 interface SimpleFeedbackScreenProps {
@@ -105,25 +105,27 @@ export default function SimpleFeedbackScreen({
   }, [feedbackData]);
 
   // Helper function to get color class based on score (0-4 scale)
-  const getColorClass = (score: number) => {
-    if (score >= 3.5) return "bg-green-100 border-green-200 text-green-800";
-    if (score >= 2.5) return "bg-blue-100 border-blue-200 text-blue-800";
-    if (score >= 1.5) return "bg-yellow-100 border-yellow-200 text-yellow-800";
+  const getColorClass = (score?: number) => {
+    const safeScore = Number(score || 0);
+    if (safeScore >= 3.5) return "bg-green-100 border-green-200 text-green-800";
+    if (safeScore >= 2.5) return "bg-blue-100 border-blue-200 text-blue-800";
+    if (safeScore >= 1.5) return "bg-yellow-100 border-yellow-200 text-yellow-800";
     return "bg-red-100 border-red-200 text-red-800";
   };
 
   // Helper function to determine CSS background color class based on score (0-4 scale)
-  const getProgressColor = (score: number): string => {
-    if (score >= 3.5) return "bg-green-500";
-    if (score >= 2.5) return "bg-blue-500";
-    if (score >= 1.5) return "bg-yellow-500";
+  const getProgressColor = (score?: number): string => {
+    const safeScore = Number(score || 0);
+    if (safeScore >= 3.5) return "bg-green-500";
+    if (safeScore >= 2.5) return "bg-blue-500";
+    if (safeScore >= 1.5) return "bg-yellow-500";
     return "bg-red-500";
   };
   
   // Calculate percentage for progress bar (ensures we show at least a small amount)
-  const calculateProgressPercentage = (score: number): string => {
+  const calculateProgressPercentage = (score?: number): string => {
     // Ensure score is treated as a number
-    const numericScore = Number(score);
+    const numericScore = Number(score || 0);
     // Calculate percentage based on 0-4 scale
     const percent = Math.max(5, (numericScore / 4) * 100);
     return `${percent}%`;
@@ -175,7 +177,7 @@ export default function SimpleFeedbackScreen({
       
       <div style="background-color: #FFFBEB; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h2 style="color: #D97706; font-size: 18px; margin-bottom: 10px;">What's Next for You</h2>
-        <p style="color: #374151; line-height: 1.6;">${feedbackData.nextSteps}</p>
+        <p style="color: #374151; line-height: 1.6;">${feedbackData.nextSteps || 'No next steps available.'}</p>
       </div>
       
       <!-- Assessment Conversation Transcript -->
@@ -247,7 +249,7 @@ export default function SimpleFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {`${feedbackData.contentKnowledgeScore}/4`}
+              {`${feedbackData.contentKnowledgeScore || 0}/4`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -264,7 +266,7 @@ export default function SimpleFeedbackScreen({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Score:</span>
             <Badge className="bg-white text-gray-800 border border-current">
-              {`${feedbackData.writingScore}/4`}
+              {`${feedbackData.writingScore || 0}/4`}
             </Badge>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
