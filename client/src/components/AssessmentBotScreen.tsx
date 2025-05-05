@@ -225,23 +225,12 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
     if (JSON.stringify(updatedTopics) !== JSON.stringify(topics)) {
       setTopics(updatedTopics);
       
-      // Check if all topics are now completed - if so, trigger Reginald to provide completion message
+      // Check if all topics are now completed
       const allTopicsCompleted = updatedTopics.every(topic => topic.isCompleted);
-      if (allTopicsCompleted && !isCompletionMessageSent.current) {
-        // Mark that we've sent the completion message to prevent duplicate messages
-        isCompletionMessageSent.current = true;
-        
-        // Add a slight delay before sending the completion message so it appears natural
-        setTimeout(() => {
-          // Check if the last message came from the user (not from the assistant)
-          const lastMessage = messages[messages.length - 1];
-          if (lastMessage && lastMessage.role === 'user') {
-            // Instead of sending a message that shows in the chat, make a direct API call to tell Reginald
-            // to respond with completion instructions
-            sendMessage("I think I've covered everything about the three branches of government.");
-          }
-        }, 2000); // 2-second delay
-      }
+      
+      // If all topics are completed, update the Next button color and make it more noticeable
+      // The system prompt already has instructions for Reginald to tell the student to click Next
+      // but we won't force an automatic message to avoid chat pollution
     }
   }, [messages, topics, keywordsUsed, keywordProgress, lastMessageProcessed, progressComplete, sendMessage]);
   
