@@ -110,7 +110,29 @@ export default function NewFeedbackScreen({
         nextSteps: windowData.nextSteps
       });
       
-      // Ensure we have valid data with fallbacks for empty values
+      // Special handling for "insufficient input" cases - use actual N8N response even when scores are 0
+      const hasInsufficientInputMessage = 
+        windowData.summary && 
+        (windowData.summary.includes("insufficient") || 
+         windowData.summary.includes("Insufficient"));
+      
+      if (hasInsufficientInputMessage) {
+        console.log("Detected 'insufficient input' message - using actual N8N response data");
+        
+        // For insufficient input, use the actual data from N8N without falling back
+        const newFeedbackData = {
+          summary: windowData.summary || "Insufficient student input for evaluation.",
+          contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? windowData.contentKnowledgeScore : 0,
+          writingScore: typeof windowData.writingScore === 'number' ? windowData.writingScore : 0,
+          nextSteps: windowData.nextSteps || "Please engage with the activities so we can give you helpful feedback!"
+        };
+        console.log("⭐ SETTING FEEDBACK DATA FROM N8N (INSUFFICIENT INPUT CASE):", newFeedbackData);
+        setFeedbackData(newFeedbackData);
+        setIsInitialized(true);
+        return;
+      }
+      
+      // For normal cases, ensure we have valid data with fallbacks for empty values
       const newFeedbackData = {
         summary: windowData.summary || "You've successfully completed the three branches of government learning module.",
         contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? windowData.contentKnowledgeScore : 85,
@@ -124,6 +146,28 @@ export default function NewFeedbackScreen({
     // If window data isn't available, try props
     else if (propsFeedbackData) {
       console.log("Using feedback data from props:", propsFeedbackData);
+      
+      // Special handling for "insufficient input" cases - use actual N8N response even when scores are 0
+      const hasInsufficientInputMessage = 
+        propsFeedbackData.summary && 
+        (propsFeedbackData.summary.includes("insufficient") || 
+         propsFeedbackData.summary.includes("Insufficient"));
+      
+      if (hasInsufficientInputMessage) {
+        console.log("Detected 'insufficient input' message in props - using actual N8N response data");
+        
+        // For insufficient input, use the actual data from N8N without falling back
+        const newFeedbackData = {
+          summary: propsFeedbackData.summary || "Insufficient student input for evaluation.",
+          contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' ? propsFeedbackData.contentKnowledgeScore : 0,
+          writingScore: typeof propsFeedbackData.writingScore === 'number' ? propsFeedbackData.writingScore : 0,
+          nextSteps: propsFeedbackData.nextSteps || "Please engage with the activities so we can give you helpful feedback!"
+        };
+        console.log("⭐ SETTING FEEDBACK DATA FROM PROPS (INSUFFICIENT INPUT CASE):", newFeedbackData);
+        setFeedbackData(newFeedbackData);
+        setIsInitialized(true);
+        return;
+      }
       
       // Ensure we have valid data with fallbacks for empty values
       const newFeedbackData = {
