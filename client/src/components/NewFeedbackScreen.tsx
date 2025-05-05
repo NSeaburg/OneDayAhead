@@ -145,11 +145,11 @@ export default function NewFeedbackScreen({
           "No feedback summary available.",
           
         contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? 
-          windowData.contentKnowledgeScore : 
+          Number(windowData.contentKnowledgeScore) : // Force numeric conversion 
           0,
           
         writingScore: typeof windowData.writingScore === 'number' ? 
-          windowData.writingScore : 
+          Number(windowData.writingScore) : // Force numeric conversion
           0,
           
         nextSteps: typeof windowData.nextSteps === 'string' ? 
@@ -184,11 +184,11 @@ export default function NewFeedbackScreen({
           "No feedback summary available.",
           
         contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' ? 
-          propsFeedbackData.contentKnowledgeScore : 
+          Number(propsFeedbackData.contentKnowledgeScore) : // Force numeric conversion
           0,
           
         writingScore: typeof propsFeedbackData.writingScore === 'number' ? 
-          propsFeedbackData.writingScore : 
+          Number(propsFeedbackData.writingScore) : // Force numeric conversion
           0,
           
         nextSteps: typeof propsFeedbackData.nextSteps === 'string' ? 

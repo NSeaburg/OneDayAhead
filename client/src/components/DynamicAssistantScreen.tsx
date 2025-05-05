@@ -337,6 +337,35 @@ export default function DynamicAssistantScreen({
       }
       
       // Call the onNext function to move to the next screen with feedback data
+      // Final check to ensure window.__assessmentData has the feedbackData
+      if (feedbackData && window.__assessmentData) {
+        // Make one last verification that global state is set
+        if (!window.__assessmentData.feedbackData) {
+          console.log("⚠️ CRITICAL FIX - Feedback data not found in window.__assessmentData, adding it now");
+          window.__assessmentData.feedbackData = feedbackData;
+        }
+        
+        // Force explicit setting of each score value to ensure they're properly set as numbers
+        if (typeof feedbackData.contentKnowledgeScore === 'number' && window.__assessmentData.feedbackData) {
+          console.log("⚠️ CRITICAL FIX - Explicitly setting contentKnowledgeScore:", feedbackData.contentKnowledgeScore);
+          window.__assessmentData.feedbackData.contentKnowledgeScore = feedbackData.contentKnowledgeScore;
+        }
+        
+        if (typeof feedbackData.writingScore === 'number' && window.__assessmentData.feedbackData) {
+          console.log("⚠️ CRITICAL FIX - Explicitly setting writingScore:", feedbackData.writingScore);
+          window.__assessmentData.feedbackData.writingScore = feedbackData.writingScore;
+        }
+        
+        console.log("⚠️ VERIFICATION - Final window.__assessmentData before navigation:", 
+          JSON.stringify({
+            hasContentScore: window.__assessmentData.feedbackData?.contentKnowledgeScore !== undefined,
+            contentKnowledgeScore: window.__assessmentData.feedbackData?.contentKnowledgeScore,
+            hasWritingScore: window.__assessmentData.feedbackData?.writingScore !== undefined,
+            writingScore: window.__assessmentData.feedbackData?.writingScore
+          }, null, 2)
+        );
+      }
+      
       // Always call onNext just once at the end of the try block
       console.log("⚠️ DEBUG CRITICAL - About to call onNext with feedbackData:", 
         JSON.stringify({
