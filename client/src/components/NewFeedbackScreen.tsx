@@ -86,7 +86,7 @@ export default function NewFeedbackScreen({
     
   }, []);
 
-  // Data initialization effect - we'll use a more immediate initialization approach
+  // Data initialization effect - completely reworked to prioritize N8N response data
   useEffect(() => {
     if (isInitialized) return; // Only run once
     
@@ -95,112 +95,89 @@ export default function NewFeedbackScreen({
     console.log("Window.__assessmentData at initialization:", window.__assessmentData);
     console.log("Detailed window.__assessmentData?.feedbackData:", JSON.stringify(window.__assessmentData?.feedbackData));
     
-    // CRITICAL FIX: Force direct initialization of feedback data
-    // Instead of waiting for a timeout, we'll handle initialization immediately
-    // We'll also add fixed fallback values if both sources fail
+    // COMPLETELY REVISED APPROACH: Always use the actual response from N8N if available,
+    // regardless of score values or content. Only use fallback as a last resort when 
+    // no data is available at all.
     
-    // Try to get the data from window.__assessmentData which should contain the most recent data
-    if (window.__assessmentData?.feedbackData) {
+    // Helper function to check if data appears to be valid
+    const isValidFeedbackData = (data: any) => {
+      return data && typeof data === 'object' && (
+        'summary' in data || 
+        'contentKnowledgeScore' in data || 
+        'writingScore' in data || 
+        'nextSteps' in data
+      );
+    };
+    
+    // First check window.__assessmentData for the latest feedback
+    if (window.__assessmentData?.feedbackData && isValidFeedbackData(window.__assessmentData.feedbackData)) {
       const windowData = window.__assessmentData.feedbackData;
-      console.log("Using feedback data from window.__assessmentData:", windowData);
-      console.log("Window.__assessmentData.feedbackData content check:", {
-        summary: windowData.summary,
-        contentKnowledgeScore: windowData.contentKnowledgeScore,
-        writingScore: windowData.writingScore,
-        nextSteps: windowData.nextSteps
-      });
+      console.log("Found valid feedback data in window.__assessmentData:", windowData);
       
-      // Special handling for "insufficient input" cases - use actual N8N response even when scores are 0
-      const hasInsufficientInputMessage = 
-        windowData.summary && 
-        (windowData.summary.includes("insufficient") || 
-         windowData.summary.includes("Insufficient"));
-      
-      if (hasInsufficientInputMessage) {
-        console.log("Detected 'insufficient input' message - using actual N8N response data");
-        
-        // For insufficient input, use the actual data from N8N without falling back
-        const newFeedbackData = {
-          summary: windowData.summary || "Insufficient student input for evaluation.",
-          contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? windowData.contentKnowledgeScore : 0,
-          writingScore: typeof windowData.writingScore === 'number' ? windowData.writingScore : 0,
-          nextSteps: windowData.nextSteps || "Please engage with the activities so we can give you helpful feedback!"
-        };
-        console.log("⭐ SETTING FEEDBACK DATA FROM N8N (INSUFFICIENT INPUT CASE):", newFeedbackData);
-        setFeedbackData(newFeedbackData);
-        setIsInitialized(true);
-        return;
-      }
-      
-      // For normal cases, ensure we have valid data with fallbacks for empty values
-      const newFeedbackData = {
-        summary: windowData.summary || "You've successfully completed the three branches of government learning module.",
-        contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? windowData.contentKnowledgeScore : 85,
-        writingScore: typeof windowData.writingScore === 'number' ? windowData.writingScore : 70,
-        nextSteps: windowData.nextSteps || "Continue your learning journey by exploring more government topics."
+      // Create a properly formatted object with the ACTUAL N8N response values,
+      // providing default values ONLY if properties are completely missing
+      const formattedData = {
+        summary: typeof windowData.summary === 'string' ? 
+          windowData.summary : 
+          "No feedback summary available.",
+          
+        contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? 
+          windowData.contentKnowledgeScore : 
+          0,
+          
+        writingScore: typeof windowData.writingScore === 'number' ? 
+          windowData.writingScore : 
+          0,
+          
+        nextSteps: typeof windowData.nextSteps === 'string' ? 
+          windowData.nextSteps : 
+          "No next steps available."
       };
       
-      console.log("⭐ SETTING FEEDBACK DATA FROM WINDOW:", newFeedbackData);
-      setFeedbackData(newFeedbackData);
+      console.log("⭐ USING ACTUAL N8N DATA FROM WINDOW:", formattedData);
+      setFeedbackData(formattedData);
     }
-    // If window data isn't available, try props
-    else if (propsFeedbackData) {
-      console.log("Using feedback data from props:", propsFeedbackData);
+    // Otherwise check props
+    else if (propsFeedbackData && isValidFeedbackData(propsFeedbackData)) {
+      console.log("Found valid feedback data in props:", propsFeedbackData);
       
-      // Special handling for "insufficient input" cases - use actual N8N response even when scores are 0
-      const hasInsufficientInputMessage = 
-        propsFeedbackData.summary && 
-        (propsFeedbackData.summary.includes("insufficient") || 
-         propsFeedbackData.summary.includes("Insufficient"));
-      
-      if (hasInsufficientInputMessage) {
-        console.log("Detected 'insufficient input' message in props - using actual N8N response data");
-        
-        // For insufficient input, use the actual data from N8N without falling back
-        const newFeedbackData = {
-          summary: propsFeedbackData.summary || "Insufficient student input for evaluation.",
-          contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' ? propsFeedbackData.contentKnowledgeScore : 0,
-          writingScore: typeof propsFeedbackData.writingScore === 'number' ? propsFeedbackData.writingScore : 0,
-          nextSteps: propsFeedbackData.nextSteps || "Please engage with the activities so we can give you helpful feedback!"
-        };
-        console.log("⭐ SETTING FEEDBACK DATA FROM PROPS (INSUFFICIENT INPUT CASE):", newFeedbackData);
-        setFeedbackData(newFeedbackData);
-        setIsInitialized(true);
-        return;
-      }
-      
-      // Ensure we have valid data with fallbacks for empty values
-      const newFeedbackData = {
-        summary: propsFeedbackData.summary || "You've successfully completed the three branches of government learning module.",
-        contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' ? propsFeedbackData.contentKnowledgeScore : 85,
-        writingScore: typeof propsFeedbackData.writingScore === 'number' ? propsFeedbackData.writingScore : 70,
-        nextSteps: propsFeedbackData.nextSteps || "Continue your learning journey by exploring more government topics."
+      // Create a properly formatted object with the ACTUAL N8N response values,
+      // providing default values ONLY if properties are completely missing
+      const formattedData = {
+        summary: typeof propsFeedbackData.summary === 'string' ? 
+          propsFeedbackData.summary : 
+          "No feedback summary available.",
+          
+        contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' ? 
+          propsFeedbackData.contentKnowledgeScore : 
+          0,
+          
+        writingScore: typeof propsFeedbackData.writingScore === 'number' ? 
+          propsFeedbackData.writingScore : 
+          0,
+          
+        nextSteps: typeof propsFeedbackData.nextSteps === 'string' ? 
+          propsFeedbackData.nextSteps : 
+          "No next steps available."
       };
       
-      console.log("⭐ SETTING FEEDBACK DATA FROM PROPS:", newFeedbackData);
-      setFeedbackData(newFeedbackData);
+      console.log("⭐ USING ACTUAL N8N DATA FROM PROPS:", formattedData);
+      setFeedbackData(formattedData);
     }
-    // If no other source is available, use hardcoded values as a last resort
+    // LAST RESORT - only if absolutely no data is available
     else {
-      console.log("No feedback data found in props or window. Using hardcoded values:");
+      console.log("⚠️ NO VALID FEEDBACK DATA FOUND IN ANY SOURCE. Using fallback values.");
       
-      // These values match what we can see in the server logs for proper testing (converted to 0-4 scale)
-      const hardcodedFeedbackData = {
-        summary: "The student now understands the basic structure of the U.S. government, specifically the division into three branches: the legislative, executive, and judicial branches. They can articulate how these branches function independently and how they interact with each other to maintain a balance of power.",
-        contentKnowledgeScore: 3.4, // 85/25 = 3.4
-        writingScore: 2.8, // 70/25 = 2.8
-        nextSteps: "Great job on mastering the basics of government structure! **Next, we're diving into the world of whales.** Get ready to explore these fascinating creatures and learn about their unique characteristics, habitats, and the important role they play in marine ecosystems. It's going to be a whale of a time!"
+      // These minimal fallback values are only used when no data could be found anywhere
+      const fallbackData = {
+        summary: "No feedback data was received. This is typically caused by minimal student interaction during the assessment.",
+        contentKnowledgeScore: 0,
+        writingScore: 0,
+        nextSteps: "Try again with more detailed responses to questions to receive personalized feedback."
       };
       
-      console.log("⭐ SETTING HARDCODED FEEDBACK DATA:", hardcodedFeedbackData);
-      
-      // Add data to the window object to match expected structure
-      window.__assessmentData = {
-        ...(window.__assessmentData || {}),
-        feedbackData: hardcodedFeedbackData
-      };
-      
-      setFeedbackData(hardcodedFeedbackData);
+      console.log("⭐ USING MINIMAL FALLBACK DATA:", fallbackData);
+      setFeedbackData(fallbackData);
     }
     
     setIsInitialized(true);

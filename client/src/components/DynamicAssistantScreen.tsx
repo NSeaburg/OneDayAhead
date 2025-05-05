@@ -193,7 +193,8 @@ export default function DynamicAssistantScreen({
         nextSteps: "Continue exploring government concepts by researching specific historical examples of how the branches have interacted throughout American history."
       };
       
-      // Extract feedback data if available
+      // Extract feedback data if available - REVISED APPROACH
+      // Always prefer ANY valid data from N8N over fallbacks, even if scores are 0
       let feedbackData = null;
       
       // Log raw result for debugging
@@ -202,43 +203,55 @@ export default function DynamicAssistantScreen({
       console.log("Is result an array?", Array.isArray(result));
       console.log("Result keys:", Object.keys(result));
       
-      // Check if the response has actual data
+      // Helper function to determine if an object looks like feedback data
+      const isValidFeedbackData = (data: any) => {
+        return data && typeof data === 'object' && (
+          'summary' in data || 
+          'contentKnowledgeScore' in data || 
+          'writingScore' in data || 
+          'nextSteps' in data
+        );
+      };
+      
+      // Check if the response has actual data - in order of preference
       if (Object.keys(result).length === 0) {
-        // Completely empty response, use the fallback data
+        // Completely empty response, use the fallback data only in this case
         console.log("Received completely empty response from webhook, using fallback data");
         feedbackData = fallbackFeedbackData;
-      } else if (result.feedbackData) {
+      } 
+      // DIRECT PROPERTY PATTERN (preferred)
+      else if (result.feedbackData && isValidFeedbackData(result.feedbackData)) {
         // Direct object format from server (this is the expected format from our backend)
         feedbackData = result.feedbackData;
-        console.log("Feedback data received from server's feedbackData property:", feedbackData);
-      } else if (Array.isArray(result) && result.length > 0) {
-        // Array format directly from N8N - check for two common patterns
+        console.log("Valid feedback data received in expected feedbackData property:", feedbackData);
+      }
+      // ARRAY PATTERN 
+      else if (Array.isArray(result) && result.length > 0) {
+        // Array format directly from N8N - check for valid data in array items
         const firstItem = result[0];
-        if (firstItem.feedbackData) {
-          // Case 1: Nested feedbackData property
+        
+        if (firstItem.feedbackData && isValidFeedbackData(firstItem.feedbackData)) {
+          // Nested feedbackData property
           feedbackData = firstItem.feedbackData;
-          console.log("Feedback data received from N8N array format (nested):", feedbackData);
-        } else if (firstItem.summary !== undefined && 
-                  (firstItem.contentKnowledgeScore !== undefined || 
-                   firstItem.writingScore !== undefined)) {
-          // Case 2: Direct properties in array item
+          console.log("Valid feedback data found in N8N array (nested):", feedbackData);
+        } 
+        else if (isValidFeedbackData(firstItem)) {
+          // Direct properties in array item
           feedbackData = firstItem;
-          console.log("Feedback data received from N8N array format (direct):", feedbackData);
+          console.log("Valid feedback data found in N8N array (direct):", feedbackData);
         }
-      } else if (result.success && !result.feedbackData) {
-        // Success response without feedbackData, use what you're sending from N8N 
-        console.log("Success response without feedbackData. Checking if result itself is the data");
-        if (result.summary && 
-           (result.contentKnowledgeScore !== undefined || 
-            result.writingScore !== undefined)) {
-          // The result itself might be the feedback data
-          feedbackData = result;
-          console.log("Using result object directly as feedbackData");
-        } else {
-          // Fallback 
-          console.log("No usable feedback data in result. Using fallback data");
-          feedbackData = fallbackFeedbackData;
-        }
+      }
+      // DIRECT ROOT PATTERN
+      else if (isValidFeedbackData(result)) {
+        // The result itself is the feedback data
+        feedbackData = result;
+        console.log("Using result object directly as valid feedbackData:", feedbackData);
+      }
+      
+      // If we still don't have usable feedback data, use fallback
+      if (!feedbackData) {
+        console.log("No usable feedback data found in N8N response. Using fallback data");
+        feedbackData = fallbackFeedbackData;
       }
       
       console.log("Final feedback data to be used:", feedbackData);
@@ -249,17 +262,25 @@ export default function DynamicAssistantScreen({
         // Store feedback data in window object so it can be retrieved by the feedback screen
         if (feedbackData) {
           // Store in window object with full details for debugging
-          // Ensure all properties have valid values to prevent UI issues
+          // CRITICAL: Don't modify N8N-returned values for contentKnowledgeScore and writingScore
+          // Even if they're 0, we need to show those exact values per the user's requirements
           const formattedFeedbackData = {
-            summary: feedbackData.summary || "You've completed learning about the three branches of government! You demonstrated understanding of the core concepts.",
-            // Convert scores to 0-4 scale if they're in 0-100 scale
-            contentKnowledgeScore: typeof feedbackData.contentKnowledgeScore === 'number' 
-              ? (feedbackData.contentKnowledgeScore > 4 ? feedbackData.contentKnowledgeScore / 25 : feedbackData.contentKnowledgeScore) 
-              : 3.0,
-            writingScore: typeof feedbackData.writingScore === 'number' 
-              ? (feedbackData.writingScore > 4 ? feedbackData.writingScore / 25 : feedbackData.writingScore) 
-              : 3.0,
-            nextSteps: feedbackData.nextSteps || "Continue exploring the relationships between branches by studying historical examples."
+            summary: typeof feedbackData.summary === 'string' ? 
+              feedbackData.summary : 
+              "No feedback summary available.",
+              
+            // Simply pass through whatever value N8N returned, even if it's 0
+            contentKnowledgeScore: typeof feedbackData.contentKnowledgeScore === 'number' ? 
+              feedbackData.contentKnowledgeScore : 
+              0,
+              
+            writingScore: typeof feedbackData.writingScore === 'number' ? 
+              feedbackData.writingScore : 
+              0,
+              
+            nextSteps: typeof feedbackData.nextSteps === 'string' ? 
+              feedbackData.nextSteps : 
+              "No next steps available."
           };
           
           console.log("Raw feedback data before formatting:", {
