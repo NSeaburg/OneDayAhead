@@ -93,6 +93,7 @@ export default function NewFeedbackScreen({
     console.log("⚠️ IMPORTANT - Direct initialization of NewFeedbackScreen data");
     console.log("Received propsFeedbackData:", propsFeedbackData);
     console.log("Window.__assessmentData at initialization:", window.__assessmentData);
+    console.log("Detailed window.__assessmentData?.feedbackData:", JSON.stringify(window.__assessmentData?.feedbackData));
     
     // CRITICAL FIX: Force direct initialization of feedback data
     // Instead of waiting for a timeout, we'll handle initialization immediately
@@ -102,6 +103,12 @@ export default function NewFeedbackScreen({
     if (window.__assessmentData?.feedbackData) {
       const windowData = window.__assessmentData.feedbackData;
       console.log("Using feedback data from window.__assessmentData:", windowData);
+      console.log("Window.__assessmentData.feedbackData content check:", {
+        summary: windowData.summary,
+        contentKnowledgeScore: windowData.contentKnowledgeScore,
+        writingScore: windowData.writingScore,
+        nextSteps: windowData.nextSteps
+      });
       
       // Ensure we have valid data with fallbacks for empty values
       const newFeedbackData = {

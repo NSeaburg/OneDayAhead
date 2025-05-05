@@ -180,6 +180,7 @@ export default function DynamicAssistantScreen({
       
       const result = await response.json();
       console.log("Teaching bot N8N integration result:", result);
+      console.log("Webhook response raw JSON:", JSON.stringify(result));
       console.log("Teaching bot Thread ID:", threadId);
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
@@ -260,6 +261,15 @@ export default function DynamicAssistantScreen({
               : 3.0,
             nextSteps: feedbackData.nextSteps || "Continue exploring the relationships between branches by studying historical examples."
           };
+          
+          console.log("Raw feedback data before formatting:", {
+            summary: feedbackData.summary,
+            contentKnowledgeScore: feedbackData.contentKnowledgeScore,
+            writingScore: feedbackData.writingScore,
+            nextSteps: feedbackData.nextSteps
+          });
+          
+          console.log("Formatted feedback data:", formattedFeedbackData);
           
           // Set the processed feedback data
           window.__assessmentData = {
