@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Successfully sent Claude/Anthropic assessment data to N8N:", response.status);
         console.log("Full transcript included in N8N payload:", transcript.length, "characters");
         console.log("Full conversation data included. Message count:", conversationData.length);
-        console.log("Course name sent to N8N:", courseName || "Three Branches of Government");
+        console.log("Course name sent to N8N:", courseName || "Social Studies Sample");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         console.log("Using Claude AI flag set to:", true);
         
@@ -401,7 +401,7 @@ When the student has completed both activities, thank them warmly and end the co
           // Common metadata
           timestamp: new Date().toISOString(),
           source: "learning-app-teaching",
-          courseName: courseName || "Three Branches of Government", // Updated default course name
+          courseName: courseName || "Social Studies Sample", // Updated default course name
           chatDurationSeconds: chatDurationSeconds || 0
         }, {
           timeout: 10000, // 10 second timeout
@@ -418,7 +418,7 @@ When the student has completed both activities, thank them warmly and end the co
         console.log("Assessment transcript length:", assessmentTranscript.length, "characters");
         console.log("Teaching Thread ID:", effectiveTeachingThreadId);
         console.log("Assessment Thread ID:", assessmentThreadId || `claude-assessment-${Date.now()}`);
-        console.log("Course name sent to N8N:", courseName || "Three Branches of Government");
+        console.log("Course name sent to N8N:", courseName || "Social Studies Sample");
         console.log("Chat duration sent to N8N:", chatDurationSeconds || 0, "seconds");
         console.log("Using Claude AI flag set to:", true);
         
