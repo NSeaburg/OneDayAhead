@@ -66,6 +66,7 @@ export default function AssessmentBotScreen({
   const [progressComplete, setProgressComplete] = useState(false); // Animation trigger
   const [lastMessageProcessed, setLastMessageProcessed] = useState<string | null>(null); // Track last processed message
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isCompletionMessageSent = useRef<boolean>(false); // Track if completion message was sent
   const { toast } = useToast();
   
   // Assessment topics with tracking
@@ -224,16 +225,20 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
     if (JSON.stringify(updatedTopics) !== JSON.stringify(topics)) {
       setTopics(updatedTopics);
       
-      // Check if all topics are now completed - if so, send a special message from Reginald
+      // Check if all topics are now completed - if so, trigger Reginald to provide completion message
       const allTopicsCompleted = updatedTopics.every(topic => topic.isCompleted);
-      if (allTopicsCompleted) {
+      if (allTopicsCompleted && !isCompletionMessageSent.current) {
+        // Mark that we've sent the completion message to prevent duplicate messages
+        isCompletionMessageSent.current = true;
+        
         // Add a slight delay before sending the completion message so it appears natural
         setTimeout(() => {
           // Check if the last message came from the user (not from the assistant)
           const lastMessage = messages[messages.length - 1];
           if (lastMessage && lastMessage.role === 'user') {
-            // Add a completion message from Reginald instructing the student to move on
-            sendMessage("@system: The student has completed all assessment topics. Please thank them for their explanations and instruct them to click the Next button to continue with the course.");
+            // Instead of sending a message that shows in the chat, make a direct API call to tell Reginald
+            // to respond with completion instructions
+            sendMessage("I think I've covered everything about the three branches of government.");
           }
         }, 2000); // 2-second delay
       }
