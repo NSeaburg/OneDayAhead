@@ -1,5 +1,6 @@
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRef, useEffect } from "react";
 
 interface VideoScreenProps {
   videoUrl: string;
@@ -8,14 +9,84 @@ interface VideoScreenProps {
 }
 
 export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScreenProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerReady = useRef<boolean>(false);
+
+  useEffect(() => {
+    // YouTube API event handler
+    const handleYouTubeMessages = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data.event === 'onReady') {
+          // Set player as ready to receive commands
+          playerReady.current = true;
+        }
+      } catch (e) {
+        // Ignore parsing errors from other postMessage events
+      }
+    };
+
+    // Add event listener for YouTube iframe API events
+    window.addEventListener('message', handleYouTubeMessages);
+
+    return () => {
+      // Clean up the event listener when component unmounts or video URL changes
+      window.removeEventListener('message', handleYouTubeMessages);
+      
+      // Attempt to pause the video when navigating away
+      pauseVideo();
+    };
+  }, [videoUrl]);
+
+  // Function to pause the YouTube video
+  const pauseVideo = () => {
+    try {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        // For YouTube videos
+        if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+          // Try both formats of the pause command
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'pauseVideo' }),
+            '*'
+          );
+          
+          // Alternative format
+          iframeRef.current.contentWindow.postMessage(
+            '{"event":"command","func":"pauseVideo","args":""}',
+            '*'
+          );
+          
+          // Make sure URL is changed to stop audio
+          if (iframeRef.current.src.includes('autoplay=1')) {
+            iframeRef.current.src = iframeRef.current.src.replace('autoplay=1', 'autoplay=0');
+          }
+        }
+      }
+    } catch (error) {
+      console.log("Failed to pause video:", error);
+    }
+  };
+
+  // Function to handle next button click
+  const handleNext = () => {
+    pauseVideo();
+    onNext();
+  };
+
+  // Add YouTube API parameters to the URL if it's a YouTube video
+  const enhancedVideoUrl = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') 
+    ? videoUrl + (videoUrl.includes('?') ? '&' : '?') + 'enablejsapi=1&origin=' + window.location.origin
+    : videoUrl;
+
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">The Three Branches of Government</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Social Studies Sample</h1>
       <div className="flex-grow flex flex-col">
         <div className="relative w-full h-0 pb-[56.25%] md:pb-[56.25%] bg-gray-100 rounded-lg overflow-hidden mb-6">
           <iframe 
+            ref={iframeRef}
             className="absolute inset-0 w-full h-full"
-            src={videoUrl}
+            src={enhancedVideoUrl}
             title="The Three Branches of Government"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -35,7 +106,7 @@ export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScree
           ) : <div></div>}
           
           <Button 
-            onClick={onNext}
+            onClick={handleNext}
             className="bg-primary hover:bg-primary/90 text-white"
           >
             Next
