@@ -174,7 +174,7 @@ export default function DynamicAssistantScreen({
         assessmentThreadId: assessmentThreadId || "",
         
         // Common metadata
-        courseName: "Gravity Course",
+        courseName: "Social Studies Sample",
         chatDurationSeconds: chatDurationSeconds
       });
       

@@ -314,7 +314,7 @@ If the student engages with your fictional persona, fully play along. If the stu
         threadId: threadId || `claude-${Date.now()}`,
         
         // Metadata
-        courseName: "Three Branches of Government",
+        courseName: "Social Studies Sample",
         chatDurationSeconds: chatDurationSeconds,
         
         // Flag to indicate we're using Claude/Anthropic

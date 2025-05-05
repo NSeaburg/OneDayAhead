@@ -1,0 +1,78 @@
+[
+  {
+    "headers": {
+      "host": "goldtrail.app.n8n.cloud",
+      "user-agent": "axios/1.9.0",
+      "content-length": "4826",
+      "accept": "application/json",
+      "accept-encoding": "gzip, br",
+      "cdn-loop": "cloudflare; loops=1; subreqs=1",
+      "cf-connecting-ip": "34.53.86.73",
+      "cf-ew-via": "15",
+      "cf-ipcountry": "US",
+      "cf-ray": "93b0c282d0817563-SEA",
+      "cf-visitor": "{\"scheme\":\"https\"}",
+      "cf-worker": "n8n.cloud",
+      "content-type": "application/json",
+      "x-forwarded-for": "34.53.86.73, 172.68.22.96",
+      "x-forwarded-host": "goldtrail.app.n8n.cloud",
+      "x-forwarded-port": "443",
+      "x-forwarded-proto": "https",
+      "x-forwarded-server": "traefik-prod-users-gwc-6-58b64db885-qn9zm",
+      "x-is-trusted": "yes",
+      "x-real-ip": "34.53.86.73"
+    },
+    "params": {},
+    "query": {},
+    "body": {
+      "teachingThreadId": "claude-1746453430261",
+      "teachingConversation": [
+        {
+          "role": "assistant",
+          "content": "Hey there. I'm Mr. Whitaker — retired civics teacher, but I still love helping folks figure out how all this government stuff fits together. We're going to work through a couple of quick activities today to make sure the big ideas about our system stick. I'll explain everything as we go — no pressure, just some good thinking. Ready to dive in? (sips coffee from a chipped mug labeled 'Democracy: Handle With Care')"
+        },
+        {
+          "role": "user",
+          "content": "Hello"
+        },
+        {
+          "role": "assistant",
+          "content": "Great to meet you! Let's start with our first activity about the three branches of government. I'll give you three categories to choose from: types of sports teams, types of musical groups, or types of jobs at a restaurant. Which one sounds most interesting to you?"
+        }
+      ],
+      "teachingTranscript": "Teacher: Hey there. I'm Mr. Whitaker — retired civics teacher, but I still love helping folks figure out how all this government stuff fits together. We're going to work through a couple of quick activities today to make sure the big ideas about our system stick. I'll explain everything as we go — no pressure, just some good thinking. Ready to dive in? (sips coffee from a chipped mug labeled 'Democracy: Handle With Care')\n\nStudent: Hello\n\nTeacher: Great to meet you! Let's start with our first activity about the three branches of government. I'll give you three categories to choose from: types of sports teams, types of musical groups, or types of jobs at a restaurant. Which one sounds most interesting to you?",
+      "assessmentThreadId": "claude-1746453413554",
+      "assessmentConversation": [
+        {
+          "role": "assistant",
+          "content": "Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty's service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call \"democracy\" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government's structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*"
+        },
+        {
+          "role": "user",
+          "content": "hello sir. "
+        },
+        {
+          "role": "assistant",
+          "content": "Well, at least the colonials have retained *some* manners. A proper introduction would have included a bow, but I shall overlook this transgression.\n\nTell me, young subject, I hear the most peculiar rumors that your government is divided into separate... what do you call them... branches? Like a tree? Most unusual."
+        },
+        {
+          "role": "user",
+          "content": "(bows deeper than you ever could) Nice to meet you Sir. I am Lord Winterberry the IV. "
+        },
+        {
+          "role": "assistant",
+          "content": "*(nearly drops monocle in shock)*\n\nLord Winterberry? Well, I... most unexpected to encounter nobility in these rustic colonies! Though I don't recall your family name from the peerage... no matter.\n\nPerhaps you could illuminate me on this strange government structure your countrymen have devised? I understand it has various branches, unlike our superior unified monarchy."
+        }
+      ],
+      "assessmentTranscript": "Reginald Worthington III: Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty's service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call \"democracy\" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government's structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*\n\nStudent: hello sir. \n\nReginald Worthington III: Well, at least the colonials have retained *some* manners. A proper introduction would have included a bow, but I shall overlook this transgression.\n\nTell me, young subject, I hear the most peculiar rumors that your government is divided into separate... what do you call them... branches? Like a tree? Most unusual.\n\nStudent: (bows deeper than you ever could) Nice to meet you Sir. I am Lord Winterberry the IV. \n\nReginald Worthington III: *(nearly drops monocle in shock)*\n\nLord Winterberry? Well, I... most unexpected to encounter nobility in these rustic colonies! Though I don't recall your family name from the peerage... no matter.\n\nPerhaps you could illuminate me on this strange government structure your countrymen have devised? I understand it has various branches, unlike our superior unified monarchy.",
+      "usingClaudeAI": true,
+      "expectFeedbackData": true,
+      "timestamp": "2025-05-05T13:59:41.197Z",
+      "source": "learning-app-teaching",
+      "courseName": "Gravity Course",
+      "chatDurationSeconds": 235
+    },
+    "webhookUrl": "https://goldtrail.app.n8n.cloud/webhook/Feedback Flow",
+    "executionMode": "production"
+  }
+]
