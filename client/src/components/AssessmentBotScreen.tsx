@@ -118,6 +118,8 @@ Your role is to draw out student understanding of the following six core concept
 For each topic, ask a question or prompt the student to explain. If you are unsure about their understanding, ask a follow-up question. Do not lead the student or provide the answer, even if asked. Never tell the student if they are right or wrong. React with surprise, admiration, confusion, or obvious skepticism, but never judge or evaluate their correctness.
 
 If the student engages with your fictional persona, fully play along. If the student goes off-topic, gently steer them back to discussing government.
+
+IMPORTANT: When you notice the student has covered all the required concepts about the three branches of government, thank them for their explanations and EXPLICITLY tell them they should click the "Next" button to proceed with the course. Say something like: "Well, I believe I have gathered sufficient information about your curious governmental experiment. You may now click the 'Next' button to continue with your studies. His Majesty awaits my full report!"
   `;
 
   const { 
@@ -221,8 +223,22 @@ If the student engages with your fictional persona, fully play along. If the stu
     // Update topics if changes were made
     if (JSON.stringify(updatedTopics) !== JSON.stringify(topics)) {
       setTopics(updatedTopics);
+      
+      // Check if all topics are now completed - if so, send a special message from Reginald
+      const allTopicsCompleted = updatedTopics.every(topic => topic.isCompleted);
+      if (allTopicsCompleted) {
+        // Add a slight delay before sending the completion message so it appears natural
+        setTimeout(() => {
+          // Check if the last message came from the user (not from the assistant)
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage && lastMessage.role === 'user') {
+            // Add a completion message from Reginald instructing the student to move on
+            sendMessage("@system: The student has completed all assessment topics. Please thank them for their explanations and instruct them to click the Next button to continue with the course.");
+          }
+        }, 2000); // 2-second delay
+      }
     }
-  }, [messages, topics, keywordsUsed, keywordProgress, lastMessageProcessed, progressComplete]);
+  }, [messages, topics, keywordsUsed, keywordProgress, lastMessageProcessed, progressComplete, sendMessage]);
   
   // Expose the assessment data through the window for the next screen
   if (typeof window !== 'undefined') {
