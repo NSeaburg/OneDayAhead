@@ -114,17 +114,23 @@ export default function DynamicAssistantScreen({
     }]);
   }, [teachingAssistance, initialMessage, setMessages]);
   
-  // Store conversation in global window object for the feedback screen
+  // Store conversation in global storage for the feedback screen
   useEffect(() => {
     if (messages.length > 0) {
-      // Initialize the assessment data object if it doesn't exist
+      // Use the globalStorage module to store teaching messages
+      import('@/lib/globalStorage').then(({ default: globalStorage }) => {
+        globalStorage.setTeachingMessages(messages);
+        console.log("🔴 GLOBAL STORAGE - Stored teaching conversation:", messages.length, "messages");
+      });
+      
+      // Also store in window.__assessmentData for backward compatibility
       if (!window.__assessmentData) {
         window.__assessmentData = {};
       }
       
       // Store the teaching messages
       window.__assessmentData.teachingMessages = messages;
-      console.log("Stored teaching conversation in global object:", messages.length, "messages");
+      console.log("Stored teaching conversation in window object:", messages.length, "messages");
     }
   }, [messages]);
   
@@ -260,23 +266,25 @@ export default function DynamicAssistantScreen({
       if (result.success) {
         // Silently continue without showing a toast
         
-        // Store feedback data in window object so it can be retrieved by the feedback screen
+        // Process and store feedback data for use by the feedback screen
         if (feedbackData) {
-          // Store in window object with full details for debugging
-          // CRITICAL: Don't modify N8N-returned values for contentKnowledgeScore and writingScore
-          // Even if they're 0, we need to show those exact values per the user's requirements
+          // Format the data ensuring proper types
           const formattedFeedbackData = {
             summary: typeof feedbackData.summary === 'string' ? 
               feedbackData.summary : 
               "No feedback summary available.",
               
-            // Simply pass through whatever value N8N returned, even if it's 0
+            // Convert values to numbers but preserve the exact values returned from N8N
             contentKnowledgeScore: typeof feedbackData.contentKnowledgeScore === 'number' ? 
-              feedbackData.contentKnowledgeScore : 
+              Number(feedbackData.contentKnowledgeScore) : 
+              typeof feedbackData.contentKnowledgeScore === 'string' ?
+              Number(feedbackData.contentKnowledgeScore) :
               0,
               
             writingScore: typeof feedbackData.writingScore === 'number' ? 
-              feedbackData.writingScore : 
+              Number(feedbackData.writingScore) : 
+              typeof feedbackData.writingScore === 'string' ?
+              Number(feedbackData.writingScore) :
               0,
               
             nextSteps: typeof feedbackData.nextSteps === 'string' ? 
@@ -284,33 +292,38 @@ export default function DynamicAssistantScreen({
               "No next steps available."
           };
           
-          console.log("⚠️ DEBUG Raw feedback data before formatting:", {
+          console.log("⚠️ DEBUG Raw feedback data:", {
             summary: feedbackData.summary,
             contentKnowledgeScore: feedbackData.contentKnowledgeScore,
             writingScore: feedbackData.writingScore,
-            nextSteps: feedbackData.nextSteps,
             contentKnowledgeScoreType: typeof feedbackData.contentKnowledgeScore,
-            writingScoreType: typeof feedbackData.writingScore,
-            stringified: JSON.stringify({
-              contentKnowledgeScore: feedbackData.contentKnowledgeScore,
-              writingScore: feedbackData.writingScore
-            })
+            writingScoreType: typeof feedbackData.writingScore
           });
           
-          console.log("Formatted feedback data:", formattedFeedbackData);
+          console.log("🔴 GLOBAL STORAGE - About to store formatted feedback data:", formattedFeedbackData);
           
-          // Set the processed feedback data
-          window.__assessmentData = {
-            ...(window.__assessmentData || {}),
-            feedbackData: formattedFeedbackData
-          };
+          // Store in globalStorage - this will also update window.__assessmentData
+          globalStorage.setFeedbackData(formattedFeedbackData);
           
-          // Log explicit contents to help debug
-          console.log("Setting window.__assessmentData.feedbackData with:", formattedFeedbackData);
+          // Store assessment conversation if available
+          if (assessmentConversation && assessmentConversation.length > 0) {
+            globalStorage.setAssessmentMessages(assessmentConversation);
+          }
+          
+          // Store teaching messages
+          globalStorage.setTeachingMessages(messages);
+          
+          // Store thread ID if available
+          if (assessmentThreadId) {
+            globalStorage.setAssessmentThreadId(assessmentThreadId);
+          }
+          
+          console.log("🔴 GLOBAL STORAGE - All data stored successfully");
+          console.log("🔴 GLOBAL STORAGE - Feedback data verification:", globalStorage.getFeedbackData());
         } else {
           console.log("No feedback data received from N8N webhook");
           
-          // Create fallback data to ensure UI doesn't show placeholders (using 0-4 scale)
+          // Create fallback data to ensure UI doesn't show placeholders
           const fallbackData = {
             summary: "You've completed learning about the three branches of government! You demonstrated understanding of the core concepts.",
             contentKnowledgeScore: 3.0,
@@ -318,12 +331,9 @@ export default function DynamicAssistantScreen({
             nextSteps: "Continue exploring the relationships between branches by studying historical examples."
           };
           
-          window.__assessmentData = {
-            ...(window.__assessmentData || {}),
-            feedbackData: fallbackData
-          };
-          
-          console.log("Setting fallback feedback data:", fallbackData);
+          // Store in globalStorage - this will also update window.__assessmentData
+          console.log("🔴 GLOBAL STORAGE - Using fallback feedback data:", fallbackData);
+          globalStorage.setFeedbackData(fallbackData);
         }
       } else {
         // Handle the case where N8N returned a non-error response but with success: false
@@ -335,52 +345,40 @@ export default function DynamicAssistantScreen({
           description: "There was an issue processing your data, but you can continue with the learning journey.",
           variant: "default"
         });
-      }
-      
-      // Call the onNext function to move to the next screen with feedback data
-      // Use our global storage module to ensure data consistency
-      if (feedbackData) {
-        // Store the feedback data in our global storage module
-        console.log("⚠️ CRITICAL FIX - Storing feedback data in global storage:", feedbackData);
         
-        // Convert all score values to numbers
-        const processedFeedbackData = {
-          summary: feedbackData.summary || "No feedback summary available.",
-          contentKnowledgeScore: Number(feedbackData.contentKnowledgeScore) || 0,
-          writingScore: Number(feedbackData.writingScore) || 0,
-          nextSteps: feedbackData.nextSteps || "No next steps available."
+        // Still store fallback data
+        const fallbackData = {
+          summary: "You've completed learning about the three branches of government! Some data could not be processed, but you can continue your learning journey.",
+          contentKnowledgeScore: 3.0,
+          writingScore: 3.0,
+          nextSteps: "Continue exploring governmental concepts with other resources."
         };
         
-        // Store in our global storage (which also updates window.__assessmentData)
-        globalStorage.setFeedbackData(processedFeedbackData);
-        
-        // Store the messages for assessment and teaching
-        if (assessmentConversation && assessmentConversation.length > 0) {
-          globalStorage.setAssessmentMessages(assessmentConversation);
-        }
-        
-        globalStorage.setTeachingMessages(messages);
-        
-        if (assessmentThreadId) {
-          globalStorage.setAssessmentThreadId(assessmentThreadId);
-        }
+        // Store in globalStorage
+        console.log("🔴 GLOBAL STORAGE - Using fallback feedback data after error:", fallbackData);
+        globalStorage.setFeedbackData(fallbackData);
+      }
+      
+      // Run a final verification before navigation
+      if (feedbackData) {
+        // Double check that both globalStorage and window.__assessmentData have been updated
+        const storedData = globalStorage.getFeedbackData();
         
         console.log("⚠️ VERIFICATION - Final feedback data before navigation:", 
           JSON.stringify({
-            contentKnowledgeScore: processedFeedbackData.contentKnowledgeScore,
-            contentKnowledgeScoreType: typeof processedFeedbackData.contentKnowledgeScore,
-            writingScore: processedFeedbackData.writingScore,
-            writingScoreType: typeof processedFeedbackData.writingScore
-          }, null, 2)
-        );
-        
-        // Double check that window.__assessmentData was also updated (for backward compatibility)
-        console.log("⚠️ VERIFICATION - window.__assessmentData also updated:", 
-          JSON.stringify({
-            hasContentScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore !== undefined,
-            contentKnowledgeScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore,
-            hasWritingScore: window.__assessmentData?.feedbackData?.writingScore !== undefined, 
-            writingScore: window.__assessmentData?.feedbackData?.writingScore
+            globalStorage: {
+              contentKnowledgeScore: storedData.contentKnowledgeScore,
+              contentKnowledgeScoreType: typeof storedData.contentKnowledgeScore,
+              writingScore: storedData.writingScore,
+              writingScoreType: typeof storedData.writingScore
+            },
+            window: {
+              hasContentScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore !== undefined,
+              contentKnowledgeScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore,
+              hasWritingScore: window.__assessmentData?.feedbackData?.writingScore !== undefined, 
+              writingScore: window.__assessmentData?.feedbackData?.writingScore,
+              type: typeof window.__assessmentData?.feedbackData?.contentKnowledgeScore
+            }
           }, null, 2)
         );
       }

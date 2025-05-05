@@ -12,6 +12,8 @@ import { motion } from "framer-motion";
 import { Message } from "@/lib/openai";
 // Import Reginald image directly
 import reginaldImage from "../../../public/reginald-worthington.png";
+// Import globalStorage
+import globalStorage from "@/lib/globalStorage";
 
 // Add TypeScript declaration for global window property
 declare global {
@@ -234,14 +236,28 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
     }
   }, [messages, topics, keywordsUsed, keywordProgress, lastMessageProcessed, progressComplete, sendMessage]);
   
-  // Expose the assessment data through the window for the next screen
-  if (typeof window !== 'undefined') {
-    window.__assessmentData = {
-      threadId: threadId || undefined,
-      messages,
-      teachingMessages: [] // Initialize empty teaching messages array for later use
-    };
-  }
+  // Store the assessment data using globalStorage (and window for backward compatibility)
+  useEffect(() => {
+    if (messages.length > 0 && threadId) {
+      // Store data in globalStorage
+      globalStorage.setAssessmentMessages(messages);
+      globalStorage.setAssessmentThreadId(threadId);
+      
+      console.log("🔴 GLOBAL STORAGE - Stored assessment conversation:", messages.length, "messages");
+      console.log("🔴 GLOBAL STORAGE - Stored assessment thread ID:", threadId);
+      
+      // Also store in window.__assessmentData for backward compatibility
+      if (typeof window !== 'undefined') {
+        window.__assessmentData = {
+          threadId: threadId,
+          messages,
+          teachingMessages: [] // Initialize empty teaching messages array for later use
+        };
+        
+        console.log("Stored assessment conversation in window object:", messages.length, "messages");
+      }
+    }
+  }, [messages, threadId]);
 
   // Calculate if assessment is complete (all topics covered)
   const isAssessmentComplete = topics.every(topic => topic.isCompleted);
