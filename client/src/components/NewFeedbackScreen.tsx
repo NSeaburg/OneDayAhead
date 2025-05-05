@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import html2pdf from 'html2pdf.js';
 import { notifyCourseCompleted } from "@/lib/embedding";
 import { Message } from "@/lib/openai";
+import globalStorage from "@/lib/globalStorage";
 
 // Using global interface from types.d.ts
 
@@ -86,41 +87,18 @@ export default function NewFeedbackScreen({
     
   }, []);
 
-  // Data initialization effect - completely reworked to prioritize N8N response data
+  // Data initialization effect - completely reworked to use globalStorage
   useEffect(() => {
     if (isInitialized) return; // Only run once
     
-    console.log("⚠️ IMPORTANT - Direct initialization of NewFeedbackScreen data");
+    console.log("⚠️ IMPORTANT - Direct initialization of NewFeedbackScreen data using globalStorage");
     console.log("Received propsFeedbackData:", propsFeedbackData);
-    console.log("Window.__assessmentData at initialization:", window.__assessmentData);
-    console.log("Detailed window.__assessmentData?.feedbackData:", JSON.stringify(window.__assessmentData?.feedbackData));
     
-    // CRITICAL DEBUG: Examine propsFeedbackData deeply and with enhanced detail
-    console.log("⚠️ CRITICAL DEBUG - propsFeedbackData inspection:", 
-      JSON.stringify({
-        hasProps: propsFeedbackData ? true : false,
-        propsFeedbackData: propsFeedbackData,
-        propsContentKnowledgeScore: propsFeedbackData?.contentKnowledgeScore,
-        propsWritingScore: propsFeedbackData?.writingScore,
-        propsContentKnowledgeScoreType: typeof propsFeedbackData?.contentKnowledgeScore,
-        propsWritingScoreType: typeof propsFeedbackData?.writingScore,
-        propsKeys: propsFeedbackData ? Object.keys(propsFeedbackData) : []
-      }, null, 2)
-    );
+    // Try to get data from our persistent global storage first
+    const globalData = globalStorage.getFeedbackData();
     
-    // Additional debug for webhooks scores
-    if (window.__assessmentData?.feedbackData) {
-      console.log("⚠️ DEBUG SCORES - contentKnowledgeScore:", 
-        window.__assessmentData.feedbackData.contentKnowledgeScore,
-        "type:", typeof window.__assessmentData.feedbackData.contentKnowledgeScore);
-      console.log("⚠️ DEBUG SCORES - writingScore:", 
-        window.__assessmentData.feedbackData.writingScore,
-        "type:", typeof window.__assessmentData.feedbackData.writingScore);
-    }
-    
-    // COMPLETELY REVISED APPROACH: Always use the actual response from N8N if available,
-    // regardless of score values or content. Only use fallback as a last resort when 
-    // no data is available at all.
+    // Log what we found in global storage
+    console.log("🔴 GLOBAL STORAGE - Retrieved feedback data:", globalData);
     
     // Helper function to check if data appears to be valid
     const isValidFeedbackData = (data: any) => {
@@ -132,63 +110,30 @@ export default function NewFeedbackScreen({
       );
     };
     
-    // First check window.__assessmentData for the latest feedback
-    if (window.__assessmentData?.feedbackData && isValidFeedbackData(window.__assessmentData.feedbackData)) {
-      const windowData = window.__assessmentData.feedbackData;
-      console.log("Found valid feedback data in window.__assessmentData:", windowData);
+    // Priority 1: Use data from global storage if it exists and has any score values
+    if (globalData && isValidFeedbackData(globalData) && 
+        (globalData.contentKnowledgeScore > 0 || globalData.writingScore > 0)) {
+      console.log("🔴 GLOBAL STORAGE - Using valid feedback data from global storage:", globalData);
       
-      // Create a properly formatted object with the ACTUAL N8N response values,
-      // providing default values ONLY if properties are completely missing
-      const formattedData = {
-        summary: typeof windowData.summary === 'string' ? 
-          windowData.summary : 
-          "No feedback summary available.",
-          
-        contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? 
-          Number(windowData.contentKnowledgeScore) : // Force numeric conversion 
-          0,
-          
-        writingScore: typeof windowData.writingScore === 'number' ? 
-          Number(windowData.writingScore) : // Force numeric conversion
-          0,
-          
-        nextSteps: typeof windowData.nextSteps === 'string' ? 
-          windowData.nextSteps : 
-          "No next steps available."
-      };
-      
-      console.log("⭐ USING ACTUAL N8N DATA FROM WINDOW:", formattedData);
-      
-      // CRITICAL DEBUG: Verify formattedData before setting state (window data version)
-      console.log("⚠️ CRITICAL DEBUG - window formattedData right before setState:", 
-        JSON.stringify({
-          formattedContentKnowledgeScore: formattedData.contentKnowledgeScore,
-          formattedWritingScore: formattedData.writingScore,
-          formattedContentKnowledgeScoreType: typeof formattedData.contentKnowledgeScore,
-          formattedWritingScoreType: typeof formattedData.writingScore,
-          formattedDataObj: formattedData
-        }, null, 2)
-      );
-      
-      setFeedbackData(formattedData);
+      // No need to format, global storage already handles that
+      setFeedbackData(globalData);
     }
-    // Otherwise check props
+    // Priority 2: Use props feedback data if available
     else if (propsFeedbackData && isValidFeedbackData(propsFeedbackData)) {
-      console.log("Found valid feedback data in props:", propsFeedbackData);
+      console.log("🔴 GLOBAL STORAGE - Using and storing valid feedback data from props");
       
-      // Create a properly formatted object with the ACTUAL N8N response values,
-      // providing default values ONLY if properties are completely missing
-      const formattedData = {
+      // Process and store in global storage to ensure consistency
+      const processedData = {
         summary: typeof propsFeedbackData.summary === 'string' ? 
           propsFeedbackData.summary : 
           "No feedback summary available.",
           
         contentKnowledgeScore: typeof propsFeedbackData.contentKnowledgeScore === 'number' ? 
-          Number(propsFeedbackData.contentKnowledgeScore) : // Force numeric conversion
+          Number(propsFeedbackData.contentKnowledgeScore) : 
           0,
           
         writingScore: typeof propsFeedbackData.writingScore === 'number' ? 
-          Number(propsFeedbackData.writingScore) : // Force numeric conversion
+          Number(propsFeedbackData.writingScore) : 
           0,
           
         nextSteps: typeof propsFeedbackData.nextSteps === 'string' ? 
@@ -196,24 +141,46 @@ export default function NewFeedbackScreen({
           "No next steps available."
       };
       
-      console.log("⭐ USING ACTUAL N8N DATA FROM PROPS:", formattedData);
+      // Store for future components
+      globalStorage.setFeedbackData(processedData);
       
-      // CRITICAL DEBUG: Verify formattedData before setting state
-      console.log("⚠️ CRITICAL DEBUG - formattedData right before setState:", 
-        JSON.stringify({
-          formattedContentKnowledgeScore: formattedData.contentKnowledgeScore,
-          formattedWritingScore: formattedData.writingScore,
-          formattedContentKnowledgeScoreType: typeof formattedData.contentKnowledgeScore,
-          formattedWritingScoreType: typeof formattedData.writingScore,
-          formattedDataObj: formattedData
-        }, null, 2)
-      );
+      // Use in this component
+      setFeedbackData(processedData);
+    }
+    // Priority 3: Use window.__assessmentData as fallback for backward compatibility
+    else if (window.__assessmentData?.feedbackData && isValidFeedbackData(window.__assessmentData.feedbackData)) {
+      console.log("🔴 GLOBAL STORAGE - Using window.__assessmentData as fallback");
       
-      setFeedbackData(formattedData);
+      const windowData = window.__assessmentData.feedbackData;
+      
+      // Process and store in global storage to ensure consistency
+      const processedData = {
+        summary: typeof windowData.summary === 'string' ? 
+          windowData.summary : 
+          "No feedback summary available.",
+          
+        contentKnowledgeScore: typeof windowData.contentKnowledgeScore === 'number' ? 
+          Number(windowData.contentKnowledgeScore) : 
+          0,
+          
+        writingScore: typeof windowData.writingScore === 'number' ? 
+          Number(windowData.writingScore) : 
+          0,
+          
+        nextSteps: typeof windowData.nextSteps === 'string' ? 
+          windowData.nextSteps : 
+          "No next steps available."
+      };
+      
+      // Store for future components
+      globalStorage.setFeedbackData(processedData);
+      
+      // Use in this component
+      setFeedbackData(processedData);
     }
     // LAST RESORT - only if absolutely no data is available
     else {
-      console.log("⚠️ NO VALID FEEDBACK DATA FOUND IN ANY SOURCE. Using fallback values.");
+      console.log("🔴 GLOBAL STORAGE - No valid feedback data found in any source");
       
       // These minimal fallback values are only used when no data could be found anywhere
       const fallbackData = {
@@ -223,7 +190,7 @@ export default function NewFeedbackScreen({
         nextSteps: "Try again with more detailed responses to questions to receive personalized feedback."
       };
       
-      console.log("⭐ USING MINIMAL FALLBACK DATA:", fallbackData);
+      console.log("🔴 GLOBAL STORAGE - Using minimal fallback data");
       setFeedbackData(fallbackData);
     }
     

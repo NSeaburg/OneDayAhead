@@ -10,6 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Message } from "@/lib/openai";
+import globalStorage from "@/lib/globalStorage";
 
 // Import teacher images directly
 import mrWhitakerImage from "../../../public/Whitaker.png";
@@ -337,31 +338,49 @@ export default function DynamicAssistantScreen({
       }
       
       // Call the onNext function to move to the next screen with feedback data
-      // Final check to ensure window.__assessmentData has the feedbackData
-      if (feedbackData && window.__assessmentData) {
-        // Make one last verification that global state is set
-        if (!window.__assessmentData.feedbackData) {
-          console.log("⚠️ CRITICAL FIX - Feedback data not found in window.__assessmentData, adding it now");
-          window.__assessmentData.feedbackData = feedbackData;
+      // Use our global storage module to ensure data consistency
+      if (feedbackData) {
+        // Store the feedback data in our global storage module
+        console.log("⚠️ CRITICAL FIX - Storing feedback data in global storage:", feedbackData);
+        
+        // Convert all score values to numbers
+        const processedFeedbackData = {
+          summary: feedbackData.summary || "No feedback summary available.",
+          contentKnowledgeScore: Number(feedbackData.contentKnowledgeScore) || 0,
+          writingScore: Number(feedbackData.writingScore) || 0,
+          nextSteps: feedbackData.nextSteps || "No next steps available."
+        };
+        
+        // Store in our global storage (which also updates window.__assessmentData)
+        globalStorage.setFeedbackData(processedFeedbackData);
+        
+        // Store the messages for assessment and teaching
+        if (assessmentConversation && assessmentConversation.length > 0) {
+          globalStorage.setAssessmentMessages(assessmentConversation);
         }
         
-        // Force explicit setting of each score value to ensure they're properly set as numbers
-        if (typeof feedbackData.contentKnowledgeScore === 'number' && window.__assessmentData.feedbackData) {
-          console.log("⚠️ CRITICAL FIX - Explicitly setting contentKnowledgeScore:", feedbackData.contentKnowledgeScore);
-          window.__assessmentData.feedbackData.contentKnowledgeScore = feedbackData.contentKnowledgeScore;
+        globalStorage.setTeachingMessages(messages);
+        
+        if (assessmentThreadId) {
+          globalStorage.setAssessmentThreadId(assessmentThreadId);
         }
         
-        if (typeof feedbackData.writingScore === 'number' && window.__assessmentData.feedbackData) {
-          console.log("⚠️ CRITICAL FIX - Explicitly setting writingScore:", feedbackData.writingScore);
-          window.__assessmentData.feedbackData.writingScore = feedbackData.writingScore;
-        }
-        
-        console.log("⚠️ VERIFICATION - Final window.__assessmentData before navigation:", 
+        console.log("⚠️ VERIFICATION - Final feedback data before navigation:", 
           JSON.stringify({
-            hasContentScore: window.__assessmentData.feedbackData?.contentKnowledgeScore !== undefined,
-            contentKnowledgeScore: window.__assessmentData.feedbackData?.contentKnowledgeScore,
-            hasWritingScore: window.__assessmentData.feedbackData?.writingScore !== undefined,
-            writingScore: window.__assessmentData.feedbackData?.writingScore
+            contentKnowledgeScore: processedFeedbackData.contentKnowledgeScore,
+            contentKnowledgeScoreType: typeof processedFeedbackData.contentKnowledgeScore,
+            writingScore: processedFeedbackData.writingScore,
+            writingScoreType: typeof processedFeedbackData.writingScore
+          }, null, 2)
+        );
+        
+        // Double check that window.__assessmentData was also updated (for backward compatibility)
+        console.log("⚠️ VERIFICATION - window.__assessmentData also updated:", 
+          JSON.stringify({
+            hasContentScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore !== undefined,
+            contentKnowledgeScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore,
+            hasWritingScore: window.__assessmentData?.feedbackData?.writingScore !== undefined, 
+            writingScore: window.__assessmentData?.feedbackData?.writingScore
           }, null, 2)
         );
       }
