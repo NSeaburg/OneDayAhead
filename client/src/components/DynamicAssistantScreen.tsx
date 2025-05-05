@@ -283,11 +283,17 @@ export default function DynamicAssistantScreen({
               "No next steps available."
           };
           
-          console.log("Raw feedback data before formatting:", {
+          console.log("⚠️ DEBUG Raw feedback data before formatting:", {
             summary: feedbackData.summary,
             contentKnowledgeScore: feedbackData.contentKnowledgeScore,
             writingScore: feedbackData.writingScore,
-            nextSteps: feedbackData.nextSteps
+            nextSteps: feedbackData.nextSteps,
+            contentKnowledgeScoreType: typeof feedbackData.contentKnowledgeScore,
+            writingScoreType: typeof feedbackData.writingScore,
+            stringified: JSON.stringify({
+              contentKnowledgeScore: feedbackData.contentKnowledgeScore,
+              writingScore: feedbackData.writingScore
+            })
           });
           
           console.log("Formatted feedback data:", formattedFeedbackData);
@@ -332,6 +338,14 @@ export default function DynamicAssistantScreen({
       
       // Call the onNext function to move to the next screen with feedback data
       // Always call onNext just once at the end of the try block
+      console.log("⚠️ DEBUG - About to call onNext with feedbackData:", 
+        JSON.stringify({
+          contentKnowledgeScore: feedbackData?.contentKnowledgeScore,
+          writingScore: feedbackData?.writingScore,
+          contentKnowledgeScoreType: typeof feedbackData?.contentKnowledgeScore,
+          writingScoreType: typeof feedbackData?.writingScore,
+        })
+      );
       onNext(undefined, feedbackData);
     } catch (error) {
       console.error("Failed to send teaching data to N8N:", error);

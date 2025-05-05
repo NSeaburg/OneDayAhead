@@ -95,6 +95,16 @@ export default function NewFeedbackScreen({
     console.log("Window.__assessmentData at initialization:", window.__assessmentData);
     console.log("Detailed window.__assessmentData?.feedbackData:", JSON.stringify(window.__assessmentData?.feedbackData));
     
+    // Additional debug for webhooks scores
+    if (window.__assessmentData?.feedbackData) {
+      console.log("⚠️ DEBUG SCORES - contentKnowledgeScore:", 
+        window.__assessmentData.feedbackData.contentKnowledgeScore,
+        "type:", typeof window.__assessmentData.feedbackData.contentKnowledgeScore);
+      console.log("⚠️ DEBUG SCORES - writingScore:", 
+        window.__assessmentData.feedbackData.writingScore,
+        "type:", typeof window.__assessmentData.feedbackData.writingScore);
+    }
+    
     // COMPLETELY REVISED APPROACH: Always use the actual response from N8N if available,
     // regardless of score values or content. Only use fallback as a last resort when 
     // no data is available at all.
