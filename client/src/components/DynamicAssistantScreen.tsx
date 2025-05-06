@@ -546,7 +546,7 @@ export default function DynamicAssistantScreen({
                 <hr className="my-4 border-gray-200" />
                 
                 <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Learning Level</h3>
+                  <h3 className="font-semibold text-gray-800 mb-2">Learning Focus</h3>
                   <div className="flex items-center">
                     <div className={`w-3 h-3 rounded-full mr-2 ${
                       proficiencyLevel === "high" ? "bg-green-500" :
@@ -554,9 +554,9 @@ export default function DynamicAssistantScreen({
                       proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
                     }`}></div>
                     <p className="text-sm text-gray-700">
-                      {proficiencyLevel === "high" ? "Advanced" :
-                      proficiencyLevel === "medium" ? "Intermediate" :
-                      proficiencyLevel === "low" ? "Foundational" : "Standard"}
+                      {proficiencyLevel === "high" ? "Understanding through Metaphor" :
+                      proficiencyLevel === "medium" ? "Understanding through Metaphor" :
+                      proficiencyLevel === "low" ? "Understanding through Metaphor" : "Standard Approach"}
                     </p>
                   </div>
                 </div>
