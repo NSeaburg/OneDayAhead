@@ -555,7 +555,7 @@ export default function DynamicAssistantScreen({
                     }`}></div>
                     <p className="text-sm text-gray-700">
                       {proficiencyLevel === "high" ? "Understanding through Metaphor" :
-                      proficiencyLevel === "medium" ? "Understanding through Metaphor" :
+                      proficiencyLevel === "medium" ? "Understanding through thought experiments" :
                       proficiencyLevel === "low" ? "Understanding through Metaphor" : "Standard Approach"}
                     </p>
                   </div>
