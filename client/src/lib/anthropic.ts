@@ -5,7 +5,10 @@ import { Message } from './openai';
 const defaultModel = 'claude-3-7-sonnet-20250219';
 
 // Default max tokens for Claude responses
-const DEFAULT_MAX_TOKENS = 4096;
+const DEFAULT_MAX_TOKENS = 20000;
+
+// Default temperature for Claude responses
+const DEFAULT_TEMPERATURE = 1.0;
 
 /**
  * Convert OpenAI-style messages to Anthropic format
@@ -28,7 +31,7 @@ const convertToAnthropicMessages = (messages: Message[], systemPrompt?: string) 
     system: finalSystemPrompt,
     model: defaultModel,
     max_tokens: DEFAULT_MAX_TOKENS,
-    temperature: 1.0,
+    temperature: DEFAULT_TEMPERATURE,
   };
 };
 

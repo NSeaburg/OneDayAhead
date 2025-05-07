@@ -666,7 +666,7 @@ When the student has completed both activities, thank them warmly and end the co
               messages: anthropicMessages,
               system: finalSystemPrompt,
               model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
-              max_tokens: 4096,
+              max_tokens: 20000,
               temperature: 1.0,
               stream: true
             });
@@ -779,7 +779,7 @@ When the student has completed both activities, thank them warmly and end the co
             messages: anthropicMessages,
             system: finalSystemPrompt,
             model: "claude-3-7-sonnet-20250219", // Use the latest Claude model
-            max_tokens: 4096,
+            max_tokens: 20000,
             temperature: 1.0
           });
           
