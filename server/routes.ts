@@ -25,6 +25,9 @@ const DEFAULT_ASSESSMENT_ASSISTANT_ID = "asst_68CAVYvKmjbpqFpCa9D0TiRU";
 const ASSESSMENT_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 const DYNAMIC_ASSISTANT_WEBHOOK_URL = process.env.N8N_DYNAMIC_WEBHOOK_URL; // New webhook URL for the dynamic assistant
 
+// Define the system prompt for the article assistant exactly as in the Python code
+const ARTICLE_ASSISTANT_SYSTEM_PROMPT = "You are a fresh, fun, interesting learning assistant. You discussing the content of an article about the three branches of government in the United States. Provide clear, concise answers to questions about these government branches or related topics. you aim for a quick back and forth conversation, aiming to limit most responses to 3 sentences or less. You push students to deepen their thinking and you ask them engaging questions.\n\nYou will refuse to discuss anything unrelated to the government structure of political science. You will not discuss political hot-button issues at all.";
+
 // Log the webhook URLs for debugging
 console.log("Assessment Webhook URL:", ASSESSMENT_WEBHOOK_URL);
 console.log("Dynamic Assistant Webhook URL:", DYNAMIC_ASSISTANT_WEBHOOK_URL);
@@ -87,6 +90,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || "",
       assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || ""
     });
+  });
+  
+  // Special endpoint for the article assistant chat using Claude 3.7 Sonnet
+  app.post("/api/article-chat", async (req, res) => {
+    try {
+      const { messages } = req.body;
+      
+      // This endpoint handles only non-streaming requests
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ 
+          error: "Invalid message data. Expected an array of messages." 
+        });
+      }
+      
+      console.log("Article chat endpoint using exact Python code configuration");
+      
+      // Convert OpenAI-style messages to Anthropic format
+      const anthropicMessages = messages
+        .filter((msg: any) => msg.role !== 'system')
+        .map((msg: any) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
+      
+      // Create completion with Anthropic exactly like the Python code
+      const completion = await anthropic.messages.create({
+        messages: anthropicMessages,
+        system: ARTICLE_ASSISTANT_SYSTEM_PROMPT, // Use our hardcoded prompt
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 20000,
+        temperature: 1.0
+      });
+      
+      // Extract the response content
+      const content = completion.content[0]?.type === 'text' 
+        ? completion.content[0].text 
+        : 'No response content available';
+      
+      // Return in OpenAI format for compatibility
+      res.json({
+        choices: [
+          {
+            message: {
+              content,
+              role: 'assistant'
+            }
+          }
+        ],
+        threadId: 'claude-article-' + Date.now()
+      });
+    } catch (error: any) {
+      console.error('Error in article chat endpoint:', error);
+      res.status(500).json({ 
+        error: 'article_chat_error',
+        message: error.message || 'An error occurred with the article chat' 
+      });
+    }
   });
   
 
