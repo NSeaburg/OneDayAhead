@@ -12,7 +12,7 @@ import { Message } from "@/lib/openai";
 
 // Constants
 const PULSE_DURATION = 5000;
-const INITIAL_BOT_MESSAGE = "Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty's service to study your peculiar experiment in self-governance. I see we are examining this quaint document about your so-called \"branches of government.\" Do feel free to engage me should you require enlightenment from a superior British perspective. *adjusts cravat with practiced flourish*";
+const INITIAL_BOT_MESSAGE = "Hi! We are reading about the three branches of government. Hit me up if you want to chat about the article or if you have any questions.";
 const PDF_OPTIONS = {
   margin: 10,
   filename: 'learning-material.pdf',
@@ -206,7 +206,7 @@ export default function ArticleChatScreen({
               </motion.button>
               
               <div className="p-4 bg-gray-50 border-b border-gray-200">
-                <h2 className="font-semibold text-lg text-gray-800">Reginald Worthington III</h2>
+                <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
               </div>
               <motion.div 
                 className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)] space-y-4"
@@ -295,7 +295,7 @@ export default function ArticleChatScreen({
                 }
               >
                 <MessageSquare className="h-5 w-5" />
-                <span className="font-medium">Require the wisdom of a proper Englishman?</span>
+                <span className="font-medium">Want to chat with this article?</span>
               </motion.button>
               <motion.button
                 className="absolute -top-2 -right-2 rounded-full bg-white shadow-md p-1 hover:bg-gray-100"
