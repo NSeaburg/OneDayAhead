@@ -3,7 +3,7 @@ import { ArrowRight, ArrowLeft, Send, FileDown, MessageSquare, X } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
-import { useStreamingChat } from "@/hooks/useStreamingChat";
+import { useArticleChat } from "@/hooks/useArticleChat";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import html2pdf from 'html2pdf.js';
@@ -98,26 +98,19 @@ export default function ArticleChatScreen({
   const { 
     messages, 
     sendMessage, 
-    isLoading, 
-    currentStreamingMessage, 
-    isTyping,
-    setMessages
-  } = useStreamingChat({
-    assistantId,
-    systemPrompt,
-    initialMessage: INITIAL_BOT_MESSAGE,
-    useAnthropicForAssessment: true // Ensure we're using Claude exclusively
-  });
+    isThinking: isLoading, 
+    status,
+    resetConversation,
+    streamContent: currentStreamingMessage,
+    isStreaming: isTyping
+  } = useArticleChat(INITIAL_BOT_MESSAGE);
   
   // Reset conversation on mount to ensure system prompt is applied
   useEffect(() => {
     console.log("ArticleChatScreen mounted - resetting conversation to ensure proper system prompt");
     
     // Clear existing messages and set the initial welcome
-    setMessages([{
-      role: 'assistant',
-      content: INITIAL_BOT_MESSAGE
-    }]);
+    // Use empty dependency array since we only want this to run on mount
   }, []);
 
   // Effects
@@ -221,7 +214,7 @@ export default function ArticleChatScreen({
                 animate={{ opacity: 1 }}
               >
                 {/* Regular messages */}
-                {messages.map((message, index) => (
+                {messages.map((message: Message, index: number) => (
                   <motion.div 
                     key={index} 
                     className="message-appear"
