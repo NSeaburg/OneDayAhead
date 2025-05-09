@@ -252,10 +252,10 @@ export default function HighBotWithArticleScreen({
             <hr className="my-4 border-gray-200" />
             
             <div>
-              <h3 className="font-semibold text-gray-800 mb-2">Learning Level</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">Learning Focus</h3>
               <div className="flex items-center">
                 <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
-                <p className="text-sm text-gray-700">Advanced</p>
+                <p className="text-sm text-gray-700">Understanding through Case Study</p>
               </div>
             </div>
             
