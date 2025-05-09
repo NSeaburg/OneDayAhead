@@ -255,7 +255,7 @@ export default function HighBotWithArticleScreen({
               <h3 className="font-semibold text-gray-800 mb-2">Learning Focus</h3>
               <div className="flex items-center">
                 <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
-                <p className="text-sm text-gray-700">Understanding through Case Study</p>
+                <p className="text-sm text-gray-700">Learning Through Case Study</p>
               </div>
             </div>
             
