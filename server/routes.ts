@@ -96,6 +96,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Test route to get current session ID
+  app.get("/api/user/session", (req, res) => {
+    const sessionId = req.sessionId;
+    res.json({
+      success: true,
+      sessionId: sessionId || null
+    });
+  });
+  
+  // Route to get user-specific conversations
+  app.get("/api/user/conversations", async (req, res) => {
+    try {
+      const sessionId = req.sessionId;
+      
+      if (!sessionId) {
+        return res.status(401).json({ error: "No valid session found" });
+      }
+      
+      // Get all conversations for this session
+      const conversations = await storage.getConversationsBySession(sessionId);
+      
+      return res.json({
+        success: true,
+        conversations
+      });
+    } catch (error: any) {
+      console.error("Error getting user conversations:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to retrieve conversations"
+      });
+    }
+  });
+  
+  // Route to get user-specific feedback
+  app.get("/api/user/feedback", async (req, res) => {
+    try {
+      const sessionId = req.sessionId;
+      
+      if (!sessionId) {
+        return res.status(401).json({ error: "No valid session found" });
+      }
+      
+      // Get feedback for this session
+      const feedback = await storage.getFeedbackBySession(sessionId);
+      
+      return res.json({
+        success: true,
+        feedback: feedback || null
+      });
+    } catch (error: any) {
+      console.error("Error getting user feedback:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to retrieve feedback"
+      });
+    }
+  });
+  
   // Special endpoint for the article assistant chat using Claude 3.7 Sonnet
   app.post("/api/article-chat", async (req, res) => {
     try {
@@ -132,6 +191,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? completion.content[0].text 
         : 'No response content available';
       
+      // Generate a thread ID
+      const messageId = 'claude-article-' + Date.now();
+      
+      // Store the conversation if we have a session ID
+      const sessionId = req.sessionId;
+      if (sessionId) {
+        try {
+          // Create a new conversation with the messages
+          const allMessages = [
+            ...anthropicMessages,
+            { role: 'assistant', content }
+          ];
+          
+          // Store the conversation
+          await storage.createConversation({
+            sessionId,
+            threadId: messageId,
+            assistantType: 'article',
+            messages: allMessages
+          });
+          console.log(`Stored article conversation for session ${sessionId}, thread ${messageId}`);
+        } catch (err) {
+          console.error("Error storing article conversation:", err);
+          // Continue with response even if storage fails
+        }
+      }
+      
       // Return in OpenAI format for compatibility
       res.json({
         choices: [
@@ -142,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         ],
-        threadId: 'claude-article-' + Date.now()
+        threadId: messageId
       });
     } catch (error: any) {
       console.error('Error in article chat endpoint:', error);
