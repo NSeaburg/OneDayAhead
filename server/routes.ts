@@ -159,12 +159,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/send-to-n8n", async (req, res) => {
     try {
       const { conversationData, threadId, courseName, chatDurationSeconds } = req.body;
+      const sessionId = req.sessionId; // Get session ID from request
       
       // Verify we have data to send
       if (!conversationData || !Array.isArray(conversationData)) {
         return res.status(400).json({ 
           error: "Invalid conversation data. Expected an array of messages." 
         });
+      }
+      
+      // If we have a valid threadId and sessionId, store the conversation
+      if (threadId && sessionId) {
+        try {
+          await storage.createConversation({
+            sessionId,
+            threadId,
+            assistantType: 'assessment',
+            messages: conversationData
+          });
+          console.log(`Stored assessment conversation for session ${sessionId}, thread ${threadId}`);
+        } catch (err) {
+          console.error("Error storing conversation:", err);
+          // Continue with the webhook call even if storage fails
+        }
       }
       
       // Get N8N webhook URL for assessment
@@ -205,7 +222,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           chatDurationSeconds: chatDurationSeconds || 0, // Add chat duration with fallback
           
           // Include the threadId for backward compatibility if available
-          ...(threadId ? { threadId } : { threadId: `claude-${Date.now()}` })
+          ...(threadId ? { threadId } : { threadId: `claude-${Date.now()}` }),
+          
+          // Include sessionId for user identification in concurrent scenarios
+          ...(sessionId ? { sessionId } : {})
         }, {
           timeout: 10000, // 10 second timeout
           headers: {
@@ -401,6 +421,24 @@ When the student has completed both activities, thank them warmly and end the co
         chatDurationSeconds 
       } = req.body;
       
+      const sessionId = req.sessionId; // Get session ID from request
+      
+      // If we have a valid threadId and sessionId, store the teaching conversation
+      if (teachingThreadId && sessionId && teachingConversation && teachingConversation.length > 0) {
+        try {
+          await storage.createConversation({
+            sessionId,
+            threadId: teachingThreadId,
+            assistantType: 'teaching',
+            messages: teachingConversation
+          });
+          console.log(`Stored teaching conversation for session ${sessionId}, thread ${teachingThreadId}`);
+        } catch (err) {
+          console.error("Error storing teaching conversation:", err);
+          // Continue with the webhook call even if storage fails
+        }
+      }
+      
       // Prepare conversation data (may be null/undefined from client)
       const teachingData = teachingConversation || [];
       const assessmentData = assessmentConversation || [];
@@ -466,7 +504,10 @@ When the student has completed both activities, thank them warmly and end the co
           timestamp: new Date().toISOString(),
           source: "learning-app-teaching",
           courseName: courseName || "Social Studies Sample", // Updated default course name
-          chatDurationSeconds: chatDurationSeconds || 0
+          chatDurationSeconds: chatDurationSeconds || 0,
+          
+          // Include sessionId for user identification in concurrent scenarios
+          ...(sessionId ? { sessionId } : {})
         }, {
           timeout: 10000, // 10 second timeout
           headers: {
@@ -513,7 +554,12 @@ When the student has completed both activities, thank them warmly and end the co
         }
         
         // Extract feedback data from N8N response if available
-        let feedbackData = {};
+        let feedbackData: {
+          summary?: string;
+          contentKnowledgeScore?: number;
+          writingScore?: number;
+          nextSteps?: string;
+        } = {};
         
         // Log the exact N8N response for debugging - comprehensive logging
         console.log("N8N Response Data:", JSON.stringify(response.data));
@@ -637,6 +683,23 @@ When the student has completed both activities, thank them warmly and end the co
               writingScore: 3.25,
               nextSteps: "Continue exploring more about how the branches interact in our government system."
             };
+          }
+        }
+        
+        // Store feedback data if we have a valid session ID
+        if (sessionId && Object.keys(feedbackData).length > 0) {
+          try {
+            await storage.createFeedback({
+              sessionId,
+              summary: feedbackData.summary || "",
+              contentKnowledgeScore: feedbackData.contentKnowledgeScore || 0,
+              writingScore: feedbackData.writingScore || 0,
+              nextSteps: feedbackData.nextSteps || ""
+            });
+            console.log(`Stored feedback data for session ${sessionId}`);
+          } catch (err) {
+            console.error("Error storing feedback data:", err);
+            // Continue with the response even if storage fails
           }
         }
         
@@ -851,6 +914,30 @@ When the student has completed both activities, thank them warmly and end the co
           const content = completion.content[0]?.type === 'text' 
             ? completion.content[0].text 
             : 'No response content available';
+          
+          // Store the conversation if we have a session ID
+          const sessionId = req.sessionId;
+          if (sessionId) {
+            try {
+              // Create a new conversation with the messages
+              const allMessages = [
+                ...anthropicMessages,
+                { role: 'assistant', content }
+              ];
+              
+              // Store the conversation
+              await storage.createConversation({
+                sessionId,
+                threadId: messageId,
+                assistantType: 'article',  // Default type - can be overridden with request param
+                messages: allMessages
+              });
+              console.log(`Stored Claude conversation for session ${sessionId}, thread ${messageId}`);
+            } catch (err) {
+              console.error("Error storing Claude conversation:", err);
+              // Continue with response even if storage fails
+            }
+          }
           
           // Only attempt to respond if we haven't already
           if (!responseEnded && !res.writableEnded) {
