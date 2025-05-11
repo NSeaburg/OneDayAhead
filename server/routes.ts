@@ -349,6 +349,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log the full response data for debugging
         console.log("N8N complete response:", JSON.stringify(response.data, null, 2));
+        console.log("Checking for session ID in N8N response:", 
+          response.data && response.data.sessionId ? 
+          `Found session ID: ${response.data.sessionId}` : 
+          "No session ID found in response");
         
         // FINAL WORKING SOLUTION: Follow the exact same structure that works in our test endpoint
         const responseData = response.data;
@@ -437,6 +441,16 @@ When the student has completed both activities, thank them warmly and end the co
           
           // Log the exact response we're sending back (should match test endpoint)
           console.log("Sending to client:", JSON.stringify(responseObject, null, 2));
+          
+          // Check if N8N returned the session ID and if it matches what we sent
+          if (dataToCheck && dataToCheck.sessionId) {
+            console.log(`N8N returned session ID: ${dataToCheck.sessionId}`);
+            console.log(`Our original session ID: ${sessionId || 'none'}`);
+            console.log(`Session IDs match: ${dataToCheck.sessionId === sessionId}`);
+            
+            // Add the session ID to our response
+            responseObject.sessionId = dataToCheck.sessionId;
+          }
           
           // Return the response - no other code should execute after this
           return res.json(responseObject);
