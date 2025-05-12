@@ -850,6 +850,31 @@ When the student has completed both activities, thank them warmly and end the co
           }
         }
         
+        // Extract session ID from N8N response if available
+        let returnedSessionId = null;
+        
+        // Check if response data is an object with sessionId
+        if (response.data && typeof response.data === 'object') {
+          // Direct sessionId in the object
+          if ('sessionId' in response.data) {
+            returnedSessionId = response.data.sessionId;
+            console.log(`N8N returned session ID in feedback flow: ${returnedSessionId || 'null'}`);
+          } 
+          // sessionId in the first item of an array
+          else if (Array.isArray(response.data) && response.data.length > 0 && 
+                  typeof response.data[0] === 'object' && 'sessionId' in response.data[0]) {
+            returnedSessionId = response.data[0].sessionId;
+            console.log(`N8N returned session ID in array for feedback flow: ${returnedSessionId || 'null'}`);
+          }
+        }
+        
+        // Log if session IDs match
+        if (returnedSessionId && sessionId) {
+          console.log(`Feedback flow: Session IDs match: ${returnedSessionId === sessionId}`);
+        } else {
+          console.log(`Feedback flow: Original session ID: ${sessionId || 'none'}, N8N session ID: ${returnedSessionId || 'none'}`);
+        }
+        
         // Store feedback data if we have a valid session ID
         if (sessionId && Object.keys(feedbackData).length > 0) {
           try {
@@ -867,11 +892,21 @@ When the student has completed both activities, thank them warmly and end the co
           }
         }
         
-        return res.json({ 
+        // Create response object with session ID (prefer the one from N8N if valid)
+        const responseObject = { 
           success: true, 
           message: "Combined teaching and assessment data sent to N8N successfully",
           feedbackData // Include the feedback data in the response
-        });
+        };
+        
+        // Add session ID to the response if available - prefer N8N's returned one if valid
+        if (returnedSessionId) {
+          responseObject.sessionId = returnedSessionId;
+        } else if (sessionId) {
+          responseObject.sessionId = sessionId;
+        }
+        
+        return res.json(responseObject);
       } catch (axiosError: any) {
         // Handle N8N webhook errors but allow the application to continue
         console.error("Teaching bot N8N webhook error:", axiosError.response?.data || axiosError.message);
