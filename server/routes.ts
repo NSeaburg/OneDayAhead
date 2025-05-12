@@ -348,11 +348,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Log the full response data for debugging
+        console.log("N8N raw response data type:", typeof response.data);
+        console.log("N8N raw response data is array:", Array.isArray(response.data));
+        
+        // Deeper debugging of the response
+        if (Array.isArray(response.data)) {
+          console.log("N8N response is an array with", response.data.length, "items");
+          if (response.data.length > 0) {
+            console.log("First array item:", JSON.stringify(response.data[0], null, 2));
+            // Check if sessionId exists in the first array item
+            console.log("Array item has sessionId:", response.data[0] && response.data[0].sessionId ? 
+              `Yes: ${response.data[0].sessionId}` : "No, sessionId is null or undefined");
+          }
+        }
+        
         console.log("N8N complete response:", JSON.stringify(response.data, null, 2));
         console.log("Checking for session ID in N8N response:", 
           response.data && response.data.sessionId ? 
           `Found session ID: ${response.data.sessionId}` : 
-          "No session ID found in response");
+          "No session ID found in response directly");
         
         // FINAL WORKING SOLUTION: Follow the exact same structure that works in our test endpoint
         const responseData = response.data;
@@ -394,8 +408,18 @@ When the student has completed both activities, thank them warmly and end the co
         // If the response is an array, extract the first item
         let dataToCheck = responseData;
         if (Array.isArray(responseData) && responseData.length > 0) {
+          console.log("Response is an array with", responseData.length, "items");
+          console.log("First array item raw:", JSON.stringify(responseData[0], null, 2));
+          
           dataToCheck = responseData[0];
           console.log("Extracted first item from array response");
+          
+          // Check for session ID in the array item
+          if (dataToCheck.sessionId) {
+            console.log("Array item has sessionId:", dataToCheck.sessionId);
+          } else {
+            console.log("Array item has NO sessionId (null or undefined)");
+          }
         }
         
         // Now handle the direct object case (which we're seeing in production)
@@ -449,6 +473,17 @@ When the student has completed both activities, thank them warmly and end the co
             console.log(`Session IDs match: ${dataToCheck.sessionId === sessionId}`);
             
             // Add the session ID to our response
+            responseObject.sessionId = dataToCheck.sessionId;
+          }
+          
+          // Add session ID from dataToCheck (array item) if available
+          if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].sessionId) {
+            console.log(`Found sessionId in array item: ${responseData[0].sessionId}`);
+            responseObject.sessionId = responseData[0].sessionId;
+          }
+          // Or add session ID from direct object if available
+          else if (dataToCheck && dataToCheck.sessionId) {
+            console.log(`Found sessionId in direct object: ${dataToCheck.sessionId}`);
             responseObject.sessionId = dataToCheck.sessionId;
           }
           
