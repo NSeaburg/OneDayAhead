@@ -454,7 +454,16 @@ When the student has completed both activities, thank them warmly and end the co
           console.log(`System prompt length: ${systemPrompt.length} characters`);
           
           // CRITICAL: Match the structure of our test endpoint exactly - this is what works
-          const responseObject = {
+          const responseObject: {
+            success: boolean;
+            message: string;
+            teachingAssistance: {
+              level: 'low' | 'medium' | 'high';
+              systemPrompt: string;
+            };
+            sessionId?: string;
+            threadId?: string;
+          } = {
             success: true,
             message: "Assessment data sent to N8N successfully",
             teachingAssistance: {
@@ -467,24 +476,44 @@ When the student has completed both activities, thank them warmly and end the co
           console.log("Sending to client:", JSON.stringify(responseObject, null, 2));
           
           // Check if N8N returned the session ID and if it matches what we sent
-          if (dataToCheck && dataToCheck.sessionId) {
-            console.log(`N8N returned session ID: ${dataToCheck.sessionId}`);
+          if (dataToCheck && typeof dataToCheck === 'object' && 'sessionId' in dataToCheck) {
+            const returnedSessionId = dataToCheck.sessionId as string | null;
+            console.log(`N8N returned session ID: ${returnedSessionId || 'null'}`);
             console.log(`Our original session ID: ${sessionId || 'none'}`);
-            console.log(`Session IDs match: ${dataToCheck.sessionId === sessionId}`);
+            console.log(`Session IDs match: ${returnedSessionId === sessionId}`);
             
-            // Add the session ID to our response
-            responseObject.sessionId = dataToCheck.sessionId;
+            // Add the session ID to our response if it's not null
+            if (returnedSessionId) {
+              responseObject.sessionId = returnedSessionId;
+            }
           }
           
           // Add session ID from dataToCheck (array item) if available
-          if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].sessionId) {
-            console.log(`Found sessionId in array item: ${responseData[0].sessionId}`);
-            responseObject.sessionId = responseData[0].sessionId;
+          if (Array.isArray(responseData) && responseData.length > 0 && 
+              typeof responseData[0] === 'object' && 'sessionId' in responseData[0]) {
+            const arraySessionId = responseData[0].sessionId as string | null;
+            if (arraySessionId) {
+              console.log(`Found sessionId in array item: ${arraySessionId}`);
+              responseObject.sessionId = arraySessionId;
+            } else {
+              console.log("Array item has sessionId but it's null");
+            }
           }
           // Or add session ID from direct object if available
-          else if (dataToCheck && dataToCheck.sessionId) {
-            console.log(`Found sessionId in direct object: ${dataToCheck.sessionId}`);
-            responseObject.sessionId = dataToCheck.sessionId;
+          else if (dataToCheck && typeof dataToCheck === 'object' && 'sessionId' in dataToCheck) {
+            const directSessionId = dataToCheck.sessionId as string | null;
+            if (directSessionId) {
+              console.log(`Found sessionId in direct object: ${directSessionId}`);
+              responseObject.sessionId = directSessionId;
+            } else {
+              console.log("Direct object has sessionId but it's null");
+            }
+          }
+          
+          // Fall back to using our original session ID if N8N didn't send anything valid
+          if (!responseObject.sessionId && sessionId) {
+            console.log("Using original session ID as fallback:", sessionId);
+            responseObject.sessionId = sessionId;
           }
           
           // Return the response - no other code should execute after this
