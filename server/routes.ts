@@ -95,12 +95,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route to get the assistant IDs
+  // Route to get the assistant IDs and LLM config
   app.get("/api/assistant-config", (req, res) => {
+    // Check if Claude API key is available
+    const hasClaudeAccess = !!process.env.ANTHROPIC_API_KEY;
+    
     res.json({
       discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || "",
-      assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || ""
+      assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || "",
+      llmConfig: {
+        hasClaudeAccess,
+        defaultModel: hasClaudeAccess ? "claude-3-7-sonnet-20250219" : undefined,
+        preferredProvider: hasClaudeAccess ? "anthropic" : "openai"
+      }
     });
+  });
+  
+  // Route to check Claude API health
+  app.get("/api/claude/health", async (req, res) => {
+    try {
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.status(503).json({
+          status: "unavailable",
+          message: "Claude API key not configured"
+        });
+      }
+      
+      // Simple test call to Claude
+      const response = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 10,
+        messages: [{ role: "user", content: "Respond with 'OK' and nothing else" }]
+      });
+      
+      const content = response.content.find(block => 
+        typeof block === 'object' && 'type' in block && block.type === 'text'
+      );
+      
+      let responseText = "";
+      if (content && typeof content === 'object' && 'text' in content) {
+        responseText = content.text.trim();
+      }
+      
+      return res.json({
+        status: "available",
+        model: "claude-3-7-sonnet-20250219",
+        response: responseText
+      });
+    } catch (error) {
+      console.error("Claude health check failed:", error);
+      return res.status(503).json({
+        status: "error",
+        message: error instanceof Error ? error.message : "Unknown error with Claude API"
+      });
+    }
   });
   
   // Claude 3.7 Sonnet API endpoints
@@ -156,6 +204,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Direct Claude chat endpoint
+  app.post("/api/claude/chat", async (req, res) => {
+    try {
+      const { messages, systemPrompt, threadId } = req.body;
+      
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: "Messages are required and must be an array" });
+      }
+      
+      // Format messages for Claude
+      const formattedMessages = messages.map(msg => ({
+        role: msg.role === 'system' ? 'user' : msg.role,
+        content: msg.content
+      }));
+      
+      // Create or update conversation thread
+      const sessionId = req.sessionId;
+      let conversationId;
+      
+      if (sessionId && threadId) {
+        try {
+          // Get existing conversation if it exists
+          const existingConversation = await storage.getConversationByThreadId(threadId);
+          
+          if (existingConversation) {
+            // Update existing conversation
+            await storage.updateConversation(threadId, messages);
+            conversationId = existingConversation.id;
+          } else {
+            // Create new conversation
+            const newConversation = await storage.createConversation({
+              sessionId,
+              threadId,
+              assistantType: 'claude',
+              messages
+            });
+            conversationId = newConversation.id;
+          }
+        } catch (dbError) {
+          console.error("Error with conversation storage:", dbError);
+          // Continue even if storage operations fail
+        }
+      }
+      
+      // Call Claude API
+      const response = await anthropic.messages.create({
+        model: 'claude-3-7-sonnet-20250219',
+        max_tokens: 4000,
+        system: systemPrompt || undefined,
+        messages: formattedMessages
+      });
+      
+      // Extract response text
+      const assistantMessage = response.content.find(block => 
+        typeof block === 'object' && 'type' in block && block.type === 'text'
+      );
+      
+      let assistantContent = "";
+      if (assistantMessage && typeof assistantMessage === 'object' && 'text' in assistantMessage) {
+        assistantContent = assistantMessage.text;
+      }
+      
+      // Update conversation with assistant's response if we have session and thread
+      if (sessionId && threadId) {
+        try {
+          const updatedMessages = [...messages, { role: 'assistant', content: assistantContent }];
+          await storage.updateConversation(threadId, updatedMessages);
+        } catch (dbError) {
+          console.error("Error updating conversation:", dbError);
+          // Continue even if update fails
+        }
+      }
+      
+      return res.json({
+        success: true,
+        message: assistantContent,
+        threadId,
+        sessionId,
+        model: 'claude-3-7-sonnet-20250219'
+      });
+    } catch (error) {
+      console.error("Error in Claude chat:", error);
+      return res.status(500).json({
+        error: "Failed to get response from Claude",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Text analysis endpoint
   app.post("/api/claude/analyze", async (req, res) => {
     try {
