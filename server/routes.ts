@@ -13,9 +13,15 @@ const openai = new OpenAI({
 });
 
 // Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+// the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
+import anthropic, { 
+  summarizeArticle,
+  analyzeSentiment,
+  analyzeDifficulty,
+  evaluateResponse,
+  generateRecommendations,
+  explainConcept
+} from "./anthropicClient";
 
 // Default Assistant IDs
 const DEFAULT_DISCUSSION_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
@@ -893,7 +899,12 @@ When the student has completed both activities, thank them warmly and end the co
         }
         
         // Create response object with session ID (prefer the one from N8N if valid)
-        const responseObject = { 
+        const responseObject: { 
+          success: boolean; 
+          message: string; 
+          feedbackData: any; 
+          sessionId?: string; 
+        } = { 
           success: true, 
           message: "Combined teaching and assessment data sent to N8N successfully",
           feedbackData // Include the feedback data in the response
