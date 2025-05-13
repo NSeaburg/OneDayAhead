@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { storage } from "../storage";
+import { getSecureCookieConfig } from "./security";
 
 // Interface to extend Express Request with session
 declare global {
@@ -36,12 +37,8 @@ export async function sessionMiddleware(req: Request, res: Response, next: NextF
     const session = await storage.createSession(anonymousUser.id);
     sessionId = session.sessionId;
     
-    // Set session cookie
-    res.cookie('sessionId', sessionId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
+    // Set session cookie with secure settings
+    res.cookie('sessionId', sessionId, getSecureCookieConfig());
     
     // Store user ID in the request
     req.userId = anonymousUser.id;
