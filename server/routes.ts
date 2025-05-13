@@ -20,7 +20,8 @@ import anthropic, {
   analyzeDifficulty,
   evaluateResponse,
   generateRecommendations,
-  explainConcept
+  explainConcept,
+  generateSystemPrompt
 } from "./anthropicClient";
 
 // Default Assistant IDs
@@ -100,6 +101,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
       discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || "",
       assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || ""
     });
+  });
+  
+  // Claude 3.7 Sonnet API endpoints
+  
+  // System prompt generation endpoint
+  app.post("/api/claude/generate-prompt", async (req, res) => {
+    try {
+      const { botType, articleContent, previousContext, studentLevel } = req.body;
+      
+      if (!botType) {
+        return res.status(400).json({ error: "Bot type is required" });
+      }
+      
+      const systemPrompt = await generateSystemPrompt({
+        botType,
+        articleContent,
+        previousContext,
+        studentLevel
+      });
+      
+      // Get the session ID from the request
+      const sessionId = req.sessionId;
+      
+      // Store the generated prompt in the database if session exists
+      if (sessionId) {
+        try {
+          // Create a conversation record for this generated prompt
+          await storage.createConversation({
+            sessionId,
+            threadId: `system-prompt-${botType}-${Date.now()}`,
+            assistantType: `system-prompt-generator`,
+            messages: [{ role: 'system', content: systemPrompt }]
+          });
+        } catch (dbError) {
+          console.error("Failed to store system prompt:", dbError);
+          // Continue even if storage fails
+        }
+      }
+      
+      return res.json({
+        success: true,
+        systemPrompt,
+        sessionId,
+        botType,
+        length: systemPrompt.length
+      });
+    } catch (error) {
+      console.error("Error generating system prompt:", error);
+      return res.status(500).json({ 
+        error: "Failed to generate system prompt",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Text analysis endpoint
+  app.post("/api/claude/analyze", async (req, res) => {
+    try {
+      const { text, type } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ error: "Text is required" });
+      }
+      
+      let result;
+      
+      switch (type) {
+        case 'summary':
+          result = await summarizeArticle(text);
+          break;
+        case 'sentiment':
+          result = await analyzeSentiment(text);
+          break;
+        case 'difficulty':
+          result = await analyzeDifficulty(text);
+          break;
+        case 'explain':
+          result = await explainConcept(text, req.body.level || 'intermediate');
+          break;
+        default:
+          // Default to summary if no type specified
+          result = await summarizeArticle(text);
+      }
+      
+      // Get the session ID from the request
+      const sessionId = req.sessionId;
+      
+      // Return the result along with session ID if available
+      return res.json({
+        success: true,
+        result,
+        sessionId
+      });
+    } catch (error) {
+      console.error("Error with Claude 3.7 request:", error);
+      return res.status(500).json({ 
+        error: "Error processing request with Claude 3.7",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   });
   
   // Test route to get current session ID

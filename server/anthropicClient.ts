@@ -169,4 +169,67 @@ export async function explainConcept(concept: string, level: 'simple' | 'interme
   }
 }
 
+// Generate system prompts for different bot personas
+export async function generateSystemPrompt(options: {
+  botType: 'article' | 'assessment' | 'teaching-low' | 'teaching-medium' | 'teaching-high';
+  articleContent?: string;
+  previousContext?: string;
+  studentLevel?: 'beginner' | 'intermediate' | 'advanced';
+}): Promise<string> {
+  const { botType, articleContent, previousContext, studentLevel } = options;
+  
+  let systemPrompt = '';
+  let userPrompt = '';
+  
+  switch (botType) {
+    case 'article':
+      systemPrompt = `You are a system prompt designer for an educational AI assistant. Create a system prompt for a learning assistant that will discuss an article with students. The assistant should be fresh, fun, and interesting while maintaining educational value.`;
+      userPrompt = `Please design a system prompt for an AI assistant that will discuss the following article content with students. The assistant should be aware of the article's content and geography, maintain a fresh and fun persona, and ask engaging questions to deepen student thinking. Keep responses concise (mostly 3 sentences or less). The assistant should refuse to discuss unrelated topics.\n\nArticle content: ${articleContent || "Content about the three branches of US government"}`;
+      break;
+      
+    case 'assessment':
+      systemPrompt = `You are a system prompt designer for an educational AI assistant. Create a system prompt for Reginald Worthington III, an English aristocrat from the early 1800s who serves as an assessment bot for educational content.`;
+      userPrompt = `Please design a system prompt for Reginald Worthington III, an English aristocrat character from the early 1800s who serves as an assessment bot. He should maintain a formal, slightly pompous persona while effectively evaluating student understanding of topics. He should gather information to assess content knowledge and writing skills, providing scores from 0-100 for each.`;
+      break;
+      
+    case 'teaching-low':
+      systemPrompt = `You are a system prompt designer for an educational AI assistant. Create a system prompt for an entry-level teaching assistant named Mr. Whitaker who provides basic support to struggling students.`;
+      userPrompt = `Please design a system prompt for Mr. Whitaker, a teaching assistant who provides structured, basic support through "Learning Through Fundamentals" for students who need significant help. He should offer clear, simple explanations, frequent comprehension checks, and explicit guidance on essential concepts. His responses should be appropriate for ${studentLevel || "beginner"} level students who need extra support.${previousContext ? `\n\nThe assistant should be aware of this previous assessment conversation: ${previousContext}` : ''}`;
+      break;
+      
+    case 'teaching-medium':
+      systemPrompt = `You are a system prompt designer for an educational AI assistant. Create a system prompt for a mid-level teaching assistant named Mrs. Bannerman who provides guided support to students.`;
+      userPrompt = `Please design a system prompt for Mrs. Bannerman, a teaching assistant who provides balanced guidance through "Learning Through Practice" for students who need moderate support. She should blend direct instruction with guided discovery, use real-world examples, and encourage students to make connections. Her responses should be appropriate for ${studentLevel || "intermediate"} level students.${previousContext ? `\n\nThe assistant should be aware of this previous assessment conversation: ${previousContext}` : ''}`;
+      break;
+      
+    case 'teaching-high':
+      systemPrompt = `You are a system prompt designer for an educational AI assistant. Create a system prompt for an advanced teaching assistant named Mrs. Parton who challenges high-performing students.`;
+      userPrompt = `Please design a system prompt for Mrs. Parton, a teaching assistant who provides advanced guidance through "Learning Through Exploration" for high-performing students. She should use Socratic questioning, encourage independent thinking, introduce complex concepts, and challenge students to develop their own frameworks. Her responses should be appropriate for ${studentLevel || "advanced"} level students.${previousContext ? `\n\nThe assistant should be aware of this previous assessment conversation: ${previousContext}` : ''}`;
+      break;
+      
+    default:
+      systemPrompt = `You are a system prompt designer for an educational AI assistant. Create a general educational assistant system prompt.`;
+      userPrompt = `Please design a system prompt for a general educational AI assistant that will help students learn effectively.`;
+  }
+  
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-7-sonnet-20250219',
+      system: systemPrompt,
+      max_tokens: 2000,
+      messages: [
+        {
+          role: 'user',
+          content: userPrompt
+        }
+      ],
+    });
+
+    return extractTextFromMessage(response.content);
+  } catch (error) {
+    console.error(`Error generating ${botType} system prompt:`, error);
+    return "Unable to generate system prompt.";
+  }
+}
+
 export default anthropic;
