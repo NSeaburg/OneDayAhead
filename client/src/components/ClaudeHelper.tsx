@@ -132,7 +132,12 @@ export default function ClaudeHelper() {
       const data: ApiResponse = await response.json();
       
       if (data.success && data.message) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
+        // Ensure we handle the message as a string
+        const assistantMessage: Message = { 
+          role: 'assistant', 
+          content: data.message || 'No response content' 
+        };
+        setMessages(prev => [...prev, assistantMessage]);
         
         if (data.threadId && data.threadId !== threadId) {
           setThreadId(data.threadId);

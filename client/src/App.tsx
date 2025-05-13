@@ -16,12 +16,12 @@ function Navigation() {
         <ul className="flex space-x-6">
           <li>
             <Link href="/">
-              <a className="hover:text-blue-300 transition-colors">Home</a>
+              <span className="hover:text-blue-300 transition-colors cursor-pointer">Home</span>
             </Link>
           </li>
           <li>
             <Link href="/claude-helper">
-              <a className="hover:text-blue-300 transition-colors">Claude Helper</a>
+              <span className="hover:text-blue-300 transition-colors cursor-pointer">Claude Helper</span>
             </Link>
           </li>
         </ul>
