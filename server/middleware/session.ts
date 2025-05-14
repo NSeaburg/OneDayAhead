@@ -38,7 +38,8 @@ export async function sessionMiddleware(req: Request, res: Response, next: NextF
     sessionId = session.sessionId;
     
     // Set session cookie with secure settings
-    res.cookie('sessionId', sessionId, getSecureCookieConfig());
+    const cookieOptions = getSecureCookieConfig();
+    res.cookie('sessionId', sessionId, cookieOptions);
     
     // Store user ID in the request
     req.userId = anonymousUser.id;
@@ -60,12 +61,9 @@ export async function sessionMiddleware(req: Request, res: Response, next: NextF
       const session = await storage.createSession(anonymousUser.id);
       sessionId = session.sessionId;
       
-      // Set new session cookie
-      res.cookie('sessionId', sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
+      // Set new session cookie with secure settings
+      const cookieOptions = getSecureCookieConfig();
+      res.cookie('sessionId', sessionId, cookieOptions);
       
       // Store user ID in the request
       req.userId = anonymousUser.id;

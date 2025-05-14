@@ -18,7 +18,7 @@ app.use(corsMiddleware);
 app.use(securityHeadersMiddleware);
 
 // Cookie handling with secure settings
-app.use(cookieParser(process.env.COOKIE_SECRET || 'learning-platform-secret-key', getSecureCookieConfig()));
+app.use(cookieParser(process.env.COOKIE_SECRET || 'learning-platform-secret-key'));
 
 app.use((req, res, next) => {
   const start = Date.now();

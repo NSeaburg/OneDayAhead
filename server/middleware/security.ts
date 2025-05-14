@@ -102,7 +102,7 @@ export function getSecureCookieConfig() {
   return {
     secure: isProduction, // HTTPS only in production
     httpOnly: true, // Not accessible via JavaScript
-    sameSite: isProduction ? 'none' : 'lax', // Allow cross-site cookies in production for iframe embedding
+    sameSite: isProduction ? 'none' as const : 'lax' as const, // TypeScript needs const assertion for literal types
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
   };
 }
