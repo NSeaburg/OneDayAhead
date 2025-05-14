@@ -50,15 +50,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Global flag to track database availability
+let isDatabaseAvailable = false;
+
+// Apply session middleware 
+app.use(sessionMiddleware);
+
+// Add middleware to handle database status
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Add header for database availability
+  res.setHeader('X-Database-Available', isDatabaseAvailable.toString());
+  next();
+});
+
 (async () => {
   try {
-    // Run database migrations first
-    await runMigrations();
-    console.log("Migrations completed successfully");
-    
-    // Apply session middleware only after migrations are done
-    app.use(sessionMiddleware);
-    
+    // Set up server and routes first, so it can run even if DB fails
     const server = await registerRoutes(app);
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -66,7 +73,7 @@ app.use((req, res, next) => {
       const message = err.message || "Internal Server Error";
 
       res.status(status).json({ message });
-      throw err;
+      console.error(err);
     });
 
     // importantly only setup vite in development and after
@@ -89,6 +96,18 @@ app.use((req, res, next) => {
     }, () => {
       log(`serving on port ${port}`);
     });
+    
+    // Try to run migrations, but continue even if database is unavailable
+    try {
+      console.log("Running database migrations...");
+      await runMigrations();
+      console.log("All migrations completed successfully");
+      isDatabaseAvailable = true;
+    } catch (dbError) {
+      console.error("Error running migrations:", dbError);
+      log("WARNING: Database is not available. The application will run with limited functionality.", "express");
+      // Don't exit, allow the app to run without database
+    }
   } catch (error) {
     console.error("Failed to start server:", error);
     process.exit(1);

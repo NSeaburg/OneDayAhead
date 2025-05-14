@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import ClaudeHelperPage from "@/pages/claude-helper";
+import ClaudeTestPage from "@/pages/claude-test";
 
 // Navigation component
 function Navigation() {
@@ -37,6 +38,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/claude-helper" component={ClaudeHelperPage} />
+        <Route path="/claude-test" component={ClaudeTestPage} />
         <Route component={NotFound} />
       </Switch>
     </div>
