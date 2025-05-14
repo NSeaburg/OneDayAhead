@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import ClaudeHelperPage from "@/pages/claude-helper";
 import ClaudeTestPage from "@/pages/claude-test";
+import ClaudeDocsPage from "@/pages/claude-docs";
 
 // Navigation component
 function Navigation() {
@@ -25,6 +26,16 @@ function Navigation() {
               <span className="hover:text-blue-300 transition-colors cursor-pointer">Claude Helper</span>
             </Link>
           </li>
+          <li>
+            <Link href="/claude-test">
+              <span className="hover:text-blue-300 transition-colors cursor-pointer">Claude Test</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/claude-docs">
+              <span className="hover:text-blue-300 transition-colors cursor-pointer">Documentation</span>
+            </Link>
+          </li>
         </ul>
       </div>
     </nav>
@@ -39,6 +50,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/claude-helper" component={ClaudeHelperPage} />
         <Route path="/claude-test" component={ClaudeTestPage} />
+        <Route path="/claude-docs" component={ClaudeDocsPage} />
         <Route component={NotFound} />
       </Switch>
     </div>
