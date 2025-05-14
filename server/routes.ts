@@ -155,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Special endpoint for the article assistant chat using Claude 3.7 Sonnet
+  // Special endpoint for the article assistant chat using Claude 3.7 Sonnet (non-streaming)
   app.post("/api/article-chat", async (req, res) => {
     try {
       const { messages } = req.body;
@@ -236,6 +236,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: 'article_chat_error',
         message: error.message || 'An error occurred with the article chat' 
       });
+    }
+  });
+  
+  // Streaming endpoint for the article assistant chat
+  app.post("/api/article-chat-stream", async (req, res) => {
+    try {
+      const { messages } = req.body;
+      
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ 
+          error: "Invalid message data. Expected an array of messages." 
+        });
+      }
+      
+      console.log("Article chat streaming endpoint activated");
+      
+      // Set up SSE headers
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      });
+      
+      // Generate a thread ID
+      const messageId = 'claude-article-' + Date.now();
+      
+      // Convert OpenAI-style messages to Anthropic format
+      const anthropicMessages = messages
+        .filter((msg: any) => msg.role !== 'system')
+        .map((msg: any) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
+      
+      try {
+        // Send the initial thread ID
+        res.write(`data: ${JSON.stringify({ threadId: messageId })}\n\n`);
+        
+        // Create a streaming response from Anthropic
+        const stream = await anthropic.messages.stream({
+          messages: anthropicMessages,
+          system: ARTICLE_ASSISTANT_SYSTEM_PROMPT,
+          model: "claude-3-7-sonnet-20250219",
+          max_tokens: 20000,
+          temperature: 1.0
+        });
+        
+        let fullContent = '';
+        
+        // Process the stream
+        for await (const chunk of stream) {
+          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+            const content = chunk.delta.text;
+            
+            if (content) {
+              fullContent += content;
+              // Send the content chunk to the client
+              res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            }
+          }
+        }
+        
+        // Store the conversation if we have a session ID
+        const sessionId = req.sessionId;
+        if (sessionId) {
+          try {
+            // Create a new conversation with the messages
+            const allMessages = [
+              ...anthropicMessages,
+              { role: 'assistant', content: fullContent }
+            ];
+            
+            // Store the conversation
+            await storage.createConversation({
+              sessionId,
+              threadId: messageId,
+              assistantType: 'article',
+              messages: allMessages
+            });
+            console.log(`Stored article conversation for session ${sessionId}, thread ${messageId}`);
+          } catch (err) {
+            console.error("Error storing article conversation:", err);
+            // Continue with response even if storage fails
+          }
+        }
+        
+        // Send the [DONE] event
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } catch (error: any) {
+        console.error('Error in article chat streaming:', error);
+        // Send error to the client
+        res.write(`data: ${JSON.stringify({ error: 'article_chat_error', message: error.message || 'Streaming error occurred' })}\n\n`);
+        res.end();
+      }
+    } catch (error: any) {
+      console.error('Error in article chat streaming endpoint:', error);
+      
+      // If headers weren't sent yet, send a regular error response
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          error: 'article_chat_error',
+          message: error.message || 'An error occurred with the article chat streaming' 
+        });
+      } else {
+        // Try to send error through stream if possible
+        try {
+          res.write(`data: ${JSON.stringify({ error: 'article_chat_error', message: error.message || 'Streaming error occurred' })}\n\n`);
+          res.end();
+        } catch (streamError) {
+          console.error('Failed to send error through stream:', streamError);
+          res.end();
+        }
+      }
     }
   });
   

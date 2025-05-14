@@ -26,7 +26,7 @@ export function useArticleChat(initialMessage?: string) {
     }
   }, [initialMessage]);
 
-  // Function to send a message to the article chat endpoint
+  // Function to send a message to the article chat endpoint with streaming
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
 
@@ -47,8 +47,12 @@ export function useArticleChat(initialMessage?: string) {
       setIsThinking(true);
       setStatus('loading');
       
-      // Make the request to our dedicated article chat endpoint
-      const response = await fetch('/api/article-chat', {
+      // Reset streaming state
+      setStreamContent('');
+      setIsStreaming(true);
+      
+      // Make the request to our dedicated article chat streaming endpoint
+      const response = await fetch('/api/article-chat-stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,16 +67,66 @@ export function useArticleChat(initialMessage?: string) {
         throw new Error(`API request failed with status ${response.status}`);
       }
       
-      const data = await response.json();
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Stream reader not available');
+      }
       
-      // Extract assistant response
+      let accumulatedContent = '';
+      let threadId = '';
+      
+      // Read from the stream
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          break;
+        }
+        
+        // Convert the Uint8Array to a string
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.trim() === '') continue;
+          
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            
+            if (data === '[DONE]') {
+              continue; // End of stream marker
+            }
+            
+            try {
+              const parsed = JSON.parse(data);
+              
+              if (parsed.content) {
+                accumulatedContent += parsed.content;
+                setStreamContent(accumulatedContent);
+              }
+              
+              if (parsed.threadId) {
+                threadId = parsed.threadId;
+              }
+            } catch (e) {
+              console.error('Error parsing streaming data:', e);
+            }
+          }
+        }
+      }
+      
+      // Streaming is done, update the messages with the complete response
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.choices[0].message.content,
+        content: accumulatedContent,
       };
       
-      // Add assistant message to the chat
+      // Add the complete message to the messages array
       setMessages(prev => [...prev, assistantMessage]);
+      
+      // Reset streaming states
+      setIsStreaming(false);
+      setStreamContent('');
       setIsThinking(false);
       setStatus('idle');
       
@@ -82,6 +136,7 @@ export function useArticleChat(initialMessage?: string) {
         console.error('Error sending message:', error);
         setStatus('error');
         setIsThinking(false);
+        setIsStreaming(false);
       }
     }
   }, [messages]);
