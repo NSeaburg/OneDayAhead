@@ -95,14 +95,17 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
 }
 
 /**
- * Cookie options for secure cookie settings in LMS environments
+ * Configure secure cookie settings for LMS environments
+ * This middleware sets the options for the cookie-parser and express-session middleware
  */
-export const cookieConfig = {
-  secure: isProduction, // HTTPS only in production
-  httpOnly: true, // Not accessible via JavaScript
-  sameSite: isProduction ? 'none' : 'lax', // Allow cross-site cookies in production for iframe embedding
-  maxAge: 24 * 60 * 60 * 1000, // 24 hours
-} as const;
+export function getSecureCookieConfig() {
+  return {
+    secure: isProduction, // HTTPS only in production
+    httpOnly: true, // Not accessible via JavaScript
+    sameSite: isProduction ? 'none' : 'lax', // Allow cross-site cookies in production for iframe embedding
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  };
+}
 
 /**
  * Data cleanup middleware - can be scheduled or used on specific routes

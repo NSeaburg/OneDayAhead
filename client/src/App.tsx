@@ -1,59 +1,17 @@
-import { Switch, Route, Link } from "wouter";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
-import ClaudeHelperPage from "@/pages/claude-helper";
-import ClaudeTestPage from "@/pages/claude-test";
-import ClaudeDocsPage from "@/pages/claude-docs";
-
-// Navigation component
-function Navigation() {
-  return (
-    <nav className="bg-slate-800 text-white p-4">
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="font-bold text-lg">Educational Platform</div>
-        <ul className="flex space-x-6">
-          <li>
-            <Link href="/">
-              <span className="hover:text-blue-300 transition-colors cursor-pointer">Home</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/claude-helper">
-              <span className="hover:text-blue-300 transition-colors cursor-pointer">Claude Helper</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/claude-test">
-              <span className="hover:text-blue-300 transition-colors cursor-pointer">Claude Test</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/claude-docs">
-              <span className="hover:text-blue-300 transition-colors cursor-pointer">Documentation</span>
-            </Link>
-          </li>
-        </ul>
-      </div>
-    </nav>
-  );
-}
 
 function Router() {
   return (
-    <div>
-      <Navigation />
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/claude-helper" component={ClaudeHelperPage} />
-        <Route path="/claude-test" component={ClaudeTestPage} />
-        <Route path="/claude-docs" component={ClaudeDocsPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </div>
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 

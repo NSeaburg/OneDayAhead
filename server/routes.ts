@@ -13,16 +13,9 @@ const openai = new OpenAI({
 });
 
 // Initialize Anthropic client
-// the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
-import anthropic, { 
-  summarizeArticle,
-  analyzeSentiment,
-  analyzeDifficulty,
-  evaluateResponse,
-  generateRecommendations,
-  explainConcept,
-  generateSystemPrompt
-} from "./anthropicClient";
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY
+});
 
 // Default Assistant IDs
 const DEFAULT_DISCUSSION_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
@@ -95,249 +88,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route to get the assistant IDs and LLM config
+  // Route to get the assistant IDs
   app.get("/api/assistant-config", (req, res) => {
-    // Check if Claude API key is available
-    const hasClaudeAccess = !!process.env.ANTHROPIC_API_KEY;
-    
     res.json({
       discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || "",
-      assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || "",
-      llmConfig: {
-        hasClaudeAccess,
-        defaultModel: hasClaudeAccess ? "claude-3-7-sonnet-20250219" : undefined,
-        preferredProvider: hasClaudeAccess ? "anthropic" : "openai"
-      }
+      assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || ""
     });
-  });
-  
-  // Route to check Claude API health
-  app.get("/api/claude/health", async (req, res) => {
-    try {
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return res.status(503).json({
-          status: "unavailable",
-          message: "Claude API key not configured"
-        });
-      }
-      
-      // Simple test call to Claude
-      const response = await anthropic.messages.create({
-        model: "claude-3-7-sonnet-20250219",
-        max_tokens: 10,
-        messages: [{ role: "user", content: "Respond with 'OK' and nothing else" }]
-      });
-      
-      const content = response.content.find(block => 
-        typeof block === 'object' && 'type' in block && block.type === 'text'
-      );
-      
-      let responseText = "";
-      if (content && typeof content === 'object' && 'text' in content) {
-        responseText = content.text.trim();
-      }
-      
-      return res.json({
-        status: "available",
-        model: "claude-3-7-sonnet-20250219",
-        response: responseText
-      });
-    } catch (error) {
-      console.error("Claude health check failed:", error);
-      return res.status(503).json({
-        status: "error",
-        message: error instanceof Error ? error.message : "Unknown error with Claude API"
-      });
-    }
-  });
-  
-  // Claude 3.7 Sonnet API endpoints
-  
-  // System prompt generation endpoint
-  app.post("/api/claude/generate-prompt", async (req, res) => {
-    try {
-      const { botType, articleContent, previousContext, studentLevel } = req.body;
-      
-      if (!botType) {
-        return res.status(400).json({ error: "Bot type is required" });
-      }
-      
-      const systemPrompt = await generateSystemPrompt({
-        botType,
-        articleContent,
-        previousContext,
-        studentLevel
-      });
-      
-      // Get the session ID from the request
-      const sessionId = req.sessionId;
-      
-      // Store the generated prompt in the database if session exists
-      if (sessionId) {
-        try {
-          // Create a conversation record for this generated prompt
-          await storage.createConversation({
-            sessionId,
-            threadId: `system-prompt-${botType}-${Date.now()}`,
-            assistantType: `system-prompt-generator`,
-            messages: [{ role: 'system', content: systemPrompt }]
-          });
-        } catch (dbError) {
-          console.error("Failed to store system prompt:", dbError);
-          // Continue even if storage fails
-        }
-      }
-      
-      return res.json({
-        success: true,
-        systemPrompt,
-        sessionId,
-        botType,
-        length: systemPrompt.length
-      });
-    } catch (error) {
-      console.error("Error generating system prompt:", error);
-      return res.status(500).json({ 
-        error: "Failed to generate system prompt",
-        message: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-  
-  // Direct Claude chat endpoint
-  app.post("/api/claude/chat", async (req, res) => {
-    try {
-      const { messages, systemPrompt, threadId } = req.body;
-      
-      if (!messages || !Array.isArray(messages) || messages.length === 0) {
-        return res.status(400).json({ error: "Messages are required and must be an array" });
-      }
-      
-      // Format messages for Claude
-      const formattedMessages = messages.map(msg => ({
-        role: msg.role === 'system' ? 'user' : msg.role,
-        content: msg.content
-      }));
-      
-      // Create or update conversation thread
-      const sessionId = req.sessionId;
-      let conversationId;
-      
-      if (sessionId && threadId) {
-        try {
-          // Get existing conversation if it exists
-          const existingConversation = await storage.getConversationByThreadId(threadId);
-          
-          if (existingConversation) {
-            // Update existing conversation
-            await storage.updateConversation(threadId, messages);
-            conversationId = existingConversation.id;
-          } else {
-            // Create new conversation
-            const newConversation = await storage.createConversation({
-              sessionId,
-              threadId,
-              assistantType: 'claude',
-              messages
-            });
-            conversationId = newConversation.id;
-          }
-        } catch (dbError) {
-          console.error("Error with conversation storage:", dbError);
-          // Continue even if storage operations fail
-        }
-      }
-      
-      // Call Claude API
-      const response = await anthropic.messages.create({
-        model: 'claude-3-7-sonnet-20250219',
-        max_tokens: 4000,
-        system: systemPrompt || undefined,
-        messages: formattedMessages
-      });
-      
-      // Extract response text
-      const assistantMessage = response.content.find(block => 
-        typeof block === 'object' && 'type' in block && block.type === 'text'
-      );
-      
-      let assistantContent = "";
-      if (assistantMessage && typeof assistantMessage === 'object' && 'text' in assistantMessage) {
-        assistantContent = assistantMessage.text;
-      }
-      
-      // Update conversation with assistant's response if we have session and thread
-      if (sessionId && threadId) {
-        try {
-          const updatedMessages = [...messages, { role: 'assistant', content: assistantContent }];
-          await storage.updateConversation(threadId, updatedMessages);
-        } catch (dbError) {
-          console.error("Error updating conversation:", dbError);
-          // Continue even if update fails
-        }
-      }
-      
-      return res.json({
-        success: true,
-        message: assistantContent,
-        threadId,
-        sessionId,
-        model: 'claude-3-7-sonnet-20250219'
-      });
-    } catch (error) {
-      console.error("Error in Claude chat:", error);
-      return res.status(500).json({
-        error: "Failed to get response from Claude",
-        message: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Text analysis endpoint
-  app.post("/api/claude/analyze", async (req, res) => {
-    try {
-      const { text, type } = req.body;
-      
-      if (!text) {
-        return res.status(400).json({ error: "Text is required" });
-      }
-      
-      let result;
-      
-      switch (type) {
-        case 'summary':
-          result = await summarizeArticle(text);
-          break;
-        case 'sentiment':
-          result = await analyzeSentiment(text);
-          break;
-        case 'difficulty':
-          result = await analyzeDifficulty(text);
-          break;
-        case 'explain':
-          result = await explainConcept(text, req.body.level || 'intermediate');
-          break;
-        default:
-          // Default to summary if no type specified
-          result = await summarizeArticle(text);
-      }
-      
-      // Get the session ID from the request
-      const sessionId = req.sessionId;
-      
-      // Return the result along with session ID if available
-      return res.json({
-        success: true,
-        result,
-        sessionId
-      });
-    } catch (error) {
-      console.error("Error with Claude 3.7 request:", error);
-      return res.status(500).json({ 
-        error: "Error processing request with Claude 3.7",
-        message: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
   });
   
   // Test route to get current session ID
@@ -1137,12 +893,7 @@ When the student has completed both activities, thank them warmly and end the co
         }
         
         // Create response object with session ID (prefer the one from N8N if valid)
-        const responseObject: { 
-          success: boolean; 
-          message: string; 
-          feedbackData: any; 
-          sessionId?: string; 
-        } = { 
+        const responseObject = { 
           success: true, 
           message: "Combined teaching and assessment data sent to N8N successfully",
           feedbackData // Include the feedback data in the response
