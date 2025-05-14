@@ -68,6 +68,8 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
     "img-src 'self' data: blob:",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
+    "media-src 'self' https://* http://*", // Allow media from all sources for videos and audio
+    "frame-src 'self' https://* http://*", // Allow iframes from all sources for embedded content
   ];
   
   // Set Content-Security-Policy header
