@@ -2,6 +2,9 @@
  * Global storage utility to manage shared data between components
  * This module provides a way to store and retrieve data without relying on window.__assessmentData
  * which has been unreliable for score data.
+ * 
+ * The storage is persisted to localStorage to ensure data survives page refreshes
+ * and navigation between screens.
  */
 
 // Define the storage types
@@ -19,11 +22,27 @@ interface GlobalStorage {
   feedbackData?: FeedbackData;
 }
 
-// Initialize the global storage
-const storage: GlobalStorage = {
-  assessmentMessages: [],
-  teachingMessages: []
+// Initialize the global storage with localStorage values if available
+const getInitialStorage = (): GlobalStorage => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = window.localStorage.getItem('learningAppGlobalStorage');
+      if (saved) {
+        console.log("🔴 Restored global storage from localStorage");
+        return JSON.parse(saved);
+      }
+    }
+  } catch (err) {
+    console.error("Error loading from localStorage:", err);
+  }
+  
+  return {
+    assessmentMessages: [],
+    teachingMessages: []
+  };
 };
+
+const storage: GlobalStorage = getInitialStorage();
 
 /**
  * Set feedback data values directly
@@ -51,6 +70,9 @@ export function setFeedbackData(data: FeedbackData) {
       window.__assessmentData.feedbackData = { ...storage.feedbackData };
     }
   }
+  
+  // Persist to localStorage
+  persistToLocalStorage();
   
   console.log("🔴 GLOBAL STORAGE - Feedback data set successfully. Current data:", storage.feedbackData);
 }
@@ -88,6 +110,9 @@ export function setAssessmentMessages(messages: any[]) {
       window.__assessmentData.messages = [...messages];
     }
   }
+  
+  // Persist to localStorage
+  persistToLocalStorage();
 }
 
 /**
@@ -100,6 +125,17 @@ export function getAssessmentMessages(): any[] {
 /**
  * Set teaching messages
  */
+// Save to localStorage helper
+const persistToLocalStorage = () => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('learningAppGlobalStorage', JSON.stringify(storage));
+    }
+  } catch (err) {
+    console.error("Failed to persist to localStorage:", err);
+  }
+};
+
 export function setTeachingMessages(messages: any[]) {
   console.log("🔴 GLOBAL STORAGE - setTeachingMessages called with", messages.length, "messages");
   
@@ -122,6 +158,9 @@ export function setTeachingMessages(messages: any[]) {
     console.log("🔴 GLOBAL STORAGE - window.__assessmentData updated with teaching messages:", 
                 window.__assessmentData.teachingMessages?.length || 0, "messages");
   }
+  
+  // Persist to localStorage
+  persistToLocalStorage();
   
   // Log the content of the first and last message for debugging
   if (messages.length > 0) {
@@ -183,6 +222,9 @@ export function setAssessmentThreadId(threadId: string) {
       window.__assessmentData.threadId = threadId;
     }
   }
+  
+  // Persist to localStorage
+  persistToLocalStorage();
 }
 
 /**
