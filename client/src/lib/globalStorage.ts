@@ -146,9 +146,26 @@ export function getTeachingMessages(): any[] {
     const windowMessages = window.__assessmentData?.teachingMessages || [];
     console.log("🔴 GLOBAL STORAGE - Fallback: getting", windowMessages.length, 
                 "teaching messages from window.__assessmentData");
+                
+    // Debug log to check if we have the messages here
+    if (windowMessages.length > 0) {
+      console.log("🔍 Teaching messages from globalStorage:", result);
+      console.log("🔍 Teaching messages from window.__assessmentData:", windowMessages);
+      console.log("🔍 Final teaching messages to display:", [...windowMessages]);
+    }
+    
     return [...windowMessages];
   }
   
+  // Additional debug logs
+  console.log("🔴 GLOBAL STORAGE - Stored teaching conversation:", result.length, "messages");
+  if (result.length > 0) {
+    console.log("🔴 GLOBAL STORAGE - Teaching messages content:", JSON.stringify(result));
+  }
+  
+  console.log("Stored teaching conversation in window object:", 
+              window.__assessmentData?.teachingMessages?.length || 0, "messages");
+              
   return [...result];
 }
 
