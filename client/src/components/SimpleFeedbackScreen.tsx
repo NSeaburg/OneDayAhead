@@ -79,26 +79,59 @@ export default function SimpleFeedbackScreen({
       }
     }
     
-    // Get messages for transcript display
+    // ASSESSMENT MESSAGES
+    // ------------------
     const assessmentMsgs = globalStorage.getAssessmentMessages() || 
                           window.__assessmentData?.messages || 
                           [];
     
+    console.log(`ASSESSMENT TRANSCRIPT: Found ${assessmentMsgs.length} messages`);
+    if (assessmentMsgs.length > 0) {
+      console.log("Assessment first message:", 
+        assessmentMsgs[0].role, 
+        assessmentMsgs[0].content.substring(0, 50) + "..."
+      );
+    }
+    
+    // TEACHING MESSAGES
+    // ----------------
     // For teaching messages, try multiple sources with detailed logging
     const globalTeachingMsgs = globalStorage.getTeachingMessages();
     const windowTeachingMsgs = window.__assessmentData?.teachingMessages;
     
-    console.log("🔍 Teaching messages from globalStorage:", globalTeachingMsgs);
-    console.log("🔍 Teaching messages from window.__assessmentData:", windowTeachingMsgs);
+    console.log("🔍 TEACHING SOURCES:");
+    console.log("- localStorage/globalStorage:", globalTeachingMsgs?.length || 0, "messages");
+    console.log("- window.__assessmentData:", windowTeachingMsgs?.length || 0, "messages");
     
-    // Use whichever source has messages (prioritize global storage)
-    const teachingMsgs = (globalTeachingMsgs && globalTeachingMsgs.length > 0) 
-      ? globalTeachingMsgs 
-      : (windowTeachingMsgs && windowTeachingMsgs.length > 0)
-        ? windowTeachingMsgs
-        : [];
+    // Create a deep clone of whichever source has messages (prioritize global storage)
+    let teachingMsgs = [];
     
-    console.log("🔍 Final teaching messages to display:", teachingMsgs);
+    if (globalTeachingMsgs && globalTeachingMsgs.length > 0) {
+      console.log("✅ Using teaching messages from globalStorage");
+      teachingMsgs = JSON.parse(JSON.stringify(globalTeachingMsgs));
+    } else if (windowTeachingMsgs && windowTeachingMsgs.length > 0) {
+      console.log("✅ Using teaching messages from window.__assessmentData");
+      teachingMsgs = JSON.parse(JSON.stringify(windowTeachingMsgs));
+    } else {
+      console.log("⚠️ No teaching messages found in any source");
+      
+      // Create a minimal fallback message for display if we have no real messages
+      // (this is just for display purposes in the transcript - not stored or used elsewhere)
+      teachingMsgs = [{
+        role: "assistant",
+        content: "Hello! I'm your specialized teaching assistant for this part of the learning journey."
+      }];
+    }
+    
+    console.log("🔍 TEACHING TRANSCRIPT: Final teaching messages to display:", 
+      teachingMsgs.length, "messages");
+    
+    if (teachingMsgs.length > 0) {
+      console.log("Teaching first message:", 
+        teachingMsgs[0].role, 
+        teachingMsgs[0].content.substring(0, 50) + "..."
+      );
+    }
     
     setAssessmentMessages(assessmentMsgs);
     setTeachingMessages(teachingMsgs);
@@ -305,49 +338,113 @@ export default function SimpleFeedbackScreen({
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Conversation Transcripts</h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Assessment Bot Conversation */}
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-            <h3 className="font-medium text-blue-800 mb-2">Assessment Conversation</h3>
-            <div className="max-h-80 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
-              {assessmentMessages.length > 0 ? (
-                <div className="space-y-3">
-                  {assessmentMessages.map((message, index) => (
-                    <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-blue-50' : 'bg-gray-50'}`}>
-                      <p className="text-xs font-semibold text-gray-600 mb-1">
-                        {message.role === 'assistant' ? 'Assessment Bot' : 'You'}:
-                      </p>
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">No assessment conversation data available</p>
-              )}
+        {/* If both transcripts are empty, show a more helpful message */}
+        {assessmentMessages.length === 0 && teachingMessages.length <= 1 ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <h3 className="font-semibold text-lg text-yellow-800 mb-3">Conversation History Not Available</h3>
+            <p className="text-yellow-700 mb-4">
+              The transcript of your conversations with Reginald Worthington III and your teaching assistant
+              couldn't be retrieved. This might happen if you're viewing this page directly without completing
+              the previous steps.
+            </p>
+            <Button
+              variant="outline"
+              className="text-yellow-700 border-yellow-400 hover:bg-yellow-100"
+              onClick={() => {
+                // Show localStorage data in console for debugging
+                console.log("DEBUG - localStorage: ", localStorage.getItem('learningAppGlobalStorage'));
+                console.log("DEBUG - window.__assessmentData: ", window.__assessmentData);
+                console.log("DEBUG - teachingMessages: ", teachingMessages);
+                console.log("DEBUG - assessmentMessages: ", assessmentMessages);
+                
+                alert("Storage information has been output to the console for debugging");
+              }}
+            >
+              Debug Info
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Assessment Bot Conversation */}
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+              <h3 className="font-medium text-blue-800 mb-2">Assessment Conversation with Reginald Worthington III</h3>
+              <div className="max-h-80 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
+                {assessmentMessages.length > 0 ? (
+                  <div className="space-y-3">
+                    {assessmentMessages.map((message, index) => {
+                      // Skip any empty or invalid messages
+                      if (!message || !message.content) {
+                        return null;
+                      }
+                      
+                      return (
+                        <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                          <p className="text-xs font-semibold text-gray-600 mb-1">
+                            {message.role === 'assistant' ? 'Reginald Worthington III' : 'You'}:
+                          </p>
+                          <div className="text-sm prose prose-sm max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No assessment conversation data available</p>
+                )}
+              </div>
+            </div>
+            
+            {/* Teaching Bot Conversation */}
+            <div className="bg-green-50 border border-green-100 rounded-lg p-4">
+              <h3 className="font-medium text-green-800 mb-2">Teaching Conversation</h3>
+              <div className="max-h-80 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
+                {teachingMessages.length > 0 ? (
+                  <div className="space-y-3">
+                    {teachingMessages.map((message, index) => {
+                      // Skip any empty or invalid messages
+                      if (!message || !message.content) {
+                        return null;
+                      }
+                      
+                      // Determine the correct display name
+                      let speakerName = "Teaching Assistant";
+                      if (message.role === 'assistant') {
+                        // Look for Mrs/Mr in the content to identify the teacher
+                        if (message.content.includes("Mrs. Parton")) {
+                          speakerName = "Mrs. Parton";
+                        } else if (message.content.includes("Mrs. Bannerman")) {
+                          speakerName = "Mrs. Bannerman";
+                        } else if (message.content.includes("Mr. Whitaker")) {
+                          speakerName = "Mr. Whitaker";
+                        }
+                      } else if (message.role === 'user') {
+                        speakerName = "You";
+                      }
+                      
+                      return (
+                        <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-green-50' : 'bg-gray-50'}`}>
+                          <p className="text-xs font-semibold text-gray-600 mb-1">
+                            {speakerName}:
+                          </p>
+                          <div className="text-sm prose prose-sm max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No teaching conversation data available</p>
+                )}
+              </div>
             </div>
           </div>
-          
-          {/* Teaching Bot Conversation */}
-          <div className="bg-green-50 border border-green-100 rounded-lg p-4">
-            <h3 className="font-medium text-green-800 mb-2">Teaching Conversation</h3>
-            <div className="max-h-80 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
-              {teachingMessages.length > 0 ? (
-                <div className="space-y-3">
-                  {teachingMessages.map((message, index) => (
-                    <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-green-50' : 'bg-gray-50'}`}>
-                      <p className="text-xs font-semibold text-gray-600 mb-1">
-                        {message.role === 'assistant' ? 'Teaching Assistant' : 'You'}:
-                      </p>
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">No teaching conversation data available</p>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
       
       {/* Back button */}
