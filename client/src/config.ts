@@ -1,7 +1,7 @@
 // App configuration
 export const config = {
   // Video screen configuration
-  videoUrl: "/refresh-video.html", // Using our custom refresh-video page to force thumbnail update
+  videoUrl: "https://www.youtube.com/embed/0lrjvIfJeKo?nocache=" + new Date().getTime(), // Direct YouTube URL with cache-busting
 
   // Article content
   articleContent: `
