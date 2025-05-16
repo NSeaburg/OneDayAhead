@@ -50,36 +50,45 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
  * Set security headers for LMS iframe embedding
  */
 export function securityHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Content Security Policy
-  const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Consider restricting this further in production
-    "connect-src 'self' https://* http://*", // More permissive for API connections
-    "frame-ancestors *", // Allow embedding from any origin (most permissive setting)
-    "img-src 'self' data: blob: https://* http://*",
-    "style-src 'self' 'unsafe-inline'",
-    "font-src 'self' data:",
-    "media-src 'self' https://* http://*", // Allow media from all sources for videos and audio
-    "frame-src 'self' https://* http://*", // Allow iframes from all sources for embedded content
-  ];
+  // Check if this is an iframe-specific route
+  const isIframeRoute = req.path === '/iframe-app' || req.path === '/embed';
   
-  // Set Content-Security-Policy header
-  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+  if (isIframeRoute) {
+    // For iframe routes, set very permissive headers
+    res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *");
+    
+    // Explicitly remove X-Frame-Options to allow iframe embedding
+    res.removeHeader('X-Frame-Options');
+  } else {
+    // For regular routes, use more standard security headers
+    // Content Security Policy with frame-ancestors * to allow embedding
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "connect-src 'self' https://* http://*",
+      "frame-ancestors *", // Allow embedding from any origin
+      "img-src 'self' data: blob: https://* http://*",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      "media-src 'self' https://* http://*",
+      "frame-src 'self' https://* http://*",
+    ];
+    
+    // Set Content-Security-Policy header
+    res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+    
+    // Additional security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    // Explicitly set X-Frame-Options to ALLOWALL for all routes
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+  }
   
-  // Additional security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  // Referrer policy - less restrictive for iframe embedding
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
   
-  // Removing X-Frame-Options as it can conflict with frame-ancestors in CSP
-  // and frame-ancestors is more modern and flexible
-  
-  // Prevent content type sniffing
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  
-  // Referrer policy
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // Feature policy
+  // Permissions policy - still restrictive for security
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   
   // Pass to next middleware
