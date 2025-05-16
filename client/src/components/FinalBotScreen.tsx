@@ -127,51 +127,167 @@ export default function FinalBotScreen({
     element.style.padding = '20px';
     element.style.fontFamily = 'Arial, sans-serif';
     
-    // Create HTML content for the PDF
-    element.innerHTML = `
-      <h1 style="color: #4F46E5; font-size: 24px; margin-bottom: 20px;">Learning Results - Three Branches of Government</h1>
-      
-      <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #2563EB; font-size: 18px; margin-bottom: 10px;">Overall Feedback</h2>
-        <p style="color: #374151; line-height: 1.6;">${feedbackData.summary}</p>
-      </div>
-      
-      <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-        <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
-          <h3 style="font-size: 16px; margin-bottom: 10px;">Content Knowledge</h3>
-          <p>Score: ${feedbackData.contentKnowledgeScore}/4</p>
-        </div>
-        
-        <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
-          <h3 style="font-size: 16px; margin-bottom: 10px;">Writing Quality</h3>
-          <p>Score: ${feedbackData.writingScore}/4</p>
-        </div>
-      </div>
-      
-      <div style="background-color: #FFFBEB; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #D97706; font-size: 18px; margin-bottom: 10px;">What's Next for You</h2>
-        <p style="color: #374151; line-height: 1.6;">${feedbackData.nextSteps}</p>
-      </div>
-      
-      <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px;">
-        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Three Branches of Government - Learning Content</h2>
-        <p><strong>Objective:</strong> Understand the three branches of government and how they work together.</p>
-        <p><strong>Grade:</strong> 7-9</p>
-        
-        <h3 style="margin-top: 15px;">Key Concepts</h3>
-        <ul>
-          <li><strong>Executive Branch:</strong> Enforces laws, led by the President.</li>
-          <li><strong>Legislative Branch:</strong> Makes laws, consisting of Congress (House and Senate).</li>
-          <li><strong>Judicial Branch:</strong> Interprets laws, with the Supreme Court at the top.</li>
-          <li><strong>Checks and Balances:</strong> System where each branch limits the power of the others.</li>
-          <li><strong>Separation of Powers:</strong> Division of government responsibilities into distinct branches.</li>
-        </ul>
-      </div>
-      
-      <p style="color: #6B7280; font-size: 12px; margin-top: 30px; text-align: center;">
-        Downloaded on ${new Date().toLocaleDateString()} - Learning Platform
-      </p>
-    `;
+    // Create heading
+    const heading = document.createElement('h1');
+    heading.style.color = '#4F46E5';
+    heading.style.fontSize = '24px';
+    heading.style.marginBottom = '20px';
+    heading.textContent = 'Learning Results - Three Branches of Government';
+    element.appendChild(heading);
+    
+    // Create overall feedback section
+    const feedbackSection = document.createElement('div');
+    feedbackSection.style.backgroundColor = '#EFF6FF';
+    feedbackSection.style.padding = '15px';
+    feedbackSection.style.borderRadius = '8px';
+    feedbackSection.style.marginBottom = '20px';
+    
+    const feedbackHeading = document.createElement('h2');
+    feedbackHeading.style.color = '#2563EB';
+    feedbackHeading.style.fontSize = '18px';
+    feedbackHeading.style.marginBottom = '10px';
+    feedbackHeading.textContent = 'Overall Feedback';
+    feedbackSection.appendChild(feedbackHeading);
+    
+    const feedbackContent = document.createElement('p');
+    feedbackContent.style.color = '#374151';
+    feedbackContent.style.lineHeight = '1.6';
+    feedbackContent.textContent = feedbackData.summary;
+    feedbackSection.appendChild(feedbackContent);
+    
+    element.appendChild(feedbackSection);
+    
+    // Create scores section
+    const scoresSection = document.createElement('div');
+    scoresSection.style.display = 'flex';
+    scoresSection.style.gap = '20px';
+    scoresSection.style.marginBottom = '20px';
+    
+    // Content knowledge score
+    const contentScoreDiv = document.createElement('div');
+    contentScoreDiv.style.flex = '1';
+    contentScoreDiv.style.padding = '15px';
+    contentScoreDiv.style.borderRadius = '8px';
+    contentScoreDiv.style.border = '1px solid #BFDBFE';
+    contentScoreDiv.style.backgroundColor = '#EFF6FF';
+    
+    const contentScoreHeading = document.createElement('h3');
+    contentScoreHeading.style.fontSize = '16px';
+    contentScoreHeading.style.marginBottom = '10px';
+    contentScoreHeading.textContent = 'Content Knowledge';
+    contentScoreDiv.appendChild(contentScoreHeading);
+    
+    const contentScorePara = document.createElement('p');
+    contentScorePara.textContent = `Score: ${feedbackData.contentKnowledgeScore}/4`;
+    contentScoreDiv.appendChild(contentScorePara);
+    
+    scoresSection.appendChild(contentScoreDiv);
+    
+    // Writing score
+    const writingScoreDiv = document.createElement('div');
+    writingScoreDiv.style.flex = '1';
+    writingScoreDiv.style.padding = '15px';
+    writingScoreDiv.style.borderRadius = '8px';
+    writingScoreDiv.style.border = '1px solid #BFDBFE';
+    writingScoreDiv.style.backgroundColor = '#EFF6FF';
+    
+    const writingScoreHeading = document.createElement('h3');
+    writingScoreHeading.style.fontSize = '16px';
+    writingScoreHeading.style.marginBottom = '10px';
+    writingScoreHeading.textContent = 'Writing Quality';
+    writingScoreDiv.appendChild(writingScoreHeading);
+    
+    const writingScorePara = document.createElement('p');
+    writingScorePara.textContent = `Score: ${feedbackData.writingScore}/4`;
+    writingScoreDiv.appendChild(writingScorePara);
+    
+    scoresSection.appendChild(writingScoreDiv);
+    element.appendChild(scoresSection);
+    
+    // Create next steps section
+    const nextStepsSection = document.createElement('div');
+    nextStepsSection.style.backgroundColor = '#FFFBEB';
+    nextStepsSection.style.padding = '15px';
+    nextStepsSection.style.borderRadius = '8px';
+    nextStepsSection.style.marginBottom = '20px';
+    
+    const nextStepsHeading = document.createElement('h2');
+    nextStepsHeading.style.color = '#D97706';
+    nextStepsHeading.style.fontSize = '18px';
+    nextStepsHeading.style.marginBottom = '10px';
+    nextStepsHeading.textContent = 'What\'s Next for You';
+    nextStepsSection.appendChild(nextStepsHeading);
+    
+    const nextStepsContent = document.createElement('p');
+    nextStepsContent.style.color = '#374151';
+    nextStepsContent.style.lineHeight = '1.6';
+    nextStepsContent.textContent = feedbackData.nextSteps;
+    nextStepsSection.appendChild(nextStepsContent);
+    
+    element.appendChild(nextStepsSection);
+    
+    // Create content section
+    const contentSection = document.createElement('div');
+    contentSection.style.backgroundColor = '#F3F4F6';
+    contentSection.style.padding = '15px';
+    contentSection.style.borderRadius = '8px';
+    
+    const contentHeading = document.createElement('h2');
+    contentHeading.style.color = '#4B5563';
+    contentHeading.style.fontSize = '18px';
+    contentHeading.style.marginBottom = '10px';
+    contentHeading.textContent = 'Three Branches of Government - Learning Content';
+    contentSection.appendChild(contentHeading);
+    
+    const objectivePara = document.createElement('p');
+    const objectiveStrong = document.createElement('strong');
+    objectiveStrong.textContent = 'Objective: ';
+    objectivePara.appendChild(objectiveStrong);
+    objectivePara.appendChild(document.createTextNode('Understand the three branches of government and how they work together.'));
+    contentSection.appendChild(objectivePara);
+    
+    const gradePara = document.createElement('p');
+    const gradeStrong = document.createElement('strong');
+    gradeStrong.textContent = 'Grade: ';
+    gradePara.appendChild(gradeStrong);
+    gradePara.appendChild(document.createTextNode('7-9'));
+    contentSection.appendChild(gradePara);
+    
+    const conceptsHeading = document.createElement('h3');
+    conceptsHeading.style.marginTop = '15px';
+    conceptsHeading.textContent = 'Key Concepts';
+    contentSection.appendChild(conceptsHeading);
+    
+    const conceptsList = document.createElement('ul');
+    
+    const concepts = [
+      { name: 'Executive Branch', desc: 'Enforces laws, led by the President.' },
+      { name: 'Legislative Branch', desc: 'Makes laws, consisting of Congress (House and Senate).' },
+      { name: 'Judicial Branch', desc: 'Interprets laws, with the Supreme Court at the top.' },
+      { name: 'Checks and Balances', desc: 'System where each branch limits the power of the others.' },
+      { name: 'Separation of Powers', desc: 'Division of government responsibilities into distinct branches.' }
+    ];
+    
+    concepts.forEach(concept => {
+      const li = document.createElement('li');
+      const strong = document.createElement('strong');
+      strong.textContent = `${concept.name}: `;
+      li.appendChild(strong);
+      li.appendChild(document.createTextNode(concept.desc));
+      conceptsList.appendChild(li);
+    });
+    
+    contentSection.appendChild(conceptsList);
+    element.appendChild(contentSection);
+    
+    // Create footer
+    const footer = document.createElement('p');
+    footer.style.color = '#6B7280';
+    footer.style.fontSize = '12px';
+    footer.style.marginTop = '30px';
+    footer.style.textAlign = 'center';
+    footer.textContent = `Downloaded on ${new Date().toLocaleDateString()} - Learning Platform`;
+    element.appendChild(footer);
     
     // Configure PDF options
     const options = {
