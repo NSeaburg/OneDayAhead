@@ -122,8 +122,11 @@ export default function ArticleChatScreen({
   }, []);
   
   useEffect(() => {
-    // Auto-scroll to latest message
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Auto-scroll chat container to latest message instead of the entire page
+    const messageContainer = messagesEndRef.current?.closest('.overflow-y-auto');
+    if (messageContainer) {
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
   }, [messages, currentStreamingMessage]);
 
   // Event handlers

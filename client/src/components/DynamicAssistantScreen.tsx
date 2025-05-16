@@ -141,9 +141,13 @@ export default function DynamicAssistantScreen({
     }
   }, [messages]);
   
-  // Scroll to bottom of messages when new messages appear or when typing
+  // Scroll chat container to bottom when new messages appear or when typing
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Get the parent container that has the overflow-y-auto class
+    const messageContainer = messagesEndRef.current?.closest('.overflow-y-auto');
+    if (messageContainer) {
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
   }, [messages, currentStreamingMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
