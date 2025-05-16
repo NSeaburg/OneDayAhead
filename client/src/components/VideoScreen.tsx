@@ -74,8 +74,10 @@ export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScree
   };
 
   // Add YouTube API parameters to the URL if it's a YouTube video
+  // Add cache-busting parameter for YouTube to force thumbnail refresh
+  const timestamp = new Date().getTime();
   const enhancedVideoUrl = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') 
-    ? videoUrl + (videoUrl.includes('?') ? '&' : '?') + 'enablejsapi=1&origin=' + window.location.origin
+    ? videoUrl + (videoUrl.includes('?') ? '&' : '?') + 'enablejsapi=1&origin=' + window.location.origin + '&nocache=' + timestamp
     : videoUrl;
 
   return (
