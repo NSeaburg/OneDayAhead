@@ -61,12 +61,12 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
     res.removeHeader('X-Frame-Options');
   } else {
     // For regular routes, use more standard security headers
-    // Content Security Policy with frame-ancestors * to allow embedding
+    // Content Security Policy with specific frame-ancestors to allow embedding
     const cspDirectives = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "connect-src 'self' https://* http://*",
-      "frame-ancestors *", // Allow embedding from any origin
+      "frame-ancestors 'self' https://onedayahead.replit.app", // Allow embedding from specific domain
       "img-src 'self' data: blob: https://* http://*",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
