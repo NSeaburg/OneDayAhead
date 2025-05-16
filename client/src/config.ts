@@ -1,7 +1,7 @@
 // App configuration
 export const config = {
   // Video screen configuration
-  videoUrl: "https://www.youtube.com/embed/0lrjvIfJeKo", // Updated video URL for Three Branches of Government
+  videoUrl: "https://www.youtube.com/embed/0lrjvIfJeKo?v=" + new Date().getTime(), // Cache-busting parameter to refresh thumbnail
 
   // Article content
   articleContent: `
