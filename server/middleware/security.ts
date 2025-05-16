@@ -29,27 +29,14 @@ const allowedLmsDomains = [
  * Set up CORS headers appropriate for LMS iframe embedding
  */
 export function corsMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Get the origin from the request headers
-  const origin = req.headers.origin;
+  // Always allow any origin for development purposes
+  const origin = req.headers.origin || '*';
   
-  // Check if the origin is allowed (wildcard handling)
-  if (origin) {
-    const isAllowed = allowedLmsDomains.some(allowedDomain => {
-      if (allowedDomain.includes('*')) {
-        const pattern = allowedDomain.replace('*.', '(.+\\.)').replace('*', '(.*)');
-        const regex = new RegExp(`^${pattern}$`);
-        return regex.test(origin);
-      }
-      return origin === allowedDomain;
-    });
-    
-    if (isAllowed) {
-      res.header('Access-Control-Allow-Origin', origin);
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    }
-  }
+  // Set permissive CORS headers for all requests
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
