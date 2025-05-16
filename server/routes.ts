@@ -37,6 +37,18 @@ console.log(`Article Assistant System Prompt Length: ${ARTICLE_ASSISTANT_SYSTEM_
 console.log(`Article Assistant System Prompt Preview: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.substring(0, 100)}...`);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Special route for iframe embedding with appropriate headers
+  app.get('/embed', (req, res) => {
+    // Set headers to allow embedding from any origin
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.header('X-Frame-Options', 'ALLOWALL');
+    res.header('Content-Security-Policy', "frame-ancestors *");
+    
+    // Serve the main app HTML but with these headers
+    res.sendFile('index.html', { root: './dist/client' });
+  });
   // Direct routes for embed and example HTML files
   app.get("/embed.html", (req, res) => {
     const embedPath = path.resolve(process.cwd(), "public", "embed.html");
