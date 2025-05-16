@@ -34,3 +34,8 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+# ── Allow only the marketing site to iframe this app ────────────────────────────
+[[deployment.responseHeaders]]
+path = "/*"
+name = "Content-Security-Policy"
+value = "frame-ancestors 'self' https://onedayahead.replit.app"
