@@ -125,10 +125,15 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
  * This middleware sets the options for the cookie-parser and express-session middleware
  */
 export function getSecureCookieConfig() {
+  // When allowing all domains, use more permissive cookie settings
+  const sameSiteSetting = allowedLmsDomains.includes('*') 
+    ? 'none' as const 
+    : (isProduction ? 'none' as const : 'lax' as const);
+  
   return {
     secure: isProduction, // HTTPS only in production
     httpOnly: true, // Not accessible via JavaScript
-    sameSite: isProduction ? 'none' as const : 'lax' as const, // TypeScript needs const assertion for literal types
+    sameSite: sameSiteSetting, // TypeScript needs const assertion for literal types
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
   };
 }

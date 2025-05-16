@@ -36,7 +36,7 @@ To embed this application in your website or LMS, use the following HTML:
 <body>
   <div class="app-container">
     <iframe 
-      src="https://your-replit-app-url.replit.app" 
+      src="https://cdfe8c71-15fd-4edb-a06c-d5f5777fa119.id.replit.dev" 
       allow="fullscreen; microphone; camera" 
       title="Interactive Learning Experience">
     </iframe>
@@ -45,9 +45,43 @@ To embed this application in your website or LMS, use the following HTML:
 </html>
 ```
 
-Replace `https://your-replit-app-url.replit.app` with your actual deployed application URL.
+Your application is deployed at `https://cdfe8c71-15fd-4edb-a06c-d5f5777fa119.id.replit.dev`. This is the URL to use when embedding the app in an iframe.
 
 ## Integration Options
+
+### Resizable Integration
+
+For a better user experience, you might want to allow users to resize the iframe. We've included a resizable example in `iframe_resizable_example.html` that you can adapt:
+
+```html
+<div class="controls">
+  <button onclick="resizeIframe('small')">Small</button>
+  <button onclick="resizeIframe('medium')">Medium</button>
+  <button onclick="resizeIframe('large')">Large</button>
+  <button onclick="resizeIframe('full')">Full Height</button>
+</div>
+
+<div class="iframe-container" id="iframe-container">
+  <iframe 
+    src="https://cdfe8c71-15fd-4edb-a06c-d5f5777fa119.id.replit.dev" 
+    allow="fullscreen; microphone; camera" 
+    title="Interactive Learning Experience"
+    id="learning-iframe">
+  </iframe>
+</div>
+
+<script>
+  function resizeIframe(size) {
+    const container = document.getElementById('iframe-container');
+    switch(size) {
+      case 'small': container.style.height = '400px'; break;
+      case 'medium': container.style.height = '600px'; break;
+      case 'large': container.style.height = '800px'; break;
+      case 'full': container.style.height = (window.innerHeight - 300) + 'px'; break;
+    }
+  }
+</script>
+```
 
 ### LMS-Specific Integration
 
@@ -63,7 +97,7 @@ This application is designed to work within popular Learning Management Systems:
 
 ```html
 <iframe 
-  src="https://your-replit-app-url.replit.app" 
+  src="https://cdfe8c71-15fd-4edb-a06c-d5f5777fa119.id.replit.dev" 
   width="100%" 
   height="600px" 
   allow="fullscreen; microphone; camera"

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resizable Embedded Learning Experience</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+    .header {
+      background-color: #2a6cb4;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-weight: bold;
+      font-size: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    .app-container {
+      width: 100%;
+      position: relative;
+      margin: 20px 0;
+      border: 1px solid #e3e3e3;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      transition: height 0.3s ease;
+    }
+    .iframe-container {
+      width: 100%;
+      height: 600px; /* Default height */
+      position: relative;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    button {
+      padding: 8px 15px;
+      background-color: #2a6cb4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #1e5695;
+    }
+    .instructions {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .footer {
+      margin-top: 30px;
+      padding: 15px 0;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      border-top: 1px solid #e3e3e3;
+    }
+    .size-indicator {
+      text-align: center;
+      margin: 5px 0;
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">LMS Platform Demo</div>
+    <div>Social Studies Module</div>
+  </div>
+  
+  <div class="container">
+    <h1>Three Branches of Government</h1>
+    
+    <div class="instructions">
+      <p><strong>Instructions:</strong> Use the buttons below to resize the learning module to suit your screen. The interactive module will guide you through an exploration of the three branches of government in the United States with personalized AI tutors.</p>
+    </div>
+    
+    <div class="controls">
+      <button onclick="resizeIframe('small')">Small</button>
+      <button onclick="resizeIframe('medium')">Medium</button>
+      <button onclick="resizeIframe('large')">Large</button>
+      <button onclick="resizeIframe('full')">Full Height</button>
+    </div>
+    
+    <div class="size-indicator" id="size-display">Current size: Medium (600px)</div>
+    
+    <div class="app-container">
+      <div class="iframe-container" id="iframe-container">
+        <iframe 
+          src="https://cdfe8c71-15fd-4edb-a06c-d5f5777fa119.id.replit.dev" 
+          allow="fullscreen; microphone; camera" 
+          title="Interactive Learning Experience"
+          id="learning-iframe">
+        </iframe>
+      </div>
+    </div>
+    
+    <div class="instructions">
+      <p><strong>Notes:</strong></p>
+      <ul>
+        <li>Your progress will be saved automatically.</li>
+        <li>You can resize this window as needed for better visibility.</li>
+        <li>If you encounter any issues, please refresh the page or contact technical support.</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer">
+    &copy; 2025 Learning Platform Demo. All rights reserved.
+  </div>
+
+  <script>
+    function resizeIframe(size) {
+      const container = document.getElementById('iframe-container');
+      const sizeDisplay = document.getElementById('size-display');
+      let height;
+      let sizeText;
+      
+      switch(size) {
+        case 'small':
+          height = 400;
+          sizeText = 'Small (400px)';
+          break;
+        case 'medium':
+          height = 600;
+          sizeText = 'Medium (600px)';
+          break;
+        case 'large':
+          height = 800;
+          sizeText = 'Large (800px)';
+          break;
+        case 'full':
+          height = window.innerHeight - 300; // Approximate full height with some padding
+          sizeText = `Full (${height}px)`;
+          break;
+        default:
+          height = 600;
+          sizeText = 'Medium (600px)';
+      }
+      
+      container.style.height = `${height}px`;
+      sizeDisplay.textContent = `Current size: ${sizeText}`;
+    }
+    
+    // Handle window resizing for "full" option
+    window.addEventListener('resize', function() {
+      const container = document.getElementById('iframe-container');
+      const sizeDisplay = document.getElementById('size-display');
+      
+      // Only adjust if already in full mode (height is close to window height)
+      if (parseInt(container.style.height) > window.innerHeight - 400) {
+        const newHeight = window.innerHeight - 300;
+        container.style.height = `${newHeight}px`;
+        sizeDisplay.textContent = `Current size: Full (${newHeight}px)`;
+      }
+    });
+  </script>
+</body>
+</html>
