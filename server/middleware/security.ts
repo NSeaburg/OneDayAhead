@@ -18,12 +18,7 @@ const allowedLmsDomains = [
   'https://*.brightspace.com',
   
   // Development/testing domains
-  'http://localhost:*', 
-  'https://*.replit.app',
-  
-  // Allow all domains for easier testing
-  // Note: In production, you might want to restrict this
-  '*'
+  ...(isProduction ? [] : ['http://localhost:*', 'https://*.replit.app']),
 ];
 
 /**
@@ -33,19 +28,8 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
   // Get the origin from the request headers
   const origin = req.headers.origin;
   
-  // Allow all origins for development/testing
-  if (allowedLmsDomains.includes('*')) {
-    if (origin) {
-      res.header('Access-Control-Allow-Origin', origin);
-    } else {
-      res.header('Access-Control-Allow-Origin', '*');
-    }
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  }
-  // Specific domain check if we're not allowing all origins
-  else if (origin) {
+  // Check if the origin is allowed (wildcard handling)
+  if (origin) {
     const isAllowed = allowedLmsDomains.some(allowedDomain => {
       if (allowedDomain.includes('*')) {
         const pattern = allowedDomain.replace('*.', '(.+\\.)').replace('*', '(.*)');
@@ -76,16 +60,11 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
  */
 export function securityHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
   // Content Security Policy
-  // If we're allowing all domains, set frame-ancestors to 'all'
-  const frameAncestorsValue = allowedLmsDomains.includes('*') 
-    ? "'*'" 
-    : allowedLmsDomains.join(' ');
-  
   const cspDirectives = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Consider restricting this further in production
     "connect-src 'self' https://api.anthropic.com",
-    `frame-ancestors ${frameAncestorsValue}`,
+    `frame-ancestors ${allowedLmsDomains.join(' ')}`,
     "img-src 'self' data: blob:",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
@@ -100,15 +79,12 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   
-  // For X-Frame-Options, we need to handle the '*' special case
-  if (allowedLmsDomains.includes('*')) {
-    // X-Frame-Options doesn't support wildcards, so we omit it when allowing all domains
-    // Modern browsers will use the CSP frame-ancestors directive instead
-  } else {
-    // Use specific domains
-    const frameAncestors = allowedLmsDomains.join(' ');
-    res.setHeader('X-Frame-Options', `ALLOW-FROM ${frameAncestors}`);
-  }
+  // Allow embedding in iframes from specified domains
+  const frameAncestors = allowedLmsDomains.join(' ');
+  res.setHeader('X-Frame-Options', `ALLOW-FROM ${frameAncestors}`);
+  
+  // Prevent content type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   
   // Referrer policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -125,15 +101,10 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
  * This middleware sets the options for the cookie-parser and express-session middleware
  */
 export function getSecureCookieConfig() {
-  // When allowing all domains, use more permissive cookie settings
-  const sameSiteSetting = allowedLmsDomains.includes('*') 
-    ? 'none' as const 
-    : (isProduction ? 'none' as const : 'lax' as const);
-  
   return {
     secure: isProduction, // HTTPS only in production
     httpOnly: true, // Not accessible via JavaScript
-    sameSite: sameSiteSetting, // TypeScript needs const assertion for literal types
+    sameSite: isProduction ? 'none' as const : 'lax' as const, // TypeScript needs const assertion for literal types
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
   };
 }
