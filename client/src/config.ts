@@ -1,7 +1,7 @@
 // App configuration
 export const config = {
   // Video screen configuration
-  videoUrl: "https://www.youtube.com/embed/0lrjvIfJeKo", // Direct YouTube embed URL
+  videoUrl: "/refresh-video.html", // Using our custom refresh-video page to force thumbnail update
 
   // Article content
   articleContent: `

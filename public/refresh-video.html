@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refreshed YouTube Video</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    .responsive-embed {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      height: 0;
+      overflow: hidden;
+      max-width: 100%;
+    }
+    .responsive-embed iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="responsive-embed">
+    <div id="youtube-container"></div>
+  </div>
+
+  <script>
+    // Generate a fresh timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    
+    // Create the iframe with a cache-busting parameter
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.youtube.com/embed/0lrjvIfJeKo?rel=0&version=${timestamp}`;
+    iframe.title = "YouTube video player";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    
+    // Add the iframe to the container
+    document.getElementById('youtube-container').appendChild(iframe);
+  </script>
+</body>
+</html>

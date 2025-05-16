@@ -1,6 +1,7 @@
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useEffect } from "react";
+import YouTubePlayer from "./YouTubePlayer";
 
 interface VideoScreenProps {
   videoUrl: string;
