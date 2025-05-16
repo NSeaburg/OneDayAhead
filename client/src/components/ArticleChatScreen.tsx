@@ -176,10 +176,11 @@ export default function ArticleChatScreen({
             </Button>
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]">
-            <div 
-              className="article-content"
-              dangerouslySetInnerHTML={{ __html: articleContent }}
-            />
+            <div className="article-content">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {articleContent}
+              </ReactMarkdown>
+            </div>
           </div>
         </motion.div>
         
