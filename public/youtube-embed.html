@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Embed</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    .responsive-embed {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      height: 0;
+      overflow: hidden;
+      max-width: 100%;
+    }
+    .responsive-embed iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="responsive-embed">
+    <!-- The YouTube iframe will be inserted here by JavaScript -->
+    <div id="youtube-container"></div>
+  </div>
+
+  <script>
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+      var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      var results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Get the video ID from the URL parameter
+    const videoId = getUrlParameter('v');
+    
+    // Get the current timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    
+    if (videoId) {
+      // Create the iframe with a cache-busting parameter
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube.com/embed/${videoId}?rel=0&t=${timestamp}`;
+      iframe.title = "YouTube video player";
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      
+      // Add the iframe to the container
+      document.getElementById('youtube-container').appendChild(iframe);
+    } else {
+      document.getElementById('youtube-container').innerHTML = '<p>No video ID provided</p>';
+    }
+  </script>
+</body>
+</html>
