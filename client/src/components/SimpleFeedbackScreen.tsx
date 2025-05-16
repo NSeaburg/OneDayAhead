@@ -182,65 +182,168 @@ export default function SimpleFeedbackScreen({
     element.style.padding = '20px';
     element.style.fontFamily = 'Arial, sans-serif';
     
-    // Format conversations for the PDF
+    // Format conversations for the PDF with sanitization
     const formatConversation = (messages: any[]) => {
       return messages.map((msg) => {
         const role = msg.role === 'assistant' ? 'Assistant' : 'Student';
         const bgColor = msg.role === 'assistant' ? '#F0F7FF' : '#F5F5F5';
-        return `
-          <div style="background-color: ${bgColor}; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-            <strong>${role}:</strong>
-            <p style="white-space: pre-wrap; margin-top: 5px;">${msg.content}</p>
-          </div>
-        `;
-      }).join('');
+        
+        // Create elements manually instead of using template strings
+        const container = document.createElement('div');
+        container.style.backgroundColor = bgColor;
+        container.style.padding = '10px';
+        container.style.borderRadius = '8px';
+        container.style.marginBottom = '10px';
+        
+        const roleElement = document.createElement('strong');
+        roleElement.textContent = `${role}:`;
+        container.appendChild(roleElement);
+        
+        const content = document.createElement('p');
+        content.style.whiteSpace = 'pre-wrap';
+        content.style.marginTop = '5px';
+        content.textContent = msg.content || '';
+        container.appendChild(content);
+        
+        return container;
+      });
     };
     
-    const assessmentConvHTML = formatConversation(assessmentMessages);
-    const teachingConvHTML = formatConversation(teachingMessages);
+    // Create elements using DOM APIs
+    const title = document.createElement('h1');
+    title.style.color = '#4F46E5';
+    title.style.fontSize = '24px';
+    title.style.marginBottom = '20px';
+    title.textContent = 'Learning Results - Three Branches of Government';
+    element.appendChild(title);
     
-    // Create PDF content
-    element.innerHTML = `
-      <h1 style="color: #4F46E5; font-size: 24px; margin-bottom: 20px;">Learning Results - Three Branches of Government</h1>
-      
-      <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #2563EB; font-size: 18px; margin-bottom: 10px;">Overall Feedback</h2>
-        <p style="color: #374151; line-height: 1.6;">${feedbackData.summary || 'No feedback summary available.'}</p>
-      </div>
-      
-      <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-        <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
-          <h3 style="font-size: 16px; margin-bottom: 10px;">Content Knowledge</h3>
-          <p>Score: ${feedbackData.contentKnowledgeScore || 0}/4</p>
-        </div>
-        
-        <div style="flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #BFDBFE; background-color: #EFF6FF;">
-          <h3 style="font-size: 16px; margin-bottom: 10px;">Writing Quality</h3>
-          <p>Score: ${feedbackData.writingScore || 0}/4</p>
-        </div>
-      </div>
-      
-      <div style="background-color: #FFFBEB; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #D97706; font-size: 18px; margin-bottom: 10px;">What's Next for You</h2>
-        <p style="color: #374151; line-height: 1.6;">${feedbackData.nextSteps || 'No next steps available.'}</p>
-      </div>
-      
-      <!-- Assessment Conversation Transcript -->
-      <div style="margin-bottom: 30px;">
-        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #E5E7EB; padding-bottom: 8px;">
-          Assessment Conversation Transcript
-        </h2>
-        ${assessmentConvHTML}
-      </div>
-      
-      <!-- Teaching Conversation Transcript -->
-      <div style="margin-bottom: 30px;">
-        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #E5E7EB; padding-bottom: 8px;">
-          Teaching Conversation Transcript
-        </h2>
-        ${teachingConvHTML}
-      </div>
-    `;
+    // Overall Feedback section
+    const feedbackSection = document.createElement('div');
+    feedbackSection.style.backgroundColor = '#EFF6FF';
+    feedbackSection.style.padding = '15px';
+    feedbackSection.style.borderRadius = '8px';
+    feedbackSection.style.marginBottom = '20px';
+    
+    const feedbackTitle = document.createElement('h2');
+    feedbackTitle.style.color = '#2563EB';
+    feedbackTitle.style.fontSize = '18px';
+    feedbackTitle.style.marginBottom = '10px';
+    feedbackTitle.textContent = 'Overall Feedback';
+    feedbackSection.appendChild(feedbackTitle);
+    
+    const feedbackContent = document.createElement('p');
+    feedbackContent.style.color = '#374151';
+    feedbackContent.style.lineHeight = '1.6';
+    feedbackContent.textContent = feedbackData.summary || 'No feedback summary available.';
+    feedbackSection.appendChild(feedbackContent);
+    element.appendChild(feedbackSection);
+    
+    // Scores section
+    const scoresContainer = document.createElement('div');
+    scoresContainer.style.display = 'flex';
+    scoresContainer.style.gap = '20px';
+    scoresContainer.style.marginBottom = '20px';
+    
+    // Content Knowledge score
+    const contentScoreDiv = document.createElement('div');
+    contentScoreDiv.style.flex = '1';
+    contentScoreDiv.style.padding = '15px';
+    contentScoreDiv.style.borderRadius = '8px';
+    contentScoreDiv.style.border = '1px solid #BFDBFE';
+    contentScoreDiv.style.backgroundColor = '#EFF6FF';
+    
+    const contentScoreTitle = document.createElement('h3');
+    contentScoreTitle.style.fontSize = '16px';
+    contentScoreTitle.style.marginBottom = '10px';
+    contentScoreTitle.textContent = 'Content Knowledge';
+    contentScoreDiv.appendChild(contentScoreTitle);
+    
+    const contentScoreP = document.createElement('p');
+    contentScoreP.textContent = `Score: ${feedbackData.contentKnowledgeScore || 0}/4`;
+    contentScoreDiv.appendChild(contentScoreP);
+    scoresContainer.appendChild(contentScoreDiv);
+    
+    // Writing score
+    const writingScoreDiv = document.createElement('div');
+    writingScoreDiv.style.flex = '1';
+    writingScoreDiv.style.padding = '15px';
+    writingScoreDiv.style.borderRadius = '8px';
+    writingScoreDiv.style.border = '1px solid #BFDBFE';
+    writingScoreDiv.style.backgroundColor = '#EFF6FF';
+    
+    const writingScoreTitle = document.createElement('h3');
+    writingScoreTitle.style.fontSize = '16px';
+    writingScoreTitle.style.marginBottom = '10px';
+    writingScoreTitle.textContent = 'Writing Quality';
+    writingScoreDiv.appendChild(writingScoreTitle);
+    
+    const writingScoreP = document.createElement('p');
+    writingScoreP.textContent = `Score: ${feedbackData.writingScore || 0}/4`;
+    writingScoreDiv.appendChild(writingScoreP);
+    scoresContainer.appendChild(writingScoreDiv);
+    
+    element.appendChild(scoresContainer);
+    
+    // Next Steps section
+    const nextStepsSection = document.createElement('div');
+    nextStepsSection.style.backgroundColor = '#FFFBEB';
+    nextStepsSection.style.padding = '15px';
+    nextStepsSection.style.borderRadius = '8px';
+    nextStepsSection.style.marginBottom = '20px';
+    
+    const nextStepsTitle = document.createElement('h2');
+    nextStepsTitle.style.color = '#D97706';
+    nextStepsTitle.style.fontSize = '18px';
+    nextStepsTitle.style.marginBottom = '10px';
+    nextStepsTitle.textContent = 'What\'s Next for You';
+    nextStepsSection.appendChild(nextStepsTitle);
+    
+    const nextStepsContent = document.createElement('p');
+    nextStepsContent.style.color = '#374151';
+    nextStepsContent.style.lineHeight = '1.6';
+    nextStepsContent.textContent = feedbackData.nextSteps || 'No next steps available.';
+    nextStepsSection.appendChild(nextStepsContent);
+    element.appendChild(nextStepsSection);
+    
+    // Assessment Conversation Transcript section
+    const assessmentSection = document.createElement('div');
+    assessmentSection.style.marginBottom = '30px';
+    
+    const assessmentTitle = document.createElement('h2');
+    assessmentTitle.style.color = '#4B5563';
+    assessmentTitle.style.fontSize = '18px';
+    assessmentTitle.style.marginBottom = '15px';
+    assessmentTitle.style.borderBottom = '1px solid #E5E7EB';
+    assessmentTitle.style.paddingBottom = '8px';
+    assessmentTitle.textContent = 'Assessment Conversation Transcript';
+    assessmentSection.appendChild(assessmentTitle);
+    
+    // Add each message to assessment section
+    formatConversation(assessmentMessages).forEach(node => {
+      assessmentSection.appendChild(node);
+    });
+    
+    element.appendChild(assessmentSection);
+    
+    // Teaching Conversation Transcript section
+    const teachingSection = document.createElement('div');
+    teachingSection.style.marginBottom = '30px';
+    
+    const teachingTitle = document.createElement('h2');
+    teachingTitle.style.color = '#4B5563';
+    teachingTitle.style.fontSize = '18px';
+    teachingTitle.style.marginBottom = '15px';
+    teachingTitle.style.borderBottom = '1px solid #E5E7EB';
+    teachingTitle.style.paddingBottom = '8px';
+    teachingTitle.textContent = 'Teaching Conversation Transcript';
+    teachingSection.appendChild(teachingTitle);
+    
+    // Add each message to teaching section
+    formatConversation(teachingMessages).forEach(node => {
+      teachingSection.appendChild(node);
+    });
+    
+    element.appendChild(teachingSection);
     
     // Configure PDF options
     const options = {
