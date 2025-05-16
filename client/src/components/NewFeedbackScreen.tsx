@@ -9,6 +9,7 @@ import html2pdf from 'html2pdf.js';
 import { notifyCourseCompleted } from "@/lib/embedding";
 import { Message } from "@/lib/openai";
 import globalStorage from "@/lib/globalStorage";
+import DOMPurify from 'dompurify';
 
 // Using global interface from types.d.ts
 
@@ -251,15 +252,17 @@ export default function NewFeedbackScreen({
                         window.__assessmentData?.teachingMessages || 
                         [];
 
-    // Format conversations for the PDF
+    // Format conversations for the PDF with sanitization
     const formatConversation = (messages: any[]) => {
       return messages.map((msg, index) => {
         const role = msg.role === 'assistant' ? 'Assistant' : 'Student';
         const bgColor = msg.role === 'assistant' ? '#F0F7FF' : '#F5F5F5';
+        // Sanitize message content to prevent XSS
+        const safeContent = DOMPurify.sanitize(msg.content || '');
         return `
           <div style="background-color: ${bgColor}; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
             <strong>${role}:</strong>
-            <p style="white-space: pre-wrap; margin-top: 5px;">${msg.content}</p>
+            <p style="white-space: pre-wrap; margin-top: 5px;">${safeContent}</p>
           </div>
         `;
       }).join('');
@@ -268,13 +271,17 @@ export default function NewFeedbackScreen({
     const assessmentConvHTML = formatConversation(assessmentConv);
     const teachingConvHTML = formatConversation(teachingConv);
     
-    // Create HTML content for the PDF
-    element.innerHTML = `
+    // Sanitize feedback data
+    const safeSummary = DOMPurify.sanitize(feedbackData.summary || '');
+    const safeNextSteps = DOMPurify.sanitize(feedbackData.nextSteps || '');
+    
+    // Create HTML template
+    const htmlTemplate = `
       <h1 style="color: #4F46E5; font-size: 24px; margin-bottom: 20px;">Learning Results - Three Branches of Government</h1>
       
       <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h2 style="color: #2563EB; font-size: 18px; margin-bottom: 10px;">Overall Feedback</h2>
-        <p style="color: #374151; line-height: 1.6;">${feedbackData.summary}</p>
+        <p style="color: #374151; line-height: 1.6;">${safeSummary}</p>
       </div>
       
       <div style="display: flex; gap: 20px; margin-bottom: 20px;">
@@ -295,7 +302,7 @@ export default function NewFeedbackScreen({
       
       <div style="background-color: #FFFBEB; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h2 style="color: #D97706; font-size: 18px; margin-bottom: 10px;">What's Next for You</h2>
-        <p style="color: #374151; line-height: 1.6;">${feedbackData.nextSteps}</p>
+        <p style="color: #374151; line-height: 1.6;">${safeNextSteps}</p>
       </div>
       
       <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
@@ -332,6 +339,9 @@ export default function NewFeedbackScreen({
         Downloaded on ${new Date().toLocaleDateString()} - Learning Platform
       </p>
     `;
+    
+    // Set sanitized HTML content to the element
+    element.innerHTML = DOMPurify.sanitize(htmlTemplate);
     
     // Configure PDF options
     const options = {
