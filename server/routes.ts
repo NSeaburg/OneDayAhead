@@ -81,6 +81,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Routes for embedding guides and templates
+  app.get("/embed-guide", (req, res) => {
+    res.sendFile("embed-guide.html", { root: './public' });
+  });
+  
+  app.get("/embed-template.html", (req, res) => {
+    res.sendFile("embed-template.html", { root: './public' });
+  });
+  
+  app.get("/proxy.html", (req, res) => {
+    res.sendFile("proxy.html", { root: './public' });
+  });
+  
   // Route to proxy PDF from Google Drive to bypass CORS restrictions
   app.get("/api/pdf-proxy", async (req, res) => {
     try {
