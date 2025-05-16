@@ -18,7 +18,11 @@ const allowedLmsDomains = [
   'https://*.brightspace.com',
   
   // Development/testing domains
-  ...(isProduction ? [] : ['http://localhost:*', 'https://*.replit.app']),
+  'http://localhost:*', 
+  'https://*.replit.app',
+  
+  // Allow embedding from any origin in development
+  ...(isProduction ? [] : ['*']),
 ];
 
 /**
@@ -63,11 +67,11 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   const cspDirectives = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Consider restricting this further in production
-    "connect-src 'self' https://api.anthropic.com",
-    `frame-ancestors ${allowedLmsDomains.join(' ')}`,
-    "img-src 'self' data: blob:",
+    "connect-src 'self' https://* http://*", // More permissive for API connections
+    "frame-ancestors *", // Allow embedding from any origin (most permissive setting)
+    "img-src 'self' data: blob: https://* http://*",
     "style-src 'self' 'unsafe-inline'",
-    "font-src 'self'",
+    "font-src 'self' data:",
     "media-src 'self' https://* http://*", // Allow media from all sources for videos and audio
     "frame-src 'self' https://* http://*", // Allow iframes from all sources for embedded content
   ];
@@ -79,9 +83,8 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   
-  // Allow embedding in iframes from specified domains
-  const frameAncestors = allowedLmsDomains.join(' ');
-  res.setHeader('X-Frame-Options', `ALLOW-FROM ${frameAncestors}`);
+  // Removing X-Frame-Options as it can conflict with frame-ancestors in CSP
+  // and frame-ancestors is more modern and flexible
   
   // Prevent content type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
