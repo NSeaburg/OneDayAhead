@@ -85,15 +85,28 @@ export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScree
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Social Studies Sample</h1>
       <div className="flex-grow flex flex-col">
         <div className="relative w-full h-0 pb-[56.25%] md:pb-[56.25%] bg-gray-100 rounded-lg overflow-hidden mb-6">
-          <iframe 
-            ref={iframeRef}
-            className="absolute inset-0 w-full h-full"
-            src={enhancedVideoUrl}
-            title="The Three Branches of Government"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowFullScreen
-          />
+          {videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') ? (
+            // Extract YouTube video ID from URL
+            <YouTubePlayer 
+              videoId={videoUrl.includes('embed/') 
+                ? videoUrl.split('embed/')[1].split('?')[0] 
+                : videoUrl.includes('youtu.be/') 
+                  ? videoUrl.split('youtu.be/')[1].split('?')[0]
+                  : videoUrl.includes('v=') 
+                    ? videoUrl.split('v=')[1].split('&')[0] 
+                    : ''}
+            />
+          ) : (
+            <iframe 
+              ref={iframeRef}
+              className="absolute inset-0 w-full h-full"
+              src={enhancedVideoUrl}
+              title="The Three Branches of Government"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen
+            />
+          )}
         </div>
         <div className="mt-auto flex justify-between">
           {onPrevious ? (
