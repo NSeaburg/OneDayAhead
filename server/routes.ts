@@ -43,8 +43,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
-    res.header('X-Frame-Options', 'ALLOWALL');
-    res.header('Content-Security-Policy', "frame-ancestors *");
+    res.removeHeader('X-Frame-Options');
+    res.header('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *");
+    
+    // Serve the iframe-specific HTML
+    res.sendFile('iframe.html', { root: './public' });
+  });
+  
+  // Direct access to application in iframe-friendly mode
+  app.get('/iframe-app', (req, res) => {
+    // Set headers to allow embedding from any origin
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.removeHeader('X-Frame-Options');
+    res.header('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *");
     
     // Serve the main app HTML but with these headers
     res.sendFile('index.html', { root: './dist/client' });
