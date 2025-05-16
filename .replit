@@ -38,4 +38,4 @@ waitForPort = 5000
 [[deployment.responseHeaders]]
 path = "/*"
 name = "Content-Security-Policy"
-value = "frame-ancestors 'self' https://onedayahead.replit.app"
+value = "frame-ancestors 'self' https://onedayahead.replit.app https://replit.com"
