@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import html2pdf from 'html2pdf.js';
 import { motion, AnimatePresence } from "framer-motion";
 import { Message } from "@/lib/openai";
+import DOMPurify from 'dompurify';
 
 // Constants
 const PULSE_DURATION = 5000;
@@ -176,11 +177,10 @@ export default function ArticleChatScreen({
             </Button>
           </div>
           <div className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]">
-            <div className="article-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {articleContent}
-              </ReactMarkdown>
-            </div>
+            <div 
+              className="article-content"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(articleContent) }}
+            />
           </div>
         </motion.div>
         
