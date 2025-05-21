@@ -8,18 +8,18 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run   = ["npm", "run", "start"]
+run = ["npm", "run", "start"]
 
 [[ports]]
-localPort    = 5000
+localPort = 5000
 externalPort = 80
 
 [workflows]
 runButton = "Start application"
 
 [[workflows.workflow]]
-name  = "Project"
-mode  = "parallel"
+name = "Project"
+mode = "parallel"
 author = "agent"
 
 [[workflows.workflow.tasks]]
@@ -27,16 +27,16 @@ task = "workflow.run"
 args = "Start application"
 
 [[workflows.workflow]]
-name   = "Start application"
+name = "Start application"
 author = "agent"
 
 [[workflows.workflow.tasks]]
-task        = "shell.exec"
-args        = "npm run dev"
+task = "shell.exec"
+args = "npm run dev"
 waitForPort = 5000
 
 # ── Allow listed sites to iframe this app ──────────────────────────────────────
 [[deployment.responseHeaders]]
-path  = "/*"
-name  = "Content-Security-Policy"
-value = "frame-ancestors 'self' https://onedayahead.replit.app https://ai.onedayahead.com https://replit.com"
+path = "/*"
+name = "Content-Security-Policy"
+value = "frame-ancestors 'self' https://onedayahead.replit.app https://ai.onedayahead.com https://replit.com http://onedayahead.com"
