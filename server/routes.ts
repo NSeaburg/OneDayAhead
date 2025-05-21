@@ -59,8 +59,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.removeHeader('X-Frame-Options');
     res.header('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *");
     
-    // Serve the main app HTML but with these headers
-    res.sendFile('index.html', { root: './client' });
+    // Serve the iframe entry HTML
+    res.sendFile('iframe-entry.html', { root: './public' });
   });
   // Direct routes for embed and example HTML files
   app.get("/embed.html", (req, res) => {

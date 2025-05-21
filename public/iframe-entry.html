@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Three Branches of Government - Interactive Learning</title>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      #app-container {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe 
+      id="app-container" 
+      src="/" 
+      title="Three Branches of Government Interactive Learning"
+      allow="microphone; camera"
+    ></iframe>
+    <script>
+      // Enable communication between the iframe and parent window
+      window.addEventListener('message', function(event) {
+        // Forward any messages from the app to the parent window
+        if (event.data && event.source === document.getElementById('app-container').contentWindow) {
+          window.parent.postMessage(event.data, '*');
+        }
+      });
+    </script>
+  </body>
+</html>
