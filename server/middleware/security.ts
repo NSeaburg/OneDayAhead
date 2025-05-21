@@ -21,6 +21,10 @@ const allowedLmsDomains = [
   'http://localhost:*', 
   'https://*.replit.app',
   
+  // Specific domains we're embedding on
+  'https://ai.onedayahead.com',
+  'https://*.onedayahead.com',
+  
   // Allow embedding from any origin in development
   ...(isProduction ? [] : ['*']),
 ];

@@ -11,26 +11,108 @@
         height: 100%;
         width: 100%;
         overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
-      #app-container {
-        width: 100%;
+      .container {
         height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .learning-app {
+        height: 100%;
+        width: 100%;
         border: none;
+        flex-grow: 1;
+      }
+      .loading-message {
+        display: none;
+        text-align: center;
+        padding: 40px;
+      }
+      .error-message {
+        display: none;
+        text-align: center;
+        padding: 40px;
+        color: #e53e3e;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 20px;
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: #4f46e5;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
       }
     </style>
   </head>
   <body>
-    <iframe 
-      id="app-container" 
-      src="/" 
-      title="Three Branches of Government Interactive Learning"
-      allow="microphone; camera"
-    ></iframe>
+    <div class="container">
+      <iframe 
+        id="learning-app" 
+        class="learning-app"
+        src="/" 
+        title="Three Branches of Government Interactive Learning"
+        allow="microphone; camera"
+        crossorigin="anonymous"
+      ></iframe>
+      
+      <div id="loading-message" class="loading-message">
+        <div class="spinner"></div>
+        <h2>Loading interactive learning experience...</h2>
+        <p>Please wait while we prepare your learning materials.</p>
+      </div>
+      
+      <div id="error-message" class="error-message">
+        <h2>Connection Issue</h2>
+        <p>We're having trouble connecting to the learning platform.</p>
+        <p>Please try refreshing the page or visit again later.</p>
+      </div>
+    </div>
+    
     <script>
-      // Enable communication between the iframe and parent window
+      const iframe = document.getElementById('learning-app');
+      const loadingMessage = document.getElementById('loading-message');
+      const errorMessage = document.getElementById('error-message');
+      
+      // Show loading message initially
+      iframe.style.display = 'none';
+      loadingMessage.style.display = 'block';
+      
+      // Handle successful load
+      iframe.addEventListener('load', function() {
+        // Hide loading message and show iframe
+        loadingMessage.style.display = 'none';
+        iframe.style.display = 'block';
+      });
+      
+      // Handle errors
+      iframe.addEventListener('error', function() {
+        handleError();
+      });
+      
+      // Timeout for slow connections
+      setTimeout(function() {
+        // If iframe is still not visible, show error
+        if (iframe.style.display === 'none') {
+          handleError();
+        }
+      }, 10000);
+      
+      function handleError() {
+        loadingMessage.style.display = 'none';
+        errorMessage.style.display = 'block';
+        iframe.style.display = 'none';
+      }
+      
+      // Message forwarding
       window.addEventListener('message', function(event) {
-        // Forward any messages from the app to the parent window
-        if (event.data && event.source === document.getElementById('app-container').contentWindow) {
+        // Forward messages from the app to the parent window
+        if (event.data && event.source === iframe.contentWindow) {
           window.parent.postMessage(event.data, '*');
         }
       });
