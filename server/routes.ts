@@ -60,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *");
     
     // Serve the main app HTML but with these headers
-    res.sendFile('index.html', { root: './dist/client' });
+    res.sendFile('index.html', { root: './client' });
   });
   // Direct routes for embed and example HTML files
   app.get("/embed.html", (req, res) => {
