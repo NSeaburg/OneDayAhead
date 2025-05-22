@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Three Branches of Government - Interactive Learning</title>
+    <!-- Security headers for embedding -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *.onedayahead.com">
     <style>
       body, html {
         margin: 0;
@@ -17,17 +19,6 @@
         flex-direction: column;
         height: 100vh;
         width: 100%;
-      }
-      .header {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
-        text-align: center;
-      }
-      h1 {
-        margin: 0;
-        font-size: 1.5rem;
-        color: #4f46e5;
       }
       .main-content {
         flex: 1;
@@ -97,6 +88,17 @@
       const iframe = document.getElementById('learning-app');
       const loading = document.getElementById('loading');
       
+      // Determine if we're on demo.onedayahead.com or another domain
+      const currentHost = window.location.hostname;
+      
+      // Set the iframe source based on hosting environment
+      if (currentHost === 'demo.onedayahead.com') {
+        iframe.src = '/'; // Use relative path on our domain
+      } else {
+        // When embedded elsewhere, use the full URL to demo.onedayahead.com
+        iframe.src = 'https://demo.onedayahead.com/';
+      }
+      
       // Hide loading when iframe is loaded
       iframe.addEventListener('load', function() {
         setTimeout(function() {
@@ -138,13 +140,22 @@
         }
       }, 10000);
       
-      // Forward messages from iframe to parent
+      // Enable cross-domain communication
       window.addEventListener('message', function(event) {
-        if (event.source === iframe.contentWindow) {
-          // Forward to parent window
+        // Check origin for security - only allow messages from our domains
+        const allowedOrigins = [
+          'https://demo.onedayahead.com',
+          'https://ai.onedayahead.com'
+        ];
+        
+        if (allowedOrigins.includes(event.origin) && event.source === iframe.contentWindow) {
+          // Forward the message to parent with the same data
           window.parent.postMessage(event.data, '*');
         }
       });
+      
+      // Let parent know we're ready
+      window.parent.postMessage({type: 'EMBED_READY', status: 'loaded'}, '*');
     </script>
   </body>
 </html>

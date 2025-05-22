@@ -23,6 +23,7 @@ const allowedLmsDomains = [
   
   // Specific domains we're embedding on
   'https://ai.onedayahead.com',
+  'https://demo.onedayahead.com',
   'https://*.onedayahead.com',
   
   // Allow embedding from any origin in development
@@ -55,7 +56,7 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
  */
 export function securityHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
   // Check if this is an iframe-specific route
-  const isIframeRoute = req.path === '/iframe-app' || req.path === '/embed';
+  const isIframeRoute = req.path === '/iframe-app' || req.path === '/embed' || req.path === '/embed-direct';
   
   if (isIframeRoute) {
     // For iframe routes, set very permissive headers
@@ -70,7 +71,7 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "connect-src 'self' https://* http://*",
-      "frame-ancestors 'self' https://onedayahead.replit.app", // Allow embedding from specific domain
+      "frame-ancestors 'self' https://*.onedayahead.com https://*.replit.app", // Allow embedding from specific domains
       "img-src 'self' data: blob: https://* http://*",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
