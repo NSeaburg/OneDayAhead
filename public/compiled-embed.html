@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Three Branches of Government - Learning Experience</title>
+    <!-- Security headers for embedding -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *.onedayahead.com">
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f8fafc;
+        color: #1e293b;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .header {
+        padding: 16px;
+        background-color: #4f46e5;
+        color: white;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: white;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        overflow: hidden;
+      }
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+      }
+      .message {
+        margin-bottom: 20px;
+        display: flex;
+      }
+      .message.user {
+        justify-content: flex-end;
+      }
+      .message-content {
+        padding: 12px 16px;
+        border-radius: 8px;
+        max-width: 80%;
+      }
+      .message.assistant .message-content {
+        background-color: #f1f5f9;
+      }
+      .message.user .message-content {
+        background-color: #4f46e5;
+        color: white;
+      }
+      .input-area {
+        padding: 16px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+      }
+      .input-field {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+        resize: none;
+        outline: none;
+        min-height: 48px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .input-field:focus {
+        border-color: #4f46e5;
+      }
+      .send-button {
+        margin-left: 8px;
+        padding: 0 20px;
+        background-color: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .send-button:hover {
+        background-color: #4338ca;
+      }
+      .send-button:disabled {
+        background-color: #c7d2fe;
+        cursor: not-allowed;
+      }
+      .loading-indicator {
+        display: inline-block;
+        margin-left: 8px;
+      }
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #cbd5e1;
+        margin-right: 4px;
+        animation: dot-pulse 1.5s infinite ease-in-out;
+      }
+      .dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes dot-pulse {
+        0%, 100% { transform: scale(0.8); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>Three Branches of Government</h1>
+      </header>
+      
+      <div class="chat-container">
+        <div id="messages" class="messages">
+          <!-- Messages will be added here dynamically -->
+        </div>
+        
+        <div class="input-area">
+          <textarea 
+            id="userInput" 
+            class="input-field" 
+            placeholder="Type your message here..." 
+            rows="1"></textarea>
+          <button id="sendButton" class="send-button">Send</button>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      // Elements
+      const messagesContainer = document.getElementById('messages');
+      const userInput = document.getElementById('userInput');
+      const sendButton = document.getElementById('sendButton');
+      
+      // Auto-resize textarea
+      userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+      
+      // Initial message
+      addMessage('assistant', 'Hello! I\'m your learning assistant for the Three Branches of Government. How can I help you today?');
+      
+      // Create information about the three branches
+      const branchInfo = {
+        executive: {
+          name: "Executive Branch",
+          description: "The Executive Branch is headed by the President and is responsible for enforcing laws. The President serves as Commander in Chief of the armed forces, can veto bills, and appoints Supreme Court justices and federal judges (with Senate approval).",
+          powers: [
+            "Enforces federal laws",
+            "Commands the military",
+            "Conducts foreign policy",
+            "Appoints federal officials",
+            "Can veto legislation"
+          ],
+          checks: [
+            "Laws are passed by Congress",
+            "Appointments require Senate approval",
+            "Congress can override vetoes with 2/3 majority",
+            "Supreme Court can declare executive actions unconstitutional",
+            "Congress can impeach and remove the President"
+          ]
+        },
+        legislative: {
+          name: "Legislative Branch",
+          description: "The Legislative Branch consists of Congress (the Senate and House of Representatives) and is responsible for making laws. They can override Presidential vetoes with a 2/3 majority vote, approve federal judges, and can impeach federal officials.",
+          powers: [
+            "Makes federal laws",
+            "Controls federal spending and taxes",
+            "Declares war",
+            "Approves treaties and presidential appointments",
+            "Can impeach federal officials"
+          ],
+          checks: [
+            "President can veto legislation",
+            "Supreme Court can declare laws unconstitutional",
+            "President can call special sessions of Congress",
+            "President serves as Commander in Chief of military",
+            "President conducts day-to-day foreign policy"
+          ]
+        },
+        judicial: {
+          name: "Judicial Branch",
+          description: "The Judicial Branch includes the Supreme Court and federal courts. They interpret laws, determine if laws are constitutional, and can overturn laws they deem unconstitutional. Supreme Court justices are appointed for life by the President and confirmed by the Senate.",
+          powers: [
+            "Interprets federal laws",
+            "Reviews laws for constitutionality",
+            "Resolves disputes between states",
+            "Protects civil rights and liberties",
+            "Serves as the final court of appeal"
+          ],
+          checks: [
+            "Judges are appointed by the President",
+            "Appointments require Senate approval",
+            "Congress can impeach and remove judges",
+            "Congress can amend the Constitution to override decisions",
+            "Congress controls federal court jurisdiction and funding"
+          ]
+        },
+        checks_and_balances: {
+          name: "Checks and Balances",
+          description: "Checks and balances prevent any branch from having too much power. For example, the President can veto laws (Executive check on Legislative), Congress can override vetoes (Legislative check on Executive), and the Supreme Court can declare laws unconstitutional (Judicial check on both).",
+          examples: [
+            "President can veto bills passed by Congress",
+            "Congress can override presidential vetoes with 2/3 majority",
+            "Courts can declare laws and executive actions unconstitutional",
+            "President appoints federal judges, but Senate must confirm them",
+            "Congress can impeach and remove the President and federal judges",
+            "Congress controls funding for the executive and judicial branches",
+            "President enforces court decisions"
+          ]
+        }
+      };
+      
+      // Event listeners
+      sendButton.addEventListener('click', handleUserMessage);
+      userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleUserMessage();
+        }
+      });
+      
+      // Functions
+      function handleUserMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+        
+        // Add user message to chat
+        addMessage('user', message);
+        
+        // Clear input field
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        
+        // Disable send button and show loading
+        sendButton.disabled = true;
+        const loadingId = showTypingIndicator();
+        
+        // Process user message
+        setTimeout(() => {
+          hideTypingIndicator(loadingId);
+          processUserMessage(message);
+          sendButton.disabled = false;
+        }, 1000);
+      }
+      
+      function processUserMessage(message) {
+        const lowerCaseMessage = message.toLowerCase();
+        
+        // Check for keywords related to branches
+        if (lowerCaseMessage.includes('executive') || lowerCaseMessage.includes('president')) {
+          respondAboutBranch('executive');
+        } 
+        else if (lowerCaseMessage.includes('legislative') || lowerCaseMessage.includes('congress') || lowerCaseMessage.includes('senate') || lowerCaseMessage.includes('house')) {
+          respondAboutBranch('legislative');
+        } 
+        else if (lowerCaseMessage.includes('judicial') || lowerCaseMessage.includes('court') || lowerCaseMessage.includes('supreme')) {
+          respondAboutBranch('judicial');
+        } 
+        else if (lowerCaseMessage.includes('checks') || lowerCaseMessage.includes('balances') || lowerCaseMessage.includes('balance')) {
+          respondAboutChecksAndBalances();
+        } 
+        else if (lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hi ') || lowerCaseMessage === 'hi') {
+          addMessage('assistant', 'Hello! I\'m here to help you learn about the three branches of government: Executive, Legislative, and Judicial. What would you like to know?');
+        }
+        else if (lowerCaseMessage.includes('all') || lowerCaseMessage.includes('three branches')) {
+          respondAboutAllBranches();
+        }
+        else {
+          addMessage('assistant', 'I\'m here to help you learn about the three branches of US government: Executive, Legislative, and Judicial. Please ask me about any of these branches or about checks and balances.');
+        }
+      }
+      
+      function respondAboutBranch(branch) {
+        const info = branchInfo[branch];
+        let response = `<strong>${info.name}</strong><br><br>${info.description}<br><br>`;
+        
+        response += "<strong>Key Powers:</strong><br>";
+        info.powers.forEach(power => {
+          response += `• ${power}<br>`;
+        });
+        
+        response += "<br><strong>Checks on its Power:</strong><br>";
+        info.checks.forEach(check => {
+          response += `• ${check}<br>`;
+        });
+        
+        addMessage('assistant', response);
+      }
+      
+      function respondAboutChecksAndBalances() {
+        const info = branchInfo.checks_and_balances;
+        let response = `<strong>${info.name}</strong><br><br>${info.description}<br><br>`;
+        
+        response += "<strong>Examples:</strong><br>";
+        info.examples.forEach(example => {
+          response += `• ${example}<br>`;
+        });
+        
+        addMessage('assistant', response);
+      }
+      
+      function respondAboutAllBranches() {
+        let response = "<strong>The Three Branches of Government</strong><br><br>";
+        response += "The U.S. government is divided into three branches to ensure a separation of powers:<br><br>";
+        
+        response += "<strong>1. Executive Branch:</strong> Led by the President, enforces laws<br>";
+        response += "<strong>2. Legislative Branch:</strong> Made up of Congress, creates laws<br>";
+        response += "<strong>3. Judicial Branch:</strong> Comprises the court system, interprets laws<br><br>";
+        
+        response += "Each branch has its own powers and responsibilities, with checks and balances to prevent any one branch from becoming too powerful. Would you like to learn more about a specific branch?";
+        
+        addMessage('assistant', response);
+      }
+      
+      function addMessage(sender, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.innerHTML = content;
+        
+        messageDiv.appendChild(messageContent);
+        messagesContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+      
+      function showTypingIndicator() {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'message assistant';
+        loadingDiv.id = 'typing-indicator';
+        
+        const loadingContent = document.createElement('div');
+        loadingContent.className = 'message-content loading-indicator';
+        
+        for (let i = 0; i < 3; i++) {
+          const dot = document.createElement('span');
+          dot.className = 'dot';
+          loadingContent.appendChild(dot);
+        }
+        
+        loadingDiv.appendChild(loadingContent);
+        messagesContainer.appendChild(loadingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        return loadingDiv.id;
+      }
+      
+      function hideTypingIndicator(id) {
+        const indicator = document.getElementById(id);
+        if (indicator) {
+          indicator.remove();
+        }
+      }
+      
+      // Notify parent window that embed is loaded
+      window.parent.postMessage({type: 'EMBED_READY', status: 'loaded'}, '*');
+    </script>
+  </body>
+</html>
