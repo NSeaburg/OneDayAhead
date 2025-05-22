@@ -68,14 +68,16 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // ✱ FIXED: point to the actual production build folder
+  const distPath = path.resolve(import.meta.dirname, "..", "dist");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath}, make sure to run "npm run build" first`,
     );
   }
 
+  // serve real files first
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist

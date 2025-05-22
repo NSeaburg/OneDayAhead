@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Three Branches of Government - Interactive Learning</title>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      .iframe-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+      .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s ease;
+        z-index: 100;
+      }
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(79, 70, 229, 0.1);
+        border-radius: 50%;
+        border-top-color: #4f46e5;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .error {
+        max-width: 80%;
+        text-align: center;
+        color: #e11d48;
+      }
+      .retry-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+      .retry-btn:hover {
+        background-color: #4338ca;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="iframe-container">
+        <iframe
+          id="app-frame"
+          src=""
+          title="Interactive Learning Experience"
+          allow="microphone; camera"
+          loading="lazy">
+        </iframe>
+        
+        <div id="loading" class="loading-overlay">
+          <div class="spinner"></div>
+          <h2>Loading Interactive Learning Experience</h2>
+          <p>Please wait while we prepare your learning environment...</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const iframe = document.getElementById('app-frame');
+      const loadingOverlay = document.getElementById('loading');
+      let loadingTimeout;
+      
+      // Configure app URL - use the root URL with special parameters
+      const appUrl = window.location.origin + '/?embed=true&noScrollReset=true';
+      iframe.src = appUrl;
+      
+      // Show loading spinner immediately
+      loadingOverlay.classList.remove('hidden');
+      
+      // Handle iframe load event
+      iframe.addEventListener('load', function() {
+        // Hide loading overlay with a slight delay for smoother transition
+        clearTimeout(loadingTimeout);
+        setTimeout(() => {
+          loadingOverlay.classList.add('hidden');
+        }, 500);
+        
+        // Reset styles that might interfere with embedding
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          if (iframeDoc && iframeDoc.body) {
+            // Add a class to the body of the embedded app
+            iframeDoc.body.classList.add('embedded-app');
+            
+            // Inject styles to prevent scrolling issues
+            const styleElement = iframeDoc.createElement('style');
+            styleElement.textContent = `
+              body.embedded-app {
+                overflow: hidden;
+                height: 100vh;
+                margin: 0;
+                padding: 0;
+              }
+              .chat-container {
+                height: calc(100vh - 60px);
+                max-height: none;
+                overflow-y: auto;
+              }
+              .message-list {
+                overflow-y: auto;
+              }
+            `;
+            iframeDoc.head.appendChild(styleElement);
+          }
+        } catch (e) {
+          console.error('Error accessing iframe content:', e);
+        }
+      });
+      
+      // Handle load timeout
+      loadingTimeout = setTimeout(function() {
+        if (!loadingOverlay.classList.contains('hidden')) {
+          loadingOverlay.innerHTML = `
+            <div class="error">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12" y2="16"></line>
+              </svg>
+              <h2>Loading is taking longer than expected</h2>
+              <p>There might be a connection issue with the learning platform.</p>
+              <button class="retry-btn" onclick="window.location.reload()">Try Again</button>
+            </div>
+          `;
+        }
+      }, 15000);
+      
+      // Handle communication with the iframe
+      window.addEventListener('message', function(event) {
+        // Only accept messages from our iframe or allowed domains
+        if (event.source === iframe.contentWindow) {
+          // Forward messages to parent for analytics or other purposes
+          window.parent.postMessage(event.data, '*');
+          
+          // Listen for specific events
+          if (event.data && event.data.type === 'app_loaded') {
+            loadingOverlay.classList.add('hidden');
+          }
+        }
+      });
+      
+      // Send init message to parent
+      window.parent.postMessage({type: 'embed_initialized', url: window.location.href}, '*');
+    </script>
+  </body>
+</html>
