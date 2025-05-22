@@ -62,20 +62,23 @@ export async function setupVite(app: Express, server: Server) {
 
 /* ───────────────── Production static handler ───────────────── */
 export function serveStatic(app: Express) {
-  /* build writes into <repo>/dist/public  (+ dist/index.js at root) */
-  const distRoot = path.resolve(import.meta.dirname, "..", "dist");
+  const distRoot = path.resolve(import.meta.dirname, "..", "dist"); // dist/index.js
+  const publicRoot = path.join(distRoot, "public"); // dist/public/index.html, assets/*
 
-  if (!fs.existsSync(path.join(distRoot, "public", "index.html"))) {
+  if (!fs.existsSync(path.join(publicRoot, "index.html"))) {
     throw new Error(
       `dist/public/index.html not found in ${distRoot}. Run "npm run build" first.`,
     );
   }
 
-  /* 1️⃣  Serve every file inside dist/ (index.js, public/assets/*, etc.) */
+  /* 1️⃣  serve JS bundle at /index.js */
   app.use(express.static(distRoot));
 
-  /* 2️⃣  For SPA routes ("/", "/about", etc.) fall back to the built HTML */
+  /* 2️⃣  serve HTML & assets under /public/* */
+  app.use(express.static(publicRoot));
+
+  /* 3️⃣  SPA fallback: always return built index.html */
   app.use("*", (_req, res) => {
-    res.sendFile(path.join(distRoot, "public", "index.html"));
+    res.sendFile(path.join(publicRoot, "index.html"));
   });
 }
