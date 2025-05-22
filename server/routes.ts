@@ -181,6 +181,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Serve the compiled standalone embed
     res.sendFile('compiled-embed.html', { root: './public' });
   });
+  // Catch-all route for root - ensure the main app loads correctly
+  app.get('/', (req, res) => {
+    res.sendFile(path.resolve(process.cwd(), 'client', 'index.html'));
+  });
+  
   // Direct routes for embed and example HTML files
   app.get("/embed.html", (req, res) => {
     const embedPath = path.resolve(process.cwd(), "public", "embed.html");
