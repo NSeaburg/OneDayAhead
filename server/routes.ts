@@ -181,24 +181,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Serve the compiled standalone embed
     res.sendFile('compiled-embed.html', { root: './public' });
   });
-  // Catch-all route for root - ensure the main app loads correctly
-  app.get('/', (req, res) => {
-    res.sendFile(path.resolve(process.cwd(), 'client', 'index.html'));
-  });
-  
-  // Special route for onedayahead.com embedding - completely standalone
-  app.get('/onedayahead', (req, res) => {
-    // Set proper headers for embedding on onedayahead.com domains
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    res.removeHeader('X-Frame-Options');
-    res.header('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *.onedayahead.com");
-    
-    // Serve the completely standalone HTML file
-    res.sendFile('onedayahead-embed.html', { root: './public' });
-  });
-  
   // Direct routes for embed and example HTML files
   app.get("/embed.html", (req, res) => {
     const embedPath = path.resolve(process.cwd(), "public", "embed.html");
