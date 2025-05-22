@@ -81,6 +81,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Serve the simplified embed HTML
     res.sendFile('embed-direct.html', { root: './public' });
   });
+  
+  // Lightweight embed solution specifically for onedayahead.com domains
+  app.get('/lightweight-embed', (req, res) => {
+    // Set headers to allow embedding from onedayahead.com domains
+    const origin = req.headers.origin || '*';
+    
+    if (origin.includes('onedayahead.com')) {
+      res.header('Access-Control-Allow-Origin', origin);
+    } else {
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'GET');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.removeHeader('X-Frame-Options');
+    res.header('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *.onedayahead.com");
+    
+    // Serve the standalone lightweight embed solution
+    res.sendFile('lightweight-embed.html', { root: './public' });
+  });
   // Direct routes for embed and example HTML files
   app.get("/embed.html", (req, res) => {
     const embedPath = path.resolve(process.cwd(), "public", "embed.html");

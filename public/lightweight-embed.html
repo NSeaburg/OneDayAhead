@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Three Branches of Government - Learning Experience</title>
+    <!-- Security headers for embedding -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *.onedayahead.com">
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f8fafc;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100%;
+      }
+      .header {
+        padding: 16px;
+        background-color: #4f46e5;
+        color: white;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+      .main-content {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+      }
+      .chat-interface {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: calc(100% - 40px);
+      }
+      .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+      }
+      .message {
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        max-width: 80%;
+        animation: fadeIn 0.3s ease-out;
+      }
+      .assistant-message {
+        background-color: #f3f4f6;
+        color: #111827;
+        align-self: flex-start;
+      }
+      .user-message {
+        background-color: #4f46e5;
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+      .chat-input {
+        display: flex;
+        padding: 12px;
+        border-top: 1px solid #e5e7eb;
+        background-color: white;
+      }
+      .input-field {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        resize: none;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .input-field:focus {
+        border-color: #4f46e5;
+      }
+      .send-button {
+        background-color: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0 20px;
+        margin-left: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+      }
+      .send-button:hover {
+        background-color: #4338ca;
+      }
+      .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: rgba(255,255,255,0.9);
+        z-index: 10;
+        transition: opacity 0.5s ease-out;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 20px;
+        border: 4px solid rgba(79, 70, 229, 0.1);
+        border-radius: 50%;
+        border-top-color: #4f46e5;
+        animation: spin 1s ease-in-out infinite;
+      }
+      .hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .error-message {
+        color: #ef4444;
+        padding: 8px 12px;
+        background-color: #fee2e2;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        font-size: 14px;
+      }
+      .next-button {
+        background-color: #10b981;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        margin-top: 16px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s;
+      }
+      .next-button:hover {
+        background-color: #059669;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>Three Branches of Government - Interactive Learning</h1>
+      </header>
+      
+      <main class="main-content">
+        <div class="chat-interface">
+          <div id="chat-messages" class="chat-messages">
+            <!-- Messages will be added here via JavaScript -->
+          </div>
+          
+          <div class="chat-input">
+            <textarea 
+              id="user-input" 
+              class="input-field" 
+              placeholder="Type your message here..." 
+              rows="1"></textarea>
+            <button id="send-button" class="send-button">Send</button>
+          </div>
+        </div>
+      </main>
+      
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <h2>Loading your interactive learning experience...</h2>
+        <p>This will just take a moment</p>
+      </div>
+    </div>
+    
+    <script>
+      // DOM Elements
+      const chatMessages = document.getElementById('chat-messages');
+      const userInput = document.getElementById('user-input');
+      const sendButton = document.getElementById('send-button');
+      const loading = document.getElementById('loading');
+      
+      // Auto-resize the input textarea
+      userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+      
+      // Sample conversation data (can be replaced with actual API calls)
+      const initialMessages = [
+        {
+          role: 'assistant',
+          content: 'Hello! I\'m your learning assistant for the Three Branches of Government. What would you like to learn about the executive, legislative, or judicial branch?'
+        }
+      ];
+      
+      // Initialize the chat
+      function initializeChat() {
+        // Display initial messages
+        initialMessages.forEach(message => {
+          addMessageToChat(message.role, message.content);
+        });
+        
+        // Hide loading screen after a short delay
+        setTimeout(() => {
+          loading.classList.add('hidden');
+        }, 1000);
+      }
+      
+      // Add a message to the chat interface
+      function addMessageToChat(role, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}-message`;
+        messageDiv.textContent = content;
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll to the bottom of the chat
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      
+      // Handle send message
+      function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+        
+        // Add user message to chat
+        addMessageToChat('user', message);
+        
+        // Clear input
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        
+        // Normally, we would send this to the API and get a response
+        // For now, we'll just simulate a response
+        simulateResponse(message);
+      }
+      
+      // Simulate a response (this would be replaced with actual API communication)
+      function simulateResponse(userMessage) {
+        // Show typing indicator
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'message assistant-message';
+        typingIndicator.innerHTML = '<em>Thinking...</em>';
+        typingIndicator.id = 'typing-indicator';
+        chatMessages.appendChild(typingIndicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Simulate API delay
+        setTimeout(() => {
+          // Remove typing indicator
+          document.getElementById('typing-indicator').remove();
+          
+          // Add assistant response
+          let response = "I'm sorry, I can't connect to the learning server right now. Please try refreshing the page or try again later.";
+          
+          // Very simple response logic - in real app, this would come from the API
+          if (userMessage.toLowerCase().includes('executive')) {
+            response = "The Executive Branch is headed by the President and is responsible for enforcing laws. The President serves as Commander in Chief of the armed forces, can veto bills, and appoints Supreme Court justices and federal judges (with Senate approval).";
+          } else if (userMessage.toLowerCase().includes('legislative')) {
+            response = "The Legislative Branch consists of Congress (the Senate and House of Representatives) and is responsible for making laws. They can override Presidential vetoes with a 2/3 majority vote, approve federal judges, and can impeach federal officials.";
+          } else if (userMessage.toLowerCase().includes('judicial')) {
+            response = "The Judicial Branch includes the Supreme Court and federal courts. They interpret laws, determine if laws are constitutional, and can overturn laws they deem unconstitutional. Supreme Court justices are appointed for life by the President and confirmed by the Senate.";
+          } else if (userMessage.toLowerCase().includes('check') && userMessage.toLowerCase().includes('balance')) {
+            response = "Checks and balances prevent any branch from having too much power. For example, the President can veto laws (Executive check on Legislative), Congress can override vetoes (Legislative check on Executive), and the Supreme Court can declare laws unconstitutional (Judicial check on both).";
+          }
+          
+          addMessageToChat('assistant', response);
+        }, 1500);
+      }
+      
+      // Event listeners
+      sendButton.addEventListener('click', sendMessage);
+      userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      // Initialize when the page loads
+      window.addEventListener('load', initializeChat);
+      
+      // Let parent page know we're loaded
+      window.parent.postMessage({type: 'EMBED_READY', status: 'loaded'}, '*');
+    </script>
+  </body>
+</html>
