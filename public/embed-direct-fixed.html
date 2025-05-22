@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Interactive Learning Experience</title>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe 
+      id="app-frame"
+      src="https://new-venture-nate127.replit.app"
+      title="Interactive Learning Experience"
+      allow="fullscreen">
+    </iframe>
+    
+    <script>
+      // This script ensures proper communication between frames
+      window.addEventListener('message', function(event) {
+        // Forward messages to parent
+        if (event.source === document.getElementById('app-frame').contentWindow) {
+          window.parent.postMessage(event.data, '*');
+        }
+      });
+    </script>
+  </body>
+</html>
