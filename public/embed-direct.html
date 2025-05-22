@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Three Branches of Government - Interactive Learning</title>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100%;
+      }
+      .header {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #4f46e5;
+      }
+      .main-content {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+      .embed-frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: opacity 0.5s;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 20px;
+        border: 4px solid rgba(79, 70, 229, 0.1);
+        border-radius: 50%;
+        border-top-color: #4f46e5;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <main class="main-content">
+        <iframe 
+          id="learning-app"
+          class="embed-frame"
+          src="/"
+          allow="microphone; camera"
+          title="Interactive Three Branches of Government Learning Module">
+        </iframe>
+        
+        <div id="loading" class="loading">
+          <div class="spinner"></div>
+          <h2>Loading your interactive learning experience...</h2>
+          <p>This will just take a moment</p>
+        </div>
+      </main>
+    </div>
+    
+    <script>
+      const iframe = document.getElementById('learning-app');
+      const loading = document.getElementById('loading');
+      
+      // Hide loading when iframe is loaded
+      iframe.addEventListener('load', function() {
+        setTimeout(function() {
+          loading.classList.add('hidden');
+        }, 500);
+      });
+      
+      // Handle error
+      iframe.addEventListener('error', function() {
+        loading.innerHTML = `
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12" y2="16"></line>
+          </svg>
+          <h2 style="color: #e53e3e;">Connection Error</h2>
+          <p>We're having trouble loading the learning module.</p>
+          <button onclick="window.location.reload()" style="margin-top: 20px; padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Try Again
+          </button>
+        `;
+      });
+      
+      // Set timeout for slow connections
+      setTimeout(function() {
+        if (!loading.classList.contains('hidden')) {
+          loading.innerHTML = `
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12" y2="16"></line>
+            </svg>
+            <h2 style="color: #f59e0b;">Taking longer than expected</h2>
+            <p>The learning module is still loading.</p>
+            <button onclick="window.location.reload()" style="margin-top: 20px; padding: 8px 16px; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Refresh
+            </button>
+          `;
+        }
+      }, 10000);
+      
+      // Forward messages from iframe to parent
+      window.addEventListener('message', function(event) {
+        if (event.source === iframe.contentWindow) {
+          // Forward to parent window
+          window.parent.postMessage(event.data, '*');
+        }
+      });
+    </script>
+  </body>
+</html>
