@@ -1,13 +1,21 @@
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = "npm run dev"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+
+# run the server in production mode
+run = "NODE_ENV=production npm run dev"
+
+# keep dist/ visible so its files go into the deploy image
+hidden = [".config", ".git", "generated-icon.png", "node_modules"]
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
+
+# skip the long build step during deploy (you build manually beforehand)
+build = ["echo", "skip"]
+
+# the process Autoscale should start after container boots
 run = ["npm", "run", "start"]
 
 [[ports]]
