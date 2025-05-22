@@ -73,6 +73,17 @@ app.use((req, res, next) => {
     // setting up all the other routes so the catch-all route
     // doesn't interfere with the other routes
     if (app.get("env") === "development") {
+      // Special handler for production mode when using the ?production=true param
+      app.use((req, res, next) => {
+        if (req.query.production === 'true') {
+          // If this is a specific production embed request, use static files instead
+          console.log('Serving in PRODUCTION mode for query param: ' + req.originalUrl);
+          serveStatic(app);
+        } else {
+          next();
+        }
+      });
+      
       await setupVite(app, server);
     } else {
       serveStatic(app);
