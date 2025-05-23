@@ -729,7 +729,7 @@ export default function DynamicAssistantScreen({
         </div>
       </div>
       
-      <div className="mt-4 flex justify-between">
+      <div className="mt-4 max-w-4xl mx-auto px-8 flex justify-between">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
