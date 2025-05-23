@@ -731,7 +731,7 @@ export default function DynamicAssistantScreen({
       </div>
       
       {/* Navigation buttons positioned below content container */}
-      <div className="mt-4 flex justify-between">
+      <div className="mt-2 flex justify-between">
         {onPrevious ? (
           <Button
             onClick={onPrevious}

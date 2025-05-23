@@ -112,7 +112,7 @@ export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScree
         </div>
         
         {/* Navigation buttons positioned below video container */}
-        <div className="mt-4 flex justify-between">
+        <div className="mt-2 flex justify-between">
           {onPrevious ? (
             <Button 
               onClick={onPrevious}

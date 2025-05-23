@@ -675,7 +675,7 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
       </div>
       
       {/* Navigation buttons positioned below chat container */}
-      <div className="mt-4 flex justify-between">
+      <div className="mt-2 flex justify-between">
         {onPrevious ? (
           <Button
             onClick={onPrevious}

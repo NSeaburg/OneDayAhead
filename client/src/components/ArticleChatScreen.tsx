@@ -189,7 +189,7 @@ export default function ArticleChatScreen({
         </motion.div>
         
         {/* Navigation buttons positioned below article container */}
-        <div className="mt-4 flex justify-between">
+        <div className="mt-2 flex justify-between">
           {onPrevious ? (
             <Button
               onClick={onPrevious}
