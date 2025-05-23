@@ -311,7 +311,18 @@ export default function Home() {
         </div>
       </div>
 
-
+      {/* Reset button positioned at bottom left */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <Button 
+          variant="outline" 
+          size="icon"
+          className="rounded-full w-10 h-10 border-gray-300 text-gray-700 hover:bg-gray-100 shadow-sm"
+          onClick={resetApp}
+          title="Reset App"
+        >
+          <RotateCcw className="h-5 w-5" />
+        </Button>
+      </div>
     </div>
   );
 }
