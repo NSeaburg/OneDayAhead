@@ -671,33 +671,30 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
             </form>
           </div>
           
-          {/* Navigation buttons positioned at bottom corners of chat container */}
-          <div className="absolute bottom-4 left-4 right-4 flex justify-between pointer-events-none">
-            <div className="pointer-events-auto">
-              {onPrevious ? (
-                <Button
-                  onClick={onPrevious}
-                  variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-100 bg-white/90 backdrop-blur-sm shadow-sm"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              ) : <div></div>}
-            </div>
-            
-            <div className="pointer-events-auto">
-              <Button
-                onClick={handleNext}
-                disabled={isLoading || isSendingToN8N}
-                className={`${isAssessmentComplete ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-primary/90'} text-white shadow-sm`}
-              >
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
         </div>
+      </div>
+      
+      {/* Navigation buttons positioned below chat container */}
+      <div className="mt-4 flex justify-between">
+        {onPrevious ? (
+          <Button
+            onClick={onPrevious}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        ) : <div></div>}
+        
+        <Button
+          onClick={handleNext}
+          disabled={isLoading || isSendingToN8N}
+          className={`${isAssessmentComplete ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-primary/90'} text-white`}
+        >
+          Next
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
