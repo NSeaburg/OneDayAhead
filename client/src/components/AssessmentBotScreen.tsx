@@ -574,7 +574,7 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
         </div>
         
         {/* Right column - Chat interface */}
-        <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+        <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative">
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             <h2 className="font-bold text-lg text-gray-800">Royal Assessment: Three Branches of Government</h2>
           </div>
@@ -670,30 +670,34 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
               </Button>
             </form>
           </div>
+          
+          {/* Navigation buttons positioned at bottom corners of chat container */}
+          <div className="absolute bottom-4 left-4 right-4 flex justify-between pointer-events-none">
+            <div className="pointer-events-auto">
+              {onPrevious ? (
+                <Button
+                  onClick={onPrevious}
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100 bg-white/90 backdrop-blur-sm shadow-sm"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              ) : <div></div>}
+            </div>
+            
+            <div className="pointer-events-auto">
+              <Button
+                onClick={handleNext}
+                disabled={isLoading || isSendingToN8N}
+                className={`${isAssessmentComplete ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-primary/90'} text-white shadow-sm`}
+              >
+                Next
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      {/* Navigation buttons */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 flex justify-between">
-        {onPrevious ? (
-          <Button
-            onClick={onPrevious}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        ) : <div></div>}
-        
-        <Button
-          onClick={handleNext}
-          disabled={isLoading || isSendingToN8N}
-          className={`${isAssessmentComplete ? 'bg-green-500 hover:bg-green-600' : 'bg-primary hover:bg-primary/90'} text-white`}
-        >
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
       </div>
     </div>
   );

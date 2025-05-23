@@ -179,11 +179,37 @@ export default function ArticleChatScreen({
               Download PDF
             </Button>
           </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]">
+          <div className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)] relative">
             <div 
               className="article-content"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(articleContent) }}
             />
+            
+            {/* Navigation buttons positioned at bottom corners of article container */}
+            <div className="absolute bottom-4 left-4 right-4 flex justify-between pointer-events-none">
+              <div className="pointer-events-auto">
+                {onPrevious ? (
+                  <Button
+                    onClick={onPrevious}
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100 bg-white/90 backdrop-blur-sm shadow-sm"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                ) : <div></div>}
+              </div>
+              
+              <div className="pointer-events-auto">
+                <Button
+                  onClick={onNext}
+                  className="bg-primary hover:bg-primary/90 text-white shadow-sm"
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </motion.div>
         
@@ -318,27 +344,7 @@ export default function ArticleChatScreen({
         )}
       </AnimatePresence>
 
-      {/* Navigation buttons */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 flex justify-between">
-        {onPrevious ? (
-          <Button
-            onClick={onPrevious}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        ) : <div></div>}
-        
-        <Button
-          onClick={onNext}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
+
     </div>
   );
 }
