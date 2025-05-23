@@ -188,28 +188,6 @@ export default function ArticleChatScreen({
           </div>
         </motion.div>
         
-        {/* Navigation buttons positioned below article container */}
-        <div className="mt-2 flex justify-between">
-          {onPrevious ? (
-            <Button
-              onClick={onPrevious}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-100"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-          ) : <div></div>}
-          
-          <Button
-            onClick={onNext}
-            className="bg-primary hover:bg-primary/90 text-white"
-          >
-            Next
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-        
         {/* Chat Section - Using AnimatePresence for animation */}
         <AnimatePresence mode="sync">
           {isChatOpen && (
@@ -341,7 +319,27 @@ export default function ArticleChatScreen({
         )}
       </AnimatePresence>
 
-
+      {/* Navigation buttons positioned below content containers */}
+      <div className="mt-2 flex justify-between">
+        {onPrevious ? (
+          <Button
+            onClick={onPrevious}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        ) : <div></div>}
+        
+        <Button
+          onClick={onNext}
+          className="bg-primary hover:bg-primary/90 text-white"
+        >
+          Next
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }

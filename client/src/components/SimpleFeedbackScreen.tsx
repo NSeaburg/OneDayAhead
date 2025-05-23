@@ -559,7 +559,7 @@ export default function SimpleFeedbackScreen({
             className="border-gray-300 text-gray-700 hover:bg-gray-100"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Previous Step
+            Back
           </Button>
         </div>
       )}
