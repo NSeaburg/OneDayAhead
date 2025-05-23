@@ -73,8 +73,8 @@ export default function Home() {
   
   // Send screen change notification whenever the current screen changes
   useEffect(() => {
-    // Get the screen name based on index
-    const screenNames = ["Video", "Article", "Assessment", "Teaching", "Feedback"];
+    // Get the screen name based on index - updated to match your specifications
+    const screenNames = ["VideoScreen", "ArticleScreen", "AssessmentScreen", "teaching bot", "feedback page"];
     const screenName = screenNames[currentScreen - 1] || "Unknown";
     
     // Notify parent window about screen change
