@@ -58,48 +58,11 @@ export const EMBED_MESSAGES = {
  * @param screenIndex Index of the current screen
  */
 export function notifyScreenChange(screenName: string, screenIndex: number) {
-  // Check if the app is running in an iframe
-  const isInIframe = window.self !== window.top;
-  
-  if (isInIframe && window.parent) {
-    try {
-      // Get content based on screen
-      let content = '';
-      switch (screenIndex) {
-        case 1:
-          content = 'Your video content';
-          break;
-        case 2:
-          content = 'Your written content';
-          break;
-        case 3:
-          content = 'Assessment in progress';
-          break;
-        case 4:
-          content = 'Teaching bot interaction';
-          break;
-        case 5:
-          content = 'Feedback and completion';
-          break;
-        default:
-          content = 'Learning content';
-      }
-
-      // Send message in the exact format requested
-      window.parent.postMessage({
-        type: 'SCREEN_CHANGE',
-        data: {
-          screen: screenIndex,
-          screenName: screenName,
-          content: content
-        }
-      }, '*');
-      
-      console.log(`Message sent to parent: screen_change`);
-    } catch (error) {
-      console.error('Error sending message to parent:', error);
-    }
-  }
+  sendMessageToParent(EMBED_MESSAGES.SCREEN_CHANGE, {
+    currentScreen: screenName,
+    screenIndex,
+    totalScreens: 5 // Hardcoded total for now
+  });
 }
 
 /**
