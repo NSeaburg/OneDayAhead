@@ -589,7 +589,7 @@ export default function DynamicAssistantScreen({
         
         {/* Right column - Chat interface */}
         <div className={`${proficiencyLevel === "high" && showArticle ? 'md:w-2/5' : proficiencyLevel !== "unknown" ? 'md:w-2/3' : 'w-full'} flex-grow flex flex-col transition-all duration-300`}>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full relative">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <h2 className="font-semibold text-lg text-gray-800">
                 {proficiencyLevel === "high" ? "Mrs. Parton" :
@@ -725,30 +725,35 @@ export default function DynamicAssistantScreen({
                 </Button>
               </form>
             </div>
+            
+            {/* Navigation buttons positioned at bottom corners of chat container */}
+            <div className="absolute bottom-4 left-4 right-4 flex justify-between pointer-events-none">
+              <div className="pointer-events-auto">
+                {onPrevious ? (
+                  <Button
+                    onClick={onPrevious}
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100 bg-white/90 backdrop-blur-sm shadow-sm"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                ) : <div></div>}
+              </div>
+              
+              <div className="pointer-events-auto">
+                <Button
+                  onClick={handleNext}
+                  disabled={isLoading || isSendingToN8N}
+                  className="bg-primary hover:bg-primary/90 text-white shadow-sm"
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="mt-4 max-w-2xl mx-auto px-4 flex justify-between">
-        {onPrevious ? (
-          <Button
-            onClick={onPrevious}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        ) : <div></div>}
-        
-        <Button
-          onClick={handleNext}
-          disabled={isLoading || isSendingToN8N}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
       </div>
     </div>
   );
