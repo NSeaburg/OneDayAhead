@@ -109,7 +109,7 @@ export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScree
             />
           )}
         </div>
-        <div className="mt-auto max-w-4xl mx-auto px-8 flex justify-between w-full">
+        <div className="mt-auto max-w-2xl mx-auto px-4 flex justify-between w-full">
           {onPrevious ? (
             <Button 
               onClick={onPrevious}

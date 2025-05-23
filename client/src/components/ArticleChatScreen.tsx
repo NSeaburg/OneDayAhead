@@ -319,7 +319,7 @@ export default function ArticleChatScreen({
       </AnimatePresence>
 
       {/* Navigation buttons */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-4xl px-8 flex justify-between">
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 flex justify-between">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
