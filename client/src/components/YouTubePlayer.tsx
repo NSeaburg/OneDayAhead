@@ -31,6 +31,7 @@ export default function YouTubePlayer({ videoId, onReady }: YouTubePlayerProps) 
     iframe.frameBorder = "0";
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
+    iframe.setAttribute('data-testid', 'youtube-player');
     
     // Add the iframe to the container
     containerRef.current.appendChild(iframe);
