@@ -70,48 +70,8 @@ export default function VideoScreen({ videoUrl, onNext, onPrevious }: VideoScree
 
   // Function to handle next button click
   const handleNext = () => {
-    // Try multiple approaches to stop the video
     pauseVideo();
-    
-    // Simulate a click on the YouTube player to pause it
-    const youtubeContainer = document.querySelector('[data-testid="youtube-player"]') || 
-                           document.querySelector('iframe[src*="youtube.com"]');
-    
-    if (youtubeContainer) {
-      try {
-        // Create and dispatch a click event in the center of the player
-        const rect = youtubeContainer.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        const clickEvent = new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          clientX: centerX,
-          clientY: centerY
-        });
-        
-        youtubeContainer.dispatchEvent(clickEvent);
-        
-        // Also try clicking the iframe content if possible
-        if (youtubeContainer instanceof HTMLIFrameElement && youtubeContainer.contentDocument) {
-          const centerClickInIframe = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            clientX: rect.width / 2,
-            clientY: rect.height / 2
-          });
-          youtubeContainer.contentDocument.dispatchEvent(centerClickInIframe);
-        }
-      } catch (error) {
-        console.log("Click simulation failed:", error);
-      }
-    }
-    
-    // Small delay to let the pause take effect, then navigate
-    setTimeout(() => {
-      onNext();
-    }, 200);
+    onNext();
   };
 
   // Add YouTube API parameters to the URL if it's a YouTube video

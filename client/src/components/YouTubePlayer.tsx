@@ -7,7 +7,6 @@ interface YouTubePlayerProps {
 
 export default function YouTubePlayer({ videoId, onReady }: YouTubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   
   useEffect(() => {
     // Only create the iframe if the container exists
@@ -18,7 +17,6 @@ export default function YouTubePlayer({ videoId, onReady }: YouTubePlayerProps) 
     
     // Create a new iframe element
     const iframe = document.createElement('iframe');
-    iframeRef.current = iframe;
     
     // Add a timestamp to force refresh
     const timestamp = new Date().getTime();
@@ -31,65 +29,29 @@ export default function YouTubePlayer({ videoId, onReady }: YouTubePlayerProps) 
     iframe.frameBorder = "0";
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
-    iframe.setAttribute('data-testid', 'youtube-player');
     
     // Add the iframe to the container
     containerRef.current.appendChild(iframe);
     
     // Notify parent component when ready
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data.event === 'onReady') {
-          if (onReady) onReady();
-        }
-      } catch (e) {
-        // Ignore parsing errors from other postMessage events
-      }
-    };
-    
-    window.addEventListener('message', handleMessage);
-    
-    // Cleanup function to stop video and remove iframe
-    return () => {
-      window.removeEventListener('message', handleMessage);
-      
-      // Forcefully stop the video by changing the src and removing iframe
-      if (iframeRef.current) {
+    if (onReady) {
+      const handleMessage = (event: MessageEvent) => {
         try {
-          // First try to stop the video
-          if (iframeRef.current.contentWindow) {
-            iframeRef.current.contentWindow.postMessage(
-              '{"event":"command","func":"stopVideo","args":""}',
-              '*'
-            );
+          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+          if (data.event === 'onReady') {
+            onReady();
           }
-          
-          // Force stop by clearing the src
-          iframeRef.current.src = 'about:blank';
-          
-          // Remove the iframe after a brief delay
-          setTimeout(() => {
-            if (iframeRef.current && iframeRef.current.parentNode) {
-              iframeRef.current.parentNode.removeChild(iframeRef.current);
-            }
-          }, 100);
         } catch (e) {
-          // Ignore errors if iframe is already gone
+          // Ignore parsing errors from other postMessage events
         }
-      }
+      };
       
-      // Clear the container
-      if (containerRef.current) {
-        setTimeout(() => {
-          if (containerRef.current) {
-            containerRef.current.innerHTML = '';
-          }
-        }, 200);
-      }
+      window.addEventListener('message', handleMessage);
       
-      iframeRef.current = null;
-    };
+      return () => {
+        window.removeEventListener('message', handleMessage);
+      };
+    }
   }, [videoId, onReady]);
   
   return (
