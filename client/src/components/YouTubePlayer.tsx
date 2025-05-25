@@ -53,25 +53,38 @@ export default function YouTubePlayer({ videoId, onReady }: YouTubePlayerProps) 
     return () => {
       window.removeEventListener('message', handleMessage);
       
-      // Stop the video before cleanup
-      if (iframeRef.current && iframeRef.current.contentWindow) {
+      // Forcefully stop the video by changing the src and removing iframe
+      if (iframeRef.current) {
         try {
-          iframeRef.current.contentWindow.postMessage(
-            '{"event":"command","func":"pauseVideo","args":""}',
-            '*'
-          );
-          iframeRef.current.contentWindow.postMessage(
-            '{"event":"command","func":"stopVideo","args":""}',
-            '*'
-          );
+          // First try to stop the video
+          if (iframeRef.current.contentWindow) {
+            iframeRef.current.contentWindow.postMessage(
+              '{"event":"command","func":"stopVideo","args":""}',
+              '*'
+            );
+          }
+          
+          // Force stop by clearing the src
+          iframeRef.current.src = 'about:blank';
+          
+          // Remove the iframe after a brief delay
+          setTimeout(() => {
+            if (iframeRef.current && iframeRef.current.parentNode) {
+              iframeRef.current.parentNode.removeChild(iframeRef.current);
+            }
+          }, 100);
         } catch (e) {
           // Ignore errors if iframe is already gone
         }
       }
       
-      // Remove the iframe completely
+      // Clear the container
       if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+        setTimeout(() => {
+          if (containerRef.current) {
+            containerRef.current.innerHTML = '';
+          }
+        }, 200);
       }
       
       iframeRef.current = null;
