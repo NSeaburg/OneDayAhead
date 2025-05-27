@@ -469,7 +469,7 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
             </div>
             
             <p className="text-sm text-gray-700 mb-4">
-              Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown—once you've explained how this whole "no king" business is supposed to work. He is fully expecting you to explain (and perhaps reconsider) your little Revolution.
+              Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown.
             </p>
             
             <hr className="my-4 border-gray-200" />
