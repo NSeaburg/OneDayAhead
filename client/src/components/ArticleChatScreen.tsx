@@ -153,11 +153,11 @@ export default function ArticleChatScreen({
   };
 
   return (
-    <div className="flex flex-col p-4 md:p-6 h-full relative">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+    <div className="h-screen bg-gray-100 p-2 md:p-4 flex flex-col">
+      <h1 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2 md:mb-4 flex-shrink-0">
         {isChatOpen ? "Article & Discussion" : "Article"}
       </h1>
-      <div className="flex-grow flex flex-col md:flex-row md:flex-nowrap gap-4 md:gap-6 mb-24 relative">
+      <div className="flex-1 flex flex-col md:flex-row md:flex-nowrap gap-2 md:gap-4 min-h-0 relative">
         {/* Article Section */}
         <motion.div 
           className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col"
@@ -179,7 +179,7 @@ export default function ArticleChatScreen({
               Download PDF
             </Button>
           </div>
-          <div className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)] relative">
+          <div className="flex-1 p-3 md:p-4 overflow-y-auto min-h-0 relative">
             <div 
               className="article-content"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(articleContent) }}

@@ -452,12 +452,12 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6 h-full">
+    <div className="h-screen bg-gray-100 p-2 md:p-4 flex flex-col">
       {/* Main content area with bio and chat */}
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 min-h-0">
         {/* Left column - Character profile & Assessment topics */}
-        <div className="w-full md:w-1/3 flex flex-col mb-4 md:mb-0">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="w-full md:w-1/3 bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 overflow-y-auto">
+          <div>
             <div className="flex flex-col items-center text-center mb-4">
               <img 
                 src={reginaldImage} 
@@ -574,12 +574,12 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
         </div>
         
         {/* Right column - Chat interface */}
-        <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col relative">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <h2 className="font-bold text-lg text-gray-800">Royal Assessment: Three Branches of Government</h2>
+        <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
+          <div className="p-3 md:p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+            <h2 className="font-bold text-base md:text-lg text-gray-800">Royal Assessment: Three Branches of Government</h2>
           </div>
           
-          <div className="p-4 overflow-y-auto h-[calc(100vh-350px)] md:h-[calc(100vh-320px)] space-y-4">
+          <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-4 min-h-0">
             {/* Messages (including the initial greeting) */}
             {messages.map((message: Message, index: number) => (
               <div key={index} className="message-appear flex flex-col">
@@ -644,14 +644,14 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
           </div>
           
           {/* Input area */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-3 md:p-4 border-t border-gray-200 flex-shrink-0">
             <form onSubmit={handleSubmit} className="flex items-start gap-2">
               <AutoResizeTextarea
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Type your response here..."
                 className="flex-grow focus:border-green-500"
-                maxRows={7}
+                maxRows={4}
                 onKeyDown={(e) => {
                   // Submit on Enter key without Shift key
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -675,7 +675,7 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
       </div>
       
       {/* Navigation buttons positioned below chat container */}
-      <div className="mt-2 flex justify-between">
+      <div className="mt-2 flex justify-between px-2 md:px-4 flex-shrink-0">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
