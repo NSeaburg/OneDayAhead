@@ -452,7 +452,7 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
   };
 
   return (
-    <div className="h-screen bg-gray-100 p-2 md:p-4 flex flex-col">
+    <div className="h-screen p-2 md:p-4 flex flex-col">
       {/* Main content area with bio and chat */}
       <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 min-h-0">
         {/* Left column - Character profile & Assessment topics */}

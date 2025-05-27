@@ -153,7 +153,7 @@ export default function ArticleChatScreen({
   };
 
   return (
-    <div className="h-screen bg-gray-100 p-2 md:p-4 flex flex-col">
+    <div className="h-screen p-2 md:p-4 flex flex-col">
       <h1 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2 md:mb-4 flex-shrink-0">
         {isChatOpen ? "Article & Discussion" : "Article"}
       </h1>
