@@ -214,7 +214,7 @@ export default function ArticleChatScreen({
                 <h2 className="font-semibold text-lg text-gray-800">Discussion Assistant</h2>
               </div>
               <motion.div 
-                className="p-4 overflow-y-auto h-[calc(100vh-380px)] md:h-[calc(100vh-350px)] space-y-4"
+                className="flex-1 p-3 md:p-4 overflow-y-auto min-h-0 space-y-4"
                 initial={{ opacity: 1 }}
                 animate={{ opacity: 1 }}
               >
@@ -246,14 +246,14 @@ export default function ArticleChatScreen({
                 {/* Reference for scrolling to bottom */}
                 <div ref={messagesEndRef} />
               </motion.div>
-              <div className="p-4 border-t border-gray-200">
+              <div className="p-3 md:p-4 border-t border-gray-200 flex-shrink-0">
                 <form onSubmit={handleSubmit} className="flex items-start gap-2">
                   <AutoResizeTextarea
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder="Type your message here..."
                     className="flex-grow focus:border-primary-500"
-                    maxRows={5}
+                    maxRows={4}
                     autoFocus
                     onKeyDown={(e) => {
                       // Submit on Enter key without Shift key
@@ -320,7 +320,7 @@ export default function ArticleChatScreen({
       </AnimatePresence>
 
       {/* Navigation buttons positioned below content containers */}
-      <div className="mt-2 flex justify-between">
+      <div className="mt-2 flex justify-between px-2 md:px-4 flex-shrink-0">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
