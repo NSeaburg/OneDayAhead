@@ -675,7 +675,7 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
       </div>
       
       {/* Navigation buttons positioned below chat container */}
-      <div className="mt-2 flex justify-between px-2 md:px-4 flex-shrink-0">
+      <div className="mt-4 flex justify-between px-2 md:px-4 flex-shrink-0">
         {onPrevious ? (
           <Button
             onClick={onPrevious}
