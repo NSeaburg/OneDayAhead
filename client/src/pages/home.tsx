@@ -10,7 +10,7 @@ import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
-import { notifyScreenChange, notifyFeedbackReceived, notifyCourseCompleted } from "@/lib/embedding";
+
 
 // Using global interface declared in types.d.ts
 
@@ -77,13 +77,7 @@ export default function Home() {
     const screenNames = ["Video", "Article", "Assessment", "Teaching", "Feedback"];
     const screenName = screenNames[currentScreen - 1] || "Unknown";
     
-    // Notify parent window about screen change
-    notifyScreenChange(screenName, currentScreen);
-    
-    // Send course completion notification when reaching the final screen
-    if (currentScreen === config.totalSteps) {
-      notifyCourseCompleted(feedbackData);
-    }
+    // Screen change tracking removed for security
   }, [currentScreen, feedbackData]);
   
   // Debug logging when we enter screen 4
