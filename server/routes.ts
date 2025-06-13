@@ -1518,7 +1518,7 @@ When the student has completed both activities, thank them warmly and end the co
         if (stream) {
           // Use streaming API for regular completions
           const stream = await openai.chat.completions.create({
-            model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            model: model || "gpt-4o", // Legacy fallback - primary chat uses Claude
             messages: messagesWithSystem,
             temperature: temperature || 1.0,
             stream: true,
@@ -1538,7 +1538,7 @@ When the student has completed both activities, thank them warmly and end the co
         } else {
           // Regular non-streaming response
           const response = await openai.chat.completions.create({
-            model: model || "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+            model: model || "gpt-4o", // Legacy fallback - primary chat uses Claude
             messages: messagesWithSystem,
             temperature: temperature || 1.0,
           });
