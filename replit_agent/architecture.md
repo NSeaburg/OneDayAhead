@@ -79,15 +79,13 @@ The application uses a PostgreSQL database with Drizzle ORM for data access. The
 
 ### AI Integration
 
-The application integrates with two AI services:
+The application integrates with Anthropic's Claude API for all conversational AI:
 
-1. **OpenAI GPT**: Used for general discussions and assessments
-2. **Anthropic Claude**: Used for personalized teaching based on assessment results
+1. **Article Chat**: Claude Sonnet 4 for article discussions
+2. **Assessment Bot**: Claude Sonnet 4 with Reginald Worthington character
+3. **Teaching Assistants**: Claude Sonnet 4 with personalized system prompts from N8N
 
-Different assistant types are used for specific purposes:
-- Discussion Assistant: For article-related discussions
-- Assessment Assistant: For evaluating user understanding
-- Dynamic Assistant: For personalized teaching based on assessment results
+All AI interactions use Claude Sonnet 4 (claude-sonnet-4-20250514) via Anthropic API.
 
 ### N8N Integration
 
