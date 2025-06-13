@@ -19,7 +19,6 @@ const anthropic = new Anthropic({
 
 // Default Assistant IDs
 const DEFAULT_DISCUSSION_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
-const DEFAULT_ASSESSMENT_ASSISTANT_ID = "asst_68CAVYvKmjbpqFpCa9D0TiRU";
 
 // N8N Webhook URLs
 const ASSESSMENT_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
@@ -235,8 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Route to get the assistant IDs
   app.get("/api/assistant-config", (req, res) => {
     res.json({
-      discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || "",
-      assessmentAssistantId: DEFAULT_ASSESSMENT_ASSISTANT_ID || ""
+      discussionAssistantId: DEFAULT_DISCUSSION_ASSISTANT_ID || ""
     });
   });
   
@@ -1480,7 +1478,7 @@ When the student has completed both activities, thank them warmly and end the co
       }
       
       // If an assistantId is provided or we have a default assistant ID, use the assistant API
-      if (assistantId || DEFAULT_DISCUSSION_ASSISTANT_ID || DEFAULT_ASSESSMENT_ASSISTANT_ID) {
+      if (assistantId || DEFAULT_DISCUSSION_ASSISTANT_ID) {
         const threadId = await createThread();
         
         // Add messages to the thread
