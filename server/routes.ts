@@ -17,7 +17,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-// Default Assistant IDs
+// Legacy OpenAI reference - now using Claude for all conversations
 const DEFAULT_DISCUSSION_ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
 
 // N8N Webhook URLs
@@ -1465,7 +1465,7 @@ When the student has completed both activities, thank them warmly and end the co
     }
   });
   
-  // OpenAI chat completions endpoint with streaming support
+  // Legacy chat endpoint - primary AI uses Claude/Anthropic
   app.post("/api/chat", async (req, res) => {
     try {
       const { messages, model, temperature, systemPrompt, assistantId, stream = false } = req.body;

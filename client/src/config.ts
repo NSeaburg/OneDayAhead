@@ -28,13 +28,14 @@ export const config = {
     </p>
   `,
 
-  // OpenAI API configuration
-  openai: {
-    // Using the OpenAI Assistant IDs - the actual ID is injected from the server
-    discussionAssistantId: "assistant-id", // This will be replaced with the OPENAI_ASSISTANT_ID from the server
-    assessmentAssistantId: "assistant-id", // This will be replaced with the OPENAI_ASSISTANT_ID from the server
-    // The final bot ID will be determined externally (via N8N)
-    finalBotIdPlaceholder: "assistant-id", // This will be replaced with the OPENAI_ASSISTANT_ID from the server
+  // AI API configuration (using Claude/Anthropic)
+  ai: {
+    // Discussion assistant uses Claude for article conversations
+    discussionAssistantId: "claude-discussion",
+    // Assessment uses Claude with Reginald character
+    assessmentAssistantId: "claude-assessment", 
+    // Teaching assistant determined by N8N based on assessment
+    teachingAssistantId: "claude-teaching",
   },
 
   // System prompts for each assistant

@@ -138,7 +138,7 @@ export default function Home() {
             <div className="text-red-500 text-4xl mb-4">⚠️</div>
             <h2 className="text-xl font-semibold mb-2">Configuration Error</h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            <p className="text-gray-500 text-sm">Please check that your OpenAI API key and Assistant IDs are properly configured.</p>
+            <p className="text-gray-500 text-sm">Please check that your Claude API key is properly configured.</p>
           </div>
         </div>
       </div>

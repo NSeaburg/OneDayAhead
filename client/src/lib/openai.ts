@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { apiRequest } from "./queryClient";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const MODEL = "gpt-4o";
+// Legacy model reference - now using Claude via Anthropic API
+const MODEL = "claude-sonnet-4-20250514";
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -24,10 +24,10 @@ export interface ChatCompletionResponse {
       role: string;
     };
   }[];
-  threadId?: string; // Optional thread ID when using OpenAI Assistants API
+  threadId?: string; // Optional thread ID when using Claude conversations
 }
 
-// Function to create a chat completion using the OpenAI API via our backend
+// Function to create a chat completion using the Claude API via our backend
 export const createChatCompletion = async (
   request: ChatCompletionRequest
 ): Promise<ChatCompletionResponse> => {
