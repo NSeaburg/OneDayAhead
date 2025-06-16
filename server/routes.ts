@@ -11,18 +11,10 @@ import fs from "fs";
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
-// Initialize Anthropic client with better error handling
+// Initialize Anthropic client
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'dummy-key'
+  apiKey: process.env.ANTHROPIC_API_KEY
 });
-
-// Check if API key is available
-const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
-if (!hasAnthropicKey) {
-  console.log("⚠️ ANTHROPIC_API_KEY not found - AI features will be disabled");
-} else {
-  console.log("✅ Anthropic API key configured successfully");
-}
 
 
 
