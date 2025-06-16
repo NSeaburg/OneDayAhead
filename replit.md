@@ -2,9 +2,9 @@
 
 ## Overview
 
-This repository contains a comprehensive learning platform application designed specifically for Educational Technology (EdTech) environments. The platform provides an interactive learning experience centered around the three branches of the U.S. government, featuring AI-powered conversations, assessments, and personalized feedback mechanisms.
+This repository contains a comprehensive LTI 1.3 compliant learning platform application designed specifically for Educational Technology (EdTech) environments. The platform provides an interactive learning experience centered around the three branches of the U.S. government, featuring AI-powered conversations, assessments, and personalized feedback mechanisms with full Canvas LMS integration.
 
-The application is architected as a full-stack web application with a React frontend and Express.js backend, utilizing modern technologies for scalable, secure deployment in Learning Management Systems (LMS) such as Canvas and Blackboard.
+The application is architected as a full-stack web application with a React frontend and Express.js backend, utilizing modern technologies for scalable, secure deployment in Learning Management Systems (LMS) such as Canvas and Blackboard. The platform now includes complete LTI 1.3 authentication, grade passback, deep linking, and Names and Role Provisioning Service (NRPS) support.
 
 ## System Architecture
 
@@ -27,18 +27,30 @@ The application is architected as a full-stack web application with a React fron
 - **Migrations**: Custom migration system in `server/migrations.ts`
 
 ### AI Integration
-- **Primary Provider**: Anthropic Claude (claude-sonnet-4-20250514)
-- **Fallback**: OpenAI GPT models for compatibility
+- **Primary Provider**: Anthropic Claude (claude-3-7-sonnet-20250219)
 - **Streaming**: Real-time response streaming for enhanced user experience
+- **LTI Integration**: Context-aware AI assistants with Canvas user data
+
+### LTI 1.3 Integration
+- **Authentication**: JWT-based OIDC login flow with Canvas
+- **Grade Passback**: Assignment and Grade Services (AGS) for automatic grade submission
+- **Deep Linking**: Content selection and course integration
+- **NRPS**: Names and Role Provisioning Service for course roster access
+- **Multi-Tenant**: Support for multiple Canvas instances with separate configurations
 
 ## Key Components
 
 ### Data Models
-The application uses four core database tables:
-- **users**: Anonymous user management with UUID-based sessions
-- **sessions**: Secure session tracking with expiration
-- **conversations**: AI chat history with assistant type classification
-- **feedbacks**: Assessment results and personalized learning recommendations
+The application uses comprehensive database schema with LTI 1.3 support:
+- **users**: User management with LTI user linking
+- **sessions**: Secure session tracking with LTI context
+- **conversations**: AI chat history with tenant and LTI user classification
+- **feedbacks**: Assessment results with automatic grade passback
+- **lti_platforms**: Canvas instance configurations
+- **lti_users**: LTI user identity management
+- **lti_contexts**: Course/context information from Canvas
+- **tenants**: Multi-instance support for different institutions
+- **lti_grades**: Grade tracking and submission status
 
 ### Security Framework
 - **LMS Integration**: Designed for iframe embedding in Canvas, Blackboard, and other LMS platforms
@@ -47,10 +59,20 @@ The application uses four core database tables:
 - **Session Security**: HTTP-only cookies with SameSite policies
 
 ### AI Assistant Types
-1. **Discussion Assistant**: Interactive article discussion using Claude
-2. **Assessment Assistant**: Evaluation bot with character persona (Reginald)
-3. **Dynamic Teaching Assistant**: Adaptive teaching based on assessment results
-4. **High-Level Assistant**: Advanced content analysis (Mrs. Parton persona)
+1. **Discussion Assistant**: Interactive article discussion using Claude with LTI user context
+2. **Assessment Assistant**: Evaluation bot with character persona (Reginald) and grade passback
+3. **Dynamic Teaching Assistant**: Adaptive teaching based on assessment results and Canvas integration
+4. **High-Level Assistant**: Advanced content analysis with LTI-aware feedback
+
+### LTI 1.3 Endpoints
+- **POST /api/lti/login**: OIDC login initiation from Canvas
+- **POST /api/lti/launch**: Main LTI launch endpoint with JWT validation
+- **GET /api/lti/jwks**: Public key set for Canvas verification
+- **POST /api/lti/deep-linking**: Content selection interface
+- **GET /api/lti/nrps/:contextId**: Names and Role Provisioning Service
+- **GET /api/lti/lineitems/:contextId**: Assignment and Grade Services line items
+- **POST /api/lti/scores/:lineitemId**: Grade passback submission
+- **GET /api/lti/config**: LTI tool configuration for Canvas registration
 
 ## Data Flow
 
@@ -109,6 +131,11 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 - `ANTHROPIC_API_KEY`: Claude API authentication
 - `N8N_WEBHOOK_URL`: Assessment webhook endpoint
 - `N8N_DYNAMIC_WEBHOOK_URL`: Dynamic assistant webhook
+- `LTI_ISSUER`: Canvas platform issuer URL (e.g., https://canvas.instructure.com)
+- `LTI_CLIENT_ID`: Canvas Developer Key client ID
+- `LTI_DEPLOYMENT_ID`: Canvas deployment identifier
+- `LTI_PRIVATE_KEY`: RSA private key for JWT signing (PEM format)
+- `LTI_PUBLIC_KEY`: RSA public key for verification (PEM format)
 
 ### Security Configuration
 - Frame-ancestors policy for approved LMS domains
@@ -118,8 +145,37 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- June 16, 2025. Complete LTI 1.3 integration implemented with Canvas compatibility
+  - Added full LTI 1.3 authentication with OIDC login flow
+  - Implemented Assignment and Grade Services (AGS) for automatic grade passback
+  - Added Deep Linking support for content selection in Canvas
+  - Integrated Names and Role Provisioning Service (NRPS) for course roster access
+  - Created comprehensive multi-tenant architecture for multiple Canvas instances
+  - Added LTI-specific database schema with 7 new tables
+  - Implemented secure JWT token handling with RSA key management
+  - Added development mode bypass for testing without LTI authentication
+  - Enhanced security with rate limiting and LTI-aware middleware
+  - Updated AI assistants to be LTI context-aware with Canvas user data
 - June 13, 2025. Initial setup
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## LTI 1.3 Canvas Integration
+
+### Setup Requirements
+1. Create Canvas Developer Key with appropriate scopes
+2. Configure LTI environment variables (issuer, client ID, deployment ID, RSA keys)
+3. Register tool endpoints in Canvas (login, launch, JWKS URLs)
+4. Set up deep linking and grade passback permissions
+
+### Available Features
+- **Authentication**: Secure LTI 1.3 login with Canvas user context
+- **Grade Passback**: Automatic submission of assessment scores to Canvas gradebook
+- **Deep Linking**: Content selection interface for instructors
+- **Multi-Tenant**: Support for multiple Canvas instances with separate configurations
+- **Development Mode**: Testing access via /dev endpoint bypassing LTI authentication
+
+### Canvas Configuration
+The application provides LTI configuration at `/api/lti/config` for easy Canvas setup with all required endpoints and scopes pre-configured.
