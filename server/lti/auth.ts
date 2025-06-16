@@ -123,7 +123,7 @@ export async function validateLtiToken(token: string): Promise<LtiClaims | null>
 
 export async function ltiAuthMiddleware(req: LtiSession, res: Response, next: NextFunction) {
   // Skip LTI auth in development mode for direct testing
-  if (process.env.NODE_ENV === 'development' && req.path.startsWith('/dev')) {
+  if (process.env.NODE_ENV === 'development' && (req.path.startsWith('/dev') || req.path.startsWith('/api/'))) {
     // Create mock LTI context for development
     req.lti = {
       claims: {

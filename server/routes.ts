@@ -53,12 +53,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply LTI authentication to protected routes (skip for development and static assets)
   app.use('/api', (req, res, next) => {
-    // Skip LTI auth for certain routes in development
-    if (process.env.NODE_ENV === 'development' && (
-      req.path.includes('/assistant-config') || 
-      req.path.includes('/pdf-proxy') ||
-      req.path.startsWith('/dev')
-    )) {
+    // Skip LTI auth completely in development mode
+    if (process.env.NODE_ENV === 'development') {
       return next();
     }
     
