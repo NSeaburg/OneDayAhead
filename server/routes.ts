@@ -1,10 +1,15 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { ltiAuthMiddleware } from "./lti/auth";
+import ltiRoutes from "./lti/routes";
+import { ltiServices } from "./lti/services";
 import Anthropic from "@anthropic-ai/sdk";
 import axios from "axios";
 import path from "path";
 import fs from "fs";
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -29,6 +34,84 @@ console.log(`Article Assistant System Prompt Length: ${ARTICLE_ASSISTANT_SYSTEM_
 console.log(`Article Assistant System Prompt Preview: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.substring(0, 100)}...`);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Enhanced security middleware
+  app.use(helmet({
+    frameguard: false, // Allow iframe embedding
+    contentSecurityPolicy: false // We handle CSP manually for LTI
+  }));
+
+  // Rate limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+  });
+  app.use(limiter);
+
+  // LTI 1.3 routes - mounted before other routes
+  app.use('/api/lti', ltiRoutes);
+
+  // Apply LTI authentication to protected routes (skip for development and static assets)
+  app.use('/api', (req, res, next) => {
+    // Skip LTI auth for certain routes in development
+    if (process.env.NODE_ENV === 'development' && (
+      req.path.includes('/assistant-config') || 
+      req.path.includes('/pdf-proxy') ||
+      req.path.startsWith('/dev')
+    )) {
+      return next();
+    }
+    
+    // Apply LTI authentication for production or LTI routes
+    if (req.path.includes('/claude-chat') || 
+        req.path.includes('/send-to-n8n') || 
+        req.path.includes('/conversations') || 
+        req.path.includes('/feedback')) {
+      return ltiAuthMiddleware(req, res, next);
+    }
+    
+    next();
+  });
+
+  // Development route for testing without LTI
+  app.get('/dev', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Development Access</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+          .btn { background: #0066cc; color: white; padding: 12px 24px; border: none; border-radius: 4px; text-decoration: none; display: inline-block; margin: 10px 0; }
+          .btn:hover { background: #0052a3; }
+          .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Government Learning Platform - Development Mode</h1>
+          <div class="warning">
+            <strong>Development Access:</strong> This bypasses LTI authentication for testing purposes.
+          </div>
+          <p>Access the application in development mode with mock LTI context.</p>
+          <a href="/?dev_mode=true" class="btn">Launch Application</a>
+          <a href="/api/lti/config" class="btn">View LTI Configuration</a>
+          
+          <h3>LTI 1.3 Endpoints</h3>
+          <ul>
+            <li><strong>Login:</strong> /api/lti/login</li>
+            <li><strong>Launch:</strong> /api/lti/launch</li>
+            <li><strong>JWKS:</strong> /api/lti/jwks</li>
+            <li><strong>Deep Linking:</strong> /api/lti/deep-linking</li>
+            <li><strong>Configuration:</strong> /api/lti/config</li>
+          </ul>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
   // Special route for iframe embedding with appropriate headers
   app.get('/embed', (req, res) => {
     // Set headers to allow embedding from any origin
