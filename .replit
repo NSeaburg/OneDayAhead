@@ -1,7 +1,7 @@
 modules = ["nodejs-20", "web", "postgresql-16"]
 
-# run the server in production mode
-run = "NODE_ENV=production npm run dev"
+# run the server in development mode for hot-reloading
+run = "npm run dev"
 
 # keep dist/ visible so its files go into the deploy image
 hidden = [".config", ".git", "generated-icon.png", "node_modules"]
