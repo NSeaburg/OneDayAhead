@@ -1,0 +1,56 @@
+1. Core LTI 1.3 Components to Add
+Authentication & Security
+JWT-based authentication - Replace current session system with LTI 1.3 JWT tokens
+Public/Private key pairs - Generate RSA keys for secure token signing
+OpenID Connect login flow - Implement the 3-step LTI launch process
+Nonce validation - Prevent replay attacks
+Platform registration - Store Canvas platform configurations
+Required LTI 1.3 Endpoints
+OIDC Login (/api/lti/login) - Initial authentication endpoint
+Launch (/api/lti/launch) - Main application entry point after auth
+JWKS (/api/lti/jwks) - Public key endpoint for Canvas
+Deep Linking (/api/lti/deep-linking) - For content selection (optional)
+2. Database Schema Changes
+New Tables Needed
+lti_platforms - Store Canvas instance configurations
+lti_deployments - Track different Canvas deployments
+lti_registrations - Platform registration data
+lti_contexts - Course/context information from Canvas
+lti_users - LTI user data (replace anonymous sessions)
+User Identity Changes
+Replace anonymous sessions with Canvas user IDs
+Store Canvas roles (student, instructor, admin)
+Track course enrollment context
+3. Configuration Requirements
+Canvas Developer Keys
+Generate a Developer Key in Canvas
+Configure redirect URIs for your app
+Set up proper scopes for grade passback (if needed)
+Environment Variables to Add
+LTI_ISSUER=https://canvas.instructure.com
+LTI_CLIENT_ID=your_canvas_client_id
+LTI_DEPLOYMENT_ID=your_deployment_id
+LTI_PRIVATE_KEY=your_rsa_private_key
+LTI_PUBLIC_KEY=your_rsa_public_key
+LTI_KEY_SET_URL=https://your-app.com/api/lti/jwks
+4. Code Changes Required
+Backend Changes
+New LTI middleware - Handle JWT validation and user context
+Update routes - Protect all routes with LTI authentication
+Grade passback - Implement Assignment and Grade Services (AGS) if needed
+Content selection - Deep Linking for content library integration
+Frontend Changes
+Remove anonymous access - All access must come through LTI launch
+User context - Display Canvas user information and course context
+Grade submission - Send assessment scores back to Canvas gradebook
+Responsive design - Ensure it works well in Canvas iframe
+5. Dependencies to Add
+LTI 1.3 Libraries
+ltijs - Comprehensive LTI 1.3 library for Node.js
+jsonwebtoken - JWT handling
+node-jose - Key management
+ltiaas - Alternative LTI library option
+Additional Security
+helmet - Enhanced security headers
+express-rate-limit - Rate limiting
+cors - Updated CORS configuration for Canvas

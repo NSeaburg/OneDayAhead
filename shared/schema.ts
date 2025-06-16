@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -34,6 +34,84 @@ export const feedbacks = pgTable("feedbacks", {
   contentKnowledgeScore: integer("content_knowledge_score"),
   writingScore: integer("writing_score"),
   nextSteps: text("next_steps"),
+  grade: integer("grade"), // For grade passback
+  maxGrade: integer("max_grade").default(100),
+  submittedToLms: boolean("submitted_to_lms").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// LTI 1.3 Platform/Tenant tables
+export const ltiPlatforms = pgTable("lti_platforms", {
+  id: serial("id").primaryKey(),
+  issuer: text("issuer").unique().notNull(),
+  name: text("name").notNull(),
+  clientId: text("client_id").notNull(),
+  authenticationEndpoint: text("authentication_endpoint").notNull(),
+  accesstokenEndpoint: text("accesstoken_endpoint").notNull(),
+  authConfig: json("auth_config"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const ltiDeployments = pgTable("lti_deployments", {
+  id: serial("id").primaryKey(),
+  platformId: integer("platform_id").references(() => ltiPlatforms.id),
+  deploymentId: text("deployment_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const ltiRegistrations = pgTable("lti_registrations", {
+  id: serial("id").primaryKey(),
+  platformId: integer("platform_id").references(() => ltiPlatforms.id),
+  keySet: json("key_set").notNull(),
+  privateKey: text("private_key").notNull(),
+  publicKey: text("public_key").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const ltiContexts = pgTable("lti_contexts", {
+  id: serial("id").primaryKey(),
+  platformId: integer("platform_id").references(() => ltiPlatforms.id),
+  contextId: text("context_id").notNull(),
+  contextType: text("context_type"),
+  contextTitle: text("context_title"),
+  contextLabel: text("context_label"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const ltiUsers = pgTable("lti_users", {
+  id: serial("id").primaryKey(),
+  platformId: integer("platform_id").references(() => ltiPlatforms.id),
+  ltiUserId: text("lti_user_id").notNull(),
+  name: text("name"),
+  givenName: text("given_name"),
+  familyName: text("family_name"),
+  email: text("email"),
+  roles: text("roles").array(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tenants for multi-instance support
+export const tenants = pgTable("tenants", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  domain: text("domain").unique(),
+  platformId: integer("platform_id").references(() => ltiPlatforms.id),
+  config: json("config"), // Store tenant-specific configurations
+  systemPrompt: text("system_prompt"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// LTI Grade passback tracking
+export const ltiGrades = pgTable("lti_grades", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").references(() => sessions.sessionId, { onDelete: "cascade" }),
+  ltiUserId: integer("lti_user_id").references(() => ltiUsers.id),
+  lineitemId: text("lineitem_id"),
+  score: integer("score"),
+  maxScore: integer("max_score").default(100),
+  submissionStatus: text("submission_status").default("pending"),
+  submittedAt: timestamp("submitted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -62,6 +140,66 @@ export const insertFeedbackSchema = createInsertSchema(feedbacks).pick({
   contentKnowledgeScore: true,
   writingScore: true,
   nextSteps: true,
+  grade: true,
+  maxGrade: true,
+});
+
+// LTI Insert schemas
+export const insertLtiPlatformSchema = createInsertSchema(ltiPlatforms).pick({
+  issuer: true,
+  name: true,
+  clientId: true,
+  authenticationEndpoint: true,
+  accesstokenEndpoint: true,
+  authConfig: true,
+});
+
+export const insertLtiDeploymentSchema = createInsertSchema(ltiDeployments).pick({
+  platformId: true,
+  deploymentId: true,
+});
+
+export const insertLtiRegistrationSchema = createInsertSchema(ltiRegistrations).pick({
+  platformId: true,
+  keySet: true,
+  privateKey: true,
+  publicKey: true,
+});
+
+export const insertLtiContextSchema = createInsertSchema(ltiContexts).pick({
+  platformId: true,
+  contextId: true,
+  contextType: true,
+  contextTitle: true,
+  contextLabel: true,
+});
+
+export const insertLtiUserSchema = createInsertSchema(ltiUsers).pick({
+  platformId: true,
+  ltiUserId: true,
+  name: true,
+  givenName: true,
+  familyName: true,
+  email: true,
+  roles: true,
+});
+
+export const insertTenantSchema = createInsertSchema(tenants).pick({
+  name: true,
+  domain: true,
+  platformId: true,
+  config: true,
+  systemPrompt: true,
+  isActive: true,
+});
+
+export const insertLtiGradeSchema = createInsertSchema(ltiGrades).pick({
+  sessionId: true,
+  ltiUserId: true,
+  lineitemId: true,
+  score: true,
+  maxScore: true,
+  submissionStatus: true,
 });
 
 // Types
@@ -76,3 +214,25 @@ export type Conversation = typeof conversations.$inferSelect;
 
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type Feedback = typeof feedbacks.$inferSelect;
+
+// LTI Types
+export type InsertLtiPlatform = z.infer<typeof insertLtiPlatformSchema>;
+export type LtiPlatform = typeof ltiPlatforms.$inferSelect;
+
+export type InsertLtiDeployment = z.infer<typeof insertLtiDeploymentSchema>;
+export type LtiDeployment = typeof ltiDeployments.$inferSelect;
+
+export type InsertLtiRegistration = z.infer<typeof insertLtiRegistrationSchema>;
+export type LtiRegistration = typeof ltiRegistrations.$inferSelect;
+
+export type InsertLtiContext = z.infer<typeof insertLtiContextSchema>;
+export type LtiContext = typeof ltiContexts.$inferSelect;
+
+export type InsertLtiUser = z.infer<typeof insertLtiUserSchema>;
+export type LtiUser = typeof ltiUsers.$inferSelect;
+
+export type InsertTenant = z.infer<typeof insertTenantSchema>;
+export type Tenant = typeof tenants.$inferSelect;
+
+export type InsertLtiGrade = z.infer<typeof insertLtiGradeSchema>;
+export type LtiGrade = typeof ltiGrades.$inferSelect;
