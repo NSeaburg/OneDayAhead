@@ -1210,14 +1210,42 @@ When the student has completed both activities, thank them warmly and end the co
         // Store feedback data if we have a valid session ID
         if (sessionId && Object.keys(feedbackData).length > 0) {
           try {
+            // Calculate final grade for LTI passback
+            const finalGrade = Math.round(((feedbackData.contentKnowledgeScore || 0) + (feedbackData.writingScore || 0)) / 2);
+            
             await storage.createFeedback({
               sessionId,
               summary: feedbackData.summary || "",
               contentKnowledgeScore: feedbackData.contentKnowledgeScore || 0,
               writingScore: feedbackData.writingScore || 0,
-              nextSteps: feedbackData.nextSteps || ""
+              nextSteps: feedbackData.nextSteps || "",
+              grade: finalGrade,
+              maxGrade: 100
             });
             console.log(`Stored feedback data for session ${sessionId}`);
+
+            // Process LTI grade passback if this is an LTI session
+            if (req.lti?.claims) {
+              try {
+                const gradeSuccess = await ltiServices.processAssessmentCompletion(
+                  sessionId,
+                  req.lti.claims,
+                  {
+                    contentKnowledgeScore: feedbackData.contentKnowledgeScore || 0,
+                    writingScore: feedbackData.writingScore || 0,
+                    totalPossible: 100
+                  }
+                );
+                
+                if (gradeSuccess) {
+                  console.log(`LTI grade passback successful for session ${sessionId}`);
+                } else {
+                  console.log(`LTI grade passback failed or not available for session ${sessionId}`);
+                }
+              } catch (gradeError) {
+                console.error('LTI grade passback error:', gradeError);
+              }
+            }
           } catch (err) {
             console.error("Error storing feedback data:", err);
             // Continue with the response even if storage fails
@@ -1233,9 +1261,9 @@ When the student has completed both activities, thank them warmly and end the co
         
         // Add session ID to the response if available - prefer N8N's returned one if valid
         if (returnedSessionId) {
-          responseObject.sessionId = returnedSessionId;
+          (responseObject as any).sessionId = returnedSessionId;
         } else if (sessionId) {
-          responseObject.sessionId = sessionId;
+          (responseObject as any).sessionId = sessionId;
         }
         
         return res.json(responseObject);
@@ -1540,6 +1568,88 @@ When the student has completed both activities, thank them warmly and end the co
       }
     }
   });
+
+  // LTI user context and progress endpoints
+  app.get("/api/lti/user/context", async (req: any, res) => {
+    try {
+      if (!req.lti?.claims) {
+        return res.status(401).json({ error: 'No LTI context available' });
+      }
+
+      const context = {
+        user: {
+          id: req.lti.claims.sub,
+          name: req.lti.claims.name,
+          email: req.lti.claims.email,
+          roles: req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/roles']
+        },
+        course: {
+          id: req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/context']?.id,
+          title: req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/context']?.title,
+          label: req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/context']?.label
+        },
+        platform: {
+          name: req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/platform_instance']?.name,
+          url: req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/platform_instance']?.url
+        },
+        hasGradePassback: !!req.lti.claims['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'],
+        hasNRPS: !!req.lti.claims['https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice']
+      };
+
+      res.json(context);
+    } catch (error) {
+      console.error('Error getting LTI context:', error);
+      res.status(500).json({ error: 'Failed to retrieve LTI context' });
+    }
+  });
+
+  app.get("/api/lti/user/progress", async (req: any, res) => {
+    try {
+      if (!req.lti?.claims) {
+        return res.status(401).json({ error: 'No LTI context available' });
+      }
+
+      const progress = await ltiServices.getUserProgress(req.lti.claims);
+      res.json(progress || { message: 'No progress data available' });
+    } catch (error) {
+      console.error('Error getting user progress:', error);
+      res.status(500).json({ error: 'Failed to retrieve progress' });
+    }
+  });
+
+  app.post("/api/lti/submit-grade", async (req: any, res) => {
+    try {
+      if (!req.lti?.claims) {
+        return res.status(401).json({ error: 'No LTI context available' });
+      }
+
+      const { score, maxScore, comment } = req.body;
+      const agsEndpoint = req.lti.claims['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'];
+      
+      if (!agsEndpoint?.lineitem) {
+        return res.status(400).json({ error: 'No grade passback endpoint available' });
+      }
+
+      const success = await ltiServices.submitGrade(req.lti.claims, {
+        userId: req.lti.claims.sub,
+        lineitemId: agsEndpoint.lineitem,
+        scoreGiven: score,
+        scoreMaximum: maxScore,
+        comment: comment,
+        timestamp: new Date().toISOString()
+      });
+
+      if (success) {
+        res.json({ success: true, message: 'Grade submitted successfully' });
+      } else {
+        res.status(500).json({ error: 'Grade submission failed' });
+      }
+    } catch (error) {
+      console.error('Error submitting grade:', error);
+      res.status(500).json({ error: 'Failed to submit grade' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
