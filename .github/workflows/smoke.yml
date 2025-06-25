@@ -1,0 +1,15 @@
+name: smoke-test
+on: workflow_dispatch      # run manually from the Actions tab
+jobs:
+  build-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t onedayahead:test .
+      - name: Start container
+        run: docker run -d --rm -p 3000:3000 --name oda onedayahead:test
+      - name: Wait & curl
+        run: |
+          sleep 5
+          curl -f http://localhost:3000/lti/health
