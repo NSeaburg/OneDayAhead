@@ -1,15 +1,37 @@
-name: smoke-test
-on: workflow_dispatch      # run manually from the Actions tab
-jobs:
-  build-run:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build image
-        run: docker build -t onedayahead:test .
-      - name: Start container
-        run: docker run -d --rm -p 3000:3000 --name oda onedayahead:test
-      - name: Wait & curl
-        run: |
-          sleep 5
-          curl -f http://localhost:3000/lti/health
+          name: smoke-test
+          on: workflow_dispatch
+
+          jobs:
+            build-run:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+
+                - name: Build image
+                  run: docker build -t onedayahead:test .
+
+                - name: Start container
+                  run: |
+                    docker run -d --rm \
+                      --name oda \
+                      -p 3000:3000 \
+                      -e PORT=3000 \
+                      -e NODE_ENV=production \
+                      -e SESSION_SECRET=dummy \
+                      -e DATABASE_URL=postgres://dummy \
+                      onedayahead:test
+
+                - name: Wait & curl
+                  run: |
+                    for i in {1..10}; do
+                      sleep 3
+                      if curl -f http://localhost:3000/lti/health ; then
+                        echo "App is up"
+                        exit 0
+                      fi
+                    done
+                    echo "App never became ready" && exit 1
+
+                - name: Show container logs if curl fails
+                  if: failure()
+                  run: docker logs oda || true
