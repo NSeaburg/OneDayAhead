@@ -1,44 +1,44 @@
-                                          name: smoke-test
-                                          on:
-                                            workflow_dispatch:      # run manually from the “Actions” tab
+                                                  name: smoke-test
+                                                  on:
+                                                    workflow_dispatch:              # run manually from the “Actions” tab
 
-                                          jobs:
-                                            build-run:
-                                              runs-on: ubuntu-latest
+                                                  jobs:
+                                                    build-run:
+                                                      runs-on: ubuntu-latest
 
-                                              steps:
-                                                # 1. Pull repo contents
-                                                - uses: actions/checkout@v4
+                                                      steps:
+                                                        # 1. Checkout repo
+                                                        - uses: actions/checkout@v4
 
-                                                # 2. Build Docker image from the Dockerfile in the repo root
-                                                - name: Build image
-                                                  run: docker build -t onedayahead:test .
+                                                        # 2. Build Docker image from the Dockerfile
+                                                        - name: Build image
+                                                          run: docker build -t onedayahead:test .
 
-                                                # 3. Run container with dummy secrets and skip-migrations flag
-                                                - name: Start container
-                                                  run: |
-                                                    docker run -d --name oda \
-                                                      -p 3000:3000 \
-                                                      -e PORT=3000 \
-                                                      -e NODE_ENV=production \
-                                                      -e SESSION_SECRET=dummy \
-                                                      -e DATABASE_URL=postgres://user:pass@localhost:5432/testdb \
-                                                      -e SKIP_DB_MIGRATIONS=true \
-                                                      onedayahead:test
+                                                        # 3. Start container with dummy secrets and skip-migrations flag
+                                                        - name: Start container
+                                                          run: |
+                                                            docker run -d --name oda \
+                                                              -p 3000:3000 \
+                                                              -e PORT=3000 \
+                                                              -e NODE_ENV=production \
+                                                              -e SESSION_SECRET=dummy \
+                                                              -e DATABASE_URL=postgres://user:pass@localhost:5432/testdb \
+                                                              -e SKIP_DB_MIGRATIONS=true \
+                                                              onedayahead:test
 
-                                                # 4. Poll /lti/health for up to ~30 s
-                                                - name: Wait & curl
-                                                  run: |
-                                                    for i in {1..10}; do
-                                                      sleep 3
-                                                      if curl -fs http://localhost:3000/lti/health ; then
-                                                        echo "App is up"
-                                                        exit 0
-                                                      fi
-                                                    done
-                                                    echo "App never became ready" && exit 1
+                                                        # 4. Poll /health for ~30 s until the server responds
+                                                        - name: Wait & curl
+                                                          run: |
+                                                            for i in {1..10}; do
+                                                              sleep 3
+                                                              if curl -fs http://localhost:3000/health ; then
+                                                                echo "App is up"
+                                                                exit 0
+                                                              fi
+                                                            done
+                                                            echo "App never became ready" && exit 1
 
-                                                # 5. If still failing, print the container logs
-                                                - name: Show container logs if curl fails
-                                                  if: failure()
-                                                  run: docker logs oda || true
+                                                        # 5. If curl fails, dump container logs for diagnosis
+                                                        - name: Show container logs if curl fails
+                                                          if: failure()
+                                                          run: docker logs oda || true

@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // ──────────────── NEW: skip flag ────────────────
+    // ───────── skip DB migrations during CI smoke-test ─────────
     if (process.env.SKIP_DB_MIGRATIONS === "true") {
       console.log("⚠️  Skipping DB migrations (CI smoke-test)");
     } else {
@@ -54,10 +54,12 @@ app.use((req, res, next) => {
       console.log("Migrations completed successfully");
     }
 
-    // sessions only after (or instead of) migrations
     app.use(sessionMiddleware);
 
     const server = await registerRoutes(app);
+
+    /* ---------- NEW: simple health-check endpoint ---------- */
+    app.get("/health", (_req, res) => res.status(200).send("OK"));
 
     // global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -67,7 +69,6 @@ app.use((req, res, next) => {
 
     // dev vs prod asset handling
     if (app.get("env") === "development") {
-      // serve static files if ?production=true, else Vite dev middleware
       app.use((req, res, next) => {
         if (req.query.production === "true") {
           console.log("Serving static build for " + req.originalUrl);
