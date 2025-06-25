@@ -3,106 +3,89 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cookieParser from "cookie-parser";
 import { sessionMiddleware } from "./middleware/session";
-import { corsMiddleware, securityHeadersMiddleware, getSecureCookieConfig } from "./middleware/security";
+import {
+  corsMiddleware,
+  securityHeadersMiddleware,
+} from "./middleware/security";
 import { runMigrations } from "./migrations";
 
-// Initialize Express app
 const app = express();
+app.set("trust proxy", 1); // allow rate-limit IP detection behind proxy
 
-// Enable trust proxy for rate limiting in Replit environment
-app.set('trust proxy', 1);
-
-// Basic middleware
+// ────────────────── basic middleware ──────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Security middleware
 app.use(corsMiddleware);
 app.use(securityHeadersMiddleware);
+app.use(
+  cookieParser(process.env.COOKIE_SECRET || "learning-platform-secret-key"),
+);
 
-// Cookie handling with secure settings
-app.use(cookieParser(process.env.COOKIE_SECRET || 'learning-platform-secret-key'));
-
+// ─────────────── per-request logging helper ───────────
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJson: Record<string, any> | undefined;
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
+  const ogJson = res.json;
+  res.json = function (body, ...a) {
+    capturedJson = body;
+    return ogJson.apply(res, [body, ...a]);
   };
 
   res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
+    if (!path.startsWith("/api")) return;
+    const dur = Date.now() - start;
+    let line = `${req.method} ${path} ${res.statusCode} in ${dur}ms`;
+    if (capturedJson) line += ` :: ${JSON.stringify(capturedJson)}`;
+    if (line.length > 80) line = line.slice(0, 79) + "…";
+    log(line);
   });
-
   next();
 });
 
 (async () => {
   try {
-    // Run database migrations first
-    await runMigrations();
-    console.log("Migrations completed successfully");
-    
-    // Apply session middleware only after migrations are done
+    // ──────────────── NEW: skip flag ────────────────
+    if (process.env.SKIP_DB_MIGRATIONS === "true") {
+      console.log("⚠️  Skipping DB migrations (CI smoke-test)");
+    } else {
+      await runMigrations();
+      console.log("Migrations completed successfully");
+    }
+
+    // sessions only after (or instead of) migrations
     app.use(sessionMiddleware);
-    
+
     const server = await registerRoutes(app);
 
+    // global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-
-      res.status(status).json({ message });
+      res.status(err.status || 500).json({ message: err.message || "Error" });
       throw err;
     });
 
-    // importantly only setup vite in development and after
-    // setting up all the other routes so the catch-all route
-    // doesn't interfere with the other routes
+    // dev vs prod asset handling
     if (app.get("env") === "development") {
-      // Special handler for production mode when using the ?production=true param
+      // serve static files if ?production=true, else Vite dev middleware
       app.use((req, res, next) => {
-        if (req.query.production === 'true') {
-          // If this is a specific production embed request, use static files instead
-          console.log('Serving in PRODUCTION mode for query param: ' + req.originalUrl);
+        if (req.query.production === "true") {
+          console.log("Serving static build for " + req.originalUrl);
           serveStatic(app);
         } else {
           next();
         }
       });
-      
       await setupVite(app, server);
     } else {
       serveStatic(app);
     }
 
-    // ALWAYS serve the app on port 5000
-    // this serves both the API and the client.
-    // It is the only port that is not firewalled.
-    const port = 5000;
-    server.listen({
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      log(`serving on port ${port}`);
-    });
+    // listen on PORT env-var or default 5000
+    const port = Number(process.env.PORT) || 5000;
+    server.listen({ port, host: "0.0.0.0", reusePort: true }, () =>
+      log(`serving on port ${port}`),
+    );
   } catch (error) {
     console.error("Failed to start server:", error);
     process.exit(1);
