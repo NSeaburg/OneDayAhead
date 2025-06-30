@@ -42,7 +42,10 @@ app.use((req, res, next) => {
 // Test database connection before anything else
 async function testDatabaseConnection() {
   console.log("🔍 Testing basic database connection...");
-  console.log("📍 Database URL:", process.env.DATABASE_URL?.replace(/\/\/.*:.*@/, '//***:***@'));
+  console.log(
+    "📍 Database URL:",
+    process.env.DATABASE_URL?.replace(/\/\/.*:.*@/, "//***:***@"),
+  );
 
   try {
     const client = await pool.connect();
@@ -108,3 +111,9 @@ async function testDatabaseConnection() {
     const port = Number(process.env.PORT) || 5000;
     server.listen({ port, host: "0.0.0.0", reusePort: true }, () =>
       log(`🚀 serving on port ${port}`),
+    );
+  } catch (err) {
+    console.error("💥 Failed to start server:", err);
+    process.exit(1);
+  }
+})();
