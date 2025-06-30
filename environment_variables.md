@@ -30,14 +30,7 @@ N8N_DYNAMIC_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Feedback Flow
 - **Note**: These are external webhooks that process educational data
 
 ### Educational Content
-```bash
-FULL_SYSTEM_PROMPT="You are a fresh, fun, interesting learning assistant. You discussing the content of an article about the three branches of government in the United States. Provide clear, concise answers to questions about these government branches or related topics. you aim for a quick back and forth conversation, aiming to limit most responses to 3 sentences or less. You push students to deepen their thinking and you ask them engaging questions.
-
-You will refuse to discuss anything unrelated to the government structure of political science. You will not discuss political hot-button issues at all."
-```
-- **Length**: 9,505 characters (full prompt)
-- **Purpose**: Article discussion system prompt
-- **Note**: This is a truncated version - full prompt in server configuration
+System prompts are now stored in `server/prompts.ts` configuration file instead of environment variables for better maintainability and deployment simplicity.
 
 ## Optional Environment Variables
 
@@ -61,7 +54,6 @@ vercel env add ANTHROPIC_API_KEY
 vercel env add DATABASE_URL
 vercel env add N8N_WEBHOOK_URL
 vercel env add N8N_DYNAMIC_WEBHOOK_URL
-vercel env add FULL_SYSTEM_PROMPT
 ```
 
 ### For Railway
@@ -78,7 +70,6 @@ ANTHROPIC_API_KEY=sk-ant-...
 DATABASE_URL=postgresql://...
 N8N_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Assessment-Finish
 N8N_DYNAMIC_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Feedback Flow
-FULL_SYSTEM_PROMPT="[full content]"
 NODE_ENV=production
 PORT=5000
 ```

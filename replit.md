@@ -137,6 +137,9 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 - `LTI_PRIVATE_KEY`: RSA private key for JWT signing (PEM format)
 - `LTI_PUBLIC_KEY`: RSA public key for verification (PEM format)
 
+### Configuration Files
+- `server/prompts.ts`: AI assistant system prompts (moved from environment variables for better maintainability)
+
 ### Security Configuration
 - Frame-ancestors policy for approved LMS domains
 - Secure cookie configuration in production
@@ -145,6 +148,10 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- December 30, 2025. Moved AI system prompts from environment variables to configuration files
+  - Created `server/prompts.ts` for better maintainability and deployment simplicity
+  - Removed FULL_SYSTEM_PROMPT environment variable dependency
+  - Updated documentation to reflect configuration file approach
 - June 16, 2025. Complete LTI 1.3 integration implemented with Canvas compatibility
   - Added full LTI 1.3 authentication with OIDC login flow
   - Implemented Assignment and Grade Services (AGS) for automatic grade passback
