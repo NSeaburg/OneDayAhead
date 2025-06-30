@@ -8,10 +8,10 @@ import {
   securityHeadersMiddleware,
 } from "./middleware/security";
 import { runMigrations } from "./migrations";
+import { pool } from "./db";
 
 const app = express();
 app.set("trust proxy", 1);
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(corsMiddleware);
@@ -39,6 +39,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Test database connection before anything else
+async function testDatabaseConnection() {
+  console.log("🔍 Testing basic database connection...");
+  console.log("📍 Database URL:", process.env.DATABASE_URL?.replace(/\/\/.*:.*@/, '//***:***@'));
+
+  try {
+    const client = await pool.connect();
+    console.log("✅ Database connection successful!");
+    console.log("📊 Connected to database:", client.database);
+    console.log("🏠 Connected to host:", client.host);
+    console.log("🔌 Connected on port:", client.port);
+    client.release();
+    return true;
+  } catch (error) {
+    console.error("❌ Database connection failed:");
+    console.error("🚨 Error details:", error);
+    return false;
+  }
+}
+
 (async () => {
   try {
     const skipDb = process.env.SKIP_DB_MIGRATIONS === "true";
@@ -46,8 +66,16 @@ app.use((req, res, next) => {
     if (skipDb) {
       console.log("⚠️  Skipping DB migrations (CI smoke-test)");
     } else {
+      // Test connection first
+      const connectionSuccess = await testDatabaseConnection();
+      if (!connectionSuccess) {
+        console.error("💥 Cannot connect to database. Exiting...");
+        process.exit(1);
+      }
+
+      console.log("🔄 Running database migrations...");
       await runMigrations();
-      console.log("Migrations completed successfully");
+      console.log("✅ Migrations completed successfully");
     }
 
     /* ----- NEW: skip session store when DB is skipped ----- */
@@ -79,10 +107,4 @@ app.use((req, res, next) => {
 
     const port = Number(process.env.PORT) || 5000;
     server.listen({ port, host: "0.0.0.0", reusePort: true }, () =>
-      log(`serving on port ${port}`),
-    );
-  } catch (err) {
-    console.error("Failed to start server:", err);
-    process.exit(1);
-  }
-})();
+      log(`🚀 serving on port ${port}`),
