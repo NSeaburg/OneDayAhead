@@ -456,9 +456,9 @@ import express from "express";
 import { setupVite, serveStatic, log } from "./vite.ts";
 import { registerRoutes } from "./routes.ts";
 import { runMigrations } from "./migrations.ts";
+import { pool } from "./db.ts";
 
 const app = express();
-const port = process.env.PORT || 5000;
 
 // Parse JSON bodies
 app.use(express.json());
@@ -477,41 +477,88 @@ app.use((req, res, next) => {
   }
 });
 
-// Run database migrations
-async function initializeApp() {
+// Test database connection with detailed logging
+async function testDatabaseConnection() {
+  console.log("🔍 Testing basic database connection...");
+  console.log(
+    "📍 Database URL:",
+    process.env.DATABASE_URL?.replace(/\/\/.*:.*@/, "//***:***@"),
+  );
+
   try {
-    log("Running database migrations...");
-    await runMigrations();
-    log("Migrations completed successfully");
+    const client = await pool.connect();
+    console.log("✅ Database connection successful!");
+    console.log("📊 Connected to database:", client.database);
+    console.log("🏠 Connected to host:", client.host);
+    console.log("🔌 Connected on port:", client.port);
+    client.release();
+    return true;
   } catch (error) {
-    log(`Migration error: ${error}`, "error");
-    process.exit(1);
+    console.error("❌ Database connection failed:");
+    console.error("🚨 Error details:", error);
+    return false;
   }
 }
 
-// Initialize database and start server
-initializeApp().then(async () => {
-  const server = await registerRoutes(app);
+// Main application startup with enhanced error handling
+(async () => {
+  try {
+    const skipDb = process.env.SKIP_DB_MIGRATIONS === "true";
 
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    await setupVite(app, server);
+    if (skipDb) {
+      console.log("⚠️  Skipping DB migrations (CI smoke-test)");
+    } else {
+      // Test connection first
+      const connectionSuccess = await testDatabaseConnection();
+      if (!connectionSuccess) {
+        console.error("💥 Cannot connect to database. Exiting...");
+        process.exit(1);
+      }
+
+      console.log("🔄 Running database migrations...");
+      await runMigrations();
+      console.log("✅ Migrations completed successfully");
+    }
+
+    // Skip session store when DB is skipped
+    if (skipDb) {
+      console.log("⚠️  Skipping session store (CI smoke-test)");
+    } else {
+      app.use(sessionMiddleware);
+    }
+
+    const server = await registerRoutes(app);
+
+    // Health check endpoint
+    app.get("/health", (_req, res) => res.status(200).send("OK"));
+
+    // Error handling middleware
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      res.status(err.status || 500).json({ message: err.message || "Error" });
+      throw err;
+    });
+
+    // Development vs production serving
+    if (app.get("env") === "development") {
+      app.use((req, res, next) => {
+        if (req.query.production === "true") {
+          serveStatic(app);
+        } else next();
+      });
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    const port = Number(process.env.PORT) || 5000;
+    server.listen({ port, host: "0.0.0.0", reusePort: true }, () =>
+      log(`🚀 serving on port ${port}`),
+    );
+  } catch (err) {
+    console.error("💥 Failed to start server:", err);
+    process.exit(1);
   }
-
-  // Error handling middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    
-    log(`Error ${status}: ${message}`, "error");
-    res.status(status).json({ message });
-  });
-
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
-  });
-});
+})();
 ```
 
 ---
@@ -646,6 +693,9 @@ export default defineConfig({
 8. **Assessment System**: Comprehensive feedback with content and writing scores
 9. **Docker Ready**: Containerized deployment for AWS ECS/Fargate
 10. **Production Optimized**: SSL connections, connection pooling, error handling
+11. **Enhanced Database Testing**: Connection validation with detailed logging and graceful failure handling
+12. **CI/CD Support**: SKIP_DB_MIGRATIONS flag for smoke testing and deployment verification
+13. **Health Check Endpoint**: /health endpoint for load balancer and monitoring integration
 
 ## Data Export Capabilities
 
