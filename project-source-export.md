@@ -1,6 +1,6 @@
 # Learning Platform - Complete Source Code Export
 
-Generated: 2025-06-28
+Generated: 2025-06-30
 
 ## Project Overview
 
@@ -9,9 +9,10 @@ This is an LTI 1.3 compliant learning platform with AI-powered conversations and
 **Tech Stack:**
 - Frontend: React + TypeScript + Vite + Tailwind CSS
 - Backend: Node.js + Express + TypeScript
-- Database: PostgreSQL with Drizzle ORM
+- Database: AWS RDS PostgreSQL with Drizzle ORM
 - AI: Anthropic Claude API
 - LTI 1.3: Full Canvas integration with grade passback
+- Deployment: Docker-ready with AWS infrastructure
 
 ---
 
@@ -134,6 +135,38 @@ export const ltiGrades = pgTable("lti_grades", {
   submittedAt: timestamp("submitted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+```
+
+---
+
+## AWS RDS Database Connection (server/db.ts)
+
+```typescript
+import pg from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "@shared/schema";
+
+const { Pool } = pg;
+
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+// Configure connection pool for AWS RDS PostgreSQL
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // AWS RDS requires SSL
+  },
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+});
+
+// Initialize Drizzle with node-postgres adapter
+export const db = drizzle(pool, { schema });
 ```
 
 ---
@@ -285,89 +318,8 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  // LTI Deployment methods
-  async createLtiDeployment(data: InsertLtiDeployment): Promise<LtiDeployment> {
-    const result = await db.insert(ltiDeployments).values(data).returning();
-    return result[0];
-  }
-
-  async getLtiDeployment(platformId: number, deploymentId: string): Promise<LtiDeployment | undefined> {
-    const result = await db.select().from(ltiDeployments)
-      .where(and(eq(ltiDeployments.platformId, platformId), eq(ltiDeployments.deploymentId, deploymentId)))
-      .limit(1);
-    return result[0];
-  }
-
-  // LTI Registration methods
-  async createLtiRegistration(data: InsertLtiRegistration): Promise<LtiRegistration> {
-    const result = await db.insert(ltiRegistrations).values(data).returning();
-    return result[0];
-  }
-
-  async getLtiRegistrationByPlatform(platformId: number): Promise<LtiRegistration | undefined> {
-    const result = await db.select().from(ltiRegistrations).where(eq(ltiRegistrations.platformId, platformId)).limit(1);
-    return result[0];
-  }
-
-  // LTI Context methods
-  async getLtiContextByContextId(platformId: number, contextId: string): Promise<LtiContext | undefined> {
-    const result = await db.select().from(ltiContexts)
-      .where(and(eq(ltiContexts.platformId, platformId), eq(ltiContexts.contextId, contextId)))
-      .limit(1);
-    return result[0];
-  }
-
-  async createLtiContext(data: InsertLtiContext): Promise<LtiContext> {
-    const result = await db.insert(ltiContexts).values(data).returning();
-    return result[0];
-  }
-
-  // LTI User methods
-  async getLtiUserByUserId(platformId: number, ltiUserId: string): Promise<LtiUser | undefined> {
-    const result = await db.select().from(ltiUsers)
-      .where(and(eq(ltiUsers.platformId, platformId), eq(ltiUsers.ltiUserId, ltiUserId)))
-      .limit(1);
-    return result[0];
-  }
-
-  async createLtiUser(data: InsertLtiUser): Promise<LtiUser> {
-    const result = await db.insert(ltiUsers).values(data).returning();
-    return result[0];
-  }
-
-  // Tenant methods
-  async getTenantByPlatform(platformId: number): Promise<Tenant | undefined> {
-    const result = await db.select().from(tenants).where(eq(tenants.platformId, platformId)).limit(1);
-    return result[0];
-  }
-
-  async createTenant(data: InsertTenant): Promise<Tenant> {
-    const result = await db.insert(tenants).values(data).returning();
-    return result[0];
-  }
-
-  async getTenantByDomain(domain: string): Promise<Tenant | undefined> {
-    const result = await db.select().from(tenants).where(eq(tenants.domain, domain)).limit(1);
-    return result[0];
-  }
-
-  // LTI Grade methods
-  async createLtiGrade(data: InsertLtiGrade): Promise<LtiGrade> {
-    const result = await db.insert(ltiGrades).values(data).returning();
-    return result[0];
-  }
-
-  async getLtiGradesByUser(ltiUserId: number): Promise<LtiGrade[]> {
-    return await db.select().from(ltiGrades).where(eq(ltiGrades.ltiUserId, ltiUserId));
-  }
-
-  async updateLtiGradeSubmission(id: number, status: string): Promise<LtiGrade | undefined> {
-    const result = await db.update(ltiGrades)
-      .set({ submissionStatus: status, submittedAt: new Date() })
-      .where(eq(ltiGrades.id, id))
-      .returning();
-    return result[0];
-  }
+  // Additional LTI methods (truncated for brevity)
+  // ... all other LTI CRUD operations follow similar patterns
 }
 
 export const storage = new DatabaseStorage();
@@ -450,9 +402,6 @@ export class LtiKeyManager {
     });
 
     console.log('Generated new RSA key pair for LTI 1.3');
-    console.log('Public Key:', publicKey);
-    console.log('Private Key (store securely):', privateKey);
-
     return { publicKey, privateKey };
   }
 
@@ -600,11 +549,20 @@ export default App;
 
 ---
 
-## Environment Variables Required
+## AWS Infrastructure Configuration
+
+### Database Infrastructure
+- **Type**: Amazon RDS PostgreSQL
+- **Instance**: oda-prod.c364ukis8hf2.us-east-2.rds.amazonaws.com:5432
+- **Network**: Multi-AZ VPC deployment (us-east-2a, 2b, 2c)
+- **Security**: SSL required, private VPC access only
+- **Connection**: Standard PostgreSQL with connection pooling
+
+### Environment Variables Required
 
 ```bash
-# Database
-DATABASE_URL=postgresql://user:password@host:port/database
+# AWS RDS Database
+DATABASE_URL=postgresql://postgres:PASSWORD@oda-prod.c364ukis8hf2.us-east-2.rds.amazonaws.com:5432/postgres?sslmode=require
 
 # AI Integration
 ANTHROPIC_API_KEY=your_anthropic_api_key
@@ -655,15 +613,54 @@ CMD ["node", "dist/index.js"]
 
 ---
 
+## Drizzle Configuration
+
+```typescript
+import { defineConfig } from "drizzle-kit";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL, ensure the database is provisioned");
+}
+
+export default defineConfig({
+  out: "./migrations",
+  schema: "./shared/schema.ts",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL,
+  },
+});
+```
+
+---
+
 ## Key Features
 
 1. **LTI 1.3 Integration**: Full Canvas LMS support with authentication, grade passback, and deep linking
 2. **AI Assistants**: Multiple Claude-powered assistants for different learning phases
-3. **Multi-Tenant**: Support for multiple Canvas instances with separate configurations
-4. **Session Management**: Secure session-based user tracking with automatic cleanup
-5. **Grade Passback**: Automatic submission of assessment scores to Canvas gradebook
-6. **Real-time Conversations**: Streaming AI responses for interactive learning
-7. **Assessment System**: Comprehensive feedback with content and writing scores
-8. **Database Migrations**: Automatic schema setup and updates
+3. **AWS RDS Integration**: Production-ready PostgreSQL with SSL and connection pooling
+4. **Multi-Tenant**: Support for multiple Canvas instances with separate configurations
+5. **Session Management**: Secure session-based user tracking with automatic cleanup
+6. **Grade Passback**: Automatic submission of assessment scores to Canvas gradebook
+7. **Real-time Conversations**: Streaming AI responses for interactive learning
+8. **Assessment System**: Comprehensive feedback with content and writing scores
+9. **Docker Ready**: Containerized deployment for AWS ECS/Fargate
+10. **Production Optimized**: SSL connections, connection pooling, error handling
 
-This platform provides a complete LTI 1.3 compliant learning experience with AI-powered interactions and seamless Canvas integration.
+## Data Export Capabilities
+
+- **PDF Export**: Users can download learning results with transcripts and scores
+- **Database Storage**: All learning data stored in AWS RDS PostgreSQL
+- **Grade Passback**: Automatic Canvas gradebook integration
+- **No Google Sheets Integration**: Currently not configured for spreadsheet export
+
+## Deployment Architecture
+
+The application is designed for AWS deployment with:
+- **Frontend**: React SPA served via CDN or static hosting
+- **Backend**: Node.js API deployed on ECS/Fargate or Lambda
+- **Database**: AWS RDS PostgreSQL in private VPC
+- **Security**: VPC networking with security groups (ODA-SG, ODA-RDS)
+- **SSL**: Required connections throughout the infrastructure
+
+This platform provides a complete LTI 1.3 compliant learning experience with AI-powered interactions, AWS-grade infrastructure, and seamless Canvas integration.
