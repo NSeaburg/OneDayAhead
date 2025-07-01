@@ -121,6 +121,7 @@ export default function AssessmentBotScreen({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: allMessages,  // Send full conversation history
+          systemPrompt,  // Send the Reginald system prompt
           threadId,
           assistantType: 'assessment'
         })

@@ -1296,10 +1296,10 @@ When the student has completed both activities, thank them warmly and end the co
     }
   });
 
-  // Non-streaming endpoint for assessment and teaching bots
+  // Streaming endpoint for assessment and teaching bots
   app.post("/api/claude-chat", async (req, res) => {
     try {
-      const { messages, systemPrompt } = req.body;
+      const { messages, systemPrompt, threadId, assistantType } = req.body;
       
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({ 
@@ -1310,6 +1310,13 @@ When the student has completed both activities, thank them warmly and end the co
       // Log the system prompt to verify it's being received
       console.log("Received system prompt on server:", systemPrompt?.substring(0, 100) + "...");
       
+      // Set up streaming headers
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      });
+      
       // Convert OpenAI-style messages to Anthropic format
       const anthropicMessages = messages
         .filter((msg: any) => msg.role !== 'system')
@@ -1318,33 +1325,49 @@ When the student has completed both activities, thank them warmly and end the co
           content: msg.content
         }));
       
-      // Create completion with Anthropic
-      const completion = await anthropic.messages.create({
+      // Generate a thread ID based on assistant type
+      const detectedAssistantType = systemPrompt?.includes('Reginald') ? 'assessment' : 'teaching';
+      const messageId = threadId || `claude-${detectedAssistantType}-${Date.now()}`;
+      
+      // Send initial thread ID
+      res.write(`data: ${JSON.stringify({ threadId: messageId })}\n\n`);
+      
+      // Start streaming response from Claude
+      const stream = await anthropic.messages.stream({
         messages: anthropicMessages,
-        system: systemPrompt || ASSESSMENT_ASSISTANT_PROMPT, // Use provided prompt or fallback
+        system: systemPrompt || ASSESSMENT_ASSISTANT_PROMPT,
         model: "claude-3-5-sonnet-20241022",
         max_tokens: 8192, // Fixed: reduced from 20000 to 8192 (max allowed)
         temperature: 1.0
       });
       
-      // Extract the response content
-      const content = completion.content[0]?.type === 'text' 
-        ? completion.content[0].text 
-        : 'No response content available';
+      let fullContent = '';
       
-      // Generate a thread ID based on assistant type
-      const assistantType = systemPrompt?.includes('Reginald') ? 'assessment' : 'teaching';
-      const messageId = `claude-${assistantType}-${Date.now()}`;
+      // Process the stream
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          const content = chunk.delta.text;
+          
+          if (content) {
+            fullContent += content;
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          }
+        }
+      }
+      
+      // Send completion signal
+      res.write(`data: [DONE]\n\n`);
+      res.end();
       
       // Store the conversation if we have a session ID
       const sessionId = req.sessionId;
       if (sessionId) {
         try {
-          const allMessages = [...messages, { role: 'assistant', content }];
+          const allMessages = [...messages, { role: 'assistant', content: fullContent }];
           await storage.createConversation({
             sessionId,
             threadId: messageId,
-            assistantType,
+            assistantType: detectedAssistantType,
             messages: allMessages
           });
         } catch (error) {
@@ -1352,32 +1375,24 @@ When the student has completed both activities, thank them warmly and end the co
         }
       }
       
-      res.json({
-        id: messageId,
-        object: "chat.completion",
-        created: Math.floor(Date.now() / 1000),
-        model: "claude-3-5-sonnet-20241022",
-        choices: [{
-          index: 0,
-          message: {
-            role: "assistant",
-            content: content
-          },
-          finish_reason: "stop"
-        }],
-        usage: {
-          prompt_tokens: 0,
-          completion_tokens: 0,
-          total_tokens: 0
-        }
-      });
-      
     } catch (error: any) {
       console.error("Error in claude chat:", error);
-      return res.status(500).json({
-        error: "Failed to process chat request",
-        details: error.message
-      });
+      
+      // Since we're streaming, we need to send the error through the stream
+      // Check if headers were already sent (streaming started)
+      if (res.headersSent) {
+        // Send error through the stream
+        try {
+          res.write(`data: ${JSON.stringify({ error: 'claude_chat_error', message: error.message || 'Streaming error occurred' })}\n\n`);
+          res.end();
+        } catch (streamError) {
+          console.error('Failed to send error through stream:', streamError);
+          res.end();
+        }
+      } else {
+        // Headers not sent yet, can send regular JSON response
+        res.status(500).json({ error: 'Chat request failed', details: error.message });
+      }
     }
   });
 
