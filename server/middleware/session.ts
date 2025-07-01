@@ -9,6 +9,12 @@ declare global {
     interface Request {
       sessionId?: string;
       userId?: number | null;
+      ltiContext?: {
+        userId: string;
+        courseId: string;
+        isDevelopment: boolean;
+        claims?: any;
+      };
     }
   }
 }

@@ -122,15 +122,15 @@ export async function validateLtiToken(token: string): Promise<LtiClaims | null>
 }
 
 export async function ltiAuthMiddleware(req: LtiSession, res: Response, next: NextFunction) {
-  // Check for development session with isDevelopment flag
-  if ((req as any).session?.ltiContext?.isDevelopment) {
-    // Use mock LTI context from development session
-    const sessionContext = (req as any).session.ltiContext;
+  // Check for development context set by /dev route
+  if ((req as any).ltiContext?.isDevelopment) {
+    // Use mock LTI context from development request
+    const devContext = (req as any).ltiContext;
     req.lti = {
-      claims: sessionContext.claims,
+      claims: devContext.claims,
       platform: { id: 1, name: 'Development Platform' },
-      context: { id: 1, contextId: sessionContext.courseId },
-      user: { id: 1, name: sessionContext.claims.name || 'Dev User' },
+      context: { id: 1, contextId: devContext.courseId },
+      user: { id: 1, name: devContext.claims.name || 'Dev User' },
       tenant: { id: 1, name: 'Development Tenant' }
     };
     return next();
