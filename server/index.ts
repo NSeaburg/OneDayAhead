@@ -39,65 +39,26 @@ app.use((req, res, next) => {
   next();
 });
 
-// Test database connection with proper retry logic
-async function testDatabaseConnection(retries = 3) {
-  console.log("🔍 Testing database connection...");
+// Test database connection before anything else
+async function testDatabaseConnection() {
+  console.log("🔍 Testing basic database connection...");
   console.log(
     "📍 Database URL:",
     process.env.DATABASE_URL?.replace(/\/\/.*:.*@/, "//***:***@"),
   );
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      console.log(`🔄 Connection attempt ${attempt}/${retries}...`);
-      const client = await pool.connect();
-      
-      // Test with a simple query
-      const result = await client.query('SELECT NOW() as current_time');
-      console.log("✅ Database connection successful!");
-      console.log("📊 Current time from database:", result.rows[0]?.current_time);
-      
-      client.release();
-      return true;
-    } catch (error) {
-      console.error(`❌ Database connection attempt ${attempt} failed:`);
-      console.error("🚨 Error details:", error);
-      
-      if (attempt < retries) {
-        const delay = attempt * 2000; // Exponential backoff: 2s, 4s, 6s
-        console.log(`⏳ Waiting ${delay}ms before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  
-  console.error("💥 All database connection attempts failed");
-  return false;
-}
-
-// Initialize database connection in background
-async function initializeDatabaseAsync() {
-  console.log("🔄 Starting background database initialization...");
-  
-  const connectionSuccess = await testDatabaseConnection(5);
-  if (connectionSuccess) {
-    try {
-      console.log("🔄 Running database migrations...");
-      await runMigrations();
-      console.log("✅ Database migrations completed successfully");
-      
-      // Enable session middleware after successful DB connection
-      console.log("🔄 Enabling session middleware...");
-      // Note: We would need to restart the server to add middleware
-      // For now, log that DB is ready for next restart
-      console.log("📝 Database ready - session middleware will be enabled on next restart");
-      
-    } catch (migrationError) {
-      console.error("❌ Database migration failed:", migrationError);
-    }
-  } else {
-    console.error("⚠️  Database still unavailable. Some features may not work.");
-    console.log("💡 Check DATABASE_URL and network connectivity");
+  try {
+    const client = await pool.connect();
+    console.log("✅ Database connection successful!");
+    console.log("📊 Connected to database:", client.database);
+    console.log("🏠 Connected to host:", client.host);
+    console.log("🔌 Connected on port:", client.port);
+    client.release();
+    return true;
+  } catch (error) {
+    console.error("❌ Database connection failed:");
+    console.error("🚨 Error details:", error);
+    return false;
   }
 }
 
@@ -108,20 +69,24 @@ async function initializeDatabaseAsync() {
     if (skipDb) {
       console.log("⚠️  Skipping DB migrations (CI smoke-test)");
     } else {
-      // Start database initialization in background to not block server startup
-      console.log("🚀 Starting server immediately, database will initialize in background...");
-      
-      // Initialize database connection in background
-      setTimeout(() => {
-        initializeDatabaseAsync().catch(err => {
-          console.error("Background database initialization failed:", err);
-        });
-      }, 1000); // Wait 1 second after server starts
+      // Test connection first
+      const connectionSuccess = await testDatabaseConnection();
+      if (!connectionSuccess) {
+        console.error("💥 Cannot connect to database. Exiting...");
+        process.exit(1);
+      }
+
+      console.log("🔄 Running database migrations...");
+      await runMigrations();
+      console.log("✅ Migrations completed successfully");
     }
 
-    /* ----- Skip session store until database is ready ----- */
-    console.log("⚠️  Session store disabled until database is ready");
-    // app.use(sessionMiddleware); // Will be enabled after DB connection
+    /* ----- NEW: skip session store when DB is skipped ----- */
+    if (skipDb) {
+      console.log("⚠️  Skipping session store (CI smoke-test)");
+    } else {
+      app.use(sessionMiddleware);
+    }
 
     const server = await registerRoutes(app);
 
