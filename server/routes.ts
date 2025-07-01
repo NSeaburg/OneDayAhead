@@ -116,6 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: 'dev@example.com'
         }
       };
+    }
 
     res.send(`
       <!DOCTYPE html>
