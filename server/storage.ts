@@ -481,7 +481,17 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use memory storage when explicitly requested for development
-const useMemoryStorage = process.env.NODE_ENV === "development" && process.env.USE_MEMORY_STORAGE === "true";
-console.log(`🗄️  Storage mode: ${useMemoryStorage ? 'In-Memory' : 'Database'}`);
-export const storage: IStorage = useMemoryStorage ? new MemoryStorage() : new DatabaseStorage();
+// Dynamic storage initialization function
+function initializeStorage(): IStorage {
+  const useMemoryStorage = process.env.NODE_ENV === "development" && process.env.USE_MEMORY_STORAGE === "true";
+  console.log(`🗄️  Storage mode: ${useMemoryStorage ? 'In-Memory' : 'Database'}`);
+  return useMemoryStorage ? new MemoryStorage() : new DatabaseStorage();
+}
+
+// Initialize storage - will be re-initialized if environment changes
+export let storage: IStorage = initializeStorage();
+
+// Function to reinitialize storage (useful when environment variables change)
+export function reinitializeStorage(): void {
+  storage = initializeStorage();
+}

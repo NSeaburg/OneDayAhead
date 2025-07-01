@@ -76,12 +76,20 @@ async function testDatabaseConnection() {
       // Test connection first
       const connectionSuccess = await testDatabaseConnection();
       if (!connectionSuccess) {
-        console.error("💥 Cannot connect to database. Exiting...");
-        process.exit(1);
+        if (process.env.NODE_ENV === "development") {
+          console.log("🔧 Database connection failed in development mode - switching to in-memory storage");
+          process.env.USE_MEMORY_STORAGE = "true";
+          // Reinitialize storage with new environment variable
+          const { reinitializeStorage } = await import("./storage");
+          reinitializeStorage();
+        } else {
+          console.error("💥 Cannot connect to database. Exiting...");
+          process.exit(1);
+        }
+      } else {
+        console.log("🔄 Running database migrations...");
+        await runMigrations();
       }
-
-      console.log("🔄 Running database migrations...");
-      await runMigrations();
       console.log("✅ Migrations completed successfully");
     }
 
