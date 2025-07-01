@@ -1299,7 +1299,7 @@ When the student has completed both activities, thank them warmly and end the co
   // Simple streaming endpoint for assessment and teaching bots
   app.post("/api/claude-chat", async (req, res) => {
     try {
-      const { message, threadId, assistantType } = req.body;
+      const { message, messages: conversationHistory, threadId, assistantType } = req.body;
       
       // Handle different assistant types with appropriate system prompts
       let systemPrompt;
@@ -1330,12 +1330,26 @@ When the student has completed both activities, thank them warmly and end the co
         'Connection': 'keep-alive',
       });
       
-      // Create message array for Claude API
-      const messages = [{ role: 'user' as const, content: message }];
+      // Use the full conversation history if provided, otherwise fall back to single message
+      let claudeMessages;
+      if (conversationHistory && Array.isArray(conversationHistory)) {
+        // Convert to Claude format, filtering out system messages
+        claudeMessages = conversationHistory
+          .filter((msg: any) => msg.role !== 'system')
+          .map((msg: any) => ({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content
+          }));
+      } else {
+        // Fallback for single message (backwards compatibility)
+        claudeMessages = [{ role: 'user' as const, content: message }];
+      }
+      
+      console.log(`Sending ${claudeMessages.length} messages to Claude for ${assistantType} assistant`);
       
       // Start streaming response from Claude
       const stream = await anthropic.messages.stream({
-        messages,
+        messages: claudeMessages,
         system: systemPrompt,
         model: "claude-3-7-sonnet-20250219",
         max_tokens: 20000,
@@ -1367,10 +1381,18 @@ When the student has completed both activities, thank them warmly and end the co
       try {
         const sessionId = req.sessionId;
         if (sessionId) {
-          const allMessages = [
-            { role: 'user', content: message },
-            { role: 'assistant', content: fullContent }
-          ];
+          // Store the complete conversation including the new assistant response
+          let allMessages;
+          if (conversationHistory && Array.isArray(conversationHistory)) {
+            // Add the new assistant message to the existing conversation
+            allMessages = [...conversationHistory, { role: 'assistant', content: fullContent }];
+          } else {
+            // Fallback for single message
+            allMessages = [
+              { role: 'user', content: message },
+              { role: 'assistant', content: fullContent }
+            ];
+          }
           
           await storage.createConversation({
             sessionId,
