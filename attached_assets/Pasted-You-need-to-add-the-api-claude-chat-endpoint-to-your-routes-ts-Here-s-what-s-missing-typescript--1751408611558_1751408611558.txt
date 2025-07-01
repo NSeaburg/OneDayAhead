@@ -1,0 +1,86 @@
+You need to add the /api/claude-chat endpoint to your routes.ts. Here's what's missing:
+typescript// Add this to server/routes.ts after the article-chat endpoint
+
+app.post("/api/claude-chat", async (req, res) => {
+  try {
+    const { messages, systemPrompt } = req.body;
+    
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ 
+        error: "Invalid message data. Expected an array of messages." 
+      });
+    }
+    
+    // Log the system prompt to verify it's being received
+    console.log("Received system prompt on server:", systemPrompt?.substring(0, 100) + "...");
+    
+    // Convert OpenAI-style messages to Anthropic format
+    const anthropicMessages = messages
+      .filter((msg: any) => msg.role !== 'system')
+      .map((msg: any) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }));
+    
+    // Create completion with Anthropic
+    const completion = await anthropic.messages.create({
+      messages: anthropicMessages,
+      system: systemPrompt || ASSESSMENT_ASSISTANT_PROMPT, // Use provided prompt or fallback
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 20000,
+      temperature: 1.0
+    });
+    
+    // Extract the response content
+    const content = completion.content[0]?.type === 'text' 
+      ? completion.content[0].text 
+      : 'No response content available';
+    
+    // Generate a thread ID based on assistant type
+    const assistantType = systemPrompt?.includes('Reginald') ? 'assessment' : 'teaching';
+    const messageId = `claude-${assistantType}-${Date.now()}`;
+    
+    // Store the conversation if we have a session ID
+    const sessionId = req.sessionId;
+    if (sessionId) {
+      try {
+        const allMessages = [...messages, { role: 'assistant', content }];
+        await storage.createConversation({
+          sessionId,
+          threadId: messageId,
+          assistantType,
+          messages: allMessages
+        });
+      } catch (error) {
+        console.error("Error storing conversation:", error);
+      }
+    }
+    
+    res.json({
+      id: messageId,
+      object: "chat.completion",
+      created: Math.floor(Date.now() / 1000),
+      model: "claude-3-5-sonnet-20241022",
+      choices: [{
+        index: 0,
+        message: {
+          role: "assistant",
+          content: content
+        },
+        finish_reason: "stop"
+      }],
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0
+      }
+    });
+    
+  } catch (error: any) {
+    console.error("Error in claude chat:", error);
+    return res.status(500).json({
+      error: "Failed to process chat request",
+      details: error.message
+    });
+  }
+});
