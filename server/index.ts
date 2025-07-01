@@ -40,26 +40,41 @@ app.use((req, res, next) => {
 });
 
 // Test database connection before anything else
-async function testDatabaseConnection() {
-  console.log("🔍 Testing basic database connection...");
+async function testDatabaseConnection(retries = 3) {
+  console.log("🔍 Testing database connection...");
   console.log(
     "📍 Database URL:",
     process.env.DATABASE_URL?.replace(/\/\/.*:.*@/, "//***:***@"),
   );
 
-  try {
-    const client = await pool.connect();
-    console.log("✅ Database connection successful!");
-    console.log("📊 Connected to database:", client.database);
-    console.log("🏠 Connected to host:", client.host);
-    console.log("🔌 Connected on port:", client.port);
-    client.release();
-    return true;
-  } catch (error) {
-    console.error("❌ Database connection failed:");
-    console.error("🚨 Error details:", error);
-    return false;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`🔄 Connection attempt ${attempt}/${retries}...`);
+      const client = await pool.connect();
+      console.log("✅ Database connection successful!");
+      
+      // Get basic connection info
+      const result = await client.query('SELECT current_database(), inet_server_addr(), inet_server_port()');
+      const [dbInfo] = result.rows;
+      console.log("📊 Connected to database:", dbInfo.current_database);
+      console.log("🏠 Connected to host:", dbInfo.inet_server_addr);
+      console.log("🔌 Connected on port:", dbInfo.inet_server_port);
+      
+      client.release();
+      return true;
+    } catch (error) {
+      console.error(`❌ Connection attempt ${attempt}/${retries} failed:`);
+      console.error("🚨 Error details:", error);
+      
+      if (attempt < retries) {
+        const waitTime = attempt * 2000; // Progressive backoff: 2s, 4s, 6s
+        console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
   }
+  
+  return false;
 }
 
 (async () => {
