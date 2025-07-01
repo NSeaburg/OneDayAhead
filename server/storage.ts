@@ -17,6 +17,198 @@ import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
+// In-memory storage for development without database
+class MemoryStorage implements IStorage {
+  private users: Map<number, User> = new Map();
+  private sessions: Map<string, Session> = new Map();
+  private conversations: Map<string, Conversation> = new Map();
+  private feedbacks: Map<string, Feedback> = new Map();
+  private userIdCounter = 1;
+  private conversationIdCounter = 1;
+  private feedbackIdCounter = 1;
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const users = Array.from(this.users.values());
+    return users.find(user => user.username === username);
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const user: User = {
+      id: this.userIdCounter++,
+      username: userData.username,
+      password: userData.password,
+      createdAt: new Date()
+    };
+    this.users.set(user.id, user);
+    return user;
+  }
+
+  async createSession(userId: number): Promise<Session> {
+    const session: Session = {
+      id: uuidv4(),
+      userId,
+      createdAt: new Date()
+    };
+    this.sessions.set(session.id, session);
+    return session;
+  }
+
+  async getSessionById(sessionId: string): Promise<Session | undefined> {
+    return this.sessions.get(sessionId);
+  }
+
+  async validateSession(sessionId: string): Promise<boolean> {
+    return this.sessions.has(sessionId);
+  }
+
+  async createConversation(data: InsertConversation): Promise<Conversation> {
+    const conversation: Conversation = {
+      id: this.conversationIdCounter++,
+      sessionId: data.sessionId || null,
+      threadId: data.threadId,
+      assistantType: data.assistantType,
+      messages: data.messages,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.conversations.set(data.threadId, conversation);
+    return conversation;
+  }
+
+  async getConversationByThreadId(threadId: string): Promise<Conversation | undefined> {
+    return this.conversations.get(threadId);
+  }
+
+  async getConversationsBySession(sessionId: string): Promise<Conversation[]> {
+    return Array.from(this.conversations.values()).filter(c => c.sessionId === sessionId);
+  }
+
+  async updateConversation(threadId: string, messages: any[]): Promise<Conversation | undefined> {
+    const conversation = this.conversations.get(threadId);
+    if (conversation) {
+      conversation.messages = messages;
+      conversation.updatedAt = new Date();
+      this.conversations.set(threadId, conversation);
+    }
+    return conversation;
+  }
+
+  async createFeedback(data: InsertFeedback): Promise<Feedback> {
+    const feedback: Feedback = {
+      id: this.feedbackIdCounter++,
+      sessionId: data.sessionId || null,
+      summary: data.summary || null,
+      contentKnowledgeScore: data.contentKnowledgeScore || null,
+      writingScore: data.writingScore || null,
+      nextSteps: data.nextSteps || null,
+      grade: data.grade || null,
+      maxGrade: data.maxGrade || null,
+      submittedToLms: data.submittedToLms || null,
+      createdAt: new Date()
+    };
+    this.feedbacks.set(data.sessionId || '', feedback);
+    return feedback;
+  }
+
+  async getFeedbackBySession(sessionId: string): Promise<Feedback | undefined> {
+    return this.feedbacks.get(sessionId);
+  }
+
+  // LTI methods - simplified for development (return minimal valid objects)
+  async getLtiPlatformByIssuer(): Promise<LtiPlatform | undefined> { return undefined; }
+  async createLtiPlatform(data: InsertLtiPlatform): Promise<LtiPlatform> { 
+    return { 
+      id: 1, 
+      name: data.name,
+      issuer: data.issuer,
+      clientId: data.clientId,
+      authenticationEndpoint: data.authenticationEndpoint,
+      accesstokenEndpoint: data.accesstokenEndpoint,
+      authConfig: data.authConfig,
+      createdAt: new Date() 
+    };
+  }
+  async createLtiDeployment(data: InsertLtiDeployment): Promise<LtiDeployment> {
+    return { 
+      id: 1,
+      platformId: data.platformId,
+      deploymentId: data.deploymentId,
+      createdAt: new Date() 
+    };
+  }
+  async getLtiDeployment(): Promise<LtiDeployment | undefined> { return undefined; }
+  async createLtiRegistration(data: InsertLtiRegistration): Promise<LtiRegistration> {
+    return { 
+      id: 1,
+      platformId: data.platformId,
+      keySet: data.keySet,
+      privateKey: data.privateKey,
+      publicKey: data.publicKey,
+      createdAt: new Date() 
+    };
+  }
+  async getLtiRegistrationByPlatform(): Promise<LtiRegistration | undefined> { return undefined; }
+  async getLtiContextByContextId(): Promise<LtiContext | undefined> { return undefined; }
+  async createLtiContext(data: InsertLtiContext): Promise<LtiContext> {
+    return { 
+      id: 1,
+      platformId: data.platformId,
+      contextId: data.contextId,
+      contextType: data.contextType,
+      contextTitle: data.contextTitle,
+      contextLabel: data.contextLabel,
+      createdAt: new Date() 
+    };
+  }
+  async getLtiUserByUserId(): Promise<LtiUser | undefined> { return undefined; }
+  async createLtiUser(data: InsertLtiUser): Promise<LtiUser> {
+    return { 
+      id: 1,
+      name: data.name,
+      platformId: data.platformId,
+      ltiUserId: data.ltiUserId,
+      givenName: data.givenName,
+      familyName: data.familyName,
+      email: data.email,
+      roles: data.roles,
+      createdAt: new Date() 
+    };
+  }
+  async getTenantByPlatform(): Promise<Tenant | undefined> { return undefined; }
+  async createTenant(data: InsertTenant): Promise<Tenant> {
+    return { 
+      id: 1,
+      name: data.name,
+      platformId: data.platformId,
+      domain: data.domain,
+      config: data.config,
+      systemPrompt: data.systemPrompt,
+      isActive: data.isActive,
+      createdAt: new Date() 
+    };
+  }
+  async getTenantByDomain(): Promise<Tenant | undefined> { return undefined; }
+  async createLtiGrade(data: InsertLtiGrade): Promise<LtiGrade> {
+    return { 
+      id: 1,
+      sessionId: data.sessionId,
+      ltiUserId: data.ltiUserId,
+      lineitemId: data.lineitemId,
+      score: data.score,
+      maxScore: data.maxScore,
+      submissionStatus: data.submissionStatus,
+      submittedAt: data.submittedAt,
+      createdAt: new Date() 
+    };
+  }
+  async getLtiGradesByUser(): Promise<LtiGrade[]> { return []; }
+  async updateLtiGradeSubmission(): Promise<LtiGrade | undefined> { return undefined; }
+}
+
 // Storage interface with all the methods we need
 export interface IStorage {
   // User methods
@@ -289,4 +481,7 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Use memory storage when explicitly requested for development
+const useMemoryStorage = process.env.NODE_ENV === "development" && process.env.USE_MEMORY_STORAGE === "true";
+console.log(`🗄️  Storage mode: ${useMemoryStorage ? 'In-Memory' : 'Database'}`);
+export const storage: IStorage = useMemoryStorage ? new MemoryStorage() : new DatabaseStorage();
