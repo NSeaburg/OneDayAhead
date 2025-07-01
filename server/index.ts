@@ -65,9 +65,12 @@ async function testDatabaseConnection() {
 (async () => {
   try {
     const skipDb = process.env.SKIP_DB_MIGRATIONS === "true";
+    const isDevelopment = process.env.NODE_ENV === "development" && !process.env.DATABASE_URL;
 
     if (skipDb) {
       console.log("⚠️  Skipping DB migrations (CI smoke-test)");
+    } else if (isDevelopment) {
+      console.log("🔧 Development mode without database - using in-memory storage");
     } else {
       // Test connection first
       const connectionSuccess = await testDatabaseConnection();
