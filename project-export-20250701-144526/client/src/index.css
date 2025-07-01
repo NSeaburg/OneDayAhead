@@ -1,0 +1,328 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+      --background: 0 0% 100%;
+--foreground: 20 14.3% 4.1%;
+--muted: 60 4.8% 95.9%;
+--muted-foreground: 25 5.3% 44.7%;
+--popover: 0 0% 100%;
+--popover-foreground: 20 14.3% 4.1%;
+--card: 0 0% 100%;
+--card-foreground: 20 14.3% 4.1%;
+--border: 20 5.9% 90%;
+--input: 20 5.9% 90%;
+--primary: 207 90% 54%;
+--primary-foreground: 211 100% 99%;
+--secondary: 60 4.8% 95.9%;
+--secondary-foreground: 24 9.8% 10%;
+--accent: 60 4.8% 95.9%;
+--accent-foreground: 24 9.8% 10%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 60 9.1% 97.8%;
+--ring: 20 14.3% 4.1%;
+--radius: 0.5rem;
+  }
+  .dark {
+      --background: 240 10% 3.9%;
+--foreground: 0 0% 98%;
+--muted: 240 3.7% 15.9%;
+--muted-foreground: 240 5% 64.9%;
+--popover: 240 10% 3.9%;
+--popover-foreground: 0 0% 98%;
+--card: 240 10% 3.9%;
+--card-foreground: 0 0% 98%;
+--border: 240 3.7% 15.9%;
+--input: 240 3.7% 15.9%;
+--primary: 207 90% 54%;
+--primary-foreground: 211 100% 99%;
+--secondary: 240 3.7% 15.9%;
+--secondary-foreground: 0 0% 98%;
+--accent: 240 3.7% 15.9%;
+--accent-foreground: 0 0% 98%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 240 4.9% 83.9%;
+--radius: 0.5rem;
+  }
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* All custom animations removed for direct text display */
+
+/* Basic styling for chat messages - no animations */
+.message-appear {
+  opacity: 1;
+}
+
+/* Chat messages should appear with proper formatting */
+.typing-text {
+  display: inline;
+  white-space: pre-wrap; /* Preserve newlines and whitespace */
+  word-wrap: break-word; /* Break long words to prevent overflow */
+}
+
+/* Markdown styling */
+.markdown-content {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Heading styles */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.markdown-content h1 {
+  font-size: 1.75rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.5rem;
+}
+
+.markdown-content h3 {
+  font-size: 1.25rem;
+}
+
+/* Additional specific Markdown heading rules for heading format */
+.markdown-content p strong {
+  display: inline-block;  
+}
+
+/* Specific CSS for handling hash-based headings */
+
+/* Specific handling for literal hash characters at beginning of lines */
+.markdown-content p:first-letter {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+/* Add specific styling for heading text with ### prefixes */
+.markdown-content p strong:first-child {
+  font-weight: 700;
+}
+
+/* Special styling for lines that start with multiple hash characters */
+.markdown-content p {
+  position: relative;
+}
+
+/* General paragraph styling */
+.markdown-content p {
+  margin-bottom: 0.75rem;
+}
+
+/* Special styling for inline code in headings */
+.markdown-content h1 code,
+.markdown-content h2 code,
+.markdown-content h3 code {
+  background: none;
+  padding: 0;
+  border: none;
+  font-family: inherit;
+  color: inherit;
+}
+
+/* Style for code blocks that look like headings */
+.markdown-content p code:only-child {
+  display: block;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  background: none;
+  padding: 0;
+  color: #1a202c;
+  border: none;
+}
+
+/* List styles */
+.markdown-content ul,
+.markdown-content ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+}
+
+/* Code blocks */
+.markdown-content pre {
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+}
+
+.markdown-content code {
+  background-color: #f1f1f1;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+  display: block;
+  overflow-x: auto;
+  color: #24292e;
+  line-height: 1.5;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 4px solid #3b82f6;
+  padding: 0.75rem 1rem;
+  font-style: italic;
+  margin: 0.75rem 0;
+  background-color: #f8fafc;
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.markdown-content blockquote p {
+  margin-bottom: 0;
+}
+
+.markdown-content blockquote * {
+  color: #334155;
+}
+
+.markdown-content blockquote blockquote {
+  margin-left: 0.5rem;
+  margin-right: 0;
+  border-left-color: #64748b;
+}
+
+/* Extra paragraph styling already defined above */
+
+/* Bold and italic text */
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+/* Tables (GitHub Flavored Markdown) */
+.markdown-content table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+.markdown-content table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  text-align: left;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.markdown-content table tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Strikethrough */
+.markdown-content del {
+  text-decoration: line-through;
+}
+
+/* Task lists */
+.markdown-content ul.contains-task-list {
+  list-style-type: none;
+  padding-left: 0.5rem;
+}
+
+.markdown-content ul.contains-task-list input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+/* Footnotes */
+.markdown-content .footnotes {
+  font-size: 0.875rem;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 2rem;
+  padding-top: 1rem;
+}
+
+.markdown-content .footnotes ol {
+  padding-left: 1rem;
+}
+
+.markdown-content .footnote-ref,
+.markdown-content .footnote-backref {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+/* Styling for the article content in the High Bot screen */
+.article-content {
+  max-width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.article-content h1 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #222;
+}
+
+.article-content h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #444;
+}
+
+.article-content p {
+  margin-bottom: 1.2rem;
+}
+
