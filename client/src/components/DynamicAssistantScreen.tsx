@@ -101,11 +101,14 @@ export default function DynamicAssistantScreen({
     setCurrentStreamingMessage("");
 
     try {
+      // Prepare the full conversation history like the assessment bot does
+      const allMessages = [...messages, userMessage];
+      
       const response = await fetch('/api/claude-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message,
+          messages: allMessages,  // Send full conversation history
           threadId,
           assistantType: 'teaching',
           customSystemPrompt: activeSystemPrompt // Pass the teaching system prompt from N8N
