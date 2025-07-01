@@ -23,7 +23,11 @@ const ASSESSMENT_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 const DYNAMIC_ASSISTANT_WEBHOOK_URL = process.env.N8N_DYNAMIC_WEBHOOK_URL; // New webhook URL for the dynamic assistant
 
 // Import system prompts from configuration file
-import { ARTICLE_ASSISTANT_SYSTEM_PROMPT } from "./prompts";
+import { 
+  ARTICLE_ASSISTANT_SYSTEM_PROMPT, 
+  ASSESSMENT_ASSISTANT_PROMPT,
+  TEACHING_ASSISTANT_FALLBACK_PROMPT 
+} from "./prompts";
 
 // Log the webhook URLs for debugging
 console.log("Assessment Webhook URL:", ASSESSMENT_WEBHOOK_URL);
