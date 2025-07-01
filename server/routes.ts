@@ -1373,23 +1373,11 @@ When the student has completed both activities, thank them warmly and end the co
       });
       
     } catch (error: any) {
-      console.error('Claude chat error:', error);
-      
-      // Since we're streaming, we need to send the error through the stream
-      // Check if headers were already sent (streaming started)
-      if (res.headersSent) {
-        // Send error through the stream
-        try {
-          res.write(`data: ${JSON.stringify({ error: 'claude_chat_error', message: error.message || 'Streaming error occurred' })}\n\n`);
-          res.end();
-        } catch (streamError) {
-          console.error('Failed to send error through stream:', streamError);
-          res.end();
-        }
-      } else {
-        // Headers not sent yet, can send regular JSON response
-        res.status(500).json({ error: 'Chat request failed', details: error.message });
-      }
+      console.error("Error in claude chat:", error);
+      return res.status(500).json({
+        error: "Failed to process chat request",
+        details: error.message
+      });
     }
   });
 
