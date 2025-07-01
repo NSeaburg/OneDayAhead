@@ -10,20 +10,17 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configure connection pool for PostgreSQL
+// Configure connection pool for AWS RDS PostgreSQL
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('localhost') ? false : {
-    rejectUnauthorized: false, // Required for hosted PostgreSQL
+  ssl: {
+    rejectUnauthorized: false, // AWS RDS requires SSL
   },
-  max: 10, // Reduced pool size for better connection management
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 20000, // Increased timeout for initial connection
-  query_timeout: 15000,
-  statement_timeout: 15000,
-  // Add keep alive settings
-  keepAlive: true,
-  keepAliveInitialDelayMillis: 10000,
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 10000, // Increased from 2000 to 10000ms
+  query_timeout: 10000, // Add query timeout
+  statement_timeout: 10000, // Add statement timeout
 });
 
 // Test connection on startup
