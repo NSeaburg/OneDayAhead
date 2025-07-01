@@ -62,8 +62,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return next();
     }
     
-    // Apply LTI authentication for production or LTI routes
+    // Apply LTI authentication for all chat endpoints and protected routes in production
     if (req.path.includes('/claude-chat') || 
+        req.path.includes('/article-chat') ||
+        req.path.includes('/article-chat-stream') ||
         req.path.includes('/send-to-n8n') || 
         req.path.includes('/conversations') || 
         req.path.includes('/feedback')) {
@@ -75,6 +77,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Development route for testing without LTI
   app.get('/dev', (req, res) => {
+    // Set up mock LTI session for development
+    if (req.session) {
+      req.session.ltiContext = {
+        userId: 'dev-user',
+        courseId: 'dev-course', 
+        isDevelopment: true,
+        claims: {
+          iss: 'https://canvas.instructure.com',
+          sub: 'dev-user-123',
+          aud: 'dev-client',
+          exp: Date.now() / 1000 + 3600,
+          iat: Date.now() / 1000,
+          nonce: 'dev-nonce',
+          'https://purl.imsglobal.org/spec/lti/claim/deployment_id': 'dev-deployment',
+          'https://purl.imsglobal.org/spec/lti/claim/target_link_uri': req.originalUrl,
+          'https://purl.imsglobal.org/spec/lti/claim/resource_link': {
+            id: 'dev-resource-123'
+          },
+          'https://purl.imsglobal.org/spec/lti/claim/context': {
+            id: 'dev-context-123',
+            type: ['CourseTemplate'],
+            label: 'DEV 101',
+            title: 'Development Course'
+          },
+          'https://purl.imsglobal.org/spec/lti/claim/roles': ['http://purl.imsglobal.org/vocab/lis/v2/membership#Learner'],
+          'https://purl.imsglobal.org/spec/lti/claim/platform_instance': {
+            guid: 'dev-platform-123',
+            name: 'Development Canvas',
+            url: 'https://dev.instructure.com'
+          },
+          'https://purl.imsglobal.org/spec/lti/claim/launch_presentation': {
+            document_target: 'iframe'
+          },
+          name: 'Dev User',
+          given_name: 'Dev',
+          family_name: 'User',
+          email: 'dev@example.com'
+        }
+      };
+    }
+
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -86,6 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .btn { background: #0066cc; color: white; padding: 12px 24px; border: none; border-radius: 4px; text-decoration: none; display: inline-block; margin: 10px 0; }
           .btn:hover { background: #0052a3; }
           .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0; }
+          .success { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 4px; margin: 20px 0; }
         </style>
       </head>
       <body>
@@ -93,6 +137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <h1>Government Learning Platform - Development Mode</h1>
           <div class="warning">
             <strong>Development Access:</strong> This bypasses LTI authentication for testing purposes.
+          </div>
+          <div class="success">
+            <strong>Mock LTI Session Created:</strong> All chat endpoints should now work properly.
           </div>
           <p>Access the application in development mode with mock LTI context.</p>
           <a href="/?dev_mode=true" class="btn">Launch Application</a>
