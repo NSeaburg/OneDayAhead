@@ -463,91 +463,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Add the /api/claude-chat endpoint for assessment and teaching bots
-  app.post("/api/claude-chat", async (req, res) => {
-    try {
-      const { messages, systemPrompt } = req.body;
-      
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ 
-          error: "Invalid message data. Expected an array of messages." 
-        });
-      }
-      
-      // Log the system prompt to verify it's being received
-      console.log("Received system prompt on server:", systemPrompt?.substring(0, 100) + "...");
-      
-      // Convert OpenAI-style messages to Anthropic format
-      const anthropicMessages = messages
-        .filter((msg: any) => msg.role !== 'system')
-        .map((msg: any) => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content
-        }));
-      
-      // Create completion with Anthropic
-      const completion = await anthropic.messages.create({
-        messages: anthropicMessages,
-        system: systemPrompt || ASSESSMENT_ASSISTANT_PROMPT, // Use provided prompt or fallback
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 20000,
-        temperature: 1.0
-      });
-      
-      // Extract the response content
-      const content = completion.content[0]?.type === 'text' 
-        ? completion.content[0].text 
-        : 'No response content available';
-      
-      // Generate a thread ID based on assistant type
-      const assistantType = systemPrompt?.includes('Reginald') ? 'assessment' : 'teaching';
-      const messageId = `claude-${assistantType}-${Date.now()}`;
-      
-      // Store the conversation if we have a session ID
-      const sessionId = req.sessionId;
-      if (sessionId) {
-        try {
-          const allMessages = [...messages, { role: 'assistant', content }];
-          await storage.createConversation({
-            sessionId,
-            threadId: messageId,
-            assistantType,
-            messages: allMessages
-          });
-        } catch (error) {
-          console.error("Error storing conversation:", error);
-        }
-      }
-      
-      res.json({
-        id: messageId,
-        object: "chat.completion",
-        created: Math.floor(Date.now() / 1000),
-        model: "claude-3-5-sonnet-20241022",
-        choices: [{
-          index: 0,
-          message: {
-            role: "assistant",
-            content: content
-          },
-          finish_reason: "stop"
-        }],
-        usage: {
-          prompt_tokens: 0,
-          completion_tokens: 0,
-          total_tokens: 0
-        }
-      });
-      
-    } catch (error: any) {
-      console.error("Error in claude chat:", error);
-      return res.status(500).json({
-        error: "Failed to process chat request",
-        details: error.message
-      });
-    }
-  });
-  
   // Streaming endpoint for the article assistant chat
   app.post("/api/article-chat-stream", async (req, res) => {
     try {
@@ -1381,115 +1296,81 @@ When the student has completed both activities, thank them warmly and end the co
     }
   });
 
-  // Simple streaming endpoint for assessment and teaching bots
+  // Non-streaming endpoint for assessment and teaching bots
   app.post("/api/claude-chat", async (req, res) => {
     try {
-      const { message, messages: conversationHistory, threadId, assistantType } = req.body;
+      const { messages, systemPrompt } = req.body;
       
-      // Handle different assistant types with appropriate system prompts
-      let systemPrompt;
-      let assistantTypeForStorage = 'article'; // default
-      
-      switch (assistantType) {
-        case 'assessment':
-          systemPrompt = ASSESSMENT_ASSISTANT_PROMPT;
-          assistantTypeForStorage = 'assessment';
-          break;
-        case 'teaching':
-          // For teaching, we should have received a custom system prompt from N8N
-          // This is a fallback - ideally we'd get the prompt from the teaching assistance data
-          systemPrompt = req.body.customSystemPrompt || TEACHING_ASSISTANT_FALLBACK_PROMPT;
-          assistantTypeForStorage = 'teaching';
-          break;
-        default:
-          systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
-          assistantTypeForStorage = 'article';
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ 
+          error: "Invalid message data. Expected an array of messages." 
+        });
       }
       
-      console.log(`Claude chat request for ${assistantType} assistant (${systemPrompt.length} chars)`);
+      // Log the system prompt to verify it's being received
+      console.log("Received system prompt on server:", systemPrompt?.substring(0, 100) + "...");
       
-      // Set up streaming headers
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      });
+      // Convert OpenAI-style messages to Anthropic format
+      const anthropicMessages = messages
+        .filter((msg: any) => msg.role !== 'system')
+        .map((msg: any) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
       
-      // Use the full conversation history if provided, otherwise fall back to single message
-      let claudeMessages;
-      if (conversationHistory && Array.isArray(conversationHistory)) {
-        // Convert to Claude format, filtering out system messages
-        claudeMessages = conversationHistory
-          .filter((msg: any) => msg.role !== 'system')
-          .map((msg: any) => ({
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content
-          }));
-      } else {
-        // Fallback for single message (backwards compatibility)
-        claudeMessages = [{ role: 'user' as const, content: message }];
-      }
-      
-      console.log(`Sending ${claudeMessages.length} messages to Claude for ${assistantType} assistant`);
-      
-      // Start streaming response from Claude
-      const stream = await anthropic.messages.stream({
-        messages: claudeMessages,
-        system: systemPrompt,
-        model: "claude-3-7-sonnet-20250219",
-        max_tokens: 20000,
+      // Create completion with Anthropic
+      const completion = await anthropic.messages.create({
+        messages: anthropicMessages,
+        system: systemPrompt || ASSESSMENT_ASSISTANT_PROMPT, // Use provided prompt or fallback
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 8192, // Fixed: reduced from 20000 to 8192 (max allowed)
         temperature: 1.0
       });
       
-      let fullContent = '';
+      // Extract the response content
+      const content = completion.content[0]?.type === 'text' 
+        ? completion.content[0].text 
+        : 'No response content available';
       
-      // Send initial thread ID
-      res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
+      // Generate a thread ID based on assistant type
+      const assistantType = systemPrompt?.includes('Reginald') ? 'assessment' : 'teaching';
+      const messageId = `claude-${assistantType}-${Date.now()}`;
       
-      // Process the stream
-      for await (const chunk of stream) {
-        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-          const content = chunk.delta.text;
-          
-          if (content) {
-            fullContent += content;
-            res.write(`data: ${JSON.stringify({ content })}\n\n`);
-          }
-        }
-      }
-      
-      // Send completion signal
-      res.write(`data: [DONE]\n\n`);
-      res.end();
-      
-      // Store conversation if we have session context
-      try {
-        const sessionId = req.sessionId;
-        if (sessionId) {
-          // Store the complete conversation including the new assistant response
-          let allMessages;
-          if (conversationHistory && Array.isArray(conversationHistory)) {
-            // Add the new assistant message to the existing conversation
-            allMessages = [...conversationHistory, { role: 'assistant', content: fullContent }];
-          } else {
-            // Fallback for single message
-            allMessages = [
-              { role: 'user', content: message },
-              { role: 'assistant', content: fullContent }
-            ];
-          }
-          
+      // Store the conversation if we have a session ID
+      const sessionId = req.sessionId;
+      if (sessionId) {
+        try {
+          const allMessages = [...messages, { role: 'assistant', content }];
           await storage.createConversation({
             sessionId,
-            threadId,
-            assistantType: assistantTypeForStorage,
+            threadId: messageId,
+            assistantType,
             messages: allMessages
           });
+        } catch (error) {
+          console.error("Error storing conversation:", error);
         }
-      } catch (storageError) {
-        console.error("Error storing conversation:", storageError);
-        // Continue without failing the response
       }
+      
+      res.json({
+        id: messageId,
+        object: "chat.completion",
+        created: Math.floor(Date.now() / 1000),
+        model: "claude-3-5-sonnet-20241022",
+        choices: [{
+          index: 0,
+          message: {
+            role: "assistant",
+            content: content
+          },
+          finish_reason: "stop"
+        }],
+        usage: {
+          prompt_tokens: 0,
+          completion_tokens: 0,
+          total_tokens: 0
+        }
+      });
       
     } catch (error: any) {
       console.error('Claude chat error:', error);
