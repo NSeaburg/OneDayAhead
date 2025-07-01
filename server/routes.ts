@@ -37,7 +37,8 @@ console.log("Dynamic Assistant Webhook URL:", DYNAMIC_ASSISTANT_WEBHOOK_URL);
 console.log(`Article Assistant System Prompt Length: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.length} characters`);
 console.log(`Article Assistant System Prompt Preview: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.substring(0, 100)}...`);
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, options: { dbAvailable?: boolean } = {}): Promise<Server> {
+  const { dbAvailable = true } = options;
   // Enhanced security middleware
   app.use(helmet({
     frameguard: false, // Allow iframe embedding
