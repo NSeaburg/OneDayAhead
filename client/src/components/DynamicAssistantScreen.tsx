@@ -84,20 +84,81 @@ export default function DynamicAssistantScreen({
   console.log(`System prompt length: ${activeSystemPrompt?.length || 0} characters`);
   console.log(`Teaching assistance data:`, teachingAssistance ? JSON.stringify(teachingAssistance, null, 2) : 'Not provided');
   
-  const { 
-    messages, 
-    sendMessage, 
-    isLoading, 
-    threadId, 
-    currentStreamingMessage, 
-    isTyping,
-    setMessages
-  } = useStreamingChat({
-    assistantId,
-    systemPrompt: activeSystemPrompt,
-    initialMessage,
-    useAnthropicForAssessment: true // Use Claude/Anthropic exclusively
-  });
+  // Use simple approach like article and assessment bots
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [threadId] = useState(`claude-teaching-${Date.now()}`);
+  const [currentStreamingMessage, setCurrentStreamingMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Simple send message function with teaching assistant support
+  const sendMessage = async (message: string) => {
+    if (!message.trim() || isLoading) return;
+
+    const userMessage = { role: 'user' as const, content: message };
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+    setCurrentStreamingMessage("");
+
+    try {
+      const response = await fetch('/api/claude-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          threadId,
+          assistantType: 'teaching',
+          customSystemPrompt: activeSystemPrompt // Pass the teaching system prompt from N8N
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      let accumulatedContent = "";
+      setIsTyping(true);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = new TextDecoder().decode(value);
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                accumulatedContent += parsed.content;
+                setCurrentStreamingMessage(accumulatedContent);
+              }
+            } catch (e) {
+              // Ignore parsing errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+      setMessages(prev => [...prev, { role: 'assistant', content: accumulatedContent }]);
+      setCurrentStreamingMessage("");
+      setIsTyping(false);
+    } catch (error) {
+      console.error('Teaching chat error:', error);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'I apologize, but I encountered an error. Please try again.' }]);
+      setCurrentStreamingMessage("");
+      setIsTyping(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Reset conversation on mount or when teachingAssistance changes to ensure system prompt is applied
   useEffect(() => {

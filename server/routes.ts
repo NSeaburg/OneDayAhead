@@ -307,10 +307,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route to get the assistant IDs (legacy endpoint - now using Claude)
+  // Route to get the assistant IDs and system prompts
   app.get("/api/assistant-config", (req, res) => {
     res.json({
-      discussionAssistantId: "claude-discussion"
+      discussionAssistantId: "claude-discussion",
+      assessmentAssistantId: "claude-assessment",
+      systemPrompts: {
+        discussion: ARTICLE_ASSISTANT_SYSTEM_PROMPT,
+        assessment: ASSESSMENT_ASSISTANT_PROMPT,
+        teachingFallback: TEACHING_ASSISTANT_FALLBACK_PROMPT
+      }
     });
   });
   
@@ -1290,8 +1296,102 @@ When the student has completed both activities, thank them warmly and end the co
     }
   });
 
-  // Anthropic Claude API endpoint with streaming support
+  // Simple streaming endpoint for assessment and teaching bots
   app.post("/api/claude-chat", async (req, res) => {
+    try {
+      const { message, threadId, assistantType } = req.body;
+      
+      // Handle different assistant types with appropriate system prompts
+      let systemPrompt;
+      let assistantTypeForStorage = 'article'; // default
+      
+      switch (assistantType) {
+        case 'assessment':
+          systemPrompt = ASSESSMENT_ASSISTANT_PROMPT;
+          assistantTypeForStorage = 'assessment';
+          break;
+        case 'teaching':
+          // For teaching, we should have received a custom system prompt from N8N
+          // This is a fallback - ideally we'd get the prompt from the teaching assistance data
+          systemPrompt = req.body.customSystemPrompt || TEACHING_ASSISTANT_FALLBACK_PROMPT;
+          assistantTypeForStorage = 'teaching';
+          break;
+        default:
+          systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
+          assistantTypeForStorage = 'article';
+      }
+      
+      console.log(`Claude chat request for ${assistantType} assistant (${systemPrompt.length} chars)`);
+      
+      // Set up streaming headers
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      });
+      
+      // Create message array for Claude API
+      const messages = [{ role: 'user' as const, content: message }];
+      
+      // Start streaming response from Claude
+      const stream = await anthropic.messages.stream({
+        messages,
+        system: systemPrompt,
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 20000,
+        temperature: 1.0
+      });
+      
+      let fullContent = '';
+      
+      // Send initial thread ID
+      res.write(`data: ${JSON.stringify({ threadId })}\n\n`);
+      
+      // Process the stream
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          const content = chunk.delta.text;
+          
+          if (content) {
+            fullContent += content;
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          }
+        }
+      }
+      
+      // Send completion signal
+      res.write(`data: [DONE]\n\n`);
+      res.end();
+      
+      // Store conversation if we have session context
+      try {
+        const sessionId = req.sessionId;
+        if (sessionId) {
+          const allMessages = [
+            { role: 'user', content: message },
+            { role: 'assistant', content: fullContent }
+          ];
+          
+          await storage.createConversation({
+            sessionId,
+            threadId,
+            assistantType: assistantTypeForStorage,
+            messages: allMessages
+          });
+        }
+      } catch (storageError) {
+        console.error("Error storing conversation:", storageError);
+        // Continue without failing the response
+      }
+      
+    } catch (error) {
+      console.error('Claude chat error:', error);
+      res.status(500).json({ error: 'Chat request failed', details: error.message });
+    }
+  });
+
+  // Legacy Anthropic Claude API endpoint with streaming support (keeping for compatibility)
+  app.post("/api/claude-chat-legacy", async (req, res) => {
     // Flag to track if headers have been sent to avoid errors
     let headersSent = false;
     let responseEnded = false;
