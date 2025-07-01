@@ -77,11 +77,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Development route for testing without LTI
   app.get('/dev', (req, res) => {
-    // Set up mock LTI session for development
-    req.ltiContext = {
-      userId: 'dev-user',
-      courseId: 'dev-course', 
-      isDevelopment: true,
+    // Set up mock LTI session for development using express-session
+    if (req.session) {
+      req.session.ltiContext = {
+        userId: 'dev-user',
+        courseId: 'dev-course', 
+        isDevelopment: true,
         claims: {
           iss: 'https://canvas.instructure.com',
           sub: 'dev-user-123',

@@ -21,6 +21,18 @@ app.use(
   cookieParser(process.env.COOKIE_SECRET || "learning-platform-secret-key"),
 );
 
+// Configure express-session for persistent development context
+app.use(session({
+  secret: process.env.SESSION_SECRET || "learning-platform-session-secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    httpOnly: true
+  }
+}));
+
 app.use((req, res, next) => {
   const start = Date.now();
   let captured: any;

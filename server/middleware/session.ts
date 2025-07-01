@@ -16,6 +16,14 @@ declare global {
         claims?: any;
       };
     }
+    interface Session {
+      ltiContext?: {
+        userId: string;
+        courseId: string;
+        isDevelopment: boolean;
+        claims?: any;
+      };
+    }
   }
 }
 
