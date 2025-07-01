@@ -113,14 +113,11 @@ export default function AssessmentBotScreen({
     setCurrentStreamingMessage("");
 
     try {
-      // Prepare the full conversation history like the article chat does
-      const allMessages = [...messages, userMessage];
-      
       const response = await fetch('/api/claude-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: allMessages,  // Send full conversation history
+          message,
           threadId,
           assistantType: 'assessment'
         })
