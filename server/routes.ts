@@ -43,8 +43,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced security middleware
   app.use(
     helmet({
-      frameguard: false, // Allow iframe embedding
-      contentSecurityPolicy: false, // We handle CSP manually for LTI
+      frameguard: false, // Disable frameguard since we handle frame-ancestors manually
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          frameAncestors: [
+            "'self'",
+            "https://*.onedayahead.com",
+            "https://*.replit.app",
+            "https://*.instructure.com",     // Canvas domains
+            "https://*.canvas.com",          // Canvas domains
+            "https://canvas.instructure.com", // Specific Canvas domain
+            "https://*.canvaslms.com",       // Additional Canvas domain
+          ],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'", "https:"],
+        },
+      },
     }),
   );
 
