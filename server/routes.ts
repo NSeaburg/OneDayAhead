@@ -51,10 +51,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "'self'",
             "https://*.onedayahead.com",
             "https://*.replit.app",
-            "https://*.instructure.com",     // Canvas domains
-            "https://*.canvas.com",          // Canvas domains
+            "https://*.instructure.com", // Canvas domains
+            "https://*.canvas.com", // Canvas domains
             "https://canvas.instructure.com", // Specific Canvas domain
-            "https://*.canvaslms.com",       // Additional Canvas domain
+            "https://*.canvaslms.com", // Additional Canvas domain
           ],
           scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
@@ -64,6 +64,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       },
     }),
   );
+
+  // ADD THIS DEBUG LOGGING
+  app.use((req, res, next) => {
+    console.log(
+      `[${new Date().toISOString()}] ${req.method} ${req.path} from ${req.get("origin") || req.get("referer") || "unknown"}`,
+    );
+    if (req.path.includes("lti")) {
+      console.log("LTI Request Headers:", JSON.stringify(req.headers, null, 2));
+      console.log("LTI Request Body:", JSON.stringify(req.body, null, 2));
+    }
+    next();
+  });
 
   // Rate limiting
   const limiter = rateLimit({
