@@ -92,9 +92,8 @@ export class LtiKeyManager {
 }
 
 export function getLtiConfig(): LtiConfig {
-  const baseUrl = process.env.NODE_ENV === 'production' 
-    ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
-    : 'http://localhost:5000';
+  // Hardcoded to use onedayahead.com domain
+  const baseUrl = 'https://app.onedayahead.com';
 
   return {
     issuer: process.env.LTI_ISSUER || 'https://canvas.instructure.com',
