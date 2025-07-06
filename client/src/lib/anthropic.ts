@@ -100,6 +100,7 @@ export const streamChatCompletionWithClaude = async (
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           messages: request.messages,
           systemPrompt: request.systemPrompt,

@@ -57,6 +57,7 @@ export function useArticleChat(initialMessage?: string) {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           messages: [...messages, userMessage],
         }),
