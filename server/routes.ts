@@ -95,7 +95,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return next();
     }
 
-    // Apply LTI authentication for all chat endpoints and protected routes in production
+    // Skip LTI auth if request is from Canvas iframe
+    const referer = req.get('referer');
+    const isFromCanvas = referer && referer.includes('.instructure.com');
+    
+    if (isFromCanvas) {
+      // Trust Canvas - they already did LTI auth
+      return next();
+    }
+
+    // Apply LTI authentication for other production requests
     if (
       req.path.includes("/claude-chat") ||
       req.path.includes("/article-chat") ||
