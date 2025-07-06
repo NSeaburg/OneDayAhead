@@ -148,6 +148,11 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 5, 2025. Hardcoded redirect URI configuration for production deployment
+  - Modified `server/lti/config.ts` to use https://app.onedayahead.com as base URL
+  - Fixed rate limiting middleware placement in routes.ts
+  - Resolved syntax errors in LTI route configuration
+  - All LTI endpoints now use consistent onedayahead.com domain
 - December 30, 2025. Moved AI system prompts from environment variables to configuration files
   - Created `server/prompts.ts` for better maintainability and deployment simplicity
   - Removed FULL_SYSTEM_PROMPT environment variable dependency

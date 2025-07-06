@@ -4,7 +4,7 @@
 An advanced AI-powered adaptive learning platform focused on teaching the three branches of U.S. government through interactive AI chatbots. Features LTI 1.3 Canvas integration, streaming Claude 3.5 Sonnet responses, and character-driven AI interactions.
 
 **Current Status**: Fully functional with LTI authentication fixes implemented
-**Last Updated**: July 2, 2025
+**Last Updated**: July 5, 2025
 
 ## Recent Fixes (Current Session)
 - ✅ Fixed syntax error in routes.ts causing server startup failure
@@ -13,6 +13,8 @@ An advanced AI-powered adaptive learning platform focused on teaching the three 
 - ✅ Made all chat endpoints use consistent LTI authentication
 - ✅ Created proper TypeScript session types
 - ✅ Resolved 401 authentication errors for assessment and teaching bots
+- ✅ Fixed rate limiting configuration placement in routes.ts
+- ✅ Hardcoded redirect URI to https://app.onedayahead.com/api/lti/launch
 
 ## Architecture
 
@@ -233,10 +235,12 @@ LTI_PUBLIC_KEY=...
 ## Deployment
 
 ### Current Setup
-- **Platform**: Replit with autoscale deployment
+- **Platform**: Replit with autoscale deployment  
+- **Domain**: Hardcoded to https://app.onedayahead.com
 - **Port**: 5000 (Express server)
 - **Build**: Vite frontend + TypeScript compilation
 - **Storage**: PostgreSQL primary, in-memory fallback
+- **LTI Redirect URI**: https://app.onedayahead.com/api/lti/launch
 
 ### Performance
 - Streaming responses for improved user experience
