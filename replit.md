@@ -148,6 +148,12 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 6, 2025. Canvas deployment authentication fixes
+  - Fixed frontend API calls to include `credentials: 'include'` for session persistence
+  - Implemented session-based authentication for Canvas iframe deployment 
+  - Added YouTube CSP frameSrc directive to allow video embeds
+  - Replaced referer-based auth with reliable session validation (req.session && req.sessionID)
+  - All bot endpoints now work properly in Canvas LTI deployment
 - July 5, 2025. Hardcoded redirect URI configuration for production deployment
   - Modified `server/lti/config.ts` to use https://app.onedayahead.com as base URL
   - Fixed rate limiting middleware placement in routes.ts

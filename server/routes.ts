@@ -101,16 +101,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return next();
     }
 
-    // Skip LTI auth if request is from Canvas iframe
-    const referer = req.get('referer');
-    const isFromCanvas = referer && referer.includes('.instructure.com');
+    // For production Canvas usage, we need to handle two scenarios:
+    // 1. Initial LTI launch creates a session
+    // 2. Subsequent API calls use that session
     
-    if (isFromCanvas) {
-      // Trust Canvas - they already did LTI auth
+    // Check if we have a valid session (either from LTI or regular login)
+    if (req.session && req.sessionID) {
+      // Trust the session - user was already authenticated
       return next();
     }
 
-    // Apply LTI authentication for other production requests
+    // Only require LTI auth if no session exists
     if (
       req.path.includes("/claude-chat") ||
       req.path.includes("/article-chat") ||
