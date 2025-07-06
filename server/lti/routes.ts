@@ -25,6 +25,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Build authorization URL
     const authUrl = new URL(platform.authenticationEndpoint);
     authUrl.searchParams.set('response_type', 'id_token');
+    authUrl.searchParams.set('response_mode', 'form_post');
     authUrl.searchParams.set('client_id', config.clientId);
     authUrl.searchParams.set('redirect_uri', config.launchUrl);
     authUrl.searchParams.set('scope', 'openid');
