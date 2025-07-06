@@ -47,6 +47,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
+          frameSrc: [
+            "'self'",
+            "https://www.youtube.com",
+            "https://www.youtube-nocookie.com",
+            "https://youtube.com"
+          ],
           frameAncestors: [
             "'self'",
             "https://*.onedayahead.com",
