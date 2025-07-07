@@ -34,7 +34,7 @@ export default function HighBotWithArticleScreen({
   onPrevious
 }: HighBotWithArticleScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
-  const [isSendingToN8N, setIsSendingToN8N] = useState(false);
+  const [isSendingToClaude, setIsSendingToClaude] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -109,7 +109,7 @@ export default function HighBotWithArticleScreen({
   
   const handleNext = async () => {
     try {
-      setIsSendingToN8N(true);
+      setIsSendingToClaude(true);
       
       // Calculate the chat duration in seconds
       const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
@@ -119,8 +119,8 @@ export default function HighBotWithArticleScreen({
       console.log("Teaching conversation length:", messages.length);
       console.log("Assessment conversation length:", (assessmentConversation || []).length);
       
-      // Send both conversation datasets to N8N before proceeding to the next screen
-      const response = await apiRequest("POST", "/api/send-teaching-data", {
+      // Send both conversation datasets to Claude-based grading endpoint
+      const response = await apiRequest("POST", "/api/grade-conversations", {
         // Teaching bot data
         teachingConversation: messages,
         teachingThreadId: threadId,
@@ -135,7 +135,7 @@ export default function HighBotWithArticleScreen({
       });
       
       const result = await response.json();
-      console.log("High Bot N8N integration result:", result);
+      console.log("High Bot Claude grading result:", result);
       console.log("High Bot Thread ID:", threadId);
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
       
@@ -154,8 +154,8 @@ export default function HighBotWithArticleScreen({
           };
         }
       } else {
-        // Handle the case where N8N returned a non-error response but with success: false
-        console.log("High Bot N8N integration failed:", result.message);
+        // Handle the case where Claude returned a non-error response but with success: false
+        console.log("High Bot Claude grading failed:", result.message);
         
         // Show warning toast
         toast({
@@ -168,7 +168,7 @@ export default function HighBotWithArticleScreen({
       // Call the onNext function to move to the next screen
       onNext(undefined, feedbackData);
     } catch (error) {
-      console.error("Failed to send High Bot data to N8N:", error);
+      console.error("Failed to send High Bot data to Claude grading:", error);
       
       // Show error toast
       toast({
@@ -177,10 +177,10 @@ export default function HighBotWithArticleScreen({
         variant: "destructive"
       });
       
-      // Still allow the user to proceed to the next screen even if N8N integration fails
+      // Still allow the user to proceed to the next screen even if Claude grading fails
       onNext();
     } finally {
-      setIsSendingToN8N(false);
+      setIsSendingToClaude(false);
     }
   };
   
@@ -419,7 +419,7 @@ export default function HighBotWithArticleScreen({
         
         <Button
           onClick={handleNext}
-          disabled={isLoading || isSendingToN8N}
+          disabled={isLoading || isSendingToClaude}
           className="bg-primary hover:bg-primary/90 text-white"
         >
           Next
