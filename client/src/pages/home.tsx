@@ -221,7 +221,7 @@ export default function Home() {
           {isHighBot ? (
             <HighBotWithArticleScreen 
               assistantId={dynamicAssistantId}
-              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.teaching.fallback}
+              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
               articleContent={config.articleContent}
               onNext={(feedbackResult) => {
                 if (feedbackResult) {
@@ -236,7 +236,7 @@ export default function Home() {
           ) : (
             <DynamicAssistantScreen 
               assistantId={dynamicAssistantId}
-              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.teaching.fallback}
+              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
               teachingAssistance={teachingAssistance}
               onNext={(feedbackResult) => {
                 if (feedbackResult) {
