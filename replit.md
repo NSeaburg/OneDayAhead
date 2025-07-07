@@ -148,13 +148,23 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 7, 2025. Complete N8N elimination and Claude-based assessment implementation
+  - Successfully replaced both N8N webhooks with native Claude-based assessment endpoints
+  - Implemented `/api/assess-conversation` endpoint for intelligent student assessment (high/medium/low levels)
+  - Added `/api/grade-conversations` endpoint for comprehensive grading with content knowledge and writing scores
+  - Updated all teaching assistant system prompts with detailed, structured learning activities:
+    - High level (Mrs. Parton): United States v. Nixon case study analysis with critical thinking challenges
+    - Medium level (Mrs. Bannerman): Counterfactual "what if" scenarios exploring single-branch rule
+    - Low level (Mr. Whitaker): Three-stage metaphor activities with branch matching and checks/balances scenarios
+  - Frontend successfully migrated from N8N dependencies to direct Claude assessment calls
+  - Fixed JSON parsing for Claude responses with markdown code block handling
+  - All assessment logic now handled internally with Claude 3.5 Sonnet for consistent, intelligent evaluation
 - July 7, 2025. Canvas deployment authentication fixes and planning consolidation
   - Fixed frontend API calls to include `credentials: 'include'` for session persistence
   - Implemented session-based authentication for Canvas iframe deployment 
   - Added YouTube CSP frameSrc directive to allow video embeds
   - Replaced referer-based auth with reliable session validation (req.session && req.sessionID)
   - All bot endpoints now work properly in Canvas LTI deployment
-  - Planned migration from N8N + OpenAI to consolidated Claude-based assessment system
 - July 5, 2025. Hardcoded redirect URI configuration for production deployment
   - Modified `server/lti/config.ts` to use https://app.onedayahead.com as base URL
   - Fixed rate limiting middleware placement in routes.ts

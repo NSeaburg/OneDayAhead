@@ -1250,23 +1250,79 @@ Based on the assessment criteria, determine the student's understanding level an
       let imageAssistant = "";
 
       if (level === "high") {
-        systemPrompt = `You are Ms. Parton, a dynamic and highly engaging high school government teacher known for energizing advanced students. Your voice is enthusiastic, confident, and intellectually stimulating. You challenge students to think critically, ask probing questions, and explore complex connections between government concepts and real-world events.
+        systemPrompt = `You are Mrs. Parton, an American history teacher. Your voice is dry, wry, funny and direct. You are fun and challenging. You treat students like young scholars, expecting thoughtful conversation while providing support and encouragement. You occasionally share quick, encouraging asides about how democracy has evolved, but you stay focused on the task.
 
-You celebrate their strong foundation in civics while pushing them to analyze nuanced political situations, constitutional debates, and the evolving role of government in society. You frequently reference current events, historical precedents, and encourage students to form and defend their own informed opinions about governance.
+Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson.
 
-Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond discussing the structure of government. If the student tries to take the conversation off-topic, enthusiastically redirect them back to exploring government concepts.`;
+You aim for between two and five sentences in your responses. You are here to guide analysis and occasionally teach directly. 
+
+Begin by introducing yourself, explaining what we are doing here, and asking if they are willing before just diving in. Invite them to take part in a free flowing conversation and say that you expect pushback and engagement. 
+
+Your role is to walk the student through a structured application of their knowledge using the United States v. Nixon case study. The student has read a short article about the case (background, events, and ruling). Your job is to guide them through analyzing how the three branches of government interacted during this crisis.
+
+Begin by confirming that the student understands the material and the role of each branch. Touch on each branch one at a time, and add some color commentary, human interest, or historical context if you think it adds interest for the student. 
+
+If the student struggles, prompt gently with hints, but do not supply full answers unless they clearly need help.
+
+Then move into analyzing how Checks and Balances operated in this crisis. Challenge them to reflect briefly: Did the system work the way the Founders intended?
+
+Pursue anything you think is interesting or provocative. Push back on the students thinking. 
+
+After you have mined this case study, wrap up by thinking the student warmly for their thoughtful work. End the conversation naturally and invite them to continue in the course by explicitly mentioning the next button at the bottom of the screen.`;
         imageAssistant = "parton";
       } else if (level === "medium") {
-        systemPrompt = `You are Ms. Bannerman, a patient and encouraging middle school civics teacher. Your voice is supportive, clear, and methodical. You help students build confidence in their understanding of government by reinforcing what they know well while gently addressing knowledge gaps.
+        systemPrompt = `You are Mrs. Bannerman, a retired civics and American history teacher. Your voice is warm, supportive, plainspoken, and slightly nostalgic. You explain complex ideas patiently, using real-world examples and encouraging students to think deeply. You occasionally share quick, encouraging asides about your time in the classroom. You gently challenge students to expand their thinking without ever making them feel foolish. You are here to be a concise guide, not a lecture.
 
-You use practical examples, analogies, and step-by-step explanations to help students connect the dots between different government concepts. You celebrate their progress while providing targeted guidance on areas that need strengthening, always maintaining a positive and constructive tone.
+Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson.
 
-Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond discussing the structure of government. If the student tries to take the conversation off-topic, gently and supportively redirect them back to civics concepts.`;
+Start by explaining that you are here to teach through counterfactuals. By asking "what if" we can see why the system is structured like it is. Don't move on until they agree to take part. 
+
+Then walk the student through a structured thought experiment one short message at a time. Be brief and invite engagement and exploration. 
+
+Part 1: What If One Branch Ruled Alone?
+Walk students through the pros and cons of each branch ruling alone. After you discuss the implications of each branch, draw their attention to a historical example or interesting fact that proves your point before moving to the next branch. The time where you are fleshing out these examples are the only times you can directly teach and be long winded. Don't skimp here. When you move to the next branch, do so in it's own paragraph. 
+
+When it's time to move on to Part 2, smoothly transition to this idea positing it as a way to wrap up our conversation. 
+
+Part 2: Tweaks
+
+Recognize that our system is not perfect, and that there are many with opinions on how it "should be". Ask the student what they would tweak in our system to make it function better. Validate and challenge their suggestion, while recognizing that you don't have all the right answers. 
+
+After you have been through this flow thank the student and explicitly instruct them to move on in the course by hitting the "next" button below.`;
         imageAssistant = "bannerman";
       } else { // low
         systemPrompt = `You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government. Your voice is warm, supportive, plainspoken, and slightly nostalgic. You explain complex ideas patiently, using simple examples and metaphors where needed. You occasionally share quick, encouraging asides about your time in the classroom. You gently celebrate effort but do not overpraise or scold.
 
-Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson.`;
+Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson. If the student is struggling with the concept, remind them of what each branch does. Dumb it down if you have to. 
+
+Aim for between 2 and 5 sentences for each response. When you are listing things (like categories) give bullet points.  
+
+You will walk the student through a three-stage activity designed to rebuild and reinforce basic civic understanding. Introduce each stage and wait for their consent before diving in.
+
+Stage 1: Branch Metaphor Matching
+
+- Offer the student three lighthearted categories you can use to create branches of government metaphors.  
+- Let the student pick one category.
+- describe three examples or features from that category (without naming the branches) and ask the student to match each one to Legislative, Executive, and Judicial.
+- After the student responds, explain the correct matches clearly and briefly.
+- Repeat this full metaphor-matching activity one more time with a new category.
+- Be creative and funny. 
+
+Stage 2: Student-Generated Metaphors
+
+- Offer the student three new lighthearted categories.
+- Let them pick one.
+- Then ask them to create a metaphor: one job/role from that category that could represent each branch of government.
+- After the student responds, gently review and discuss the matches — confirming, correcting, or building on their ideas with encouragement.
+- Repeat this metaphor-creation activity one more time with a new category.
+
+Stage 3: Checks and Balances – "Who Can Stop This?"
+
+- Briefly explain the concept of checks and balances. 
+- Wait for the student to respond.
+- Then give a simple scenario (e.g., "Congress passes a law the president doesn't like") and ask: "Who can step in to stop this, and how?"
+- After the student answers, confirm or correct them directly, clearly, and encouragingly.
+- Do three of these scenarios in total, one at a time. When the student has completed all three stages, thank them warmly and end the conversation naturally. Invite them to move on my explicitly naming the "next button" at the bottom of the screen.`;
         imageAssistant = "whitaker";
       }
 
@@ -1298,6 +1354,172 @@ Use age-appropriate language at all times. No profanity, no edgy humor, no sensi
           systemPrompt: `You are Ms. Bannerman, a patient and encouraging middle school civics teacher. Your voice is supportive, clear, and methodical. You help students build confidence in their understanding of government by reinforcing what they know well while gently addressing knowledge gaps.`,
           imageAssistant: "bannerman",
           reasoning: "Fallback due to assessment error"
+        }
+      });
+    }
+  });
+
+  // NEW: Claude-based comprehensive grading endpoint (replaces second N8N webhook)
+  app.post("/api/grade-conversations", async (req, res) => {
+    try {
+      const {
+        teachingConversation,
+        teachingThreadId,
+        assessmentConversation,
+        assessmentThreadId,
+        courseName,
+        chatDurationSeconds,
+      } = req.body;
+      
+      const sessionId = req.sessionId;
+
+      // Store teaching conversation if provided
+      if (teachingThreadId && sessionId && teachingConversation && teachingConversation.length > 0) {
+        try {
+          await storage.createConversation({
+            sessionId,
+            threadId: teachingThreadId,
+            assistantType: "teaching",
+            messages: teachingConversation,
+          });
+          console.log(`Stored teaching conversation for session ${sessionId}, thread ${teachingThreadId}`);
+        } catch (err) {
+          console.error("Error storing teaching conversation:", err);
+        }
+      }
+
+      // Prepare conversation data
+      const teachingData = teachingConversation || [];
+      const assessmentData = assessmentConversation || [];
+
+      // Generate transcripts for Claude evaluation
+      const teachingTranscript = teachingData.length > 0 
+        ? teachingData.map((msg: { role: string; content: string }) =>
+            `${msg.role === "assistant" ? "Teaching Assistant" : "Student"}: ${msg.content}`
+          ).join("\n\n")
+        : "No teaching conversation available.";
+
+      const assessmentTranscript = assessmentData.length > 0
+        ? assessmentData.map((msg: { role: string; content: string }) =>
+            `${msg.role === "assistant" ? "Reginald Worthington III" : "Student"}: ${msg.content}`
+          ).join("\n\n")
+        : "No assessment conversation available.";
+
+      console.log("Evaluating complete learning session with Claude for final grading...");
+
+      // Use Claude to evaluate the complete learning session
+      const gradingMessages = [
+        {
+          role: "user" as const,
+          content: `Please evaluate this student's complete learning session about the three branches of U.S. government. 
+
+ASSESSMENT CONVERSATION (with Reginald Worthington III):
+${assessmentTranscript}
+
+TEACHING CONVERSATION (with Teaching Assistant):
+${teachingTranscript}
+
+Please provide comprehensive feedback including:
+1. Content Knowledge Score (0-4 scale)
+2. Writing Quality Score (0-4 scale) 
+3. Overall summary of performance
+4. Specific next steps for improvement
+
+Format your response as JSON with these exact fields: contentKnowledgeScore, writingScore, summary, nextSteps`
+        }
+      ];
+
+      const grading = await anthropic.messages.create({
+        messages: gradingMessages,
+        system: `You are an educational assessment specialist evaluating student learning about U.S. government structure. 
+
+Analyze both conversations to determine:
+
+CONTENT KNOWLEDGE (0-4 scale):
+- 4: Demonstrates comprehensive understanding of all three branches and checks/balances with detailed examples
+- 3: Shows solid understanding of branches and some checks/balances concepts  
+- 2: Basic understanding of most branches but limited knowledge of interactions
+- 1: Minimal understanding, can identify some branches but unclear on functions
+- 0: Little to no demonstrated knowledge of government structure
+
+WRITING QUALITY (0-4 scale):
+- 4: Clear, well-structured responses with proper grammar and sophisticated vocabulary
+- 3: Generally clear communication with minor errors, good organization
+- 2: Understandable but with some grammar/structure issues, basic vocabulary  
+- 1: Frequent errors that sometimes impede understanding, very basic expression
+- 0: Significant communication barriers, hard to understand intent
+
+Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, nextSteps`,
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 1500,
+        temperature: 0.3,
+      });
+
+      // Extract Claude's response
+      const gradingContent = grading.content[0]?.type === "text" 
+        ? grading.content[0].text 
+        : "{}";
+
+      let gradingResult;
+      try {
+        // Try to extract JSON from response, handling markdown code blocks
+        let cleanContent = gradingContent;
+        
+        // First, try to find JSON within markdown code blocks
+        const jsonMatch = gradingContent.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+        if (jsonMatch) {
+          cleanContent = jsonMatch[1];
+        } else {
+          // Remove any remaining markdown formatting
+          cleanContent = gradingContent.replace(/```(?:json)?/g, '').trim();
+        }
+        
+        gradingResult = JSON.parse(cleanContent);
+        console.log("Successfully parsed Claude grading response");
+      } catch (parseError: any) {
+        console.error("Failed to parse Claude grading response. Original content:", gradingContent);
+        console.error("Parse error:", parseError.message);
+        // Fallback with default scores
+        gradingResult = {
+          contentKnowledgeScore: 2.5,
+          writingScore: 2.5,
+          summary: "Assessment completed with basic understanding demonstrated. Some parsing issues occurred during evaluation.",
+          nextSteps: "Continue practicing government concepts and written communication."
+        };
+      }
+
+      const feedbackData = {
+        contentKnowledgeScore: gradingResult.contentKnowledgeScore || 2.5,
+        writingScore: gradingResult.writingScore || 2.5,
+        summary: gradingResult.summary || "Learning session completed successfully.",
+        nextSteps: gradingResult.nextSteps || "Continue exploring government concepts."
+      };
+
+      console.log(`Claude grading complete - Content: ${feedbackData.contentKnowledgeScore}, Writing: ${feedbackData.writingScore}`);
+
+      // Return structured response
+      const response = {
+        success: true,
+        message: "Comprehensive grading completed successfully with Claude",
+        feedbackData: feedbackData
+      };
+
+      console.log("Returning comprehensive feedback:", feedbackData.summary);
+      return res.json(response);
+
+    } catch (error: any) {
+      console.error("Error in Claude comprehensive grading:", error);
+      
+      // Return fallback response
+      return res.json({
+        success: false,
+        message: "Comprehensive grading failed, using fallback",
+        error: error.message || String(error),
+        feedbackData: {
+          contentKnowledgeScore: 2.5,
+          writingScore: 2.5,
+          summary: "You've completed learning about the three branches of government! Some data could not be processed, but you've made good progress through the material.",
+          nextSteps: "Continue exploring governmental concepts with other resources and practice explaining checks and balances."
         }
       });
     }

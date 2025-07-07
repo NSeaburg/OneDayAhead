@@ -245,8 +245,8 @@ export default function DynamicAssistantScreen({
         console.log("Assessment conversation last message:", assessmentConversation[assessmentConversation.length - 1].role);
       }
       
-      // Send both conversation datasets to N8N before proceeding to the next screen
-      const response = await apiRequest("POST", "/api/send-teaching-data", {
+      // Send both conversation datasets to Claude-based grading endpoint
+      const response = await apiRequest("POST", "/api/grade-conversations", {
         // Teaching bot data
         teachingConversation: messages,
         teachingThreadId: threadId,
@@ -261,7 +261,7 @@ export default function DynamicAssistantScreen({
       });
       
       const result = await response.json();
-      console.log("Teaching bot N8N integration result:", result);
+      console.log("Claude comprehensive grading result:", result);
       console.log("Webhook response raw JSON:", JSON.stringify(result));
       console.log("Teaching bot Thread ID:", threadId);
       console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
