@@ -9,7 +9,8 @@ import SimpleFeedbackScreen from "@/components/SimpleFeedbackScreen";
 import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Settings } from "lucide-react";
+import { Link } from "wouter";
 
 
 // Using global interface declared in types.d.ts
@@ -150,6 +151,12 @@ export default function Home() {
       {/* Progress indicator showing current position in the learning flow */}
       <div className="flex justify-between items-center">
         <ProgressIndicator currentStep={currentScreen} totalSteps={config.totalSteps} />
+        <Link href="/admin">
+          <Button variant="outline" size="sm" className="ml-4">
+            <Settings className="h-4 w-4 mr-2" />
+            Content Manager
+          </Button>
+        </Link>
       </div>
       
       {/* Screen container with all screen components */}

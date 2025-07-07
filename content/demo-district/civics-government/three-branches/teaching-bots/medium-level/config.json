@@ -1,0 +1,12 @@
+{
+  "name": "Mrs. Bannerman",
+  "description": "Conceptual Understanding Instructor",
+  "avatar": "Bannerman.png",
+  "role": "teaching",
+  "level": "medium",
+  "subject": "civics",
+  "approach": "Hypothetical scenarios and guided exploration",
+  "estimatedTime": "10-15 minutes",
+  "teachingStyle": "Warm, supportive, uses real-world examples",
+  "focusArea": "What-if scenarios to test understanding"
+}

@@ -1,0 +1,33 @@
+{
+  "progressKeywords": [
+    "three branches",
+    "legislative",
+    "executive",
+    "judicial",
+    "congress",
+    "president",
+    "courts",
+    "supreme court",
+    "checks and balances",
+    "veto",
+    "override",
+    "judicial review",
+    "impeachment",
+    "laws",
+    "enforce",
+    "interpret"
+  ],
+  "completionKeywords": [
+    "all branches covered",
+    "understands checks and balances",
+    "can explain separation of powers",
+    "ready for next step"
+  ],
+  "topicMapping": {
+    "branches": ["three branches", "legislative", "executive", "judicial"],
+    "congress": ["congress", "legislative", "laws", "write laws"],
+    "president": ["president", "executive", "enforce", "commander in chief"],
+    "courts": ["courts", "judicial", "supreme court", "interpret", "judicial review"],
+    "checks": ["checks and balances", "veto", "override", "impeachment", "separation of powers"]
+  }
+}

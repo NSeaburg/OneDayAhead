@@ -28,6 +28,8 @@ import {
   ASSESSMENT_EVALUATION_PROMPT,
 } from "./prompts";
 
+import { contentManager } from "./contentManager";
+
 // Log the webhook URLs for debugging
 console.log("Assessment Webhook URL:", ASSESSMENT_WEBHOOK_URL);
 console.log("Dynamic Assistant Webhook URL:", DYNAMIC_ASSISTANT_WEBHOOK_URL);
@@ -2570,6 +2572,83 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
     } catch (error) {
       console.error("Error submitting grade:", error);
       res.status(500).json({ error: "Failed to submit grade" });
+    }
+  });
+
+  // Content Management API Endpoints
+  
+  // Get all content packages
+  app.get("/api/content/packages", async (req, res) => {
+    try {
+      const packages = await contentManager.scanContentPackages();
+      res.json({ packages });
+    } catch (error) {
+      console.error("Error scanning content packages:", error);
+      res.status(500).json({ error: "Failed to scan content packages" });
+    }
+  });
+
+  // Get specific content package
+  app.get("/api/content/packages/:district/:course/:topic", async (req, res) => {
+    try {
+      const { district, course, topic } = req.params;
+      const pkg = await contentManager.loadContentPackage(district, course, topic);
+      
+      if (!pkg) {
+        return res.status(404).json({ error: "Content package not found" });
+      }
+      
+      res.json({ package: pkg });
+    } catch (error) {
+      console.error("Error loading content package:", error);
+      res.status(500).json({ error: "Failed to load content package" });
+    }
+  });
+
+  // Get bot personality text
+  app.get("/api/content/personality/:district/:course/:topic/:botType/:level?", async (req, res) => {
+    try {
+      const { district, course, topic, botType, level } = req.params;
+      const personality = await contentManager.getPersonality(district, course, topic, botType, level || null);
+      res.json({ personality });
+    } catch (error) {
+      console.error("Error getting personality:", error);
+      res.status(500).json({ error: "Failed to get personality" });
+    }
+  });
+
+  // Save bot personality text
+  app.put("/api/content/personality/:district/:course/:topic/:botType/:level?", async (req, res) => {
+    try {
+      const { district, course, topic, botType, level } = req.params;
+      const { personality } = req.body;
+      
+      if (!personality || typeof personality !== 'string') {
+        return res.status(400).json({ error: "Personality text is required" });
+      }
+      
+      await contentManager.savePersonality(district, course, topic, botType, level || null, personality);
+      res.json({ success: true, message: "Personality saved successfully" });
+    } catch (error) {
+      console.error("Error saving personality:", error);
+      res.status(500).json({ error: "Failed to save personality" });
+    }
+  });
+
+  // Create new content package
+  app.post("/api/content/packages", async (req, res) => {
+    try {
+      const { district, course, topic, template } = req.body;
+      
+      if (!district || !course || !topic) {
+        return res.status(400).json({ error: "District, course, and topic are required" });
+      }
+      
+      await contentManager.createContentPackage(district, course, topic, template);
+      res.json({ success: true, message: "Content package created successfully" });
+    } catch (error) {
+      console.error("Error creating content package:", error);
+      res.status(500).json({ error: "Failed to create content package" });
     }
   });
 

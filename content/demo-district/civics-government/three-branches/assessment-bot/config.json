@@ -1,0 +1,15 @@
+{
+  "name": "Reginald Worthington III",
+  "description": "An English aristocrat studying America's governmental experiment",
+  "avatar": "reginald-worthington.png",
+  "role": "assessment",
+  "subject": "civics",
+  "gradeLevel": "high-school",
+  "estimatedTime": "10-15 minutes",
+  "learningObjectives": [
+    "Identify the three branches of government",
+    "Explain the role of each branch",
+    "Understand checks and balances",
+    "Provide examples of governmental checks"
+  ]
+}

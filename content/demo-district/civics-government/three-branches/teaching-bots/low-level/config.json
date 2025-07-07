@@ -1,0 +1,12 @@
+{
+  "name": "Mr. Whitaker",
+  "description": "Foundational Civics Instructor",
+  "avatar": "Whitaker.png",
+  "role": "teaching",
+  "level": "low",
+  "subject": "civics",
+  "approach": "Three-stage structured activities with metaphors",
+  "estimatedTime": "12-18 minutes",
+  "teachingStyle": "Patient, supportive, uses simple analogies",
+  "focusArea": "Building strong foundational understanding"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Mrs. Parton",
+  "description": "Advanced Government Analysis Instructor",
+  "avatar": "Parton.png",
+  "role": "teaching",
+  "level": "high",
+  "subject": "civics",
+  "approach": "Case study analysis and critical thinking",
+  "estimatedTime": "15-20 minutes",
+  "teachingStyle": "Analytical, challenging, expects scholarly discussion",
+  "focusArea": "United States v. Nixon case study application"
+}
