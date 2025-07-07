@@ -371,8 +371,8 @@ export default function AssessmentBotScreen({
         console.log("Conversation preview:", previewTranscript);
       }
       
-      // Send conversation data to N8N before proceeding to the next screen
-      const response = await apiRequest("POST", "/api/send-to-n8n", {
+      // Send conversation data to Claude-based assessment endpoint
+      const response = await apiRequest("POST", "/api/assess-conversation", {
         // Complete conversation data (raw messages)
         conversationData: messages,
         
@@ -381,14 +381,11 @@ export default function AssessmentBotScreen({
         
         // Metadata
         courseName: "Social Studies Sample",
-        chatDurationSeconds: chatDurationSeconds,
-        
-        // Flag to indicate we're using Claude/Anthropic
-        usingClaudeAI: true
+        chatDurationSeconds: chatDurationSeconds
       });
       
       const result = await response.json();
-      console.log("N8N webhook response:", result);
+      console.log("Claude assessment response:", result);
       
       if (result.success) {
         // Log result to help with debugging in client

@@ -58,3 +58,25 @@ IMPORTANT: When you notice the student has covered all the required concepts abo
 
 // Teaching assistant prompts will be dynamically received from N8N webhook
 export const TEACHING_ASSISTANT_FALLBACK_PROMPT = "Hello! I'm your specialized assistant for this part of the learning journey. How can I help you with what you've just learned?";
+
+/**
+ * Assessment Evaluation System Prompt
+ * 
+ * Used by Claude to evaluate Reginald's assessment conversation and determine
+ * student performance level (high/medium/low) for dynamic teaching assistant selection.
+ */
+export const ASSESSMENT_EVALUATION_PROMPT = `You are assessing a conversation between a bot and a student, and determining what the student understands about the structure of the U.S. government and the concept of checks and balances. Only assess the student's understanding—not the bot's.
+
+If the student clearly understands the roles of the three branches (Legislative, Executive, Judicial) and can explain how checks and balances work between them, return "high".
+
+If the student shows some understanding but misses key elements, mixes up branch responsibilities, or gives incomplete or inconsistent explanations, return "medium".
+
+If the student shows major confusion about the three branches, does not understand their roles, or misunderstands how checks and balances work, return "low".
+
+If you are unsure of the student's understanding, use "medium" and explain that their knowledge is undetermined.
+
+Your response should be a JSON object with the following structure:
+{
+  "level": "high" | "medium" | "low",
+  "reasoning": "Brief explanation of why you assigned this level"
+}`;

@@ -25,6 +25,7 @@ import {
   ARTICLE_ASSISTANT_SYSTEM_PROMPT,
   ASSESSMENT_ASSISTANT_PROMPT,
   TEACHING_ASSISTANT_FALLBACK_PROMPT,
+  ASSESSMENT_EVALUATION_PROMPT,
 } from "./prompts";
 
 // Log the webhook URLs for debugging
@@ -1160,6 +1161,144 @@ When the student has completed both activities, thank them warmly and end the co
         message: "Error in N8N integration, continuing with fallback",
         error: error.message || String(error),
         nextAssistantId: null, // Use fallback assistant
+      });
+    }
+  });
+
+  // NEW: Claude-based assessment evaluation endpoint (replaces N8N webhook)
+  app.post("/api/assess-conversation", async (req, res) => {
+    try {
+      const { conversationData, threadId, courseName, chatDurationSeconds } = req.body;
+      const sessionId = req.sessionId;
+
+      // Verify we have data to evaluate
+      if (!conversationData || !Array.isArray(conversationData)) {
+        return res.status(400).json({
+          error: "Invalid conversation data. Expected an array of messages.",
+        });
+      }
+
+      // Store the conversation if we have valid IDs
+      if (threadId && sessionId) {
+        try {
+          await storage.createConversation({
+            sessionId,
+            threadId,
+            assistantType: "assessment",
+            messages: conversationData,
+          });
+          console.log(`Stored assessment conversation for session ${sessionId}, thread ${threadId}`);
+        } catch (err) {
+          console.error("Error storing conversation:", err);
+          // Continue with assessment even if storage fails
+        }
+      }
+
+      // Generate conversation transcript for Claude evaluation
+      const transcript = conversationData
+        .map((msg: { role: string; content: string }) =>
+          `${msg.role === "assistant" ? "Reginald Worthington III" : "Student"}: ${msg.content}`
+        )
+        .join("\n\n");
+
+      console.log("Evaluating conversation with Claude for performance level...");
+
+      // Use Claude to evaluate the conversation
+      const evaluationMessages = [
+        {
+          role: "user" as const,
+          content: `Please evaluate this conversation between a student and Reginald Worthington III (an assessment bot) about the three branches of U.S. government:
+
+${transcript}
+
+Based on the assessment criteria, determine the student's understanding level and provide your reasoning.`
+        }
+      ];
+
+      const evaluation = await anthropic.messages.create({
+        messages: evaluationMessages,
+        system: ASSESSMENT_EVALUATION_PROMPT,
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 1000,
+        temperature: 0.3, // Lower temperature for consistent evaluation
+      });
+
+      // Extract Claude's response
+      const evaluationContent = evaluation.content[0]?.type === "text" 
+        ? evaluation.content[0].text 
+        : "{}";
+
+      let assessmentResult;
+      try {
+        assessmentResult = JSON.parse(evaluationContent);
+      } catch (parseError) {
+        console.error("Failed to parse Claude evaluation response:", evaluationContent);
+        // Fallback to medium level if parsing fails
+        assessmentResult = {
+          level: "medium",
+          reasoning: "Assessment parsing failed, defaulting to medium level"
+        };
+      }
+
+      const level = assessmentResult.level || "medium";
+      const reasoning = assessmentResult.reasoning || "No reasoning provided";
+
+      console.log(`Claude assessed student at "${level}" level: ${reasoning}`);
+
+      // Generate appropriate system prompt based on level
+      let systemPrompt = "";
+      let imageAssistant = "";
+
+      if (level === "high") {
+        systemPrompt = `You are Ms. Parton, a dynamic and highly engaging high school government teacher known for energizing advanced students. Your voice is enthusiastic, confident, and intellectually stimulating. You challenge students to think critically, ask probing questions, and explore complex connections between government concepts and real-world events.
+
+You celebrate their strong foundation in civics while pushing them to analyze nuanced political situations, constitutional debates, and the evolving role of government in society. You frequently reference current events, historical precedents, and encourage students to form and defend their own informed opinions about governance.
+
+Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond discussing the structure of government. If the student tries to take the conversation off-topic, enthusiastically redirect them back to exploring government concepts.`;
+        imageAssistant = "parton";
+      } else if (level === "medium") {
+        systemPrompt = `You are Ms. Bannerman, a patient and encouraging middle school civics teacher. Your voice is supportive, clear, and methodical. You help students build confidence in their understanding of government by reinforcing what they know well while gently addressing knowledge gaps.
+
+You use practical examples, analogies, and step-by-step explanations to help students connect the dots between different government concepts. You celebrate their progress while providing targeted guidance on areas that need strengthening, always maintaining a positive and constructive tone.
+
+Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond discussing the structure of government. If the student tries to take the conversation off-topic, gently and supportively redirect them back to civics concepts.`;
+        imageAssistant = "bannerman";
+      } else { // low
+        systemPrompt = `You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government. Your voice is warm, supportive, plainspoken, and slightly nostalgic. You explain complex ideas patiently, using simple examples and metaphors where needed. You occasionally share quick, encouraging asides about your time in the classroom. You gently celebrate effort but do not overpraise or scold.
+
+Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson.`;
+        imageAssistant = "whitaker";
+      }
+
+      // Return structured response matching the existing format
+      const response = {
+        success: true,
+        message: "Assessment completed successfully with Claude",
+        teachingAssistance: {
+          level: level as "low" | "medium" | "high",
+          systemPrompt: systemPrompt,
+          imageAssistant: imageAssistant,
+          reasoning: reasoning
+        }
+      };
+
+      console.log(`Returning ${level} level teaching assistant (${imageAssistant})`);
+      return res.json(response);
+
+    } catch (error: any) {
+      console.error("Error in Claude assessment:", error);
+      
+      // Return fallback response to allow app to continue
+      return res.json({
+        success: false,
+        message: "Assessment evaluation failed, using fallback",
+        error: error.message || String(error),
+        teachingAssistance: {
+          level: "medium",
+          systemPrompt: `You are Ms. Bannerman, a patient and encouraging middle school civics teacher. Your voice is supportive, clear, and methodical. You help students build confidence in their understanding of government by reinforcing what they know well while gently addressing knowledge gaps.`,
+          imageAssistant: "bannerman",
+          reasoning: "Fallback due to assessment error"
+        }
       });
     }
   });
