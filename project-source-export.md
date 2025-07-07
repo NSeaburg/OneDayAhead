@@ -1,20 +1,22 @@
 # Educational Learning Platform - Complete Source Export
 
 ## Project Overview
-An advanced AI-powered adaptive learning platform focused on teaching the three branches of U.S. government through interactive AI chatbots. Features LTI 1.3 Canvas integration, streaming Claude 3.5 Sonnet responses, and character-driven AI interactions.
+An advanced AI-powered adaptive learning platform focused on teaching the three branches of U.S. government through interactive AI chatbots. Features LTI 1.3 Canvas integration, streaming Claude 3.5 Sonnet responses, and character-driven AI interactions with native Claude-based assessment system.
 
-**Current Status**: Fully functional with LTI authentication fixes implemented
-**Last Updated**: July 5, 2025
+**Current Status**: Fully functional with complete N8N elimination and native Claude assessment
+**Last Updated**: July 7, 2025
 
-## Recent Fixes (Current Session)
-- ✅ Fixed syntax error in routes.ts causing server startup failure
-- ✅ Added express-session for persistent development context
-- ✅ Updated LTI auth middleware to support session-based development flag
-- ✅ Made all chat endpoints use consistent LTI authentication
-- ✅ Created proper TypeScript session types
-- ✅ Resolved 401 authentication errors for assessment and teaching bots
-- ✅ Fixed rate limiting configuration placement in routes.ts
-- ✅ Hardcoded redirect URI to https://app.onedayahead.com/api/lti/launch
+## Recent Major Changes (Current Session)
+- ✅ **Complete N8N Elimination**: Replaced all external N8N webhooks with internal Claude API calls
+- ✅ **Native Assessment System**: Added `/api/assess-conversation` endpoint using Claude 3.5 Sonnet
+- ✅ **Comprehensive Grading**: Added `/api/grade-conversations` endpoint for final scoring
+- ✅ **Enhanced Teaching Assistants**: Updated all three difficulty levels with detailed structured prompts:
+  - **High Level (Mrs. Parton)**: Advanced case study analysis (United States v. Nixon)
+  - **Medium Level (Mrs. Bannerman)**: Counterfactual "what if" scenarios
+  - **Low Level (Mr. Whitaker)**: Three-stage metaphor activities with guided learning
+- ✅ **Fixed Conversation Display**: Teaching transcripts now show real conversations instead of fallback messages
+- ✅ **Intelligent Assessment**: Claude evaluates student understanding and assigns appropriate difficulty levels
+- ✅ **Self-Contained Operation**: App now runs entirely on internal Claude integration without external dependencies
 
 ## Architecture
 
@@ -77,14 +79,17 @@ An advanced AI-powered adaptive learning platform focused on teaching the three 
 **Primary Endpoints:**
 - `GET /dev` - Development access with mock LTI session
 - `POST /api/article-chat-stream` - Streaming article discussion
-- `POST /api/claude-chat` - Assessment and teaching chat
+- `POST /api/claude-chat` - Assessment and teaching chat with streaming
+- `POST /api/assess-conversation` - **NEW**: Native Claude assessment for difficulty level assignment
+- `POST /api/grade-conversations` - **NEW**: Comprehensive Claude-based grading and feedback
 - `GET /api/assistant-config` - AI assistant configuration
 - LTI 1.3 endpoints for Canvas integration
 
-**Recent Changes:**
-- Added express-session middleware for persistent development context
-- Fixed LTI authentication to work with session-based development flag
-- Proper session typing for TypeScript compatibility
+**Assessment System:**
+- Intelligent evaluation using Claude 3.5 Sonnet to analyze student conversations
+- Automatic assignment to high/medium/low difficulty teaching assistants
+- Comprehensive scoring for content knowledge and writing quality
+- Detailed feedback generation with personalized next steps
 
 ### 2. LTI Authentication (server/lti/auth.ts)
 **Key Features:**
@@ -108,14 +113,18 @@ export const ltiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
 
 ### 3. AI Character Prompts (server/prompts.ts)
 **Character Definitions:**
-- **Article Assistant**: Friendly, engaging discussion facilitator
-- **Reginald Worthington III**: Aristocratic, condescending assessment character
-- **Mr. Whitaker**: Supportive teaching assistant (fallback implemented)
+- **Article Assistant**: Friendly, engaging discussion facilitator for government branches content
+- **Reginald Worthington III**: Aristocratic, condescending assessment character with British superiority
+- **Teaching Assistants** (Adaptive based on student level):
+  - **Mrs. Parton (High)**: Advanced case study analysis with United States v. Nixon constitutional examination
+  - **Mrs. Bannerman (Medium)**: Counterfactual scenarios exploring "what if" single-branch rule
+  - **Mr. Whitaker (Low)**: Three-stage metaphor activities with guided branch matching exercises
 
-**System Prompt Lengths:**
-- Article Assistant: 9,466 characters
-- Assessment Assistant: Comprehensive character personality
-- Teaching Assistant: Adaptive based on assessment results
+**Enhanced Assessment System:**
+- Native Claude evaluation replaces external N8N webhooks
+- Intelligent conversation analysis for appropriate difficulty assignment
+- Structured learning activities tailored to student comprehension level
+- Real conversation tracking with authentic teaching interactions displayed
 
 ### 4. Frontend Chat Components
 
@@ -125,14 +134,19 @@ export const ltiAuthMiddleware = (req: Request, res: Response, next: NextFunctio
 - Progress tracking integration
 
 #### AssessmentBotScreen.tsx
-- Character-driven evaluation with Reginald persona
-- N8N webhook integration for assessment analysis
-- Automatic progress detection
+- Character-driven evaluation with Reginald Worthington III persona
+- Native Claude assessment replacing N8N webhook integration
+- Automatic progress detection and conversation analysis
 
 #### DynamicAssistantScreen.tsx
-- Adaptive teaching based on assessment gaps
-- Mr. Whitaker character implementation
-- Fallback system for technical issues
+- Adaptive teaching based on Claude-assessed student performance levels
+- Three-tiered character system (Mrs. Parton/Mrs. Bannerman/Mr. Whitaker)
+- Real conversation tracking with authentic teaching interactions
+
+#### HighBotWithArticleScreen.tsx
+- **NEW**: Advanced teaching for high-performing students
+- Mrs. Parton character with constitutional case study focus
+- Claude-based grading integration for final assessment
 
 ### 5. Global Storage System (client/src/lib/globalStorage.ts)
 **Features:**
@@ -173,13 +187,18 @@ getFeedbackData()
 ```
 DATABASE_URL=postgresql://...
 ANTHROPIC_API_KEY=sk-ant-...
-N8N_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Assessment-Finish
-N8N_DYNAMIC_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Feedback Flow
 LTI_ISSUER=https://canvas.instructure.com
 LTI_CLIENT_ID=...
 LTI_DEPLOYMENT_ID=...
 LTI_PRIVATE_KEY=...
 LTI_PUBLIC_KEY=...
+```
+
+### Removed Variables (N8N Elimination)
+```
+# No longer needed - replaced with native Claude assessment
+N8N_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Assessment-Finish
+N8N_DYNAMIC_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Feedback Flow
 ```
 
 ### Development Mode
@@ -195,10 +214,11 @@ LTI_PUBLIC_KEY=...
 - **Streaming**: Real-time word-by-word response generation
 - **System Prompts**: Character-specific prompts from prompts.ts
 
-### N8N Webhooks
-- **Assessment Analysis**: Processes student responses for learning gaps
-- **Dynamic Teaching**: Selects appropriate teaching assistant based on results
-- **Fallback**: Graceful degradation when webhooks unavailable
+### Native Claude Assessment (Replaced N8N)
+- **Assessment Analysis**: Claude 3.5 Sonnet evaluates student conversations for comprehension levels
+- **Dynamic Teaching**: Intelligent assignment to high/medium/low difficulty teaching assistants
+- **Grading System**: Comprehensive scoring for content knowledge and writing quality
+- **Real-time Processing**: No external dependencies, all processing handled internally
 
 ## Security Implementation
 
@@ -221,16 +241,21 @@ LTI_PUBLIC_KEY=...
 3. **Embed**: Iframe embedding via `/embed` route
 
 ### Current Status
+- ✅ Complete N8N elimination with native Claude assessment system
 - ✅ All chat endpoints functioning with consistent authentication
-- ✅ Character prompts properly loaded from configuration
+- ✅ Enhanced teaching assistants with structured learning activities
+- ✅ Real conversation tracking in feedback transcripts
+- ✅ Intelligent difficulty level assignment based on student performance
+- ✅ Comprehensive grading system with content and writing scores
 - ✅ Streaming responses working across all AI assistants
 - ✅ Session persistence for development testing
 - ✅ Database fallback to in-memory storage
 
-### Known Issues
-- Database connection timeout in development (handled gracefully)
-- Teaching assistant fallback message when N8N webhook fails
-- Max tokens limit corrected to 8,192 for Claude 3.5 Sonnet
+### Resolved Issues
+- ✅ N8N webhook dependency eliminated - now self-contained
+- ✅ Teaching assistant fallback messages replaced with real conversations
+- ✅ Conversation transcript display fixed to show authentic interactions
+- ✅ Assessment logic moved from external service to internal Claude processing
 
 ## Deployment
 
@@ -249,11 +274,11 @@ LTI_PUBLIC_KEY=...
 - Session-based authentication caching
 
 ## Future Enhancements
-- Enhanced error recovery for N8N webhook failures
-- Improved teaching assistant personality beyond fallback
-- Additional assessment scoring algorithms
-- Enhanced PDF export formatting
+- Additional assessment scoring algorithms for more nuanced evaluation
+- Enhanced PDF export formatting with conversation highlights
 - Multi-language support for international deployment
+- Advanced analytics dashboard for instructor insights
+- Expanded case study library for high-level teaching assistant
 
 ---
 
