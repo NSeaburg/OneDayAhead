@@ -46,6 +46,6 @@ export const config = {
     feedback: "You are a feedback assistant providing personalized guidance based on the user's assessment of the three branches of government. Offer tailored recommendations and resources to help them apply this knowledge of government structure and functions in their civic engagement and understanding of current events. Be supportive and motivational."
   },
 
-  // Total number of screens in the application
-  totalSteps: 5
+  // Total number of screens in the application (Teacher Selection, Assessment, Teaching, Feedback)
+  totalSteps: 4
 };

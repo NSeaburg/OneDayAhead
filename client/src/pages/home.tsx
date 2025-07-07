@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import ProgressIndicator from "@/components/ProgressIndicator";
-import VideoScreen from "@/components/VideoScreen";
-import ArticleChatScreen from "@/components/ArticleChatScreen";
+import TeacherSelectionScreen from "@/components/TeacherSelectionScreen";
 import AssessmentBotScreen from "@/components/AssessmentBotScreen";
 import DynamicAssistantScreen from "@/components/DynamicAssistantScreen";
 import HighBotWithArticleScreen from "@/components/HighBotWithArticleScreen";
@@ -18,6 +17,9 @@ import { Link } from "wouter";
 export default function Home() {
   // Track the current screen in the learning flow
   const [currentScreen, setCurrentScreen] = useState(1);
+  
+  // Store the selected content package from teacher selection
+  const [selectedContentPackage, setSelectedContentPackage] = useState<any>(null);
   
   // Store the dynamic assistant ID received from N8N
   const [dynamicAssistantId, setDynamicAssistantId] = useState<string>("");
@@ -161,28 +163,20 @@ export default function Home() {
       
       {/* Screen container with all screen components */}
       <div className="flex-grow relative">
-        {/* Video Screen (1) */}
+        {/* Teacher Selection Screen (1) */}
         <div className={`absolute inset-0 ${currentScreen === 1 ? 'block' : 'hidden'}`}>
-          <VideoScreen 
-            videoUrl={config.videoUrl} 
-            onNext={goToNextScreen} 
+          <TeacherSelectionScreen 
+            onNext={(selectedPackage) => {
+              setSelectedContentPackage(selectedPackage);
+              console.log(`Selected content package: ${selectedPackage.name} (${selectedPackage.id})`);
+              goToNextScreen();
+            }}
             onPrevious={currentScreen > 1 ? goToPreviousScreen : undefined} 
           />
         </div>
         
-        {/* Article + Chatbot Screen (2) */}
+        {/* Assessment Bot Screen (2) */}
         <div className={`absolute inset-0 ${currentScreen === 2 ? 'block' : 'hidden'}`}>
-          <ArticleChatScreen 
-            articleContent={config.articleContent}
-            assistantId={discussionAssistantId}
-            systemPrompt={config.systemPrompts.discussion}
-            onNext={goToNextScreen} 
-            onPrevious={goToPreviousScreen} 
-          />
-        </div>
-        
-        {/* Assessment Bot Screen (3) */}
-        <div className={`absolute inset-0 ${currentScreen === 3 ? 'block' : 'hidden'}`}>
           <AssessmentBotScreen 
             assistantId={assessmentAssistantId}
             systemPrompt={config.systemPrompts.assessment}
@@ -243,8 +237,8 @@ export default function Home() {
           />
         </div>
         
-        {/* Dynamic Assistant Screen OR High Bot with Article Side-by-Side (4) */}
-        <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
+        {/* Dynamic Assistant Screen OR High Bot with Article Side-by-Side (3) */}
+        <div className={`absolute inset-0 ${currentScreen === 3 ? 'block' : 'hidden'}`}>
           {isHighBot ? (
             // High Bot with Article side-by-side layout
             <HighBotWithArticleScreen 
@@ -303,8 +297,8 @@ export default function Home() {
           )}
         </div>
         
-        {/* Final Feedback Bot Screen (5) */}
-        <div className={`absolute inset-0 ${currentScreen === 5 ? 'block' : 'hidden'}`}>
+        {/* Final Feedback Bot Screen (4) */}
+        <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
           <SimpleFeedbackScreen 
             feedbackData={feedbackData}
             onPrevious={goToPreviousScreen}
