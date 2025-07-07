@@ -103,15 +103,21 @@ export default function SimpleFeedbackScreen({
     console.log("- localStorage/globalStorage:", globalTeachingMsgs?.length || 0, "messages");
     console.log("- window.__assessmentData:", windowTeachingMsgs?.length || 0, "messages");
     
-    // Create a deep clone of whichever source has messages (prioritize global storage)
+    // Create a deep clone of whichever source has the actual conversation
+    // Prioritize window.__assessmentData if it has more messages (real conversation)
+    // or if globalStorage contains fallback messages
     let teachingMsgs = [];
     
-    if (globalTeachingMsgs && globalTeachingMsgs.length > 0) {
+    const isGlobalStorageFallback = globalTeachingMsgs && globalTeachingMsgs.length > 0 && 
+      globalTeachingMsgs[0].content.includes("fallback assistant due to a technical issue");
+    
+    if (windowTeachingMsgs && windowTeachingMsgs.length > 0 && 
+        (windowTeachingMsgs.length > (globalTeachingMsgs?.length || 0) || isGlobalStorageFallback)) {
+      console.log("✅ Using teaching messages from window.__assessmentData (real conversation)");
+      teachingMsgs = JSON.parse(JSON.stringify(windowTeachingMsgs));
+    } else if (globalTeachingMsgs && globalTeachingMsgs.length > 0 && !isGlobalStorageFallback) {
       console.log("✅ Using teaching messages from globalStorage");
       teachingMsgs = JSON.parse(JSON.stringify(globalTeachingMsgs));
-    } else if (windowTeachingMsgs && windowTeachingMsgs.length > 0) {
-      console.log("✅ Using teaching messages from window.__assessmentData");
-      teachingMsgs = JSON.parse(JSON.stringify(windowTeachingMsgs));
     } else {
       console.log("⚠️ No teaching messages found in any source");
       
