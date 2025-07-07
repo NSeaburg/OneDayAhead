@@ -2652,6 +2652,97 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
     }
   });
 
+  // Create new complete learning experience
+  app.post("/api/content/create-experience", async (req, res) => {
+    try {
+      const experienceData = req.body;
+      
+      // Validate required fields
+      if (!experienceData.name || !experienceData.district || !experienceData.course || !experienceData.topic) {
+        return res.status(400).json({ error: "Name, district, course, and topic are required" });
+      }
+
+      // Create the content package directory structure
+      await contentManager.createContentPackage(
+        experienceData.district, 
+        experienceData.course, 
+        experienceData.topic
+      );
+
+      // Create config.json with the experience configuration
+      const configPath = path.join(
+        process.cwd(), 
+        'content', 
+        experienceData.district, 
+        experienceData.course, 
+        experienceData.topic, 
+        'config.json'
+      );
+
+      const config = {
+        name: experienceData.name,
+        description: experienceData.description,
+        district: experienceData.district,
+        course: experienceData.course,
+        topic: experienceData.topic,
+        assessmentBot: {
+          name: experienceData.assessmentBot.name,
+          description: experienceData.assessmentBot.onPageText,
+          avatar: experienceData.assessmentBot.avatar ? 'assessment-avatar.png' : 'reginald-worthington.png',
+          role: "assessment",
+          personality: experienceData.assessmentBot.systemPrompt,
+          config: {
+            initialMessage: experienceData.assessmentBot.initialMessage,
+            keywords: experienceData.assessmentBot.keywords
+          }
+        },
+        teachingBots: {
+          high: {
+            name: experienceData.teachingBots.high.name,
+            description: experienceData.teachingBots.high.characterDescription,
+            avatar: experienceData.teachingBots.high.avatar ? 'high-avatar.png' : 'Parton.png',
+            role: "teaching",
+            personality: experienceData.teachingBots.high.systemPrompt,
+            config: {}
+          },
+          medium: {
+            name: experienceData.teachingBots.medium.name,
+            description: experienceData.teachingBots.medium.characterDescription,
+            avatar: experienceData.teachingBots.medium.avatar ? 'medium-avatar.png' : 'Bannerman.png',
+            role: "teaching",
+            personality: experienceData.teachingBots.medium.systemPrompt,
+            config: {}
+          },
+          low: {
+            name: experienceData.teachingBots.low.name,
+            description: experienceData.teachingBots.low.characterDescription,
+            avatar: experienceData.teachingBots.low.avatar ? 'low-avatar.png' : 'Whitaker.png',
+            role: "teaching",
+            personality: experienceData.teachingBots.low.systemPrompt,
+            config: {}
+          }
+        },
+        routingCriteria: experienceData.routingCriteria,
+        notes: experienceData.notes
+      };
+
+      // Write the config file
+      await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+
+      // TODO: Handle file uploads for avatars when implementing file upload functionality
+      // For now, we'll use default avatars
+
+      res.json({ 
+        success: true, 
+        message: "Learning experience created successfully",
+        packageId: `${experienceData.district}/${experienceData.course}/${experienceData.topic}`
+      });
+    } catch (error) {
+      console.error("Error creating learning experience:", error);
+      res.status(500).json({ error: "Failed to create learning experience" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

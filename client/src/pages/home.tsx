@@ -1,39 +1,40 @@
 import { useState, useEffect } from "react";
 import ProgressIndicator from "@/components/ProgressIndicator";
-import VideoScreen from "@/components/VideoScreen";
-import ArticleChatScreen from "@/components/ArticleChatScreen";
 import AssessmentBotScreen from "@/components/AssessmentBotScreen";
 import DynamicAssistantScreen from "@/components/DynamicAssistantScreen";
 import HighBotWithArticleScreen from "@/components/HighBotWithArticleScreen";
 import SimpleFeedbackScreen from "@/components/SimpleFeedbackScreen";
+import DeploymentPage from "@/pages/deployment";
+import ExperienceCreator from "@/pages/experience-creator";
 import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
-import { Button } from "@/components/ui/button";
-import { RotateCcw, Settings } from "lucide-react";
-import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
-
-// Using global interface declared in types.d.ts
+// Teaching assistance data interface
+interface TeachingAssistance {
+  level: 'low' | 'medium' | 'high';
+  systemPrompt: string;
+}
 
 export default function Home() {
-  // Track the current screen in the learning flow
-  const [currentScreen, setCurrentScreen] = useState(1);
+  const { toast } = useToast();
   
-  // Store the dynamic assistant ID received from N8N
+  // Track the current screen in the learning flow (deployment → assessment → teaching → feedback)
+  const [currentScreen, setCurrentScreen] = useState(0); // 0 = deployment, 1 = assessment, 2 = teaching, 3 = feedback
+  const [selectedExperience, setSelectedExperience] = useState<string | null>(null);
+  const [showExperienceCreator, setShowExperienceCreator] = useState(false);
+  
+  // Store the dynamic assistant ID received from assessment
   const [dynamicAssistantId, setDynamicAssistantId] = useState<string>("");
   
   // Store the assessment thread ID and conversation data for passing to the teaching bot
   const [assessmentThreadId, setAssessmentThreadId] = useState<string>("");
   const [assessmentConversation, setAssessmentConversation] = useState<any[]>([]);
   
-  // Teaching assistance data from N8N (Claude-specific)
-  interface TeachingAssistance {
-    level: 'low' | 'medium' | 'high';
-    systemPrompt: string;
-  }
+  // Teaching assistance data from Claude assessment
   const [teachingAssistance, setTeachingAssistance] = useState<TeachingAssistance | undefined>(undefined);
   
-  // Store feedback data from N8N
+  // Store feedback data
   const [feedbackData, setFeedbackData] = useState<{
     summary?: string;
     contentKnowledgeScore?: number;
@@ -41,81 +42,80 @@ export default function Home() {
     nextSteps?: string;
   } | undefined>(undefined);
   
-  // Add a debug log whenever feedbackData changes
-  useEffect(() => {
-    if (feedbackData) {
-      console.log("⚠️ DEBUG CRITICAL - feedbackData state in Home updated:", 
-        JSON.stringify({
-          contentKnowledgeScore: feedbackData.contentKnowledgeScore,
-          writingScore: feedbackData.writingScore,
-          contentKnowledgeScoreType: typeof feedbackData.contentKnowledgeScore,
-          writingScoreType: typeof feedbackData.writingScore,
-          fullData: feedbackData
-        }, null, 2)
-      );
-    }
-  }, [feedbackData]);
-  
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
   
-  // List of High Bot assistant IDs (move this outside hooks)
+  // List of High Bot assistant IDs
   const highBotAssistantIds = [
     "asst_lUweN1vW36yeAORIXCWDopm9",  // Original High Bot ID
     "asst_87DSLhfnAK7elvmsiL0aTPH4"    // Additional High Bot ID specified by user
   ];
   
   // Check if the current assistant ID is a High Bot
-  // (Using a calculated value rather than a hook to avoid hook order issues)
   const isHighBot = dynamicAssistantId !== "" && (
     dynamicAssistantId.includes("High") || 
     highBotAssistantIds.includes(dynamicAssistantId)
   );
-  
-  // Send screen change notification whenever the current screen changes
-  useEffect(() => {
-    // Get the screen name based on index
-    const screenNames = ["Video", "Article", "Assessment", "Teaching", "Feedback"];
-    const screenName = screenNames[currentScreen - 1] || "Unknown";
-    
-    // Screen change tracking removed for security
-  }, [currentScreen, feedbackData]);
-  
-  // Debug logging when we enter screen 4
-  useEffect(() => {
-    if (currentScreen === 4) {
-      console.log("Teaching screen loaded with assistant ID:", dynamicAssistantId);
-      console.log("Using High Bot layout:", isHighBot ? "YES" : "NO");
-      if (isHighBot) {
-        console.log("Side-by-side article layout will be shown");
-      } else {
-        console.log("Regular teaching bot layout will be shown");
-      }
-    }
-  }, [currentScreen, dynamicAssistantId, isHighBot]);
-  
-  // Function to navigate to the next screen
+
+  // Navigation functions for the learning flow
   const goToNextScreen = () => {
-    if (currentScreen < config.totalSteps) {
-      setCurrentScreen(currentScreen + 1);
-    }
-  };
-  
-  // Function to navigate to the previous screen
-  const goToPreviousScreen = () => {
-    if (currentScreen > 1) {
-      setCurrentScreen(currentScreen - 1);
-    }
-  };
-  
-  // Function to reset the app to the first screen
-  const resetApp = () => {
-    setCurrentScreen(1);
-    // Force reload the page to clear all state
-    window.location.reload();
+    setCurrentScreen(prev => Math.min(prev + 1, 3)); // Max 3 for feedback screen
   };
 
-  // Display loading state while fetching assistant IDs
+  const goToPreviousScreen = () => {
+    if (currentScreen === 1) {
+      // Going back from assessment to deployment
+      setCurrentScreen(0);
+      setSelectedExperience(null);
+    } else {
+      setCurrentScreen(prev => Math.max(prev - 1, 0));
+    }
+  };
+
+  const handleSelectExperience = (packageId: string) => {
+    setSelectedExperience(packageId);
+    setCurrentScreen(1); // Go to assessment
+  };
+
+  const handleCreateNewExperience = () => {
+    setShowExperienceCreator(true);
+  };
+
+  const handleSaveExperience = async (experienceData: any) => {
+    try {
+      const response = await fetch('/api/content/create-experience', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(experienceData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create experience');
+      }
+
+      toast({
+        title: "Experience Created",
+        description: "Your learning experience has been saved successfully!"
+      });
+
+      setShowExperienceCreator(false);
+      setCurrentScreen(0); // Go back to deployment page
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save the experience. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBackFromCreator = () => {
+    setShowExperienceCreator(false);
+  };
+
+  // Display loading state while fetching assistant configurations
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
@@ -146,55 +146,47 @@ export default function Home() {
     );
   }
 
+  // Show experience creator if requested
+  if (showExperienceCreator) {
+    return (
+      <ExperienceCreator
+        onBack={handleBackFromCreator}
+        onSave={handleSaveExperience}
+      />
+    );
+  }
+
+  // Show deployment page for experience selection
+  if (currentScreen === 0) {
+    return (
+      <DeploymentPage
+        onSelectExperience={handleSelectExperience}
+        onCreateNew={handleCreateNewExperience}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
       {/* Progress indicator showing current position in the learning flow */}
-      <div className="flex justify-between items-center">
-        <ProgressIndicator currentStep={currentScreen} totalSteps={config.totalSteps} />
-        <Link href="/admin">
-          <Button variant="outline" size="sm" className="ml-4">
-            <Settings className="h-4 w-4 mr-2" />
-            Content Manager
-          </Button>
-        </Link>
+      <div className="flex justify-between items-center p-4">
+        <ProgressIndicator currentStep={currentScreen} totalSteps={3} />
       </div>
       
       {/* Screen container with all screen components */}
       <div className="flex-grow relative">
-        {/* Video Screen (1) */}
+        {/* Assessment Bot Screen (1) */}
         <div className={`absolute inset-0 ${currentScreen === 1 ? 'block' : 'hidden'}`}>
-          <VideoScreen 
-            videoUrl={config.videoUrl} 
-            onNext={goToNextScreen} 
-            onPrevious={currentScreen > 1 ? goToPreviousScreen : undefined} 
-          />
-        </div>
-        
-        {/* Article + Chatbot Screen (2) */}
-        <div className={`absolute inset-0 ${currentScreen === 2 ? 'block' : 'hidden'}`}>
-          <ArticleChatScreen 
-            articleContent={config.articleContent}
-            assistantId={discussionAssistantId}
-            systemPrompt={config.systemPrompts.discussion}
-            onNext={goToNextScreen} 
-            onPrevious={goToPreviousScreen} 
-          />
-        </div>
-        
-        {/* Assessment Bot Screen (3) */}
-        <div className={`absolute inset-0 ${currentScreen === 3 ? 'block' : 'hidden'}`}>
           <AssessmentBotScreen 
             assistantId={assessmentAssistantId}
             systemPrompt={config.systemPrompts.assessment}
             onNext={(teachingAssistanceData) => {
-              // Store the teaching assistance data from N8N webhook
+              // Store the teaching assistance data from assessment
               if (teachingAssistanceData) {
                 setTeachingAssistance(teachingAssistanceData);
                 console.log(`Received teaching assistance level: ${teachingAssistanceData.level}`);
-                console.log("Received Claude-specific system prompt for teaching");
                 
                 // Set a specific assistant ID based on proficiency level
-                // This is primarily for maintaining backward compatibility with the High Bot layout feature
                 const assistantIdByLevel: Record<string, string> = {
                   'high': 'asst_87DSLhfnAK7elvmsiL0aTPH4', // Use high bot ID for high level
                   'medium': 'claude_medium',
@@ -205,94 +197,50 @@ export default function Home() {
                 const newAssistantId = assistantIdByLevel[teachingAssistanceData.level] || 'claude_default';
                 setDynamicAssistantId(newAssistantId);
                 
-                // Check if this is a High Bot level
-                if (teachingAssistanceData.level === 'high') {
-                  console.log("High proficiency level detected - will use side-by-side layout");
-                } else {
-                  console.log(`Using regular layout for ${teachingAssistanceData.level} proficiency level`);
-                }
+                console.log(`Using ${teachingAssistanceData.level} level assistant: ${newAssistantId}`);
               } else {
                 console.log("No teaching assistance data provided, using fallback low level");
-                // Create fallback teaching assistance data for Mr. Whitaker (low level)
+                // Create fallback teaching assistance data for low level
                 const fallbackAssistance = {
                   level: 'low' as 'low',
                   systemPrompt: `You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government.`
                 };
                 
-                // Set fallback assistance data
                 setTeachingAssistance(fallbackAssistance);
-                
-                // Set the low-level teaching assistant ID
                 setDynamicAssistantId('claude_low');
-              }
-              
-              // Capture the assessment conversation and thread ID from the component's state
-              // This will be accessed through window.__assessmentData global
-              if (window.__assessmentData) {
-                setAssessmentThreadId(window.__assessmentData.threadId || "");
-                setAssessmentConversation(window.__assessmentData.messages || []);
-                console.log("Captured assessment thread ID:", window.__assessmentData.threadId);
-                console.log("Captured assessment conversation length:", window.__assessmentData.messages?.length || 0);
-              } else {
-                console.log("No assessment data available");
               }
               
               goToNextScreen();
             }} 
-            onPrevious={goToPreviousScreen}
+            onPrevious={goToPreviousScreen} 
           />
         </div>
         
-        {/* Dynamic Assistant Screen OR High Bot with Article Side-by-Side (4) */}
-        <div className={`absolute inset-0 ${currentScreen === 4 ? 'block' : 'hidden'}`}>
+        {/* Teaching Assistant Screen (2) */}
+        <div className={`absolute inset-0 ${currentScreen === 2 ? 'block' : 'hidden'}`}>
           {isHighBot ? (
-            // High Bot with Article side-by-side layout
             <HighBotWithArticleScreen 
-              assistantId={dynamicAssistantId || discussionAssistantId}
-              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
-              articleUrl="/nixon-article.html"
-              assessmentThreadId={assessmentThreadId}
-              assessmentConversation={assessmentConversation}
-              onNext={(nextId, feedbackResult) => {
+              assistantId={dynamicAssistantId}
+              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.teaching.fallback}
+              articleContent={config.articleContent}
+              onNext={(feedbackResult) => {
                 if (feedbackResult) {
-                  console.log("⚠️ DEBUG - Feedback data from HighBotWithArticleScreen:", 
-                    JSON.stringify({
-                      contentKnowledgeScore: feedbackResult?.contentKnowledgeScore,
-                      writingScore: feedbackResult?.writingScore,
-                      contentKnowledgeScoreType: typeof feedbackResult?.contentKnowledgeScore,
-                      writingScoreType: typeof feedbackResult?.writingScore,
-                    })
-                  );
                   setFeedbackData(feedbackResult);
+                } else {
+                  console.log("No feedback data received from HighBotWithArticleScreen");
                 }
                 goToNextScreen();
               }}
               onPrevious={goToPreviousScreen}
             />
           ) : (
-            // Regular dynamic assistant screen
             <DynamicAssistantScreen 
-              assistantId={dynamicAssistantId || discussionAssistantId}
-              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
-              assessmentThreadId={assessmentThreadId}
-              assessmentConversation={assessmentConversation}
+              assistantId={dynamicAssistantId}
+              systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.teaching.fallback}
               teachingAssistance={teachingAssistance}
-              onNext={(nextId, feedbackResult) => {
+              onNext={(feedbackResult) => {
                 if (feedbackResult) {
-                  console.log("⚠️ DEBUG - Feedback data received in DynamicAssistantScreen callback:", 
-                    JSON.stringify({
-                      contentKnowledgeScore: feedbackResult?.contentKnowledgeScore,
-                      writingScore: feedbackResult?.writingScore,
-                      contentKnowledgeScoreType: typeof feedbackResult?.contentKnowledgeScore,
-                      writingScoreType: typeof feedbackResult?.writingScore,
-                    })
-                  );
-                  // Set state with the feedback data
                   setFeedbackData(feedbackResult);
-                  
-                  // Use an effect to verify the update
-                  // This won't show the updated value immediately due to React's state batching
-                  console.log("Current feedbackData state (will be previous value):", feedbackData);
                 } else {
                   console.log("No feedback data received from DynamicAssistantScreen");
                 }
@@ -303,16 +251,14 @@ export default function Home() {
           )}
         </div>
         
-        {/* Final Feedback Bot Screen (5) */}
-        <div className={`absolute inset-0 ${currentScreen === 5 ? 'block' : 'hidden'}`}>
+        {/* Final Feedback Screen (3) */}
+        <div className={`absolute inset-0 ${currentScreen === 3 ? 'block' : 'hidden'}`}>
           <SimpleFeedbackScreen 
             feedbackData={feedbackData}
             onPrevious={goToPreviousScreen}
           />
         </div>
       </div>
-
-
     </div>
   );
 }
