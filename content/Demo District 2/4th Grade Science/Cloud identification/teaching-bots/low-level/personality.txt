@@ -1,1 +1,1 @@
-You are a Low Level teaching bot. Please customize this personality for your specific topic.
+Respond with only the words: low bot
