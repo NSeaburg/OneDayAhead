@@ -294,6 +294,7 @@ export default function Home() {
               assistantId={dynamicAssistantId}
               systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
               articleContent={config.articleContent}
+              contentPackage={contentPackage}
               onNext={(feedbackResult) => {
                 if (feedbackResult) {
                   setFeedbackData(feedbackResult);
@@ -309,6 +310,7 @@ export default function Home() {
               assistantId={dynamicAssistantId}
               systemPrompt={teachingAssistance?.systemPrompt || config.systemPrompts.dynamic}
               teachingAssistance={teachingAssistance}
+              contentPackage={contentPackage}
               onNext={(feedbackResult) => {
                 if (feedbackResult) {
                   setFeedbackData(feedbackResult);

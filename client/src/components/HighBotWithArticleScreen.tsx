@@ -17,9 +17,10 @@ import remarkGfm from "remark-gfm";
 interface HighBotWithArticleScreenProps {
   assistantId: string;
   systemPrompt: string;
-  articleUrl: string;
+  articleContent?: string; // Changed from articleUrl to match usage
   assessmentThreadId?: string;
   assessmentConversation?: any[];
+  contentPackage?: any;
   onNext: (nextAssistantId?: string, feedbackData?: any) => void;
   onPrevious?: () => void;
 }
@@ -27,9 +28,10 @@ interface HighBotWithArticleScreenProps {
 export default function HighBotWithArticleScreen({ 
   assistantId,
   systemPrompt,
-  articleUrl,
+  articleContent,
   assessmentThreadId,
   assessmentConversation,
+  contentPackage,
   onNext,
   onPrevious
 }: HighBotWithArticleScreenProps) {
@@ -128,6 +130,9 @@ export default function HighBotWithArticleScreen({
         // Assessment bot data (if available)
         assessmentConversation: assessmentConversation || [],
         assessmentThreadId: assessmentThreadId || "",
+        
+        // Content package for dynamic grading
+        contentPackage: contentPackage,
         
         // Common metadata
         courseName: "Social Studies Sample",

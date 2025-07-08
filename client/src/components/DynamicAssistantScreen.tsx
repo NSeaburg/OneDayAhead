@@ -33,6 +33,7 @@ interface DynamicAssistantScreenProps {
   assessmentThreadId?: string; // Assessment bot thread ID
   assessmentConversation?: any[]; // Assessment bot conversation
   teachingAssistance?: TeachingAssistance; // New teaching assistance data from N8N
+  contentPackage?: any; // Content package data for grading
   onNext: (nextAssistantId?: string, feedbackData?: any) => void;
   onPrevious?: () => void;
 }
@@ -43,6 +44,7 @@ export default function DynamicAssistantScreen({
   assessmentThreadId,
   assessmentConversation,
   teachingAssistance,
+  contentPackage,
   onNext,
   onPrevious
 }: DynamicAssistantScreenProps) {
@@ -254,6 +256,9 @@ export default function DynamicAssistantScreen({
         // Assessment bot data (if available)
         assessmentConversation: assessmentConversation || [],
         assessmentThreadId: assessmentThreadId || "",
+        
+        // Content package for dynamic grading
+        contentPackage: contentPackage,
         
         // Common metadata
         courseName: "Social Studies Sample",

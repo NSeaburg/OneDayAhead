@@ -1408,6 +1408,7 @@ Stage 3: Checks and Balances – "Who Can Stop This?"
         assessmentThreadId,
         courseName,
         chatDurationSeconds,
+        contentPackage,
       } = req.body;
       
       const sessionId = req.sessionId;
@@ -1446,51 +1447,62 @@ Stage 3: Checks and Balances – "Who Can Stop This?"
 
       console.log("Evaluating complete learning session with Claude for final grading...");
 
+      // Create dynamic grading content based on content package
+      const isThreeBranches = contentPackage?.topic === "three-branches" || courseName?.includes("branches") || !contentPackage;
+      
+      const gradingConfig = isThreeBranches ? {
+        subject: "the three branches of U.S. government",
+        contentFocus: "the three branches of government, including the branch names, their powers, and the way they limit each other through checks and balances",
+        deeperExploration: "the three branches of government",
+        nextUnit: "The next unit in this course is about whales. Write something poppy and fun about what they can expect next. Be brief."
+      } : {
+        subject: contentPackage?.description || contentPackage?.name || "the current topic",
+        contentFocus: contentPackage?.description || "the current learning objectives",
+        deeperExploration: contentPackage?.name || "the current topic",
+        nextUnit: "Write something brief and engaging about what they can expect in their continued learning journey."
+      };
+
       // Use Claude to evaluate the complete learning session
       const gradingMessages = [
         {
           role: "user" as const,
-          content: `Please evaluate this student's complete learning session about the three branches of U.S. government. 
+          content: `Please evaluate this student's complete learning session about ${gradingConfig.subject}. 
 
-ASSESSMENT CONVERSATION (with Reginald Worthington III):
+ASSESSMENT CONVERSATION:
 ${assessmentTranscript}
 
-TEACHING CONVERSATION (with Teaching Assistant):
+TEACHING CONVERSATION:
 ${teachingTranscript}
 
-Please provide comprehensive feedback including:
-1. Content Knowledge Score (0-4 scale)
-2. Writing Quality Score (0-4 scale) 
-3. Overall summary of performance
-4. Specific next steps for improvement
+Provide feedback in these 4 areas:
 
-Format your response as JSON with these exact fields: contentKnowledgeScore, writingScore, summary, nextSteps`
+1. GENERAL FEEDBACK: Summarize the conversations in a positive manner. If no conversations are present, say that. If conversations exist, provide feedback on where the student could explore deeper when it comes to ${gradingConfig.deeperExploration}.
+
+2. CONTENT KNOWLEDGE: The student is learning about ${gradingConfig.contentFocus}. Return a score between 0 and 4 in 0.5 intervals.
+
+3. WRITING QUALITY: Grade sentence structure, word choice, grammar and spelling. Return a score between 0 and 4 in 0.5 intervals.
+
+4. WHAT'S NEXT: ${gradingConfig.nextUnit}
+
+Format your response as JSON with these exact fields: summary, contentKnowledgeScore, writingScore, nextSteps`
         }
       ];
 
       const grading = await anthropic.messages.create({
         messages: gradingMessages,
-        system: `You are an experienced educational assessment specialist evaluating student learning about U.S. government structure. Provide comprehensive, constructive feedback based on both conversations.
+        system: `You are an educational assessment specialist. Evaluate student learning conversations and provide feedback in exactly 4 areas as requested.
 
-CONTENT KNOWLEDGE RUBRIC (0-4 scale):
-- 4 (Advanced): Demonstrates deep understanding of all three branches, explains complex checks and balances with specific examples, understands constitutional foundations and can analyze real-world applications
-- 3 (Proficient): Shows solid understanding of all branches and their functions, explains basic checks and balances, can give some examples of branch interactions
-- 2 (Developing): Basic understanding of most branches and their primary functions, limited knowledge of how branches interact, few specific examples
-- 1 (Beginning): Can identify some branches but unclear on specific functions, minimal understanding of governmental structure
-- 0 (Inadequate): Little to no demonstrated knowledge of government branches or structure
+SCORING GUIDELINES:
+- Content Knowledge: 0-4 scale in 0.5 intervals (focus on understanding of branch names, powers, and checks/balances)
+- Writing Quality: 0-4 scale in 0.5 intervals (sentence structure, word choice, grammar, spelling)
 
-WRITING QUALITY RUBRIC (0-4 scale):
-- 4 (Advanced): Clear, well-organized responses with sophisticated vocabulary, proper grammar and mechanics, varied sentence structure, engages thoughtfully with questions
-- 3 (Proficient): Generally clear communication with good organization, mostly correct grammar with minor errors, adequate vocabulary, responds appropriately to prompts
-- 2 (Developing): Understandable but inconsistent organization, some grammar/mechanics errors that don't impede meaning, basic vocabulary, responses show effort but may lack depth
-- 1 (Beginning): Frequent errors in grammar/mechanics that sometimes impede understanding, very basic vocabulary, responses are brief or unclear
-- 0 (Inadequate): Significant communication barriers, frequent errors that interfere with meaning, responses are extremely brief or off-topic
+RESPONSE FORMAT:
+- Use positive, encouraging tone
+- Be specific about strengths and areas for growth
+- Keep "What's Next" section brief and engaging
+- If conversations are missing/insufficient, acknowledge this clearly
 
-FEEDBACK GUIDELINES:
-- Summary: Provide 2-3 sentences highlighting both strengths and areas for growth
-- Next Steps: Give 3-4 specific, actionable learning activities the student can do to improve
-
-Return ONLY a JSON object with exactly these fields: contentKnowledgeScore, writingScore, summary, nextSteps`,
+Return ONLY a JSON object with exactly these fields: summary, contentKnowledgeScore, writingScore, nextSteps`,
         model: "claude-3-7-sonnet-20250219",
         max_tokens: 1500,
         temperature: 0.3,
