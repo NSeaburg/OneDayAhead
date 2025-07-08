@@ -440,16 +440,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Route to get the assistant IDs and system prompts
-  app.get("/api/assistant-config", (req, res) => {
-    res.json({
-      discussionAssistantId: "claude-discussion",
-      assessmentAssistantId: "claude-assessment",
-      systemPrompts: {
-        discussion: ARTICLE_ASSISTANT_SYSTEM_PROMPT,
-        assessment: ASSESSMENT_ASSISTANT_PROMPT,
-        teachingFallback: TEACHING_ASSISTANT_FALLBACK_PROMPT,
-      },
-    });
+  app.get("/api/assistant-config", async (req, res) => {
+    try {
+      const experience = req.query.experience as string;
+      let contentPackage = null;
+      
+      // If experience is provided, load the content package
+      if (experience) {
+        const parts = experience.split('/');
+        if (parts.length === 3) {
+          const [district, course, topic] = parts;
+          contentPackage = await contentManager.loadContentPackage(district, course, topic);
+        }
+      }
+      
+      // Use content package data if available, otherwise fall back to defaults
+      const response = {
+        discussionAssistantId: "claude-discussion",
+        assessmentAssistantId: contentPackage?.assessmentBot ? "claude-assessment-dynamic" : "claude-assessment",
+        contentPackage: contentPackage,
+        systemPrompts: {
+          discussion: ARTICLE_ASSISTANT_SYSTEM_PROMPT,
+          assessment: contentPackage?.assessmentBot?.personality || ASSESSMENT_ASSISTANT_PROMPT,
+          teachingFallback: TEACHING_ASSISTANT_FALLBACK_PROMPT,
+        },
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('Error loading assistant config:', error);
+      // Fall back to defaults on error
+      res.json({
+        discussionAssistantId: "claude-discussion",
+        assessmentAssistantId: "claude-assessment",
+        contentPackage: null,
+        systemPrompts: {
+          discussion: ARTICLE_ASSISTANT_SYSTEM_PROMPT,
+          assessment: ASSESSMENT_ASSISTANT_PROMPT,
+          teachingFallback: TEACHING_ASSISTANT_FALLBACK_PROMPT,
+        },
+      });
+    }
   });
 
   // Test route to get current session ID

@@ -55,7 +55,7 @@ export default function Home() {
   } | undefined>(undefined);
   
   // Fetch assistant IDs from the backend
-  const { discussionAssistantId, assessmentAssistantId, isLoading, error } = useAssistantConfig();
+  const { discussionAssistantId, assessmentAssistantId, contentPackage, isLoading, error } = useAssistantConfig(selectedExperience);
   
   // List of High Bot assistant IDs
   const highBotAssistantIds = [
@@ -178,7 +178,7 @@ export default function Home() {
         <div className={`absolute inset-0 ${currentScreen === 1 ? 'block' : 'hidden'}`}>
           <AssessmentBotScreen 
             assistantId={assessmentAssistantId}
-            systemPrompt={config.systemPrompts.assessment}
+            systemPrompt={contentPackage?.assessmentBot?.personality || config.systemPrompts.assessment}
             onNext={(teachingAssistanceData) => {
               // Store the teaching assistance data from assessment
               if (teachingAssistanceData) {
