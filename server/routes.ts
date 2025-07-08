@@ -443,15 +443,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/assistant-config", async (req, res) => {
     try {
       const experience = req.query.experience as string;
+      console.log('🔥 SERVER - /api/assistant-config called with experience:', experience);
+      console.log('🔥 SERVER - Full query params:', req.query);
       let contentPackage = null;
       
       // If experience is provided, load the content package
       if (experience) {
         const parts = experience.split('/');
+        console.log('🔥 SERVER - Experience parts:', parts);
         if (parts.length === 3) {
           const [district, course, topic] = parts;
           contentPackage = await contentManager.loadContentPackage(district, course, topic);
+          console.log('🔥 SERVER - Loaded content package:', contentPackage?.name, 'with bot:', contentPackage?.assessmentBot?.name);
         }
+      } else {
+        console.log('🔥 SERVER - No experience parameter, using default Three Branches');
       }
       
       // Use content package data if available, otherwise fall back to defaults
