@@ -121,7 +121,7 @@ export default function AssessmentBotScreen({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: allMessages,  // Send full conversation history
-          systemPrompt,  // Send the Reginald system prompt
+          systemPrompt,  // Send the dynamic system prompt
           threadId,
           assistantType: 'assessment'
         })
@@ -177,7 +177,7 @@ export default function AssessmentBotScreen({
   
   // Reset the entire conversation on component mount to force the new system prompt
   useEffect(() => {
-    console.log("AssessmentBotScreen mounted with Reginald Worthington prompt");
+    console.log("AssessmentBotScreen mounted with system prompt:", systemPrompt?.substring(0, 100) + "...");
     
     // Clear existing messages
     setMessages([]);
