@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import * as fs from 'fs';
 import path from 'path';
 
 export interface ContentPackage {
@@ -33,19 +33,19 @@ export class ContentManager {
     const packages: ContentPackage[] = [];
     
     try {
-      const districts = await fs.readdir(this.contentRoot, { withFileTypes: true });
+      const districts = await fs.promises.readdir(this.contentRoot, { withFileTypes: true });
       
       for (const district of districts) {
         if (!district.isDirectory()) continue;
         
         const districtPath = path.join(this.contentRoot, district.name);
-        const courses = await fs.readdir(districtPath, { withFileTypes: true });
+        const courses = await fs.promises.readdir(districtPath, { withFileTypes: true });
         
         for (const course of courses) {
           if (!course.isDirectory()) continue;
           
           const coursePath = path.join(districtPath, course.name);
-          const topics = await fs.readdir(coursePath, { withFileTypes: true });
+          const topics = await fs.promises.readdir(coursePath, { withFileTypes: true });
           
           for (const topic of topics) {
             if (!topic.isDirectory()) continue;
@@ -114,7 +114,9 @@ export class ContentManager {
   private async loadUnifiedContentPackage(topicPath: string, district: string, course: string, topic: string): Promise<ContentPackage | null> {
     try {
       const configPath = path.join(topicPath, 'config.json');
+      console.log('Loading unified config from:', configPath);
       const configData = JSON.parse(await fs.promises.readFile(configPath, 'utf8'));
+      console.log('Loaded unified config:', configData);
       
       return {
         id: `${district}/${course}/${topic}`,
@@ -136,14 +138,14 @@ export class ContentManager {
     try {
       // Load config (personality is now stored in config.json)
       const configPath = path.join(botPath, 'config.json');
-      const configData = await fs.readFile(configPath, 'utf8');
+      const configData = await fs.promises.readFile(configPath, 'utf8');
       const config = JSON.parse(configData);
       
       // Load keywords if available
       let keywords = null;
       try {
         const keywordsPath = path.join(botPath, 'keywords.json');
-        const keywordsData = await fs.readFile(keywordsPath, 'utf8');
+        const keywordsData = await fs.promises.readFile(keywordsPath, 'utf8');
         keywords = JSON.parse(keywordsData);
       } catch (error) {
         // Keywords are optional
@@ -177,7 +179,7 @@ export class ContentManager {
       }
       
       const personalityPath = path.join(botPath, 'personality.txt');
-      await fs.writeFile(personalityPath, personality, 'utf8');
+      await fs.promises.writeFile(personalityPath, personality, 'utf8');
     } catch (error) {
       console.error(`Error saving personality for ${district}/${course}/${topic}:`, error);
       throw error;
@@ -197,7 +199,7 @@ export class ContentManager {
       }
       
       const personalityPath = path.join(botPath, 'personality.txt');
-      return await fs.readFile(personalityPath, 'utf8');
+      return await fs.promises.readFile(personalityPath, 'utf8');
     } catch (error) {
       console.error(`Error getting personality for ${district}/${course}/${topic}:`, error);
       throw error;
@@ -209,10 +211,10 @@ export class ContentManager {
       const topicPath = path.join(this.contentRoot, district, course, topic);
       
       // Create directory structure
-      await fs.mkdir(path.join(topicPath, 'assessment-bot'), { recursive: true });
-      await fs.mkdir(path.join(topicPath, 'teaching-bots', 'high-level'), { recursive: true });
-      await fs.mkdir(path.join(topicPath, 'teaching-bots', 'medium-level'), { recursive: true });
-      await fs.mkdir(path.join(topicPath, 'teaching-bots', 'low-level'), { recursive: true });
+      await fs.promises.mkdir(path.join(topicPath, 'assessment-bot'), { recursive: true });
+      await fs.promises.mkdir(path.join(topicPath, 'teaching-bots', 'high-level'), { recursive: true });
+      await fs.promises.mkdir(path.join(topicPath, 'teaching-bots', 'medium-level'), { recursive: true });
+      await fs.promises.mkdir(path.join(topicPath, 'teaching-bots', 'low-level'), { recursive: true });
       
       if (template) {
         // Copy from template
@@ -234,13 +236,13 @@ export class ContentManager {
 
   private async createBasicFiles(topicPath: string, topic: string): Promise<void> {
     // Create basic assessment bot files
-    await fs.writeFile(
+    await fs.promises.writeFile(
       path.join(topicPath, 'assessment-bot', 'personality.txt'),
       'You are an assessment bot. Please customize this personality for your specific topic.',
       'utf8'
     );
     
-    await fs.writeFile(
+    await fs.promises.writeFile(
       path.join(topicPath, 'assessment-bot', 'config.json'),
       JSON.stringify({
         name: 'Assessment Bot',
@@ -253,7 +255,7 @@ export class ContentManager {
       'utf8'
     );
     
-    await fs.writeFile(
+    await fs.promises.writeFile(
       path.join(topicPath, 'assessment-bot', 'keywords.json'),
       JSON.stringify({
         progressKeywords: [],
@@ -271,13 +273,13 @@ export class ContentManager {
       const level = levels[i];
       const levelName = levelNames[i];
       
-      await fs.writeFile(
+      await fs.promises.writeFile(
         path.join(topicPath, 'teaching-bots', level, 'personality.txt'),
         `You are a ${levelName} teaching bot. Please customize this personality for your specific topic.`,
         'utf8'
       );
       
-      await fs.writeFile(
+      await fs.promises.writeFile(
         path.join(topicPath, 'teaching-bots', level, 'config.json'),
         JSON.stringify({
           name: `${levelName} Teacher`,
