@@ -149,7 +149,7 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 ## Changelog
 
 - July 8, 2025. Complete multi-tenant admin interface for content creation
-  - Built comprehensive admin interface at `/admin` with password protection (OneDayAhead123)
+  - Built comprehensive admin interface at `/admin` with password protection (Onedayahead123!)
   - Created admin dashboard showing all existing learning experiences from content directory
   - Implemented multi-step content creation wizard with conversational AI assistant
   - Added streaming Claude-based content design workshop interface with split-screen chat

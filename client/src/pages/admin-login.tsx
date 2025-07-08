@@ -16,7 +16,7 @@ export default function AdminLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== "OneDayAhead123") {
+    if (password !== "Onedayahead123!") {
       toast({
         title: "Access Denied",
         description: "Invalid password",
