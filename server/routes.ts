@@ -2652,8 +2652,8 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
     }
   });
 
-  // Create new complete learning experience
-  app.post("/api/content/create-experience", async (req, res) => {
+  // Create new complete learning experience from admin form
+  app.post("/api/content/create-package", async (req, res) => {
     try {
       const experienceData = req.body;
       
@@ -2669,16 +2669,15 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
         experienceData.topic
       );
 
-      // Create config.json with the experience configuration
-      const configPath = path.join(
+      const packagePath = path.join(
         process.cwd(), 
         'content', 
         experienceData.district, 
         experienceData.course, 
-        experienceData.topic, 
-        'config.json'
+        experienceData.topic
       );
 
+      // Create config.json with the experience configuration
       const config = {
         name: experienceData.name,
         description: experienceData.description,
@@ -2686,51 +2685,51 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
         course: experienceData.course,
         topic: experienceData.topic,
         assessmentBot: {
-          name: experienceData.assessmentBot.name,
-          description: experienceData.assessmentBot.onPageText,
-          avatar: experienceData.assessmentBot.avatar ? 'assessment-avatar.png' : 'reginald-worthington.png',
+          name: experienceData.assessmentName || "Assessment Assistant",
+          description: experienceData.assessmentDescription || "Assessment bot for this experience",
+          avatar: 'reginald-worthington.png',
           role: "assessment",
-          personality: experienceData.assessmentBot.systemPrompt,
-          config: {
-            initialMessage: experienceData.assessmentBot.initialMessage,
-            keywords: experienceData.assessmentBot.keywords
-          }
+          personality: experienceData.assessmentPersonality,
+          config: {}
         },
         teachingBots: {
           high: {
-            name: experienceData.teachingBots.high.name,
-            description: experienceData.teachingBots.high.characterDescription,
-            avatar: experienceData.teachingBots.high.avatar ? 'high-avatar.png' : 'Parton.png',
+            name: experienceData.highBotName || "High Level Assistant",
+            description: experienceData.highBotDescription || "For advanced students",
+            avatar: 'Parton.png',
             role: "teaching",
-            personality: experienceData.teachingBots.high.systemPrompt,
+            personality: experienceData.highBotPersonality,
             config: {}
           },
           medium: {
-            name: experienceData.teachingBots.medium.name,
-            description: experienceData.teachingBots.medium.characterDescription,
-            avatar: experienceData.teachingBots.medium.avatar ? 'medium-avatar.png' : 'Bannerman.png',
+            name: experienceData.mediumBotName || "Medium Level Assistant", 
+            description: experienceData.mediumBotDescription || "For students at grade level",
+            avatar: 'Bannerman.png',
             role: "teaching",
-            personality: experienceData.teachingBots.medium.systemPrompt,
+            personality: experienceData.mediumBotPersonality,
             config: {}
           },
           low: {
-            name: experienceData.teachingBots.low.name,
-            description: experienceData.teachingBots.low.characterDescription,
-            avatar: experienceData.teachingBots.low.avatar ? 'low-avatar.png' : 'Whitaker.png',
-            role: "teaching",
-            personality: experienceData.teachingBots.low.systemPrompt,
+            name: experienceData.lowBotName || "Support Assistant",
+            description: experienceData.lowBotDescription || "For students needing extra support",
+            avatar: 'Whitaker.png',
+            role: "teaching", 
+            personality: experienceData.lowBotPersonality,
             config: {}
           }
-        },
-        routingCriteria: experienceData.routingCriteria,
-        notes: experienceData.notes
+        }
       };
 
       // Write the config file
+      const configPath = path.join(packagePath, 'config.json');
       await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
 
-      // TODO: Handle file uploads for avatars when implementing file upload functionality
-      // For now, we'll use default avatars
+      // Create article.txt with the article content
+      if (experienceData.articleContent) {
+        const articlePath = path.join(packagePath, 'article.txt');
+        const articleContent = `${experienceData.articleTitle}\n\n${experienceData.articleContent}`;
+        await fs.promises.writeFile(articlePath, articleContent);
+      }
 
       res.json({ 
         success: true, 
@@ -2740,6 +2739,130 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
     } catch (error) {
       console.error("Error creating learning experience:", error);
       res.status(500).json({ error: "Failed to create learning experience" });
+    }
+  });
+
+  // Content creation assistant chat endpoint
+  app.post("/api/claude/chat", async (req, res) => {
+    try {
+      const { messages, assistantType } = req.body;
+
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({
+          error: "Invalid message data. Expected an array of messages.",
+        });
+      }
+
+      // Set up SSE headers for streaming
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      });
+
+      // Generate a thread ID
+      const messageId = `claude-${assistantType || "general"}-${Date.now()}`;
+
+      // Convert messages to Anthropic format
+      const anthropicMessages = messages
+        .filter((msg: any) => msg.role !== "system")
+        .map((msg: any) => ({
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
+        }));
+
+      // Choose system prompt based on assistant type
+      let systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
+      
+      if (assistantType === "content-creation") {
+        systemPrompt = `You are a Content Creation Assistant specializing in educational experience design. You help educators create effective learning experiences by:
+
+1. Understanding learning objectives and outcomes
+2. Designing engaging content and assessments  
+3. Creating character-based AI personalities that motivate students
+4. Developing differentiated instruction for different ability levels
+5. Thinking through assessment strategies that reveal true understanding
+
+You are knowledgeable about:
+- Pedagogical best practices and learning theory
+- Student engagement strategies
+- Assessment design and rubric development
+- Differentiated instruction techniques
+- Character development for educational AI assistants
+- Cognitive load theory and effective content design
+
+You ask probing questions to help educators think deeply about their learning design choices. You provide specific, actionable advice and help workshop ideas to make them more effective.
+
+Keep responses concise and practical. Focus on helping the educator make their learning experience as effective as possible for students.`;
+      }
+
+      try {
+        // Send the initial thread ID
+        res.write(`data: ${JSON.stringify({ threadId: messageId })}\n\n`);
+
+        // Create streaming response from Anthropic
+        const stream = await anthropic.messages.stream({
+          messages: anthropicMessages,
+          system: systemPrompt,
+          model: "claude-3-7-sonnet-20250219",
+          max_tokens: 4096,
+          temperature: 0.7,
+        });
+
+        let fullContent = "";
+
+        // Process the stream
+        for await (const chunk of stream) {
+          if (
+            chunk.type === "content_block_delta" &&
+            chunk.delta.type === "text_delta"
+          ) {
+            const content = chunk.delta.text;
+
+            if (content) {
+              fullContent += content;
+              // Send the content chunk to the client
+              res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            }
+          }
+        }
+
+        // Store the conversation if we have a session ID
+        const sessionId = req.sessionId;
+        if (sessionId) {
+          try {
+            const allMessages = [
+              ...anthropicMessages,
+              { role: "assistant", content: fullContent },
+            ];
+
+            await storage.createConversation({
+              sessionId,
+              threadId: messageId,
+              assistantType: assistantType || "general",
+              messages: allMessages,
+            });
+            console.log(`Stored ${assistantType} conversation for session ${sessionId}`);
+          } catch (err) {
+            console.error("Error storing conversation:", err);
+          }
+        }
+
+        // Send the [DONE] event
+        res.write("data: [DONE]\n\n");
+        res.end();
+      } catch (error: any) {
+        console.error("Error in Claude chat streaming:", error);
+        res.write(
+          `data: ${JSON.stringify({ error: "chat_error", message: error.message || "Streaming error occurred" })}\n\n`,
+        );
+        res.end();
+      }
+    } catch (error: any) {
+      console.error("Claude chat endpoint error:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to process chat request" });
+      }
     }
   });
 

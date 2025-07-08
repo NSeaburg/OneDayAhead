@@ -9,7 +9,102 @@ interface UseStreamingChatProps {
   useAnthropicForAssessment?: boolean; // Keeping for backward compatibility, but now using Claude by default
 }
 
-export function useStreamingChat({
+// Simplified streaming chat for admin content creation
+export function useStreamingChat(assistantType?: string) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const sendMessage = useCallback(async (content: string) => {
+    try {
+      setIsStreaming(true);
+      setError(null);
+
+      // Add user message
+      const userMessage: Message = { role: 'user', content };
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
+
+      // Call the Claude chat endpoint
+      const response = await fetch('/api/claude/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          messages: newMessages,
+          assistantType: assistantType || 'content-creation'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      let assistantContent = '';
+      let assistantMessage: Message = { role: 'assistant', content: '' };
+      setMessages([...newMessages, assistantMessage]);
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                setIsStreaming(false);
+                return;
+              }
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  assistantContent += parsed.content;
+                  setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+                }
+              } catch (e) {
+                // Ignore parsing errors for malformed chunks
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    } catch (err: any) {
+      console.error('Error in streaming chat:', err);
+      setError(err.message || 'Something went wrong');
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [messages, assistantType]);
+
+  const clearHistory = useCallback(() => {
+    setMessages([]);
+  }, []);
+
+  return {
+    messages,
+    sendMessage,
+    isStreaming,
+    error,
+    clearHistory,
+  };
+}
+
+// Original streaming chat for backward compatibility
+export function useStreamingChatLegacy({
   assistantId,
   systemPrompt,
   initialMessage,
