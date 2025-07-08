@@ -74,13 +74,31 @@ export default function Home() {
   // Clear cached conversations when switching experiences
   useEffect(() => {
     if (contentPackage && contentPackage.id !== "demo-district/civics-government/three-branches") {
-      console.log('🔥 Switching to new experience, clearing localStorage cache');
-      // Clear localStorage to remove cached Reginald conversations
-      localStorage.removeItem('assessment_conversation');
-      localStorage.removeItem('assessment_thread_id');
-      localStorage.removeItem('teaching_conversation');
-      localStorage.removeItem('teaching_thread_id');
-      localStorage.removeItem('feedback_data');
+      console.log('🔥 Switching to new experience, clearing all cached data IMMEDIATELY');
+      
+      // Clear localStorage immediately and synchronously
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.removeItem('learningAppGlobalStorage');
+          window.localStorage.removeItem('assessment_conversation');
+          window.localStorage.removeItem('assessment_thread_id');
+          window.localStorage.removeItem('teaching_conversation');
+          window.localStorage.removeItem('teaching_thread_id');
+          window.localStorage.removeItem('feedback_data');
+        }
+      } catch (error) {
+        console.error('Error clearing localStorage:', error);
+      }
+      
+      // Clear window.__assessmentData immediately
+      if (typeof window !== 'undefined') {
+        window.__assessmentData = undefined;
+      }
+      
+      // Also import and call clearAllData for good measure
+      import('../lib/globalStorage').then(({ clearAllData }) => {
+        clearAllData();
+      });
       
       // Reset current screen to start fresh
       setCurrentScreen(1);

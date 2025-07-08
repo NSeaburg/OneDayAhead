@@ -209,6 +209,40 @@ export function getTeachingMessages(): any[] {
 }
 
 /**
+ * Clear all global storage data
+ */
+export function clearAllData() {
+  console.log('🔥 GLOBAL STORAGE - Clearing all cached data');
+  
+  // Reset storage object
+  storage.assessmentThreadId = undefined;
+  storage.assessmentMessages = [];
+  storage.teachingMessages = [];
+  storage.feedbackData = undefined;
+  
+  // Clear localStorage
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('learningAppGlobalStorage');
+      window.localStorage.removeItem('assessment_conversation');
+      window.localStorage.removeItem('assessment_thread_id');
+      window.localStorage.removeItem('teaching_conversation');
+      window.localStorage.removeItem('teaching_thread_id');
+      window.localStorage.removeItem('feedback_data');
+    }
+  } catch (error) {
+    console.error('Error clearing localStorage:', error);
+  }
+  
+  // Clear window.__assessmentData
+  if (typeof window !== 'undefined') {
+    window.__assessmentData = undefined;
+  }
+  
+  console.log('🔥 GLOBAL STORAGE - All data cleared successfully');
+}
+
+/**
  * Set assessment thread ID
  */
 export function setAssessmentThreadId(threadId: string) {
