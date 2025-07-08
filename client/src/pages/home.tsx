@@ -73,41 +73,48 @@ export default function Home() {
 
   // Clear cached conversations when switching experiences
   useEffect(() => {
-    if (contentPackage && contentPackage.id !== "demo-district/civics-government/three-branches") {
-      console.log('🔥 Switching to new experience, clearing all cached data IMMEDIATELY');
+    if (contentPackage) {
+      console.log('🔥 Content package received:', contentPackage.id);
+      console.log('🔥 Default three branches ID:', "demo-district/civics-government/three-branches");
+      console.log('🔥 Is this the Cloud experience?', contentPackage.id === "Demo-District 3/4th Grade Science/Clouds");
       
-      // Clear localStorage immediately and synchronously
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.removeItem('learningAppGlobalStorage');
-          window.localStorage.removeItem('assessment_conversation');
-          window.localStorage.removeItem('assessment_thread_id');
-          window.localStorage.removeItem('teaching_conversation');
-          window.localStorage.removeItem('teaching_thread_id');
-          window.localStorage.removeItem('feedback_data');
+      if (contentPackage.id !== "demo-district/civics-government/three-branches") {
+        console.log('🔥 Switching to new experience, clearing all cached data IMMEDIATELY');
+        console.log('🔥 Current contentPackage.id:', contentPackage.id);
+        
+        // Clear localStorage immediately and synchronously
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.removeItem('learningAppGlobalStorage');
+            window.localStorage.removeItem('assessment_conversation');
+            window.localStorage.removeItem('assessment_thread_id');
+            window.localStorage.removeItem('teaching_conversation');
+            window.localStorage.removeItem('teaching_thread_id');
+            window.localStorage.removeItem('feedback_data');
+          }
+        } catch (error) {
+          console.error('Error clearing localStorage:', error);
         }
-      } catch (error) {
-        console.error('Error clearing localStorage:', error);
+        
+        // Clear window.__assessmentData immediately
+        if (typeof window !== 'undefined') {
+          window.__assessmentData = undefined;
+        }
+        
+        // Also import and call clearAllData for good measure
+        import('../lib/globalStorage').then(({ clearAllData }) => {
+          clearAllData();
+        });
+        
+        // Reset current screen to start fresh
+        setCurrentScreen(1);
+        
+        // Clear any existing conversation state
+        setAssessmentThreadId("");
+        setAssessmentConversation([]);
+        setTeachingAssistance(undefined);
+        setFeedbackData(undefined);
       }
-      
-      // Clear window.__assessmentData immediately
-      if (typeof window !== 'undefined') {
-        window.__assessmentData = undefined;
-      }
-      
-      // Also import and call clearAllData for good measure
-      import('../lib/globalStorage').then(({ clearAllData }) => {
-        clearAllData();
-      });
-      
-      // Reset current screen to start fresh
-      setCurrentScreen(1);
-      
-      // Clear any existing conversation state
-      setAssessmentThreadId("");
-      setAssessmentConversation([]);
-      setTeachingAssistance(undefined);
-      setFeedbackData(undefined);
     }
   }, [contentPackage?.id]);
   
@@ -241,6 +248,8 @@ export default function Home() {
             <AssessmentBotScreen 
               assistantId={assessmentAssistantId}
               systemPrompt={contentPackage?.assessmentBot?.personality || config.systemPrompts.assessment}
+              botName={contentPackage?.assessmentBot?.name}
+              botAvatar={contentPackage?.assessmentBot?.avatar}
               onNext={(teachingAssistanceData) => {
               // Store the teaching assistance data from assessment
               if (teachingAssistanceData) {

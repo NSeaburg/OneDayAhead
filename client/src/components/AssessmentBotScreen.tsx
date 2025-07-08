@@ -43,6 +43,8 @@ interface AssessmentBotScreenProps {
   systemPrompt: string;
   onNext: (teachingAssistance?: TeachingAssistance) => void;
   onPrevious?: () => void;
+  botName?: string;
+  botAvatar?: string;
 }
 
 // Topics to be covered in the assessment
@@ -58,7 +60,9 @@ export default function AssessmentBotScreen({
   assistantId,
   systemPrompt,
   onNext,
-  onPrevious
+  onPrevious,
+  botName = "Assessment Bot",
+  botAvatar
 }: AssessmentBotScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
@@ -175,9 +179,16 @@ export default function AssessmentBotScreen({
     }
   };
   
+  // Determine the avatar source and display name
+  const avatarSrc = botAvatar ? `/${botAvatar}` : reginaldImage;
+  const displayName = botName || "Assessment Bot";
+  
   // Reset the entire conversation on component mount to force the new system prompt
   useEffect(() => {
     console.log("AssessmentBotScreen mounted with system prompt:", systemPrompt?.substring(0, 100) + "...");
+    console.log("AssessmentBotScreen mounted with bot name:", botName);
+    console.log("AssessmentBotScreen mounted with bot avatar:", botAvatar);
+    console.log("AssessmentBotScreen computed avatar src:", avatarSrc);
     
     // Clear existing messages
     setMessages([]);
@@ -493,11 +504,11 @@ export default function AssessmentBotScreen({
           <div>
             <div className="flex flex-col items-center text-center mb-4">
               <img 
-                src={reginaldImage} 
-                alt="Reginald Worthington III" 
+                src={avatarSrc} 
+                alt={displayName} 
                 className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
               />
-              <h2 className="font-bold text-xl text-gray-800">Reginald Worthington III</h2>
+              <h2 className="font-bold text-xl text-gray-800">{displayName}</h2>
               <p className="text-sm text-gray-600 font-medium">Aristocratic Observer</p>
             </div>
             
@@ -619,7 +630,7 @@ export default function AssessmentBotScreen({
                 <div className="flex items-start mb-1">
                   {message.role === 'assistant' ? (
                     <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
-                      <img src={reginaldImage} alt="RW" className="w-full h-full object-cover" />
+                      <img src={avatarSrc} alt={displayName} className="w-full h-full object-cover" />
                     </div>
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
@@ -647,10 +658,10 @@ export default function AssessmentBotScreen({
               <div className="flex flex-col">
                 <div className="flex items-start mb-1">
                   <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 border border-gray-300 shadow-sm">
-                    <img src={reginaldImage} alt="RW" className="w-full h-full object-cover" />
+                    <img src={avatarSrc} alt={displayName} className="w-full h-full object-cover" />
                   </div>
                   <span className="text-xs text-gray-500 mt-1">
-                    Reginald Worthington III
+                    {displayName}
                   </span>
                 </div>
                 <div className="ml-10 bg-red-50 border border-red-100 rounded-lg p-3 text-gray-700">
