@@ -1,8 +1,0 @@
-{
-  "name": "Assessment Bot",
-  "description": "Assessment bot for Cloud identification",
-  "avatar": "default-avatar.png",
-  "role": "assessment",
-  "subject": "general",
-  "gradeLevel": "varies"
-}

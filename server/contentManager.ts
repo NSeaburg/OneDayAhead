@@ -106,11 +106,7 @@ export class ContentManager {
 
   private async loadBotConfig(botPath: string): Promise<BotConfig> {
     try {
-      // Load personality
-      const personalityPath = path.join(botPath, 'personality.txt');
-      const personality = await fs.readFile(personalityPath, 'utf8');
-      
-      // Load config
+      // Load config (personality is now stored in config.json)
       const configPath = path.join(botPath, 'config.json');
       const configData = await fs.readFile(configPath, 'utf8');
       const config = JSON.parse(configData);
@@ -130,7 +126,7 @@ export class ContentManager {
         description: config.description,
         avatar: config.avatar,
         role: config.role,
-        personality,
+        personality: config.personality || "",
         config,
         keywords
       };
