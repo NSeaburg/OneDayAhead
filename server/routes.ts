@@ -2687,16 +2687,22 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
         assessmentBot: {
           name: experienceData.assessmentName || "Assessment Assistant",
           description: experienceData.assessmentDescription || "Assessment bot for this experience",
-          avatar: 'reginald-worthington.png',
+          avatar: experienceData.assessmentAvatar ? `${experienceData.assessmentName || 'assessment'}-avatar.png` : 'reginald-worthington.png',
           role: "assessment",
           personality: experienceData.assessmentPersonality,
+          criteria: experienceData.assessmentCriteria || "",
           config: {}
+        },
+        assessmentCriteria: {
+          high: experienceData.highCriteria || "",
+          medium: experienceData.mediumCriteria || "",
+          low: experienceData.lowCriteria || ""
         },
         teachingBots: {
           high: {
             name: experienceData.highBotName || "High Level Assistant",
             description: experienceData.highBotDescription || "For advanced students",
-            avatar: 'Parton.png',
+            avatar: experienceData.highBotAvatar ? `${experienceData.highBotName || 'high'}-avatar.png` : 'Parton.png',
             role: "teaching",
             personality: experienceData.highBotPersonality,
             config: {}
@@ -2704,7 +2710,7 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
           medium: {
             name: experienceData.mediumBotName || "Medium Level Assistant", 
             description: experienceData.mediumBotDescription || "For students at grade level",
-            avatar: 'Bannerman.png',
+            avatar: experienceData.mediumBotAvatar ? `${experienceData.mediumBotName || 'medium'}-avatar.png` : 'Bannerman.png',
             role: "teaching",
             personality: experienceData.mediumBotPersonality,
             config: {}
@@ -2712,7 +2718,7 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
           low: {
             name: experienceData.lowBotName || "Support Assistant",
             description: experienceData.lowBotDescription || "For students needing extra support",
-            avatar: 'Whitaker.png',
+            avatar: experienceData.lowBotAvatar ? `${experienceData.lowBotName || 'low'}-avatar.png` : 'Whitaker.png',
             role: "teaching", 
             personality: experienceData.lowBotPersonality,
             config: {}
@@ -2724,12 +2730,9 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
       const configPath = path.join(packagePath, 'config.json');
       await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
 
-      // Create article.txt with the article content
-      if (experienceData.articleContent) {
-        const articlePath = path.join(packagePath, 'article.txt');
-        const articleContent = `${experienceData.articleTitle}\n\n${experienceData.articleContent}`;
-        await fs.promises.writeFile(articlePath, articleContent);
-      }
+      // TODO: Handle avatar file uploads in a future update
+      // For now, we'll use default avatars or the filename referenced in config
+      // Avatar files would be saved to the package directory when upload is implemented
 
       res.json({ 
         success: true, 

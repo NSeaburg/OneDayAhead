@@ -19,10 +19,16 @@ interface TeachingAssistance {
 export default function Home() {
   const { toast } = useToast();
   
+  // Check URL for experience parameter (for admin testing)
+  const urlParams = new URLSearchParams(window.location.search);
+  const experienceParam = urlParams.get('experience');
+  
   // Track the current screen in the learning flow (1 = assessment, 2 = teaching, 3 = feedback)
-  // Skip deployment page and start directly with Three Branches experience
+  // Skip deployment page and start directly with Three Branches experience (or specified experience)
   const [currentScreen, setCurrentScreen] = useState(1); // Start with assessment (skip deployment)
-  const [selectedExperience, setSelectedExperience] = useState<string | null>("demo-district/civics-government/three-branches");
+  const [selectedExperience, setSelectedExperience] = useState<string | null>(
+    experienceParam || "demo-district/civics-government/three-branches"
+  );
   const [showExperienceCreator, setShowExperienceCreator] = useState(false);
   
   // Store the dynamic assistant ID received from assessment

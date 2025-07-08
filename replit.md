@@ -148,6 +148,17 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 8, 2025. Streamlined content creation wizard and experience testing interface
+  - Enhanced admin interface with streamlined 5-step content creation process
+  - Removed YouTube video and article content steps from creation wizard
+  - Added comprehensive assessment criteria configuration (High/Medium/Low performance levels)  
+  - Implemented avatar upload support for all AI bots (assessment and teaching assistants)
+  - Updated main app home page to support URL parameter experience selection (?experience=package-name)
+  - Enhanced admin dashboard with "Launch" button that opens experiences in new tabs for testing
+  - Modified backend create-package endpoint to handle new data structure with assessment criteria
+  - Streamlined AI Content Creation Assistant prompts to focus on bot personalities and assessment design
+  - Updated experience configuration to store assessment criteria separately from bot personalities
+  - Admin interface now supports dual-purpose: content creation/editing and real-time experience testing
 - July 8, 2025. Complete multi-tenant admin interface for content creation
   - Built comprehensive admin interface at `/admin` with password protection (Onedayahead123!)
   - Created admin dashboard showing all existing learning experiences from content directory

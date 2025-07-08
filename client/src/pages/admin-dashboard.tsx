@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2 } from "lucide-react";
+import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ContentPackage {
@@ -63,6 +63,12 @@ export default function AdminDashboard() {
 
   const handleEditPackage = (pkg: ContentPackage) => {
     setLocation(`/admin/edit/${pkg.district}/${pkg.course}/${pkg.topic}`);
+  };
+
+  const handleLaunchPackage = (pkg: ContentPackage) => {
+    // Open learning experience in new tab for testing
+    const testUrl = `/?experience=${pkg.district}/${pkg.course}/${pkg.topic}`;
+    window.open(testUrl, '_blank');
   };
 
   if (loading) {
@@ -181,16 +187,7 @@ export default function AdminDashboard() {
                           {pkg.description}
                         </CardDescription>
                       </div>
-                      <div className="flex gap-1 ml-2">
-                        <Button 
-                          onClick={() => handleEditPackage(pkg)}
-                          variant="ghost" 
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
+
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -202,15 +199,24 @@ export default function AdminDashboard() {
                       <div className="text-sm text-gray-600">
                         <p><strong>Topic:</strong> {pkg.topic}</p>
                       </div>
-                      <div className="pt-2">
+                      <div className="pt-2 flex gap-2">
+                        <Button 
+                          onClick={() => handleLaunchPackage(pkg)}
+                          variant="default" 
+                          size="sm" 
+                          className="flex-1"
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          Launch
+                        </Button>
                         <Button 
                           onClick={() => handleEditPackage(pkg)}
                           variant="outline" 
                           size="sm" 
-                          className="w-full"
+                          className="flex-1"
                         >
-                          <Settings className="h-4 w-4 mr-2" />
-                          Manage Experience
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
                         </Button>
                       </div>
                     </div>

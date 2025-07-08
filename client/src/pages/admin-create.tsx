@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, MessageCircle, Save, CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, MessageCircle, Save, CheckCircle, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 
@@ -18,33 +18,39 @@ interface ExperienceData {
   name: string;
   description: string;
   
-  // Article Content
-  articleTitle: string;
-  articleContent: string;
-  
   // Assessment Bot
   assessmentName: string;
   assessmentDescription: string;
   assessmentPersonality: string;
+  assessmentAvatar: File | null;
+  assessmentCriteria: string;
+  
+  // Assessment Criteria
+  highCriteria: string;
+  mediumCriteria: string;
+  lowCriteria: string;
   
   // Teaching Bots
   highBotName: string;
   highBotDescription: string;
   highBotPersonality: string;
+  highBotAvatar: File | null;
   
   mediumBotName: string;
   mediumBotDescription: string;
   mediumBotPersonality: string;
+  mediumBotAvatar: File | null;
   
   lowBotName: string;
   lowBotDescription: string;
   lowBotPersonality: string;
+  lowBotAvatar: File | null;
 }
 
 const STEPS = [
   { id: 1, title: "Basic Information", description: "Experience details and topic" },
-  { id: 2, title: "Article Content", description: "Learning material for students" },
-  { id: 3, title: "Assessment Bot", description: "AI assistant for evaluation" },
+  { id: 2, title: "Assessment Bot", description: "AI assistant for evaluation" },
+  { id: 3, title: "Assessment Criteria", description: "How to evaluate student performance" },
   { id: 4, title: "Teaching Assistants", description: "Adaptive learning bots" },
   { id: 5, title: "Review & Create", description: "Final review and creation" }
 ];
@@ -57,20 +63,26 @@ export default function AdminCreate() {
     topic: "",
     name: "",
     description: "",
-    articleTitle: "",
-    articleContent: "",
     assessmentName: "",
     assessmentDescription: "",
     assessmentPersonality: "",
+    assessmentAvatar: null,
+    assessmentCriteria: "",
+    highCriteria: "",
+    mediumCriteria: "",
+    lowCriteria: "",
     highBotName: "",
     highBotDescription: "",
     highBotPersonality: "",
+    highBotAvatar: null,
     mediumBotName: "",
     mediumBotDescription: "",
     mediumBotPersonality: "",
+    mediumBotAvatar: null,
     lowBotName: "",
     lowBotDescription: "",
-    lowBotPersonality: ""
+    lowBotPersonality: "",
+    lowBotAvatar: null
   });
   
   const [saving, setSaving] = useState(false);
@@ -97,23 +109,22 @@ export default function AdminCreate() {
       sendMessage(`Hello! I'm your Content Creation Assistant. I'm here to help you design effective learning experiences for students.
 
 I understand you're building a learning platform where:
-- Students watch a video introduction
-- Read and discuss an article with an AI assistant  
-- Take an assessment with a character-based AI bot
-- Work with adaptive teaching assistants based on their performance level
+- Students engage in assessment conversations with character AI bots
+- Based on their performance level, they're routed to appropriate teaching assistants
+- Each assistant provides differentiated instruction based on assessment results
 
-I can help you think through:
-- Learning objectives and outcomes
-- Content design and engagement strategies
-- Assessment approaches that reveal understanding
-- Character personalities that motivate students
-- Differentiated instruction for different ability levels
+I can help you craft:
+- Compelling character personalities for assessment bots
+- Clear assessment criteria that reveal student understanding
+- Teaching assistant personalities for different performance levels
+- System prompts that create engaging, educational conversations
+- Evaluation rubrics that guide student routing
 
 What learning experience would you like to create? Tell me about your subject, grade level, and what you want students to learn.`);
     }
   }, [setLocation, messages.length, sendMessage]);
 
-  const updateField = (field: keyof ExperienceData, value: string) => {
+  const updateField = (field: keyof ExperienceData, value: string | File | null) => {
     setExperienceData(prev => ({
       ...prev,
       [field]: value
@@ -125,9 +136,9 @@ What learning experience would you like to create? Tell me about your subject, g
       case 1:
         return experienceData.district && experienceData.course && experienceData.topic && experienceData.name;
       case 2:
-        return experienceData.articleTitle && experienceData.articleContent;
-      case 3:
         return experienceData.assessmentName && experienceData.assessmentPersonality;
+      case 3:
+        return experienceData.highCriteria && experienceData.mediumCriteria && experienceData.lowCriteria;
       case 4:
         return experienceData.highBotPersonality && experienceData.mediumBotPersonality && experienceData.lowBotPersonality;
       case 5:
@@ -245,36 +256,6 @@ What learning experience would you like to create? Tell me about your subject, g
       case 2:
         return (
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="articleTitle">Article Title</Label>
-              <Input
-                id="articleTitle"
-                value={experienceData.articleTitle}
-                onChange={(e) => updateField("articleTitle", e.target.value)}
-                placeholder="e.g., The Causes and Consequences of the Civil War"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="articleContent">Article Content</Label>
-              <Textarea
-                id="articleContent"
-                value={experienceData.articleContent}
-                onChange={(e) => updateField("articleContent", e.target.value)}
-                placeholder="Write the full article content that students will read and discuss..."
-                rows={15}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500">
-                This content will be displayed to students before they chat with the discussion assistant.
-              </p>
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="assessmentName">Assessment Bot Name</Label>
@@ -282,7 +263,7 @@ What learning experience would you like to create? Tell me about your subject, g
                   id="assessmentName"
                   value={experienceData.assessmentName}
                   onChange={(e) => updateField("assessmentName", e.target.value)}
-                  placeholder="e.g., Professor Lincoln"
+                  placeholder="e.g., Nancy Know-It-All"
                 />
               </div>
               <div className="space-y-2">
@@ -297,18 +278,109 @@ What learning experience would you like to create? Tell me about your subject, g
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="assessmentAvatar">Assessment Bot Avatar</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="assessmentAvatar"
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={(e) => updateField("assessmentAvatar", e.target.files?.[0] || null)}
+                  className="cursor-pointer"
+                />
+                <Button type="button" variant="outline" size="sm">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Image
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Upload a PNG or JPEG image. It will be automatically cropped to a circle.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="assessmentCriteria">Assessment Criteria Display</Label>
+              <Textarea
+                id="assessmentCriteria"
+                value={experienceData.assessmentCriteria}
+                onChange={(e) => updateField("assessmentCriteria", e.target.value)}
+                placeholder="Text that appears next to the chat showing what the bot is listening for..."
+                rows={4}
+              />
+              <p className="text-xs text-gray-500">
+                This text appears in the left panel (like Reggie's criteria) to show students what the bot is evaluating.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="assessmentPersonality">Assessment Bot System Prompt</Label>
               <Textarea
                 id="assessmentPersonality"
                 value={experienceData.assessmentPersonality}
                 onChange={(e) => updateField("assessmentPersonality", e.target.value)}
                 placeholder="Enter the system prompt that defines the assessment bot's personality and behavior..."
-                rows={12}
+                rows={10}
                 className="font-mono text-sm"
               />
               <p className="text-xs text-gray-500">
-                This prompt will be sent directly to Claude to define how the assessment bot behaves and evaluates students.
+                This prompt will be sent directly to Claude to define how the assessment bot behaves with students.
               </p>
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold">Assessment Evaluation Criteria</h3>
+              <p className="text-gray-600">Define how Claude should evaluate student performance and route them to appropriate teaching assistants.</p>
+            </div>
+            
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-green-700">High Performance Criteria</CardTitle>
+                  <CardDescription>What indicates a student has strong understanding?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={experienceData.highCriteria}
+                    onChange={(e) => updateField("highCriteria", e.target.value)}
+                    placeholder="Students who demonstrate high performance will show..."
+                    rows={4}
+                  />
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-yellow-700">Medium Performance Criteria</CardTitle>
+                  <CardDescription>What indicates basic understanding with some gaps?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={experienceData.mediumCriteria}
+                    onChange={(e) => updateField("mediumCriteria", e.target.value)}
+                    placeholder="Students who demonstrate medium performance will show..."
+                    rows={4}
+                  />
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-red-700">Low Performance Criteria</CardTitle>
+                  <CardDescription>What indicates students need foundational support?</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={experienceData.lowCriteria}
+                    onChange={(e) => updateField("lowCriteria", e.target.value)}
+                    placeholder="Students who demonstrate low performance will show..."
+                    rows={4}
+                  />
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
@@ -339,6 +411,21 @@ What learning experience would you like to create? Tell me about your subject, g
                       onChange={(e) => updateField("highBotDescription", e.target.value)}
                       placeholder="Brief description"
                     />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Avatar</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={(e) => updateField("highBotAvatar", e.target.files?.[0] || null)}
+                      className="cursor-pointer"
+                    />
+                    <Button type="button" variant="outline" size="sm">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </Button>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -380,6 +467,21 @@ What learning experience would you like to create? Tell me about your subject, g
                   </div>
                 </div>
                 <div className="space-y-2">
+                  <Label>Avatar</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={(e) => updateField("mediumBotAvatar", e.target.files?.[0] || null)}
+                      className="cursor-pointer"
+                    />
+                    <Button type="button" variant="outline" size="sm">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <Label>System Prompt</Label>
                   <Textarea
                     value={experienceData.mediumBotPersonality}
@@ -415,6 +517,21 @@ What learning experience would you like to create? Tell me about your subject, g
                       onChange={(e) => updateField("lowBotDescription", e.target.value)}
                       placeholder="Brief description"
                     />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Avatar</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={(e) => updateField("lowBotAvatar", e.target.files?.[0] || null)}
+                      className="cursor-pointer"
+                    />
+                    <Button type="button" variant="outline" size="sm">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </Button>
                   </div>
                 </div>
                 <div className="space-y-2">
