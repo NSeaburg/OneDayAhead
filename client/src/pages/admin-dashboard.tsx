@@ -71,6 +71,63 @@ export default function AdminDashboard() {
     window.open(testUrl, '_blank');
   };
 
+  const handleDeletePackage = async (pkg: ContentPackage) => {
+    // Protect the original Three Branches experience
+    if (pkg.district === "demo-district" && pkg.course === "civics-government" && pkg.topic === "three-branches") {
+      toast({
+        title: "Cannot Delete",
+        description: "The original Three Branches experience cannot be deleted.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmText = prompt(
+      `Are you sure you want to delete "${pkg.name}"?\n\nThis action cannot be undone. Type "DELETE" to confirm:`
+    );
+
+    if (confirmText !== "DELETE") {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/content/delete-package`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          district: pkg.district,
+          course: pkg.course,
+          topic: pkg.topic
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `"${pkg.name}" has been deleted.`,
+        });
+        loadPackages(); // Refresh the list
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Error",
+          description: error.error || "Failed to delete experience",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting package:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete experience",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -199,25 +256,39 @@ export default function AdminDashboard() {
                       <div className="text-sm text-gray-600">
                         <p><strong>Topic:</strong> {pkg.topic}</p>
                       </div>
-                      <div className="pt-2 flex gap-2">
-                        <Button 
-                          onClick={() => handleLaunchPackage(pkg)}
-                          variant="default" 
-                          size="sm" 
-                          className="flex-1"
-                        >
-                          <Play className="h-4 w-4 mr-2" />
-                          Launch
-                        </Button>
-                        <Button 
-                          onClick={() => handleEditPackage(pkg)}
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1"
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
+                      <div className="pt-2 space-y-2">
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => handleLaunchPackage(pkg)}
+                            variant="default" 
+                            size="sm" 
+                            className="flex-1"
+                          >
+                            <Play className="h-4 w-4 mr-2" />
+                            Launch
+                          </Button>
+                          <Button 
+                            onClick={() => handleEditPackage(pkg)}
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
+                        </div>
+                        {/* Only show delete button for non-protected experiences */}
+                        {!(pkg.district === "demo-district" && pkg.course === "civics-government" && pkg.topic === "three-branches") && (
+                          <Button 
+                            onClick={() => handleDeletePackage(pkg)}
+                            variant="destructive" 
+                            size="sm" 
+                            className="w-full"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>

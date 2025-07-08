@@ -2745,6 +2745,48 @@ Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, ne
     }
   });
 
+  // Delete content package endpoint
+  app.delete("/api/content/delete-package", async (req, res) => {
+    try {
+      const { district, course, topic } = req.body;
+      
+      // Validate required fields
+      if (!district || !course || !topic) {
+        return res.status(400).json({ error: "District, course, and topic are required" });
+      }
+
+      // Protect the original Three Branches experience
+      if (district === "demo-district" && course === "civics-government" && topic === "three-branches") {
+        return res.status(403).json({ error: "Cannot delete the original Three Branches experience" });
+      }
+
+      const packagePath = path.join(
+        process.cwd(), 
+        'content', 
+        district, 
+        course, 
+        topic
+      );
+
+      // Check if the directory exists
+      if (!await fs.promises.access(packagePath).then(() => true).catch(() => false)) {
+        return res.status(404).json({ error: "Content package not found" });
+      }
+
+      // Delete the entire directory
+      await fs.promises.rm(packagePath, { recursive: true, force: true });
+
+      res.json({ 
+        success: true, 
+        message: "Learning experience deleted successfully",
+        packageId: `${district}/${course}/${topic}`
+      });
+    } catch (error) {
+      console.error("Error deleting learning experience:", error);
+      res.status(500).json({ error: "Failed to delete learning experience" });
+    }
+  });
+
   // Content creation assistant chat endpoint
   app.post("/api/claude/chat", async (req, res) => {
     try {
