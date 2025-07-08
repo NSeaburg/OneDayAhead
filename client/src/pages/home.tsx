@@ -19,9 +19,10 @@ interface TeachingAssistance {
 export default function Home() {
   const { toast } = useToast();
   
-  // Track the current screen in the learning flow (deployment → assessment → teaching → feedback)
-  const [currentScreen, setCurrentScreen] = useState(0); // 0 = deployment, 1 = assessment, 2 = teaching, 3 = feedback
-  const [selectedExperience, setSelectedExperience] = useState<string | null>(null);
+  // Track the current screen in the learning flow (1 = assessment, 2 = teaching, 3 = feedback)
+  // Skip deployment page and start directly with Three Branches experience
+  const [currentScreen, setCurrentScreen] = useState(1); // Start with assessment (skip deployment)
+  const [selectedExperience, setSelectedExperience] = useState<string | null>("demo-district/civics-government/three-branches");
   const [showExperienceCreator, setShowExperienceCreator] = useState(false);
   
   // Store the dynamic assistant ID received from assessment
@@ -63,13 +64,8 @@ export default function Home() {
   };
 
   const goToPreviousScreen = () => {
-    if (currentScreen === 1) {
-      // Going back from assessment to deployment
-      setCurrentScreen(0);
-      setSelectedExperience(null);
-    } else {
-      setCurrentScreen(prev => Math.max(prev - 1, 0));
-    }
+    // Since we start directly with assessment (screen 1), prevent going below that
+    setCurrentScreen(prev => Math.max(prev - 1, 1));
   };
 
   const handleSelectExperience = (packageId: string) => {
@@ -156,15 +152,7 @@ export default function Home() {
     );
   }
 
-  // Show deployment page for experience selection
-  if (currentScreen === 0) {
-    return (
-      <DeploymentPage
-        onSelectExperience={handleSelectExperience}
-        onCreateNew={handleCreateNewExperience}
-      />
-    );
-  }
+  // Note: Deployment page (screen 0) is skipped - we start directly with assessment (screen 1)
 
   return (
     <div className="flex flex-col min-h-screen max-w-7xl mx-auto bg-white shadow-sm">
