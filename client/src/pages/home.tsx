@@ -28,6 +28,12 @@ export default function Home() {
     experienceParam.split('/').map(part => decodeURIComponent(part)).join('/') : 
     null;
   
+  // Debug URL parsing
+  console.log('🔥 URL Debugging:');
+  console.log('🔥 window.location.search:', window.location.search);
+  console.log('🔥 experienceParam:', experienceParam);
+  console.log('🔥 decodedExperience:', decodedExperience);
+  
   // Track the current screen in the learning flow (1 = assessment, 2 = teaching, 3 = feedback)
   // Skip deployment page and start directly with Three Branches experience (or specified experience)
   const [currentScreen, setCurrentScreen] = useState(1); // Start with assessment (skip deployment)
@@ -57,9 +63,10 @@ export default function Home() {
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, contentPackage, isLoading, error } = useAssistantConfig(selectedExperience);
   
-  // Debug logging for content package
+  // Debug logging for content package  
   useEffect(() => {
     console.log('🔥 Home component - selectedExperience:', selectedExperience);
+    console.log('🔥 Home component - decodedExperience:', decodedExperience);
     console.log('🔥 Home component - contentPackage:', contentPackage);
     console.log('🔥 Home component - assessmentBot personality:', contentPackage?.assessmentBot?.personality?.substring(0, 100) + '...');
   }, [selectedExperience, contentPackage]);
