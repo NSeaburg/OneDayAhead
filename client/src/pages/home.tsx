@@ -70,6 +70,28 @@ export default function Home() {
     console.log('🔥 Home component - contentPackage:', contentPackage);
     console.log('🔥 Home component - assessmentBot personality:', contentPackage?.assessmentBot?.personality?.substring(0, 100) + '...');
   }, [selectedExperience, contentPackage]);
+
+  // Clear cached conversations when switching experiences
+  useEffect(() => {
+    if (contentPackage && contentPackage.id !== "demo-district/civics-government/three-branches") {
+      console.log('🔥 Switching to new experience, clearing localStorage cache');
+      // Clear localStorage to remove cached Reginald conversations
+      localStorage.removeItem('assessment_conversation');
+      localStorage.removeItem('assessment_thread_id');
+      localStorage.removeItem('teaching_conversation');
+      localStorage.removeItem('teaching_thread_id');
+      localStorage.removeItem('feedback_data');
+      
+      // Reset current screen to start fresh
+      setCurrentScreen(1);
+      
+      // Clear any existing conversation state
+      setAssessmentThreadId("");
+      setAssessmentConversation([]);
+      setTeachingAssistance(undefined);
+      setFeedbackData(undefined);
+    }
+  }, [contentPackage?.id]);
   
   // List of High Bot assistant IDs
   const highBotAssistantIds = [
