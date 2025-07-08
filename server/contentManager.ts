@@ -70,6 +70,13 @@ export class ContentManager {
     try {
       const topicPath = path.join(this.contentRoot, district, course, topic);
       
+      // Check if this is a new-style unified config (single config.json file)
+      const unifiedConfigPath = path.join(topicPath, 'config.json');
+      if (fs.existsSync(unifiedConfigPath)) {
+        return await this.loadUnifiedContentPackage(topicPath, district, course, topic);
+      }
+      
+      // Fall back to old-style individual bot configs
       // Load assessment bot
       const assessmentBot = await this.loadBotConfig(
         path.join(topicPath, 'assessment-bot')
@@ -100,6 +107,27 @@ export class ContentManager {
       };
     } catch (error) {
       console.error(`Error loading content package ${district}/${course}/${topic}:`, error);
+      return null;
+    }
+  }
+
+  private async loadUnifiedContentPackage(topicPath: string, district: string, course: string, topic: string): Promise<ContentPackage | null> {
+    try {
+      const configPath = path.join(topicPath, 'config.json');
+      const configData = JSON.parse(await fs.promises.readFile(configPath, 'utf8'));
+      
+      return {
+        id: `${district}/${course}/${topic}`,
+        name: configData.name || topic.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+        description: configData.description || `${course} - ${topic}`,
+        district: configData.district || district,
+        course: configData.course || course,
+        topic: configData.topic || topic,
+        assessmentBot: configData.assessmentBot,
+        teachingBots: configData.teachingBots
+      };
+    } catch (error) {
+      console.error('Error loading unified content package:', error);
       return null;
     }
   }

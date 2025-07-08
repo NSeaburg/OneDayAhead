@@ -23,11 +23,16 @@ export default function Home() {
   const urlParams = new URLSearchParams(window.location.search);
   const experienceParam = urlParams.get('experience');
   
+  // Decode the experience parameter if it exists (handles URL encoding)
+  const decodedExperience = experienceParam ? 
+    experienceParam.split('/').map(part => decodeURIComponent(part)).join('/') : 
+    null;
+  
   // Track the current screen in the learning flow (1 = assessment, 2 = teaching, 3 = feedback)
   // Skip deployment page and start directly with Three Branches experience (or specified experience)
   const [currentScreen, setCurrentScreen] = useState(1); // Start with assessment (skip deployment)
   const [selectedExperience, setSelectedExperience] = useState<string | null>(
-    experienceParam || "demo-district/civics-government/three-branches"
+    decodedExperience || "demo-district/civics-government/three-branches"
   );
   const [showExperienceCreator, setShowExperienceCreator] = useState(false);
   

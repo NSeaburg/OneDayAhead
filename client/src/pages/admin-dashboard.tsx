@@ -67,7 +67,8 @@ export default function AdminDashboard() {
 
   const handleLaunchPackage = (pkg: ContentPackage) => {
     // Open learning experience in new tab for testing
-    const testUrl = `/?experience=${pkg.district}/${pkg.course}/${pkg.topic}`;
+    const experienceId = `${encodeURIComponent(pkg.district)}/${encodeURIComponent(pkg.course)}/${encodeURIComponent(pkg.topic)}`;
+    const testUrl = `/?experience=${experienceId}`;
     window.open(testUrl, '_blank');
   };
 

@@ -1,0 +1,8 @@
+{
+  "name": "High Level Teacher",
+  "description": "High Level teaching bot for Clouds",
+  "avatar": "default-avatar.png",
+  "role": "teaching",
+  "level": "high",
+  "subject": "general"
+}
