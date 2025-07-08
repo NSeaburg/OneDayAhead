@@ -18,9 +18,19 @@ export function useAssistantConfig(experience?: string | null) {
     const fetchAssistantConfig = async () => {
       try {
         setIsLoading(true);
-        const url = experience ? `/api/assistant-config?experience=${encodeURIComponent(experience)}` : '/api/assistant-config';
+        const timestamp = Date.now();
+        const url = experience 
+          ? `/api/assistant-config?experience=${encodeURIComponent(experience)}&t=${timestamp}` 
+          : `/api/assistant-config?t=${timestamp}`;
+        console.log('🔥 useAssistantConfig fetching:', url);
         const response = await apiRequest('GET', url);
         const data = await response.json() as AssistantConfig;
+        console.log('🔥 useAssistantConfig received data:', {
+          experience,
+          hasContentPackage: !!data.contentPackage,
+          assessmentBotName: data.contentPackage?.assessmentBot?.name,
+          personalityPreview: data.contentPackage?.assessmentBot?.personality?.substring(0, 50) + '...'
+        });
         setDiscussionAssistantId(data.discussionAssistantId);
         setAssessmentAssistantId(data.assessmentAssistantId);
         setContentPackage(data.contentPackage);

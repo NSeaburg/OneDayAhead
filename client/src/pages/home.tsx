@@ -57,6 +57,13 @@ export default function Home() {
   // Fetch assistant IDs from the backend
   const { discussionAssistantId, assessmentAssistantId, contentPackage, isLoading, error } = useAssistantConfig(selectedExperience);
   
+  // Debug logging for content package
+  useEffect(() => {
+    console.log('🔥 Home component - selectedExperience:', selectedExperience);
+    console.log('🔥 Home component - contentPackage:', contentPackage);
+    console.log('🔥 Home component - assessmentBot personality:', contentPackage?.assessmentBot?.personality?.substring(0, 100) + '...');
+  }, [selectedExperience, contentPackage]);
+  
   // List of High Bot assistant IDs
   const highBotAssistantIds = [
     "asst_lUweN1vW36yeAORIXCWDopm9",  // Original High Bot ID
@@ -176,10 +183,18 @@ export default function Home() {
       <div className="flex-grow relative">
         {/* Assessment Bot Screen (1) */}
         <div className={`absolute inset-0 ${currentScreen === 1 ? 'block' : 'hidden'}`}>
-          <AssessmentBotScreen 
-            assistantId={assessmentAssistantId}
-            systemPrompt={contentPackage?.assessmentBot?.personality || config.systemPrompts.assessment}
-            onNext={(teachingAssistanceData) => {
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+                <p className="mt-4 text-lg">Loading experience...</p>
+              </div>
+            </div>
+          ) : (
+            <AssessmentBotScreen 
+              assistantId={assessmentAssistantId}
+              systemPrompt={contentPackage?.assessmentBot?.personality || config.systemPrompts.assessment}
+              onNext={(teachingAssistanceData) => {
               // Store the teaching assistance data from assessment
               if (teachingAssistanceData) {
                 setTeachingAssistance(teachingAssistanceData);
@@ -213,6 +228,7 @@ export default function Home() {
             }} 
             onPrevious={goToPreviousScreen} 
           />
+          )}
         </div>
         
         {/* Teaching Assistant Screen (2) */}
