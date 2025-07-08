@@ -1,0 +1,8 @@
+{
+  "name": "Low Level Teacher",
+  "description": "Low Level teaching bot for Cloud identification",
+  "avatar": "default-avatar.png",
+  "role": "teaching",
+  "level": "low",
+  "subject": "general"
+}
