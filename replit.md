@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 8, 2025. Fixed comprehensive feedback system with enhanced AI grading and dynamic bot names
+  - Enhanced Claude grading system with detailed rubrics for content knowledge (0-4) and writing quality (0-4)
+  - Added comprehensive assessment instructions including specific criteria for each score level
+  - Fixed feedback screen to use dynamic bot names from contentPackage instead of hardcoded "Reginald Worthington III"
+  - Improved AI feedback generation with specific guidelines for summary and next steps content
+  - Verified conversation transcript loading works properly (assessment and teaching conversations display correctly)
+  - Fixed scoring accuracy - now provides realistic scores based on actual student performance
+  - Enhanced grading prompt to generate actionable next steps and comprehensive feedback summaries
 - July 8, 2025. Streamlined content creation wizard and experience testing interface
   - Enhanced admin interface with streamlined 5-step content creation process
   - Removed YouTube video and article content steps from creation wizard

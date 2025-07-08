@@ -1470,25 +1470,27 @@ Format your response as JSON with these exact fields: contentKnowledgeScore, wri
 
       const grading = await anthropic.messages.create({
         messages: gradingMessages,
-        system: `You are an educational assessment specialist evaluating student learning about U.S. government structure. 
+        system: `You are an experienced educational assessment specialist evaluating student learning about U.S. government structure. Provide comprehensive, constructive feedback based on both conversations.
 
-Analyze both conversations to determine:
+CONTENT KNOWLEDGE RUBRIC (0-4 scale):
+- 4 (Advanced): Demonstrates deep understanding of all three branches, explains complex checks and balances with specific examples, understands constitutional foundations and can analyze real-world applications
+- 3 (Proficient): Shows solid understanding of all branches and their functions, explains basic checks and balances, can give some examples of branch interactions
+- 2 (Developing): Basic understanding of most branches and their primary functions, limited knowledge of how branches interact, few specific examples
+- 1 (Beginning): Can identify some branches but unclear on specific functions, minimal understanding of governmental structure
+- 0 (Inadequate): Little to no demonstrated knowledge of government branches or structure
 
-CONTENT KNOWLEDGE (0-4 scale):
-- 4: Demonstrates comprehensive understanding of all three branches and checks/balances with detailed examples
-- 3: Shows solid understanding of branches and some checks/balances concepts  
-- 2: Basic understanding of most branches but limited knowledge of interactions
-- 1: Minimal understanding, can identify some branches but unclear on functions
-- 0: Little to no demonstrated knowledge of government structure
+WRITING QUALITY RUBRIC (0-4 scale):
+- 4 (Advanced): Clear, well-organized responses with sophisticated vocabulary, proper grammar and mechanics, varied sentence structure, engages thoughtfully with questions
+- 3 (Proficient): Generally clear communication with good organization, mostly correct grammar with minor errors, adequate vocabulary, responds appropriately to prompts
+- 2 (Developing): Understandable but inconsistent organization, some grammar/mechanics errors that don't impede meaning, basic vocabulary, responses show effort but may lack depth
+- 1 (Beginning): Frequent errors in grammar/mechanics that sometimes impede understanding, very basic vocabulary, responses are brief or unclear
+- 0 (Inadequate): Significant communication barriers, frequent errors that interfere with meaning, responses are extremely brief or off-topic
 
-WRITING QUALITY (0-4 scale):
-- 4: Clear, well-structured responses with proper grammar and sophisticated vocabulary
-- 3: Generally clear communication with minor errors, good organization
-- 2: Understandable but with some grammar/structure issues, basic vocabulary  
-- 1: Frequent errors that sometimes impede understanding, very basic expression
-- 0: Significant communication barriers, hard to understand intent
+FEEDBACK GUIDELINES:
+- Summary: Provide 2-3 sentences highlighting both strengths and areas for growth
+- Next Steps: Give 3-4 specific, actionable learning activities the student can do to improve
 
-Return ONLY a JSON object with: contentKnowledgeScore, writingScore, summary, nextSteps`,
+Return ONLY a JSON object with exactly these fields: contentKnowledgeScore, writingScore, summary, nextSteps`,
         model: "claude-3-7-sonnet-20250219",
         max_tokens: 1500,
         temperature: 0.3,

@@ -18,11 +18,13 @@ interface FeedbackData {
 interface SimpleFeedbackScreenProps {
   onPrevious?: () => void;
   feedbackData?: FeedbackData;
+  contentPackage?: any;
 }
 
 export default function SimpleFeedbackScreen({ 
   onPrevious,
-  feedbackData: propsFeedbackData 
+  feedbackData: propsFeedbackData,
+  contentPackage 
 }: SimpleFeedbackScreenProps): JSX.Element {
   // State for feedback data with default values
   const [feedbackData, setFeedbackData] = useState<FeedbackData>({
@@ -476,7 +478,7 @@ export default function SimpleFeedbackScreen({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Assessment Bot Conversation */}
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-              <h3 className="font-medium text-blue-800 mb-2">Assessment Conversation with Reginald Worthington III</h3>
+              <h3 className="font-medium text-blue-800 mb-2">Assessment Conversation with {contentPackage?.assessmentBot?.name || 'Reginald Worthington III'}</h3>
               <div className="max-h-80 overflow-y-auto border border-gray-200 bg-white rounded-md p-4">
                 {assessmentMessages.length > 0 ? (
                   <div className="space-y-3">
@@ -489,7 +491,7 @@ export default function SimpleFeedbackScreen({
                       return (
                         <div key={index} className={`p-2 rounded ${message.role === 'assistant' ? 'bg-blue-50' : 'bg-gray-50'}`}>
                           <p className="text-xs font-semibold text-gray-600 mb-1">
-                            {message.role === 'assistant' ? 'Reginald Worthington III' : 'You'}:
+                            {message.role === 'assistant' ? (contentPackage?.assessmentBot?.name || 'Reginald Worthington III') : 'You'}:
                           </p>
                           <div className="text-sm prose prose-sm max-w-none">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>

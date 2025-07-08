@@ -326,6 +326,7 @@ export default function Home() {
         <div className={`absolute inset-0 ${currentScreen === 3 ? 'block' : 'hidden'}`}>
           <SimpleFeedbackScreen 
             feedbackData={feedbackData}
+            contentPackage={contentPackage}
             onPrevious={goToPreviousScreen}
           />
         </div>
