@@ -45,6 +45,39 @@ const getInitialStorage = (): GlobalStorage => {
 const storage: GlobalStorage = getInitialStorage();
 
 /**
+ * Clear all storage data (useful for reset functionality)
+ */
+export function clearAllStorage() {
+  console.log("🔄 GLOBAL STORAGE - Clearing all storage data");
+  
+  // Reset in-memory storage
+  storage.assessmentMessages = [];
+  storage.teachingMessages = [];
+  delete storage.feedbackData;
+  delete storage.assessmentThreadId;
+  
+  // Clear localStorage
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.removeItem('learningAppGlobalStorage');
+    window.localStorage.removeItem('assessment_conversation');
+    window.localStorage.removeItem('assessment_thread_id');
+    window.localStorage.removeItem('teaching_conversation');
+    window.localStorage.removeItem('teaching_thread_id');
+    window.localStorage.removeItem('feedback_data');
+  }
+  
+  // Clear window.__assessmentData
+  if (typeof window !== 'undefined' && window.__assessmentData) {
+    delete window.__assessmentData.threadId;
+    delete window.__assessmentData.messages;
+    delete window.__assessmentData.teachingMessages;
+    delete window.__assessmentData.feedbackData;
+  }
+  
+  console.log("🔄 GLOBAL STORAGE - All storage cleared successfully");
+}
+
+/**
  * Set feedback data values directly
  */
 export function setFeedbackData(data: FeedbackData) {

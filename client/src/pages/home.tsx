@@ -11,6 +11,7 @@ import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import { clearAllStorage } from "@/lib/globalStorage";
 
 // Teaching assistance data interface
 interface TeachingAssistance {
@@ -189,23 +190,8 @@ export default function Home() {
   const handleReset = () => {
     console.log('🔄 Reset button clicked - clearing all data');
     
-    // Clear all localStorage data
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem('learningAppGlobalStorage');
-      window.localStorage.removeItem('assessment_conversation');
-      window.localStorage.removeItem('assessment_thread_id');
-      window.localStorage.removeItem('teaching_conversation');
-      window.localStorage.removeItem('teaching_thread_id');
-      window.localStorage.removeItem('feedback_data');
-    }
-    
-    // Clear window.__assessmentData
-    if (typeof window !== 'undefined' && window.__assessmentData) {
-      delete window.__assessmentData.threadId;
-      delete window.__assessmentData.messages;
-      delete window.__assessmentData.teachingMessages;
-      delete window.__assessmentData.feedbackData;
-    }
+    // Use the comprehensive clear function from globalStorage
+    clearAllStorage();
     
     // Reset all state variables
     setCurrentScreen(1);
@@ -215,9 +201,14 @@ export default function Home() {
     setFeedbackData(undefined);
     setDynamicAssistantId("");
     
+    // Force a page reload to ensure clean state
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+    
     toast({
       title: "Reset Complete",
-      description: "All conversations have been cleared. Starting fresh!"
+      description: "All conversations cleared. Refreshing page..."
     });
   };
 
