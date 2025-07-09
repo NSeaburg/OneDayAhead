@@ -286,19 +286,20 @@ export default function DynamicAssistantScreen({
         contentPackage: contentPackage
       });
       
-      console.log("Claude grading endpoint response:", response);
+      const result = await response.json();
+      console.log("Claude grading endpoint response:", result);
       
       let feedbackData = null;
       
-      if (response.success) {
+      if (result.success) {
         console.log("Claude grading successful!");
-        console.log("Feedback data received:", response.data);
+        console.log("Feedback data received:", result.data);
         
         feedbackData = {
-          summary: response.data.summary,
-          contentKnowledgeScore: response.data.contentKnowledgeScore,
-          writingScore: response.data.writingScore,
-          nextSteps: response.data.nextSteps
+          summary: result.data.summary,
+          contentKnowledgeScore: result.data.contentKnowledgeScore,
+          writingScore: result.data.writingScore,
+          nextSteps: result.data.nextSteps
         };
         
         // Store the feedback data in globalStorage  
@@ -306,7 +307,7 @@ export default function DynamicAssistantScreen({
         globalStorage.setFeedbackData(feedbackData);
         
       } else {
-        console.log("Claude grading failed:", response.message);
+        console.log("Claude grading failed:", result.message);
         feedbackData = {
           summary: "Assessment completed but detailed feedback is not available.",
           contentKnowledgeScore: 2,
