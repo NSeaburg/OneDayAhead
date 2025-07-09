@@ -126,9 +126,6 @@ async function testDatabaseConnection() {
       // Serve static files from public directory in development
       app.use(express.static("public"));
       
-      // Serve content directory as static assets
-      app.use('/content', express.static('content'));
-      
       app.use((req, res, next) => {
         if (req.query.production === "true") {
           serveStatic(app);
@@ -136,8 +133,6 @@ async function testDatabaseConnection() {
       });
       await setupVite(app, server);
     } else {
-      // Serve content directory as static assets in production too
-      app.use('/content', express.static('content'));
       serveStatic(app);
     }
 
