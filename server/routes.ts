@@ -447,9 +447,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Construct the path to the asset
       const assetPath = path.resolve(process.cwd(), 'content', district, course, topic, botType, filename);
       
-      console.log('🔥 CONTENT ASSET - Requested path:', assetPath);
-      console.log('🔥 CONTENT ASSET - File exists:', fs.existsSync(assetPath));
-      
       // Check if file exists and serve it
       if (fs.existsSync(assetPath)) {
         // Set proper content type for images
@@ -464,10 +461,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.setHeader('Content-Type', 'image/svg+xml');
         }
         
-        console.log('🔥 CONTENT ASSET - Serving file with content type:', res.get('Content-Type'));
         res.sendFile(assetPath);
       } else {
-        console.log('🔥 CONTENT ASSET - File not found, returning 404');
         res.status(404).json({ error: 'Asset not found' });
       }
     } catch (error) {
