@@ -439,6 +439,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Content asset serving route
+  app.get("/api/content-assets/:district/:course/:topic/:botType/:filename", async (req, res) => {
+    try {
+      const { district, course, topic, botType, filename } = req.params;
+      
+      // Construct the path to the asset
+      const assetPath = path.resolve(process.cwd(), 'content', district, course, topic, botType, filename);
+      
+      console.log('🔥 CONTENT ASSET - Requested path:', assetPath);
+      console.log('🔥 CONTENT ASSET - File exists:', fs.existsSync(assetPath));
+      
+      // Check if file exists and serve it
+      if (fs.existsSync(assetPath)) {
+        // Set proper content type for images
+        const ext = path.extname(filename).toLowerCase();
+        if (ext === '.png') {
+          res.setHeader('Content-Type', 'image/png');
+        } else if (ext === '.jpg' || ext === '.jpeg') {
+          res.setHeader('Content-Type', 'image/jpeg');
+        } else if (ext === '.gif') {
+          res.setHeader('Content-Type', 'image/gif');
+        } else if (ext === '.svg') {
+          res.setHeader('Content-Type', 'image/svg+xml');
+        }
+        
+        console.log('🔥 CONTENT ASSET - Serving file with content type:', res.get('Content-Type'));
+        res.sendFile(assetPath);
+      } else {
+        console.log('🔥 CONTENT ASSET - File not found, returning 404');
+        res.status(404).json({ error: 'Asset not found' });
+      }
+    } catch (error) {
+      console.error('Error serving content asset:', error);
+      res.status(500).json({ error: 'Failed to serve asset' });
+    }
+  });
+
   // Route to get the assistant IDs and system prompts
   app.get("/api/assistant-config", async (req, res) => {
     try {

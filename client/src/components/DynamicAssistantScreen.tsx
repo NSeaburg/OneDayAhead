@@ -505,6 +505,9 @@ export default function DynamicAssistantScreen({
   
   // Helper functions for teacher profiles
   const getTeacherName = () => {
+    if (contentPackage?.teachingBots?.[proficiencyLevel]?.name) {
+      return contentPackage.teachingBots[proficiencyLevel].name;
+    }
     if (proficiencyLevel === "high") {
       return "Mrs. Parton";
     }
@@ -518,6 +521,9 @@ export default function DynamicAssistantScreen({
   };
   
   const getTeacherImage = () => {
+    if (contentPackage?.teachingBots?.[proficiencyLevel]?.avatar) {
+      return `/api/content-assets/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${proficiencyLevel}/${contentPackage.teachingBots[proficiencyLevel].avatar}`;
+    }
     if (proficiencyLevel === "high") {
       return mrsPartonImage;
     }

@@ -182,7 +182,9 @@ export default function AssessmentBotScreen({
   };
   
   // Determine the avatar source and display name
-  const avatarSrc = botAvatar ? `/${botAvatar}` : reginaldImage;
+  const avatarSrc = botAvatar && contentPackage 
+    ? `/api/content-assets/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/assessment-bot/${botAvatar}`
+    : reginaldImage;
   const displayName = botName || "Assessment Bot";
   
   // Reset the entire conversation on component mount to force the new system prompt

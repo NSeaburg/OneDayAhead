@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 9, 2025. Implemented content package avatar system with proper file serving
+  - Added `/api/content-assets/:district/:course/:topic/:botType/:filename` route for serving content package assets
+  - Updated AssessmentBotScreen and DynamicAssistantScreen to load avatars from content package folders
+  - Enhanced avatar system to support dynamic content packages with proper content type headers
+  - Removed duplicate avatar files from public folder - all avatars now served from content package structure
+  - Avatar paths now constructed as `/api/content-assets/{district}/{course}/{topic}/{botType}/{filename}`
+  - System falls back to default images if content package avatars aren't found
+  - Added proper MIME type detection for PNG, JPG, GIF, and SVG images
 - July 9, 2025. Completed architectural consolidation from hybrid hardcoded/configurable system to unified file-based configuration
   - Updated /api/assess-conversation endpoint to load assessment criteria from content package configuration files
   - Updated /api/grade-conversations endpoint to load feedback instructions from content package configuration files
