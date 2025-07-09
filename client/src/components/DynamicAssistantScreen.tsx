@@ -247,14 +247,26 @@ export default function DynamicAssistantScreen({
         console.log("Assessment conversation last message:", assessmentConversation[assessmentConversation.length - 1].role);
       }
       
+      // Ensure we're using the complete teaching conversation from storage
+      const storedTeachingMessages = globalStorage.getTeachingMessages() || window.__assessmentData?.teachingMessages || messages;
+      const storedAssessmentMessages = globalStorage.getAssessmentMessages() || assessmentConversation || [];
+      
+      // Debug: Log data being sent to grading endpoint
+      console.log("📊 FRONTEND DEBUG - Sending to grading endpoint:");
+      console.log("- Current messages count:", messages.length);
+      console.log("- Stored teaching messages count:", storedTeachingMessages.length);
+      console.log("- Assessment messages count:", storedAssessmentMessages.length);
+      console.log("- Using stored teaching messages:", storedTeachingMessages.slice(0, 2));
+      console.log("- Using assessment messages:", storedAssessmentMessages.slice(0, 2));
+      
       // Send both conversation datasets to Claude-based grading endpoint
       const response = await apiRequest("POST", "/api/grade-conversations", {
-        // Teaching bot data
-        teachingConversation: messages,
+        // Teaching bot data - use stored messages to ensure complete conversation
+        teachingConversation: storedTeachingMessages,
         teachingThreadId: threadId,
         
         // Assessment bot data (if available)
-        assessmentConversation: assessmentConversation || [],
+        assessmentConversation: storedAssessmentMessages,
         assessmentThreadId: assessmentThreadId || "",
         
         // Content package for dynamic grading

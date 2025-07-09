@@ -1446,6 +1446,11 @@ Stage 3: Checks and Balances – "Who Can Stop This?"
         : "No assessment conversation available.";
 
       console.log("Evaluating complete learning session with Claude for final grading...");
+      console.log("📊 GRADING DEBUG - Received data:");
+      console.log("- teachingConversation length:", teachingData.length);
+      console.log("- assessmentConversation length:", assessmentData.length);
+      console.log("- teachingTranscript preview:", teachingTranscript.substring(0, 200) + "...");
+      console.log("- assessmentTranscript preview:", assessmentTranscript.substring(0, 200) + "...");
 
       // Create dynamic grading content based on content package
       const isThreeBranches = contentPackage?.topic === "three-branches" || courseName?.includes("branches") || !contentPackage;

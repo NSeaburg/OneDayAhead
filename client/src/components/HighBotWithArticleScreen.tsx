@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import globalStorage from "@/lib/globalStorage";
 
 // Using global interface from types.d.ts
 
@@ -116,19 +117,24 @@ export default function HighBotWithArticleScreen({
       // Calculate the chat duration in seconds
       const chatDurationSeconds = Math.floor((Date.now() - chatStartTime) / 1000);
       
+      // Ensure we're using the complete conversation data from storage
+      const storedAssessmentMessages = globalStorage.getAssessmentMessages() || assessmentConversation || [];
+      
       // Prepare the data for sending
-      console.log("Preparing to send combined conversation data");
-      console.log("Teaching conversation length:", messages.length);
-      console.log("Assessment conversation length:", (assessmentConversation || []).length);
+      console.log("📊 HIGH BOT DEBUG - Preparing to send combined conversation data");
+      console.log("- Current teaching conversation length:", messages.length);
+      console.log("- Stored assessment conversation length:", storedAssessmentMessages.length);
+      console.log("- Teaching messages preview:", messages.slice(0, 2));
+      console.log("- Assessment messages preview:", storedAssessmentMessages.slice(0, 2));
       
       // Send both conversation datasets to Claude-based grading endpoint
       const response = await apiRequest("POST", "/api/grade-conversations", {
-        // Teaching bot data
+        // Teaching bot data - use current messages for high bot
         teachingConversation: messages,
         teachingThreadId: threadId,
         
-        // Assessment bot data (if available)
-        assessmentConversation: assessmentConversation || [],
+        // Assessment bot data - use stored messages to ensure complete conversation
+        assessmentConversation: storedAssessmentMessages,
         assessmentThreadId: assessmentThreadId || "",
         
         // Content package for dynamic grading
