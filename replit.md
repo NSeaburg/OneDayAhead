@@ -148,6 +148,17 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 9, 2025. Achieved complete interchangeability between AssessmentBotScreen and DynamicAssistantScreen by eliminating all hardcoded content
+  - Removed hardcoded Reginald-specific content: "Aristocratic Observer", bio description, "What he's listening for", "Keep in mind" text
+  - Replaced hardcoded welcome message with dynamic content from contentPackage.assessmentBot.config.initialMessage
+  - Made assessment bot names, roles, descriptions, and initial messages fully configurable via content packages
+  - Eliminated hardcoded teacher profiles (Mrs. Parton, Mrs. Bannerman, Mr. Whitaker) with dynamic content package-driven profiles
+  - Replaced hardcoded civics-specific content with dynamic subject/course-based descriptions and guidance
+  - Made "United States v. Nixon" article content configurable via contentPackage.teachingBots.high.config
+  - Converted hardcoded learning approaches to configurable contentPackage.teachingBots[level].config.learningApproach
+  - Updated page titles, button text, and all UI elements to use content package data with intelligent fallbacks
+  - Both assessment and teaching interfaces now completely adaptable to any subject/grade level/content package
+  - System maintains backward compatibility with existing Three Branches content while enabling full content package flexibility
 - July 9, 2025. Fixed teaching bot chat interface scrolling to match Reggie's behavior  
   - Changed DynamicAssistantScreen chat container from growing page to fixed-height scrollable container
   - Applied same CSS structure as AssessmentBotScreen: `flex-1 overflow-y-auto min-h-0` for chat messages area

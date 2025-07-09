@@ -59,19 +59,46 @@ export default function DynamicAssistantScreen({
   // Get proficiency level from teachingAssistance if available
   const proficiencyLevel = teachingAssistance?.level || "unknown";
 
-  // Choose the appropriate initial message based on proficiency level and fallback status
-  let initialMessage = "";
-  if (isUsingFallback) {
-    initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?";
-  } else if (proficiencyLevel === "high") {
-    initialMessage = "Hello there. I'm Mrs. Parton — retired civics teacher, and I'm here to help you apply what you've learned about how our government works when it's put to the test. We'll be using the United States v. Nixon case as our guide today. When you're ready, please click the 'Launch Article' button in my profile to read about this landmark case. Then, I'll ask you questions to help you think through how each branch played its part. (gathers a folder of well-worn case studies with a fond smile)";
-  } else if (proficiencyLevel === "medium") {
-    initialMessage = "Hey there. I'm Mrs. Bannerman — retired civics teacher, and I'm here to help you think through some of the \"what ifs\" that shaped our government. We'll be exploring what might happen if just one branch ran the whole show. It's going to be some good old-fashioned critical thinking — no pressure, just ideas and conversation. Ready to get started? (adjusts an old, well-worn lesson plan binder with a fond smile)";
-  } else if (proficiencyLevel === "low") {
-    initialMessage = "Hey there. I'm Mr. Whitaker — retired civics teacher, but I still love helping folks figure out how all this government stuff fits together. We're going to work through a couple of quick activities today to make sure the big ideas about our system stick. I'll explain everything as we go — no pressure, just some good thinking. Ready to dive in? (sips coffee from a chipped mug labeled 'Democracy: Handle With Care')";
-  } else {
-    initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
-  }
+  // Helper functions for teacher profiles (moved up for use in initial message)
+  const getTeacherName = () => {
+    if (contentPackage?.teachingBots?.[proficiencyLevel]?.name) {
+      return contentPackage.teachingBots[proficiencyLevel].name;
+    }
+    // Dynamic fallback names based on content package or generic names
+    const fallbackNames = {
+      high: `Advanced ${contentPackage?.topic || 'Learning'} Instructor`,
+      medium: `Intermediate ${contentPackage?.topic || 'Learning'} Instructor`, 
+      low: `Foundational ${contentPackage?.topic || 'Learning'} Instructor`
+    };
+    return fallbackNames[proficiencyLevel] || "Teaching Assistant";
+  };
+
+  // Choose the appropriate initial message based on content package configuration
+  const getInitialMessage = () => {
+    // First try to get initial message from content package configuration
+    if (contentPackage?.teachingBots?.[proficiencyLevel]?.config?.initialMessage) {
+      return contentPackage.teachingBots[proficiencyLevel].config.initialMessage;
+    }
+    
+    // Fallback for technical issues
+    if (isUsingFallback) {
+      return "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?";
+    }
+    
+    // Generate dynamic message based on content package and level
+    const teacherName = getTeacherName();
+    const subject = contentPackage?.course?.replace('-', ' ') || 'this subject';
+    
+    const levelMessages = {
+      high: `Hello! I'm ${teacherName}, and I'm here to help you apply what you've learned about ${subject} to more advanced scenarios. We'll explore complex real-world applications and deepen your understanding. Ready to dive into some challenging material?`,
+      medium: `Hello! I'm ${teacherName}, and I'm here to help you strengthen your understanding of ${subject}. We'll work through some interesting scenarios to help you think more deeply about the concepts. Ready to get started?`,
+      low: `Hello! I'm ${teacherName}, and I'm here to help you build a solid foundation in ${subject}. We'll work through some activities to make sure the key concepts really stick. Ready to learn together?`
+    };
+    
+    return levelMessages[proficiencyLevel] || "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
+  };
+  
+  const initialMessage = getInitialMessage();
   
   // Use the teachingAssistance systemPrompt if available, otherwise use the default
   const activeSystemPrompt = teachingAssistance?.systemPrompt || systemPrompt;
@@ -338,22 +365,7 @@ export default function DynamicAssistantScreen({
     }
   };
   
-  // Helper functions for teacher profiles
-  const getTeacherName = () => {
-    if (contentPackage?.teachingBots?.[proficiencyLevel]?.name) {
-      return contentPackage.teachingBots[proficiencyLevel].name;
-    }
-    if (proficiencyLevel === "high") {
-      return "Mrs. Parton";
-    }
-    if (proficiencyLevel === "medium") {
-      return "Mrs. Bannerman";
-    }
-    if (proficiencyLevel === "low") {
-      return "Mr. Whitaker";
-    }
-    return "Teaching Assistant"; // Default fallback
-  };
+  // Additional helper functions for teacher profiles
   
   const getTeacherImage = () => {
     // Always try to use content package avatar first
@@ -363,63 +375,58 @@ export default function DynamicAssistantScreen({
       return `/content/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${folderName}/${contentPackage.teachingBots[proficiencyLevel].avatar}`;
     }
     
-    // Fallback to default avatars based on level if no content package avatar
-    if (proficiencyLevel === "high") {
-      return "/content/demo-district/civics-government/three-branches/teaching-bots/high-level/Parton.png";
-    }
-    if (proficiencyLevel === "medium") {
-      return "/content/demo-district/civics-government/three-branches/teaching-bots/medium-level/Bannerman.png";
-    }
-    if (proficiencyLevel === "low") {
-      return "/content/demo-district/civics-government/three-branches/teaching-bots/low-level/Whitaker.png";
-    }
-    
-    return placeholderImage; // Final fallback
+    // Try to use a generic avatar based on level, or use placeholder
+    return placeholderImage; // Generic fallback avatar
   };
   
   const getTeacherTitle = () => {
-    if (proficiencyLevel === "high") {
-      return "Advanced Civics Instructor";
+    if (contentPackage?.teachingBots?.[proficiencyLevel]?.role) {
+      return contentPackage.teachingBots[proficiencyLevel].role;
     }
-    if (proficiencyLevel === "medium") {
-      return "Intermediate Civics Instructor";
-    }
-    if (proficiencyLevel === "low") {
-      return "Foundational Civics Instructor";
-    }
-    return "Teaching Assistant"; // Default fallback
+    // Dynamic titles based on content package subject/course
+    const subject = contentPackage?.course?.replace('-', ' ') || 'Learning';
+    const titles = {
+      high: `Advanced ${subject} Specialist`,
+      medium: `${subject} Instructor`, 
+      low: `${subject} Learning Coach`
+    };
+    return titles[proficiencyLevel] || "Teaching Assistant";
   };
   
   const getTeacherDescription = () => {
-    if (proficiencyLevel === "high") {
-      return "After teaching civics for over 30 years at top high schools, Mrs. Parton specializes in helping students apply core concepts to complex real-world cases. She's known for drawing out deeper connections and challenging students to think critically.";
+    if (contentPackage?.teachingBots?.[proficiencyLevel]?.description) {
+      return contentPackage.teachingBots[proficiencyLevel].description;
     }
-    if (proficiencyLevel === "medium") {
-      return "With 25 years of teaching experience, Mrs. Bannerman excels at helping students build on their foundational knowledge. She uses interesting hypothetical scenarios to help students think about how government structures impact real people.";
-    }
-    if (proficiencyLevel === "low") {
-      return "After teaching civics for over 30 years, Mr. Whitaker now helps students build strong foundations in government concepts. He's known for his clear explanations, helpful analogies, and patient approach to learning. He breaks down complex ideas into manageable parts.";
-    }
-    return "Your specialized learning assistant has been selected to guide you through this material based on your assessment results."; // Default fallback
+    // Dynamic descriptions based on proficiency level and content
+    const teacherName = getTeacherName();
+    const subject = contentPackage?.course?.replace('-', ' ') || 'this subject';
+    
+    const descriptions = {
+      high: `${teacherName} specializes in helping students apply core concepts to complex real-world cases. Known for drawing out deeper connections and challenging students to think critically about ${subject}.`,
+      medium: `${teacherName} excels at helping students build on their foundational knowledge. Uses interesting scenarios to help students think about how ${subject} concepts apply in practice.`,
+      low: `${teacherName} helps students build strong foundations in ${subject} concepts. Known for clear explanations, helpful analogies, and patient approach to learning.`
+    };
+    
+    return descriptions[proficiencyLevel] || "Your specialized learning assistant has been selected to guide you through this material based on your assessment results.";
   };
 
   // Helper function to get guidance approach based on proficiency level
   const getGuidanceApproach = () => {
-    if (proficiencyLevel === "high") {
-      return "Mrs. Parton will challenge you to think critically about advanced civics concepts and historical connections that go beyond the basics. She'll help you explore nuanced ideas about government systems.";
-    }
-    if (proficiencyLevel === "medium") {
-      return "Mrs. Bannerman will help strengthen your understanding of government concepts, clarify any misunderstandings, and introduce some more advanced ideas when you're ready.";
-    }
-    if (proficiencyLevel === "low") {
-      return "Mr. Whitaker will focus on building a solid foundation of key government concepts through clear explanations, helpful metaphors, and guided activities.";
-    }
-    return "Your learning assistant will guide you through the key concepts from the material you've just studied."; // Default fallback
+    const teacherName = getTeacherName().split(' ')[0]; // Get first name/title
+    const subject = contentPackage?.course?.replace('-', ' ') || 'the subject material';
+    
+    const approaches = {
+      high: `${teacherName} will challenge you to think critically about advanced ${subject} concepts and connections that go beyond the basics. You'll explore nuanced ideas and real-world applications.`,
+      medium: `${teacherName} will help strengthen your understanding of ${subject} concepts, clarify any misunderstandings, and introduce more advanced ideas when you're ready.`,
+      low: `${teacherName} will focus on building a solid foundation of key ${subject} concepts through clear explanations, helpful metaphors, and guided activities.`
+    };
+    
+    return approaches[proficiencyLevel] || "Your learning assistant will guide you through the key concepts from the material you've just studied.";
   };
 
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-4">Specialized Guidance</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-4">{contentPackage?.name ? `${contentPackage.name} - Teaching` : "Specialized Guidance"}</h1>
       
       <div className="flex flex-col md:flex-row gap-6 flex-grow min-h-0">
         {/* Left column - Teacher profile or Article */}
@@ -428,7 +435,9 @@ export default function DynamicAssistantScreen({
             {(showArticle && proficiencyLevel === "high") ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 overflow-auto h-full flex flex-col">
                 <div className="flex justify-between items-center mb-3">
-                  <h2 className="font-semibold text-lg text-gray-800">United States v. Nixon</h2>
+                  <h2 className="font-semibold text-lg text-gray-800">
+                    {contentPackage?.teachingBots?.high?.config?.articleTitle || "Advanced Case Study"}
+                  </h2>
                   <Button 
                     onClick={() => {
                       console.log("Back to Profile button clicked, hiding article...");
@@ -444,9 +453,9 @@ export default function DynamicAssistantScreen({
                 </div>
                 <div className="flex-grow overflow-auto">
                   <iframe 
-                    src="/nixon-article.html" 
+                    src={contentPackage?.teachingBots?.high?.config?.articleUrl || "/nixon-article.html"} 
                     className="w-full h-full border-0" 
-                    title="United States v. Nixon: A Case Study in Checks and Balances" 
+                    title={contentPackage?.teachingBots?.high?.config?.articleTitle || "Advanced Case Study"} 
                   />
                 </div>
               </div>
@@ -486,9 +495,10 @@ export default function DynamicAssistantScreen({
                       proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
                     }`}></div>
                     <p className="text-sm text-gray-700">
-                      {proficiencyLevel === "high" ? "Learning Through Case Study" :
-                      proficiencyLevel === "medium" ? "Learning Through Thought Experiments" :
-                      proficiencyLevel === "low" ? "Learning Through Metaphor" : "Standard Approach"}
+                      {contentPackage?.teachingBots?.[proficiencyLevel]?.config?.learningApproach || 
+                       (proficiencyLevel === "high" ? "Advanced Analysis" :
+                        proficiencyLevel === "medium" ? "Guided Exploration" :
+                        proficiencyLevel === "low" ? "Foundational Building" : "Standard Approach")}
                     </p>
                   </div>
                 </div>
@@ -506,7 +516,7 @@ export default function DynamicAssistantScreen({
                       disabled={showArticle}
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
-                      Launch Article
+                      {contentPackage?.teachingBots?.high?.config?.articleButtonText || "Launch Article"}
                     </Button>
                   </div>
                 )}

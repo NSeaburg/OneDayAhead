@@ -204,10 +204,13 @@ export default function AssessmentBotScreen({
     // Clear existing messages
     setMessages([]);
     
-    // Set the initial welcome message from Reginald
+    // Set the initial welcome message from the assessment bot
+    const initialMessage = contentPackage?.assessmentBot?.config?.initialMessage || 
+      `Hello! I'm ${displayName}, and I'll be conducting your assessment today. I'm here to understand your current knowledge and help determine the best learning path for you. Let's begin our conversation - I'm looking forward to learning about what you know!`;
+    
     setMessages([{
       role: 'assistant',
-      content: 'Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty\'s service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call "democracy" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government\'s structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*'
+      content: initialMessage
     }]);
   }, []);
   
@@ -523,17 +526,17 @@ export default function AssessmentBotScreen({
                 className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
               />
               <h2 className="font-bold text-xl text-gray-800">{displayName}</h2>
-              <p className="text-sm text-gray-600 font-medium">Aristocratic Observer</p>
+              <p className="text-sm text-gray-600 font-medium">{contentPackage?.assessmentBot?.role || "Assessment Assistant"}</p>
             </div>
             
             <p className="text-sm text-gray-700 mb-4">
-              Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown.
+              {contentPackage?.assessmentBot?.description || "Your assessment assistant will guide you through an interactive evaluation of your understanding."}
             </p>
             
             <hr className="my-4 border-gray-200" />
             
             <div className="mb-4">
-              <h3 className="font-semibold text-gray-800 mb-2">What he's listening for</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">{contentPackage?.assessmentCriteria?.name || "Assessment Topics"}</h3>
               <ul className="space-y-3">
                 {topics.map((topic) => (
                   <li key={topic.id} className="flex items-start">
@@ -625,7 +628,7 @@ export default function AssessmentBotScreen({
             <div>
               <h3 className="font-semibold text-gray-800 mb-2">Keep in mind</h3>
               <p className="text-sm text-gray-700">
-                Reginald will use your responses to recommend a learning path that makes sense for you. Do your best—he may be smug, but he's paying attention.
+                {contentPackage?.assessmentCriteria?.description || `${displayName} will use your responses to recommend a learning path that makes sense for you. Do your best—your responses will help determine the most effective teaching approach.`}
               </p>
             </div>
           </div>
@@ -634,7 +637,7 @@ export default function AssessmentBotScreen({
         {/* Right column - Chat interface */}
         <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
           <div className="p-3 md:p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
-            <h2 className="font-bold text-base md:text-lg text-gray-800">Royal Assessment: Three Branches of Government</h2>
+            <h2 className="font-bold text-base md:text-lg text-gray-800">{contentPackage?.name || "Assessment"}</h2>
           </div>
           
           <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-4 min-h-0">
