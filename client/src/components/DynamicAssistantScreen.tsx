@@ -542,18 +542,18 @@ export default function DynamicAssistantScreen({
     if (contentPackage?.teachingBots?.[proficiencyLevel]?.avatar) {
       // Use the correct folder structure with "-level" suffix
       const folderName = `${proficiencyLevel}-level`;
-      return `/api/content-assets/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${folderName}/${contentPackage.teachingBots[proficiencyLevel].avatar}`;
+      return `/content/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${folderName}/${contentPackage.teachingBots[proficiencyLevel].avatar}`;
     }
     
     // Fallback to default avatars based on level if no content package avatar
     if (proficiencyLevel === "high") {
-      return "/api/content-assets/demo-district/civics-government/three-branches/teaching-bots/high-level/Parton.png";
+      return "/content/demo-district/civics-government/three-branches/teaching-bots/high-level/Parton.png";
     }
     if (proficiencyLevel === "medium") {
-      return "/api/content-assets/demo-district/civics-government/three-branches/teaching-bots/medium-level/Bannerman.png";
+      return "/content/demo-district/civics-government/three-branches/teaching-bots/medium-level/Bannerman.png";
     }
     if (proficiencyLevel === "low") {
-      return "/api/content-assets/demo-district/civics-government/three-branches/teaching-bots/low-level/Whitaker.png";
+      return "/content/demo-district/civics-government/three-branches/teaching-bots/low-level/Whitaker.png";
     }
     
     return placeholderImage; // Final fallback

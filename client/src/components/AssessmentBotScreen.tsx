@@ -183,7 +183,7 @@ export default function AssessmentBotScreen({
   
   // Determine the avatar source and display name
   const avatarSrc = botAvatar && contentPackage 
-    ? `/api/content-assets/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/assessment-bot/${botAvatar}`
+    ? `/content/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/assessment-bot/${botAvatar}`
     : reginaldImage;
   const displayName = botName || "Assessment Bot";
   
