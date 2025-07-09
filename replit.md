@@ -157,8 +157,11 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
   - Made "United States v. Nixon" article content configurable via contentPackage.teachingBots.high.config
   - Converted hardcoded learning approaches to configurable contentPackage.teachingBots[level].config.learningApproach
   - Updated page titles, button text, and all UI elements to use content package data with intelligent fallbacks
+  - Replaced hardcoded Three Branches assessment topics with dynamic content package-driven topics from assessmentCriteria.routingCriteria
+  - Made chat message headers, progress bar text, and completion messages use dynamic content package names
   - Both assessment and teaching interfaces now completely adaptable to any subject/grade level/content package
   - System maintains backward compatibility with existing Three Branches content while enabling full content package flexibility
+  - All avatar paths, names, descriptions, topics, keywords, and UI text now fully configurable and interchangeable
 - July 9, 2025. Fixed teaching bot chat interface scrolling to match Reggie's behavior  
   - Changed DynamicAssistantScreen chat container from growing page to fixed-height scrollable container
   - Applied same CSS structure as AssessmentBotScreen: `flex-1 overflow-y-auto min-h-0` for chat messages area

@@ -77,30 +77,50 @@ export default function AssessmentBotScreen({
   const isCompletionMessageSent = useRef<boolean>(false); // Track if completion message was sent
   const { toast } = useToast();
   
-  // Assessment topics with tracking
-  const [topics, setTopics] = useState<AssessmentTopic[]>([
-    {
-      id: "governmental-structure",
-      name: "Governmental Structure",
-      description: "Can you clearly explain how power is divided into three branches?",
-      isCompleted: false,
-      keywords: ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
-    },
-    {
-      id: "checks-balances",
-      name: "The System of Checks and Balances",
-      description: "Do you understand how the branches hold each other in check?",
-      isCompleted: false,
-      keywords: ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
-    },
-    {
-      id: "branch-roles",
-      name: "Roles of the Branches",
-      description: "Can you describe what Congress, the President, and the Courts actually do?",
-      isCompleted: false,
-      keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
+  // Assessment topics with tracking - use content package configuration or fallback defaults
+  const getAssessmentTopics = (): AssessmentTopic[] => {
+    // Try to get topics from content package assessment criteria routing
+    if (contentPackage?.assessmentCriteria?.routingCriteria) {
+      const criteria = contentPackage.assessmentCriteria.routingCriteria;
+      return Object.entries(criteria).map(([level, config]: [string, any], index) => ({
+        id: `topic-${index + 1}`,
+        name: config.description || `${level.charAt(0).toUpperCase() + level.slice(1)} Level Concepts`,
+        description: config.indicators?.[0] || `Understanding of ${level} level concepts`,
+        isCompleted: false,
+        keywords: config.indicators || [`${level}`, "concepts", "understanding"]
+      }));
     }
-  ]);
+    
+    // Fallback topics based on content package subject
+    const subject = contentPackage?.course?.replace('-', ' ') || 'subject material';
+    const topic = contentPackage?.topic?.replace('-', ' ') || 'key concepts';
+    
+    return [
+      {
+        id: "foundational-understanding",
+        name: "Foundational Understanding", 
+        description: `Can you explain the basic concepts of ${topic}?`,
+        isCompleted: false,
+        keywords: [subject, topic, "understanding", "basic", "concepts", "explain"]
+      },
+      {
+        id: "application-knowledge",
+        name: "Application Knowledge",
+        description: `Can you apply ${topic} concepts to real situations?`,
+        isCompleted: false,
+        keywords: ["application", "apply", "real", "situations", "examples", "practice"]
+      },
+      {
+        id: "critical-analysis", 
+        name: "Critical Analysis",
+        description: `Can you analyze and evaluate ${topic} concepts?`,
+        isCompleted: false,
+        keywords: ["analyze", "evaluate", "critical", "thinking", "analysis", "assessment"]
+      }
+    ];
+  };
+
+  const [topics, setTopics] = useState<AssessmentTopic[]>(getAssessmentTopics());
   
   // Use simple approach like article bot - system prompt from config
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
@@ -569,7 +589,7 @@ export default function AssessmentBotScreen({
               {/* Assessment Progress Bar */}
               <div className="mt-5">
                 <div className="flex justify-between items-center mb-1">
-                  <p className="text-xs font-medium text-gray-600">Assessment Progress</p>
+                  <p className="text-xs font-medium text-gray-600">{contentPackage?.assessmentCriteria?.name || "Assessment"} Progress</p>
                 </div>
                 <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
                   <motion.div 
@@ -608,7 +628,7 @@ export default function AssessmentBotScreen({
                       >
                         ✨
                       </motion.span>
-                      <span>Assessment Complete</span>
+                      <span>{contentPackage?.assessmentCriteria?.name || "Assessment"} Complete</span>
                       <motion.span
                         initial={{ rotate: 0 }}
                         animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
@@ -655,7 +675,7 @@ export default function AssessmentBotScreen({
                     </div>
                   )}
                   <span className="text-xs text-gray-500 mt-1">
-                    {message.role === 'assistant' ? 'Reginald Worthington III' : 'You'}
+                    {message.role === 'assistant' ? displayName : 'You'}
                   </span>
                 </div>
                 <div className={`ml-10 ${

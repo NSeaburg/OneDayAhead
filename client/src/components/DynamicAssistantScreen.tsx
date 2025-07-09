@@ -530,9 +530,7 @@ export default function DynamicAssistantScreen({
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
               <h2 className="font-semibold text-lg text-gray-800">
-                {proficiencyLevel === "high" ? "Mrs. Parton" :
-                 proficiencyLevel === "medium" ? "Mrs. Bannerman" :
-                 proficiencyLevel === "low" ? "Mr. Whitaker" : "Dynamic Assistant"}
+                {getTeacherName()}
               </h2>
               
               {proficiencyLevel !== "unknown" && (
@@ -543,9 +541,10 @@ export default function DynamicAssistantScreen({
                     proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
                   }`}></div>
                   <p className="text-sm text-gray-600">
-                    {proficiencyLevel === "high" ? "Advanced level assistance" :
-                     proficiencyLevel === "medium" ? "Intermediate level assistance" :
-                     proficiencyLevel === "low" ? "Foundational level assistance" : "Standard assistance"}
+                    {contentPackage?.teachingBots?.[proficiencyLevel]?.config?.assistanceLevel || 
+                     (proficiencyLevel === "high" ? `Advanced ${contentPackage?.course?.replace('-', ' ') || 'level'} assistance` :
+                      proficiencyLevel === "medium" ? `Intermediate ${contentPackage?.course?.replace('-', ' ') || 'level'} assistance` :
+                      proficiencyLevel === "low" ? `Foundational ${contentPackage?.course?.replace('-', ' ') || 'level'} assistance` : "Standard assistance")}
                   </p>
                 </div>
               )}
@@ -578,11 +577,7 @@ export default function DynamicAssistantScreen({
                       </div>
                     )}
                     <span className="text-xs text-gray-500 mt-1">
-                      {message.role === 'assistant' 
-                        ? (proficiencyLevel === "high" ? 'Mrs. Parton' : 
-                           proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 
-                           proficiencyLevel === "low" ? 'Mr. Whitaker' : 'Assistant') 
-                        : 'You'}
+                      {message.role === 'assistant' ? getTeacherName() : 'You'}
                     </span>
                   </div>
                   <div className={`ml-10 ${
@@ -609,9 +604,7 @@ export default function DynamicAssistantScreen({
                       />
                     </div>
                     <span className="text-xs text-gray-500 mt-1">
-                      {proficiencyLevel === "high" ? 'Mrs. Parton' : 
-                       proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 
-                       proficiencyLevel === "low" ? 'Mr. Whitaker' : 'Assistant'}
+                      {getTeacherName()}
                     </span>
                   </div>
                   <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700">
