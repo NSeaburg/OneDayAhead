@@ -1,0 +1,100 @@
+{
+  "name": "Three Branches Government Feedback Instructions",
+  "description": "Instructions for generating comprehensive feedback and grading for the three branches learning experience",
+  "subject": "civics",
+  "gradeLevel": "high-school",
+  "gradingPrompt": "You are evaluating a student's complete learning experience about the three branches of government. You have their assessment conversation and teaching conversation transcripts.\n\nEvaluate on these dimensions:\n\n**CONTENT KNOWLEDGE (0-4 scale, 0.5 increments)**\n- 4.0: Demonstrates comprehensive understanding of all three branches, their functions, and checks/balances with specific examples\n- 3.5: Shows strong understanding with minor gaps or lacks some specific examples\n- 3.0: Good basic understanding of branches and checks/balances\n- 2.5: Understands most concepts but has some confusion or gaps\n- 2.0: Basic understanding with significant gaps or misconceptions\n- 1.5: Limited understanding, major concepts unclear\n- 1.0: Very limited understanding, mostly confused\n- 0.5: Minimal engagement or understanding\n- 0.0: No demonstrated understanding\n\n**WRITING QUALITY (0-4 scale, 0.5 increments)**\n- 4.0: Clear, well-organized responses with proper grammar and vocabulary\n- 3.5: Generally clear with minor issues\n- 3.0: Mostly clear communication, some organizational issues\n- 2.5: Adequate communication with noticeable issues\n- 2.0: Communication hampered by unclear expression\n- 1.5: Difficult to understand, major clarity issues\n- 1.0: Very unclear, hard to follow reasoning\n- 0.5: Minimal coherent communication\n- 0.0: Incomprehensible or no substantial responses\n\nProvide:\n1. **summary**: 2-3 paragraph comprehensive feedback on their learning journey\n2. **contentKnowledgeScore**: Number between 0-4 (0.5 increments)\n3. **writingScore**: Number between 0-4 (0.5 increments)\n4. **nextSteps**: Specific, actionable recommendations for continued learning\n\nFocus on growth, celebrate achievements, and provide constructive guidance.",
+  "feedbackComponents": {
+    "summary": {
+      "description": "Comprehensive overview of student's learning journey",
+      "requirements": [
+        "Acknowledge student's engagement and effort",
+        "Highlight key concepts they grasped well",
+        "Note areas where they showed growth during the experience",
+        "Mention specific examples or insights they provided",
+        "Keep tone encouraging and growth-focused"
+      ],
+      "length": "2-3 paragraphs"
+    },
+    "contentKnowledgeScore": {
+      "description": "Assessment of understanding of three branches concepts",
+      "scale": "0-4 points in 0.5 increments",
+      "focusAreas": [
+        "Identification of three branches",
+        "Understanding branch functions",
+        "Knowledge of checks and balances",
+        "Specific examples provided",
+        "Deeper insights about separation of powers"
+      ]
+    },
+    "writingScore": {
+      "description": "Assessment of communication and expression quality",
+      "scale": "0-4 points in 0.5 increments",
+      "focusAreas": [
+        "Clarity of expression",
+        "Organization of thoughts",
+        "Grammar and vocabulary usage",
+        "Completeness of responses",
+        "Engagement in meaningful dialogue"
+      ]
+    },
+    "nextSteps": {
+      "description": "Personalized recommendations for continued learning",
+      "requirements": [
+        "Specific to their demonstrated level and interests",
+        "Actionable and achievable",
+        "Connect to real-world applications",
+        "Encourage continued exploration",
+        "Provide concrete next learning activities"
+      ],
+      "examples": [
+        "Explore specific Supreme Court cases that demonstrate judicial review",
+        "Research a recent example of presidential veto power in action",
+        "Investigate how your local government structure mirrors federal separation of powers",
+        "Study the impeachment process through historical examples"
+      ]
+    }
+  },
+  "rubricGuidelines": {
+    "excellentPerformance": {
+      "contentRange": "3.5-4.0",
+      "writingRange": "3.5-4.0",
+      "characteristics": [
+        "Comprehensive understanding with sophisticated insights",
+        "Clear, well-organized communication",
+        "Specific examples and connections to real-world applications",
+        "Demonstrates critical thinking about governmental structure"
+      ]
+    },
+    "proficientPerformance": {
+      "contentRange": "2.5-3.4",
+      "writingRange": "2.5-3.4",
+      "characteristics": [
+        "Good understanding of core concepts",
+        "Generally clear communication",
+        "Some examples and connections made",
+        "Shows engagement with the material"
+      ]
+    },
+    "developingPerformance": {
+      "contentRange": "1.5-2.4",
+      "writingRange": "1.5-2.4",
+      "characteristics": [
+        "Basic understanding with gaps",
+        "Communication needs improvement",
+        "Limited examples or connections",
+        "Shows effort but needs support"
+      ]
+    },
+    "beginningPerformance": {
+      "contentRange": "0.0-1.4",
+      "writingRange": "0.0-1.4",
+      "characteristics": [
+        "Minimal understanding of concepts",
+        "Unclear or incomplete communication",
+        "Few or no examples provided",
+        "Needs significant foundational support"
+      ]
+    }
+  }
+}

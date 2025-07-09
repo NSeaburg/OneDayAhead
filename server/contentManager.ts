@@ -14,6 +14,64 @@ export interface ContentPackage {
     medium: BotConfig;
     low: BotConfig;
   };
+  assessmentCriteria?: AssessmentCriteria;
+  feedbackInstructions?: FeedbackInstructions;
+}
+
+export interface AssessmentCriteria {
+  name: string;
+  description: string;
+  subject: string;
+  gradeLevel: string;
+  evaluationPrompt: string;
+  routingCriteria: {
+    high: RoutingLevel;
+    medium: RoutingLevel;
+    low: RoutingLevel;
+  };
+  fallbackLevel: string;
+}
+
+export interface RoutingLevel {
+  description: string;
+  indicators: string[];
+  teachingBot: string;
+  minScore: number;
+}
+
+export interface FeedbackInstructions {
+  name: string;
+  description: string;
+  subject: string;
+  gradeLevel: string;
+  gradingPrompt: string;
+  feedbackComponents: {
+    summary: FeedbackComponent;
+    contentKnowledgeScore: FeedbackComponent;
+    writingScore: FeedbackComponent;
+    nextSteps: FeedbackComponent;
+  };
+  rubricGuidelines: {
+    excellentPerformance: PerformanceLevel;
+    proficientPerformance: PerformanceLevel;
+    developingPerformance: PerformanceLevel;
+    beginningPerformance: PerformanceLevel;
+  };
+}
+
+export interface FeedbackComponent {
+  description: string;
+  scale?: string;
+  focusAreas?: string[];
+  requirements?: string[];
+  length?: string;
+  examples?: string[];
+}
+
+export interface PerformanceLevel {
+  contentRange: string;
+  writingRange: string;
+  characteristics: string[];
 }
 
 export interface BotConfig {
@@ -95,6 +153,10 @@ export class ContentManager {
         )
       };
 
+      // Load assessment criteria and feedback instructions
+      const assessmentCriteria = await this.loadAssessmentCriteria(topicPath);
+      const feedbackInstructions = await this.loadFeedbackInstructions(topicPath);
+
       return {
         id: `${district}/${course}/${topic}`,
         name: topic.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
@@ -103,7 +165,9 @@ export class ContentManager {
         course,
         topic,
         assessmentBot,
-        teachingBots
+        teachingBots,
+        assessmentCriteria,
+        feedbackInstructions
       };
     } catch (error) {
       console.error(`Error loading content package ${district}/${course}/${topic}:`, error);
@@ -232,6 +296,32 @@ export class ContentManager {
   private async copyTemplate(templatePath: string, targetPath: string): Promise<void> {
     // Copy template implementation - for now just create basic files
     await this.createBasicFiles(targetPath, path.basename(targetPath));
+  }
+
+  private async loadAssessmentCriteria(topicPath: string): Promise<AssessmentCriteria | undefined> {
+    try {
+      const criteriaPath = path.join(topicPath, 'assessment-criteria.json');
+      if (fs.existsSync(criteriaPath)) {
+        const data = await fs.promises.readFile(criteriaPath, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('Error loading assessment criteria:', error);
+    }
+    return undefined;
+  }
+
+  private async loadFeedbackInstructions(topicPath: string): Promise<FeedbackInstructions | undefined> {
+    try {
+      const instructionsPath = path.join(topicPath, 'feedback-instructions.json');
+      if (fs.existsSync(instructionsPath)) {
+        const data = await fs.promises.readFile(instructionsPath, 'utf8');
+        return JSON.parse(data);
+      }
+    } catch (error) {
+      console.error('Error loading feedback instructions:', error);
+    }
+    return undefined;
   }
 
   private async createBasicFiles(topicPath: string, topic: string): Promise<void> {

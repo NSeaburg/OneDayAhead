@@ -45,6 +45,7 @@ interface AssessmentBotScreenProps {
   onPrevious?: () => void;
   botName?: string;
   botAvatar?: string;
+  contentPackage?: any;
 }
 
 // Topics to be covered in the assessment
@@ -62,7 +63,8 @@ export default function AssessmentBotScreen({
   onNext,
   onPrevious,
   botName = "Assessment Bot",
-  botAvatar
+  botAvatar,
+  contentPackage
 }: AssessmentBotScreenProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
@@ -389,6 +391,9 @@ export default function AssessmentBotScreen({
         
         // Thread ID (for backward compatibility) or generate a Claude-specific one
         threadId: threadId || `claude-${Date.now()}`,
+        
+        // Content package for dynamic assessment
+        contentPackage: contentPackage,
         
         // Metadata
         courseName: "Social Studies Sample",

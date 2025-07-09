@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 9, 2025. Completed architectural consolidation from hybrid hardcoded/configurable system to unified file-based configuration
+  - Updated /api/assess-conversation endpoint to load assessment criteria from content package configuration files
+  - Updated /api/grade-conversations endpoint to load feedback instructions from content package configuration files
+  - Modified AssessmentBotScreen component to pass contentPackage data to assessment endpoints
+  - Assessment routing and grading now fully driven by assessment-criteria.json and feedback-instructions.json files
+  - Eliminated hardcoded Three Branches assessment logic in favor of configuration-driven approach
+  - System now uses consistent file-based configuration structure across all content packages
+  - Enhanced ContentManager to load and provide assessment criteria and feedback instructions to backend routes
 - July 8, 2025. Fixed comprehensive feedback system with enhanced AI grading and dynamic bot names
   - Enhanced Claude grading system with detailed rubrics for content knowledge (0-4) and writing quality (0-4)
   - Added comprehensive assessment instructions including specific criteria for each score level

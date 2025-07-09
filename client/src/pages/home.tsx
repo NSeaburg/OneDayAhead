@@ -250,6 +250,7 @@ export default function Home() {
               systemPrompt={contentPackage?.assessmentBot?.personality || config.systemPrompts.assessment}
               botName={contentPackage?.assessmentBot?.name}
               botAvatar={contentPackage?.assessmentBot?.avatar}
+              contentPackage={contentPackage}
               onNext={(teachingAssistanceData) => {
               // Store the teaching assistance data from assessment
               if (teachingAssistanceData) {

@@ -1207,7 +1207,7 @@ When the student has completed both activities, thank them warmly and end the co
   // NEW: Claude-based assessment evaluation endpoint (replaces N8N webhook)
   app.post("/api/assess-conversation", async (req, res) => {
     try {
-      const { conversationData, threadId, courseName, chatDurationSeconds } = req.body;
+      const { conversationData, threadId, courseName, chatDurationSeconds, contentPackage } = req.body;
       const sessionId = req.sessionId;
 
       // Verify we have data to evaluate
@@ -1233,10 +1233,32 @@ When the student has completed both activities, thank them warmly and end the co
         }
       }
 
+      // Load assessment criteria from content package or use default
+      let assessmentCriteria = null;
+      let evaluationPrompt = ASSESSMENT_EVALUATION_PROMPT; // fallback
+      
+      if (contentPackage) {
+        try {
+          const [district, course, topic] = contentPackage.id.split('/');
+          const loadedPackage = await contentManager.loadContentPackage(district, course, topic);
+          assessmentCriteria = loadedPackage?.assessmentCriteria;
+          
+          if (assessmentCriteria?.evaluationPrompt) {
+            evaluationPrompt = assessmentCriteria.evaluationPrompt;
+            console.log("🔧 Using assessment criteria from content package:", assessmentCriteria.name);
+          } else {
+            console.log("🔧 No assessment criteria found, using fallback prompt");
+          }
+        } catch (error) {
+          console.error("Error loading assessment criteria:", error);
+          console.log("🔧 Falling back to default assessment prompt");
+        }
+      }
+
       // Generate conversation transcript for Claude evaluation
       const transcript = conversationData
         .map((msg: { role: string; content: string }) =>
-          `${msg.role === "assistant" ? "Reginald Worthington III" : "Student"}: ${msg.content}`
+          `${msg.role === "assistant" ? "Assessment Bot" : "Student"}: ${msg.content}`
         )
         .join("\n\n");
 
@@ -1246,7 +1268,7 @@ When the student has completed both activities, thank them warmly and end the co
       const evaluationMessages = [
         {
           role: "user" as const,
-          content: `Please evaluate this conversation between a student and Reginald Worthington III (an assessment bot) about the three branches of U.S. government:
+          content: `Please evaluate this learning conversation:
 
 ${transcript}
 
@@ -1256,7 +1278,7 @@ Based on the assessment criteria, determine the student's understanding level an
 
       const evaluation = await anthropic.messages.create({
         messages: evaluationMessages,
-        system: ASSESSMENT_EVALUATION_PROMPT,
+        system: evaluationPrompt,
         model: "claude-3-7-sonnet-20250219",
         max_tokens: 1000,
         temperature: 0.3, // Lower temperature for consistent evaluation
@@ -1284,12 +1306,34 @@ Based on the assessment criteria, determine the student's understanding level an
 
       console.log(`Claude assessed student at "${level}" level: ${reasoning}`);
 
-      // Generate appropriate system prompt based on level
+      // Generate appropriate system prompt based on level using content package or fallback
       let systemPrompt = "";
       let imageAssistant = "";
 
-      if (level === "high") {
-        systemPrompt = `You are Mrs. Parton, an American history teacher. Your voice is dry, wry, funny and direct. You are fun and challenging. You treat students like young scholars, expecting thoughtful conversation while providing support and encouragement. You occasionally share quick, encouraging asides about how democracy has evolved, but you stay focused on the task.
+      // Try to load teaching bot from content package first
+      if (contentPackage && assessmentCriteria) {
+        try {
+          const teachingBotLevel = level === "high" ? "high" : level === "medium" ? "medium" : "low";
+          const teachingBot = contentPackage.teachingBots?.[teachingBotLevel];
+          
+          if (teachingBot?.personality) {
+            systemPrompt = teachingBot.personality;
+            imageAssistant = teachingBot.avatar?.replace('.png', '') || teachingBotLevel;
+            console.log(`🔧 Using teaching bot "${teachingBot.name}" from content package`);
+          } else {
+            console.log(`🔧 No teaching bot found for level ${teachingBotLevel}, using fallback`);
+          }
+        } catch (error) {
+          console.error("Error loading teaching bot from content package:", error);
+        }
+      }
+
+      // Fall back to hardcoded prompts if content package doesn't have them
+      if (!systemPrompt) {
+        console.log(`🔧 Using fallback teaching prompts for level: ${level}`);
+        
+        if (level === "high") {
+          systemPrompt = `You are Mrs. Parton, an American history teacher. Your voice is dry, wry, funny and direct. You are fun and challenging. You treat students like young scholars, expecting thoughtful conversation while providing support and encouragement. You occasionally share quick, encouraging asides about how democracy has evolved, but you stay focused on the task.
 
 Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson.
 
@@ -1308,9 +1352,9 @@ Then move into analyzing how Checks and Balances operated in this crisis. Challe
 Pursue anything you think is interesting or provocative. Push back on the students thinking. 
 
 After you have mined this case study, wrap up by thinking the student warmly for their thoughtful work. End the conversation naturally and invite them to continue in the course by explicitly mentioning the next button at the bottom of the screen.`;
-        imageAssistant = "parton";
-      } else if (level === "medium") {
-        systemPrompt = `You are Mrs. Bannerman, a retired civics and American history teacher. Your voice is warm, supportive, plainspoken, and slightly nostalgic. You explain complex ideas patiently, using real-world examples and encouraging students to think deeply. You occasionally share quick, encouraging asides about your time in the classroom. You gently challenge students to expand their thinking without ever making them feel foolish. You are here to be a concise guide, not a lecture.
+          imageAssistant = "parton";
+        } else if (level === "medium") {
+          systemPrompt = `You are Mrs. Bannerman, a retired civics and American history teacher. Your voice is warm, supportive, plainspoken, and slightly nostalgic. You explain complex ideas patiently, using real-world examples and encouraging students to think deeply. You occasionally share quick, encouraging asides about your time in the classroom. You gently challenge students to expand their thinking without ever making them feel foolish. You are here to be a concise guide, not a lecture.
 
 Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson.
 
@@ -1328,9 +1372,9 @@ Part 2: Tweaks
 Recognize that our system is not perfect, and that there are many with opinions on how it "should be". Ask the student what they would tweak in our system to make it function better. Validate and challenge their suggestion, while recognizing that you don't have all the right answers. 
 
 After you have been through this flow thank the student and explicitly instruct them to move on in the course by hitting the "next" button below.`;
-        imageAssistant = "bannerman";
-      } else { // low
-        systemPrompt = `You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government. Your voice is warm, supportive, plainspoken, and slightly nostalgic. You explain complex ideas patiently, using simple examples and metaphors where needed. You occasionally share quick, encouraging asides about your time in the classroom. You gently celebrate effort but do not overpraise or scold.
+          imageAssistant = "bannerman";
+        } else { // low
+          systemPrompt = `You are Mr. Whitaker, a retired civics and American history teacher. You taught for 35 years and now volunteer your time to help students strengthen their understanding of government. Your voice is warm, supportive, plainspoken, and slightly nostalgic. You explain complex ideas patiently, using simple examples and metaphors where needed. You occasionally share quick, encouraging asides about your time in the classroom. You gently celebrate effort but do not overpraise or scold.
 
 Use age-appropriate language at all times. No profanity, no edgy humor, no sensitive topics, and no political opinions beyond the structure of government. If the student tries to take the conversation off-topic, gently and kindly redirect them back to the lesson. If the student is struggling with the concept, remind them of what each branch does. Dumb it down if you have to. 
 
@@ -1362,7 +1406,8 @@ Stage 3: Checks and Balances – "Who Can Stop This?"
 - Then give a simple scenario (e.g., "Congress passes a law the president doesn't like") and ask: "Who can step in to stop this, and how?"
 - After the student answers, confirm or correct them directly, clearly, and encouragingly.
 - Do three of these scenarios in total, one at a time. When the student has completed all three stages, thank them warmly and end the conversation naturally. Invite them to move on my explicitly naming the "next button" at the bottom of the screen.`;
-        imageAssistant = "whitaker";
+          imageAssistant = "whitaker";
+        }
       }
 
       // Return structured response matching the existing format
@@ -1452,7 +1497,41 @@ Stage 3: Checks and Balances – "Who Can Stop This?"
       console.log("- teachingTranscript preview:", teachingTranscript.substring(0, 200) + "...");
       console.log("- assessmentTranscript preview:", assessmentTranscript.substring(0, 200) + "...");
 
-      // Create dynamic grading content based on content package
+      // Load feedback instructions from content package or use default
+      let feedbackInstructions = null;
+      let gradingPrompt = `You are an educational assessment specialist. Evaluate student learning conversations and provide feedback in exactly 4 areas as requested.
+
+SCORING GUIDELINES:
+- Content Knowledge: 0-4 scale in 0.5 intervals (focus on understanding of core concepts)
+- Writing Quality: 0-4 scale in 0.5 intervals (sentence structure, word choice, grammar, spelling)
+
+RESPONSE FORMAT:
+- Use positive, encouraging tone
+- Be specific about strengths and areas for growth
+- Keep "What's Next" section brief and engaging
+- If conversations are missing/insufficient, acknowledge this clearly
+
+Return ONLY a JSON object with exactly these fields: summary, contentKnowledgeScore, writingScore, nextSteps`;
+
+      if (contentPackage) {
+        try {
+          const [district, course, topic] = contentPackage.id.split('/');
+          const loadedPackage = await contentManager.loadContentPackage(district, course, topic);
+          feedbackInstructions = loadedPackage?.feedbackInstructions;
+          
+          if (feedbackInstructions?.gradingPrompt) {
+            gradingPrompt = feedbackInstructions.gradingPrompt;
+            console.log("🔧 Using feedback instructions from content package:", feedbackInstructions.name);
+          } else {
+            console.log("🔧 No feedback instructions found, using fallback prompt");
+          }
+        } catch (error) {
+          console.error("Error loading feedback instructions:", error);
+          console.log("🔧 Falling back to default grading prompt");
+        }
+      }
+
+      // Create dynamic grading content based on content package or fallback
       const isThreeBranches = contentPackage?.topic === "three-branches" || courseName?.includes("branches") || !contentPackage;
       
       const gradingConfig = isThreeBranches ? {
@@ -1495,19 +1574,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
 
       const grading = await anthropic.messages.create({
         messages: gradingMessages,
-        system: `You are an educational assessment specialist. Evaluate student learning conversations and provide feedback in exactly 4 areas as requested.
-
-SCORING GUIDELINES:
-- Content Knowledge: 0-4 scale in 0.5 intervals (focus on understanding of branch names, powers, and checks/balances)
-- Writing Quality: 0-4 scale in 0.5 intervals (sentence structure, word choice, grammar, spelling)
-
-RESPONSE FORMAT:
-- Use positive, encouraging tone
-- Be specific about strengths and areas for growth
-- Keep "What's Next" section brief and engaging
-- If conversations are missing/insufficient, acknowledge this clearly
-
-Return ONLY a JSON object with exactly these fields: summary, contentKnowledgeScore, writingScore, nextSteps`,
+        system: gradingPrompt,
         model: "claude-3-7-sonnet-20250219",
         max_tokens: 1500,
         temperature: 0.3,
