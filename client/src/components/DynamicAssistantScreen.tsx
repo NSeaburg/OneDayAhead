@@ -167,18 +167,40 @@ export default function DynamicAssistantScreen({
   
   // Reset conversation on mount or when teachingAssistance changes to ensure system prompt is applied
   useEffect(() => {
-    console.log("DynamicAssistantScreen mounted/updated - resetting conversation to ensure proper system prompt");
+    console.log("DynamicAssistantScreen mounted/updated - checking if conversation reset needed");
     console.log("Using system prompt with level:", proficiencyLevel);
     
     // Always ensure article is hidden on first load
     setShowArticle(false);
     
-    // Clear existing messages and set the initial welcome
-    setMessages([{
-      role: 'assistant',
-      content: initialMessage
-    }]);
-  }, [teachingAssistance, initialMessage, setMessages]);
+    // Check if we already have a teaching conversation in storage
+    const existingTeachingMessages = globalStorage.getTeachingMessages();
+    const windowTeachingMessages = window.__assessmentData?.teachingMessages;
+    
+    // Determine if we have a real conversation (more than just initial greeting) from either source
+    const hasRealConversation = (messages: any[]) => {
+      return messages && messages.length > 1 && 
+             messages.some(msg => msg.role === 'user'); // At least one user message means real conversation
+    };
+    
+    const existingIsReal = hasRealConversation(existingTeachingMessages);
+    const windowIsReal = hasRealConversation(windowTeachingMessages);
+    
+    if (windowIsReal && windowTeachingMessages.length > (existingTeachingMessages?.length || 0)) {
+      console.log("Found real teaching conversation in window with", windowTeachingMessages.length, "messages - preserving it");
+      setMessages(windowTeachingMessages);
+    } else if (existingIsReal) {
+      console.log("Found real teaching conversation in storage with", existingTeachingMessages.length, "messages - preserving it");
+      setMessages(existingTeachingMessages);
+    } else {
+      console.log("No real conversation found - starting fresh with initial message");
+      // Clear existing messages and set the initial welcome
+      setMessages([{
+        role: 'assistant',
+        content: initialMessage
+      }]);
+    }
+  }, [teachingAssistance, initialMessage, proficiencyLevel]);
   
   // Store conversation in global storage for the feedback screen
   useEffect(() => {
@@ -522,7 +544,9 @@ export default function DynamicAssistantScreen({
   
   const getTeacherImage = () => {
     if (contentPackage?.teachingBots?.[proficiencyLevel]?.avatar) {
-      return `/api/content-assets/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${proficiencyLevel}/${contentPackage.teachingBots[proficiencyLevel].avatar}`;
+      // Use the correct folder structure with "-level" suffix
+      const folderName = `${proficiencyLevel}-level`;
+      return `/api/content-assets/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${folderName}/${contentPackage.teachingBots[proficiencyLevel].avatar}`;
     }
     if (proficiencyLevel === "high") {
       return mrsPartonImage;
