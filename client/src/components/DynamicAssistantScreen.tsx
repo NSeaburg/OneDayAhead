@@ -12,11 +12,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Message } from "@/lib/openai";
 import globalStorage from "@/lib/globalStorage";
 
-// Import teacher images directly
-import mrWhitakerImage from "../../../public/Whitaker.png";
-import mrsPartonImage from "../../../public/Parton.png";
-import mrsBannermanImage from "../../../public/Bannerman.png";
-
 // Default placeholder image for fallback purposes
 const placeholderImage = "https://placehold.co/400x400?text=Assistant";
 
@@ -543,21 +538,25 @@ export default function DynamicAssistantScreen({
   };
   
   const getTeacherImage = () => {
+    // Always try to use content package avatar first
     if (contentPackage?.teachingBots?.[proficiencyLevel]?.avatar) {
       // Use the correct folder structure with "-level" suffix
       const folderName = `${proficiencyLevel}-level`;
       return `/api/content-assets/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${folderName}/${contentPackage.teachingBots[proficiencyLevel].avatar}`;
     }
+    
+    // Fallback to default avatars based on level if no content package avatar
     if (proficiencyLevel === "high") {
-      return mrsPartonImage;
+      return "/api/content-assets/demo-district/civics-government/three-branches/teaching-bots/high-level/Parton.png";
     }
     if (proficiencyLevel === "medium") {
-      return mrsBannermanImage;
+      return "/api/content-assets/demo-district/civics-government/three-branches/teaching-bots/medium-level/Bannerman.png";
     }
     if (proficiencyLevel === "low") {
-      return mrWhitakerImage;
+      return "/api/content-assets/demo-district/civics-government/three-branches/teaching-bots/low-level/Whitaker.png";
     }
-    return placeholderImage; // Default fallback
+    
+    return placeholderImage; // Final fallback
   };
   
   const getTeacherTitle = () => {
