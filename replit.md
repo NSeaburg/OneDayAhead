@@ -148,6 +148,13 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 9, 2025. Fixed feedback page data flow issues after reset button usage
+  - Fixed critical bug where DynamicAssistantScreen was passing feedback data as second parameter but home.tsx callback expected it as first parameter
+  - Changed `onNext(undefined, feedbackData)` to `onNext(feedbackData)` to match expected callback signature
+  - Fixed JSON parsing issue where frontend tried to access `response.success` directly instead of parsing response first with `response.json()`
+  - Fixed data property mismatch where server returns `feedbackData` but frontend was accessing `result.data`
+  - Feedback page now correctly displays scores and feedback both on first run and after using reset button
+  - Data flow confirmed working: `/api/grade-conversations` → result.feedbackData → onNext callback → home.tsx setFeedbackData → SimpleFeedbackScreen props
 - July 9, 2025. Fixed feedback page data flow by streamlining Claude grading integration
   - Removed complex legacy N8N parsing code from DynamicAssistantScreen handleNext function
   - Simplified feedback data flow: `/api/grade-conversations` → feedbackData → globalStorage → SimpleFeedbackScreen

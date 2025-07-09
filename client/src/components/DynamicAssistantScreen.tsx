@@ -319,7 +319,7 @@ export default function DynamicAssistantScreen({
       
       // Navigate to feedback screen with the data
       console.log("⚠️ DEBUG CRITICAL - About to call onNext with feedbackData:", feedbackData);
-      onNext(undefined, feedbackData);
+      onNext(feedbackData);
     } catch (error) {
       console.error("Failed to grade conversations:", error);
       
@@ -332,7 +332,7 @@ export default function DynamicAssistantScreen({
       };
       
       globalStorage.setFeedbackData(fallbackData);
-      onNext(undefined, fallbackData);
+      onNext(fallbackData);
     } finally {
       setIsSendingToN8N(false);
     }
