@@ -9,6 +9,8 @@ import ExperienceCreator from "@/pages/experience-creator";
 import { config } from "@/config";
 import { useAssistantConfig } from "@/hooks/useAssistantConfig";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 
 // Teaching assistance data interface
 interface TeachingAssistance {
@@ -183,6 +185,42 @@ export default function Home() {
     setShowExperienceCreator(false);
   };
 
+  // Reset function to clear all conversations and return to assessment
+  const handleReset = () => {
+    console.log('🔄 Reset button clicked - clearing all data');
+    
+    // Clear all localStorage data
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('learningAppGlobalStorage');
+      window.localStorage.removeItem('assessment_conversation');
+      window.localStorage.removeItem('assessment_thread_id');
+      window.localStorage.removeItem('teaching_conversation');
+      window.localStorage.removeItem('teaching_thread_id');
+      window.localStorage.removeItem('feedback_data');
+    }
+    
+    // Clear window.__assessmentData
+    if (typeof window !== 'undefined' && window.__assessmentData) {
+      delete window.__assessmentData.threadId;
+      delete window.__assessmentData.messages;
+      delete window.__assessmentData.teachingMessages;
+      delete window.__assessmentData.feedbackData;
+    }
+    
+    // Reset all state variables
+    setCurrentScreen(1);
+    setAssessmentThreadId("");
+    setAssessmentConversation([]);
+    setTeachingAssistance(undefined);
+    setFeedbackData(undefined);
+    setDynamicAssistantId("");
+    
+    toast({
+      title: "Reset Complete",
+      description: "All conversations have been cleared. Starting fresh!"
+    });
+  };
+
   // Display loading state while fetching assistant configurations
   if (isLoading) {
     return (
@@ -231,6 +269,15 @@ export default function Home() {
       {/* Progress indicator showing current position in the learning flow */}
       <div className="flex justify-between items-center p-4">
         <ProgressIndicator currentStep={currentScreen} totalSteps={3} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReset}
+          className="flex items-center gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Reset
+        </Button>
       </div>
       
       {/* Screen container with all screen components */}
