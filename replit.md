@@ -148,6 +148,12 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 9, 2025. Fixed feedback page data flow by streamlining Claude grading integration
+  - Removed complex legacy N8N parsing code from DynamicAssistantScreen handleNext function
+  - Simplified feedback data flow: `/api/grade-conversations` → feedbackData → globalStorage → SimpleFeedbackScreen
+  - Reset button now works correctly - clears all data and refreshes page for clean state
+  - Teaching conversation transcripts and assessment data now flow properly to feedback screen
+  - Eliminated 100+ lines of complex N8N webhook data parsing in favor of direct Claude API integration
 - July 9, 2025. Successfully implemented static content serving for avatars and fixed display issues
   - Replaced API route serving (/api/content-assets) with direct static serving (/content/) 
   - Added express.static('content') middleware to serve content directory in both development and production

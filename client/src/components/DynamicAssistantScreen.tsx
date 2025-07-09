@@ -276,245 +276,62 @@ export default function DynamicAssistantScreen({
       console.log("- Using stored teaching messages:", storedTeachingMessages.slice(0, 2));
       console.log("- Using assessment messages:", storedAssessmentMessages.slice(0, 2));
       
+      // Store teaching conversation for transcript display
+      globalStorage.setTeachingMessages(storedTeachingMessages);
+      
       // Send both conversation datasets to Claude-based grading endpoint
       const response = await apiRequest("POST", "/api/grade-conversations", {
-        // Teaching bot data - use stored messages to ensure complete conversation
         teachingConversation: storedTeachingMessages,
-        teachingThreadId: threadId,
-        
-        // Assessment bot data (if available)
         assessmentConversation: storedAssessmentMessages,
-        assessmentThreadId: assessmentThreadId || "",
-        
-        // Content package for dynamic grading
-        contentPackage: contentPackage,
-        
-        // Common metadata
-        courseName: "Social Studies Sample",
-        chatDurationSeconds: chatDurationSeconds
+        contentPackage: contentPackage
       });
       
-      const result = await response.json();
-      console.log("Claude comprehensive grading result:", result);
-      console.log("Webhook response raw JSON:", JSON.stringify(result));
-      console.log("Teaching bot Thread ID:", threadId);
-      console.log("Assessment bot Thread ID:", assessmentThreadId || "Not available");
+      console.log("Claude grading endpoint response:", response);
       
-      // Fallback data when N8N returns an empty response or connection fails (using 0-4 scale)
-      // Note: In production, this would be replaced with a more generic message prompting user to retry
-      const fallbackFeedbackData = {
-        summary: "You've completed learning about the three branches of government! You demonstrated understanding of how the legislative, executive, and judicial branches function together with checks and balances.",
-        contentKnowledgeScore: 3.0,
-        writingScore: 3.0,
-        nextSteps: "Continue exploring government concepts by researching specific historical examples of how the branches have interacted throughout American history."
-      };
-      
-      // Extract feedback data if available - REVISED APPROACH
-      // Always prefer ANY valid data from N8N over fallbacks, even if scores are 0
       let feedbackData = null;
       
-      // Log raw result for debugging
-      console.log("Raw result from server:", JSON.stringify(result));
-      console.log("Result type:", typeof result);
-      console.log("Is result an array?", Array.isArray(result));
-      console.log("Result keys:", Object.keys(result));
-      
-      // Helper function to determine if an object looks like feedback data
-      const isValidFeedbackData = (data: any) => {
-        return data && typeof data === 'object' && (
-          'summary' in data || 
-          'contentKnowledgeScore' in data || 
-          'writingScore' in data || 
-          'nextSteps' in data
-        );
-      };
-      
-      // Check if the response has actual data - in order of preference
-      if (Object.keys(result).length === 0) {
-        // Completely empty response, use the fallback data only in this case
-        console.log("Received completely empty response from webhook, using fallback data");
-        feedbackData = fallbackFeedbackData;
-      } 
-      // DIRECT PROPERTY PATTERN (preferred)
-      else if (result.feedbackData && isValidFeedbackData(result.feedbackData)) {
-        // Direct object format from server (this is the expected format from our backend)
-        feedbackData = result.feedbackData;
-        console.log("Valid feedback data received in expected feedbackData property:", feedbackData);
-      }
-      // ARRAY PATTERN 
-      else if (Array.isArray(result) && result.length > 0) {
-        // Array format directly from N8N - check for valid data in array items
-        const firstItem = result[0];
+      if (response.success) {
+        console.log("Claude grading successful!");
+        console.log("Feedback data received:", response.data);
         
-        if (firstItem.feedbackData && isValidFeedbackData(firstItem.feedbackData)) {
-          // Nested feedbackData property
-          feedbackData = firstItem.feedbackData;
-          console.log("Valid feedback data found in N8N array (nested):", feedbackData);
-        } 
-        else if (isValidFeedbackData(firstItem)) {
-          // Direct properties in array item
-          feedbackData = firstItem;
-          console.log("Valid feedback data found in N8N array (direct):", feedbackData);
-        }
-      }
-      // DIRECT ROOT PATTERN
-      else if (isValidFeedbackData(result)) {
-        // The result itself is the feedback data
-        feedbackData = result;
-        console.log("Using result object directly as valid feedbackData:", feedbackData);
-      }
-      
-      // If we still don't have usable feedback data, use fallback
-      if (!feedbackData) {
-        console.log("No usable feedback data found in N8N response. Using fallback data");
-        feedbackData = fallbackFeedbackData;
-      }
-      
-      console.log("Final feedback data to be used:", feedbackData);
-      
-      if (result.success) {
-        // Silently continue without showing a toast
-        
-        // Process and store feedback data for use by the feedback screen
-        if (feedbackData) {
-          // Format the data ensuring proper types
-          const formattedFeedbackData = {
-            summary: typeof feedbackData.summary === 'string' ? 
-              feedbackData.summary : 
-              "No feedback summary available.",
-              
-            // Convert values to numbers but preserve the exact values returned from N8N
-            contentKnowledgeScore: typeof feedbackData.contentKnowledgeScore === 'number' ? 
-              Number(feedbackData.contentKnowledgeScore) : 
-              typeof feedbackData.contentKnowledgeScore === 'string' ?
-              Number(feedbackData.contentKnowledgeScore) :
-              0,
-              
-            writingScore: typeof feedbackData.writingScore === 'number' ? 
-              Number(feedbackData.writingScore) : 
-              typeof feedbackData.writingScore === 'string' ?
-              Number(feedbackData.writingScore) :
-              0,
-              
-            nextSteps: typeof feedbackData.nextSteps === 'string' ? 
-              feedbackData.nextSteps : 
-              "No next steps available."
-          };
-          
-          console.log("⚠️ DEBUG Raw feedback data:", {
-            summary: feedbackData.summary,
-            contentKnowledgeScore: feedbackData.contentKnowledgeScore,
-            writingScore: feedbackData.writingScore,
-            contentKnowledgeScoreType: typeof feedbackData.contentKnowledgeScore,
-            writingScoreType: typeof feedbackData.writingScore
-          });
-          
-          console.log("🔴 GLOBAL STORAGE - About to store formatted feedback data:", formattedFeedbackData);
-          
-          // Store in globalStorage - this will also update window.__assessmentData
-          globalStorage.setFeedbackData(formattedFeedbackData);
-          
-          // Store assessment conversation if available
-          if (assessmentConversation && assessmentConversation.length > 0) {
-            globalStorage.setAssessmentMessages(assessmentConversation);
-          }
-          
-          // Store teaching messages
-          globalStorage.setTeachingMessages(messages);
-          
-          // Store thread ID if available
-          if (assessmentThreadId) {
-            globalStorage.setAssessmentThreadId(assessmentThreadId);
-          }
-          
-          console.log("🔴 GLOBAL STORAGE - All data stored successfully");
-          console.log("🔴 GLOBAL STORAGE - Feedback data verification:", globalStorage.getFeedbackData());
-        } else {
-          console.log("No feedback data received from N8N webhook");
-          
-          // Create fallback data to ensure UI doesn't show placeholders
-          const fallbackData = {
-            summary: "You've completed learning about the three branches of government! You demonstrated understanding of the core concepts.",
-            contentKnowledgeScore: 3.0,
-            writingScore: 3.0,
-            nextSteps: "Continue exploring the relationships between branches by studying historical examples."
-          };
-          
-          // Store in globalStorage - this will also update window.__assessmentData
-          console.log("🔴 GLOBAL STORAGE - Using fallback feedback data:", fallbackData);
-          globalStorage.setFeedbackData(fallbackData);
-        }
-      } else {
-        // Handle the case where N8N returned a non-error response but with success: false
-        console.log("Teaching bot N8N integration failed:", result.message);
-        
-        // Show warning toast
-        toast({
-          title: "Data integration issue",
-          description: "There was an issue processing your data, but you can continue with the learning journey.",
-          variant: "default"
-        });
-        
-        // Still store fallback data
-        const fallbackData = {
-          summary: "You've completed learning about the three branches of government! Some data could not be processed, but you can continue your learning journey.",
-          contentKnowledgeScore: 3.0,
-          writingScore: 3.0,
-          nextSteps: "Continue exploring governmental concepts with other resources."
+        feedbackData = {
+          summary: response.data.summary,
+          contentKnowledgeScore: response.data.contentKnowledgeScore,
+          writingScore: response.data.writingScore,
+          nextSteps: response.data.nextSteps
         };
         
-        // Store in globalStorage
-        console.log("🔴 GLOBAL STORAGE - Using fallback feedback data after error:", fallbackData);
-        globalStorage.setFeedbackData(fallbackData);
-      }
-      
-      // Run a final verification before navigation
-      if (feedbackData) {
-        // Double check that both globalStorage and window.__assessmentData have been updated
-        const storedData = globalStorage.getFeedbackData();
+        // Store the feedback data in globalStorage  
+        console.log("🔴 GLOBAL STORAGE - Storing Claude feedback data:", feedbackData);
+        globalStorage.setFeedbackData(feedbackData);
         
-        console.log("⚠️ VERIFICATION - Final feedback data before navigation:", 
-          JSON.stringify({
-            globalStorage: {
-              contentKnowledgeScore: storedData.contentKnowledgeScore,
-              contentKnowledgeScoreType: typeof storedData.contentKnowledgeScore,
-              writingScore: storedData.writingScore,
-              writingScoreType: typeof storedData.writingScore
-            },
-            window: {
-              hasContentScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore !== undefined,
-              contentKnowledgeScore: window.__assessmentData?.feedbackData?.contentKnowledgeScore,
-              hasWritingScore: window.__assessmentData?.feedbackData?.writingScore !== undefined, 
-              writingScore: window.__assessmentData?.feedbackData?.writingScore,
-              type: typeof window.__assessmentData?.feedbackData?.contentKnowledgeScore
-            }
-          }, null, 2)
-        );
+      } else {
+        console.log("Claude grading failed:", response.message);
+        feedbackData = {
+          summary: "Assessment completed but detailed feedback is not available.",
+          contentKnowledgeScore: 2,
+          writingScore: 2,
+          nextSteps: "Continue exploring government concepts."
+        };
+        globalStorage.setFeedbackData(feedbackData);
       }
       
-      // Always call onNext just once at the end of the try block
-      console.log("⚠️ DEBUG CRITICAL - About to call onNext with feedbackData:", 
-        JSON.stringify({
-          contentKnowledgeScore: feedbackData?.contentKnowledgeScore,
-          writingScore: feedbackData?.writingScore,
-          contentKnowledgeScoreType: typeof feedbackData?.contentKnowledgeScore,
-          writingScoreType: typeof feedbackData?.writingScore,
-          fullData: feedbackData
-        }, null, 2)
-      );
+      // Navigate to feedback screen with the data
+      console.log("⚠️ DEBUG CRITICAL - About to call onNext with feedbackData:", feedbackData);
       onNext(undefined, feedbackData);
     } catch (error) {
-      console.error("Failed to send teaching data to N8N:", error);
+      console.error("Failed to grade conversations:", error);
       
-      // Show error toast
-      toast({
-        title: "Error sending teaching data",
-        description: "There was a problem sending your conversation data. You can still continue.",
-        variant: "destructive"
-      });
+      // Provide fallback feedback
+      const fallbackData = {
+        summary: "You've completed the learning session. Some feedback data couldn't be processed.",
+        contentKnowledgeScore: 2,
+        writingScore: 2,
+        nextSteps: "Continue exploring government concepts."
+      };
       
-      // Still allow the user to proceed to the next screen even if N8N integration fails
-      onNext();
+      globalStorage.setFeedbackData(fallbackData);
+      onNext(undefined, fallbackData);
     } finally {
       setIsSendingToN8N(false);
     }
