@@ -2144,10 +2144,20 @@ Return ONLY a JSON object with exactly these fields: summary, contentKnowledgeSc
       // Convert OpenAI-style messages to Anthropic format
       const anthropicMessages = messages
         .filter((msg: any) => msg.role !== "system")
+        .filter((msg: any) => msg.content && msg.content.trim().length > 0) // Filter out empty messages
         .map((msg: any) => ({
           role: msg.role as "user" | "assistant",
-          content: msg.content,
+          content: msg.content.trim(),
         }));
+
+      // Log message filtering results
+      console.log(`Filtered ${messages.length} input messages to ${anthropicMessages.length} valid messages`);
+      if (anthropicMessages.length === 0) {
+        console.error("No valid messages after filtering - all messages were empty");
+        res.write(`data: ${JSON.stringify({ error: "No valid messages to process" })}\n\n`);
+        res.end();
+        return;
+      }
 
       // Generate a thread ID based on assistant type
       const detectedAssistantType = systemPrompt?.includes("Reginald")

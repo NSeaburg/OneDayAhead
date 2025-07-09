@@ -139,6 +139,11 @@ export default function SimpleFeedbackScreen({
         teachingMsgs[0].role, 
         teachingMsgs[0].content.substring(0, 50) + "..."
       );
+      console.log("Teaching last message:", 
+        teachingMsgs[teachingMsgs.length - 1].role, 
+        teachingMsgs[teachingMsgs.length - 1].content.substring(0, 50) + "..."
+      );
+      console.log("Teaching all message roles:", teachingMsgs.map(m => m.role).join(", "));
     }
     
     setAssessmentMessages(assessmentMsgs);
