@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 9, 2025. Successfully implemented static content serving for avatars and fixed display issues
+  - Replaced API route serving (/api/content-assets) with direct static serving (/content/) 
+  - Added express.static('content') middleware to serve content directory in both development and production
+  - Updated all avatar paths in DynamicAssistantScreen and AssessmentBotScreen to use /content/ URLs
+  - Fixed Vite middleware interference that was causing API routes to return HTML instead of images
+  - Enhanced error handling for Anthropic API overload situations with user-friendly messages
+  - Confirmed both Reginald (assessment bot) and teaching bot avatars now load correctly from content packages
+  - System maintains full interchangeability - avatar paths use same structure, just served statically
 - July 9, 2025. Implemented content package avatar system with proper file serving
   - Added `/api/content-assets/:district/:course/:topic/:botType/:filename` route for serving content package assets
   - Updated AssessmentBotScreen and DynamicAssistantScreen to load avatars from content package folders

@@ -173,7 +173,14 @@ export default function AssessmentBotScreen({
       setIsTyping(false);
     } catch (error) {
       console.error('Assessment chat error:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'I apologize, but I encountered an error. Please try again.' }]);
+      
+      // More helpful error message for overloaded API
+      let errorMessage = 'I apologize, but I encountered an error. Please try again.';
+      if (error instanceof Error && error.message.includes('overloaded')) {
+        errorMessage = 'I apologize, but my services are temporarily overloaded. Please wait a moment and try again.';
+      }
+      
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
       setCurrentStreamingMessage("");
       setIsTyping(false);
     } finally {
