@@ -293,13 +293,13 @@ export default function DynamicAssistantScreen({
       
       if (result.success) {
         console.log("Claude grading successful!");
-        console.log("Feedback data received:", result.data);
+        console.log("Feedback data received:", result.feedbackData);
         
         feedbackData = {
-          summary: result.data.summary,
-          contentKnowledgeScore: result.data.contentKnowledgeScore,
-          writingScore: result.data.writingScore,
-          nextSteps: result.data.nextSteps
+          summary: result.feedbackData.summary,
+          contentKnowledgeScore: result.feedbackData.contentKnowledgeScore,
+          writingScore: result.feedbackData.writingScore,
+          nextSteps: result.feedbackData.nextSteps
         };
         
         // Store the feedback data in globalStorage  
