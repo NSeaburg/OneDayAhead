@@ -123,6 +123,9 @@ async function testDatabaseConnection() {
     });
 
     if (app.get("env") === "development") {
+      // Serve static files from public directory in development
+      app.use(express.static("public"));
+      
       app.use((req, res, next) => {
         if (req.query.production === "true") {
           serveStatic(app);
