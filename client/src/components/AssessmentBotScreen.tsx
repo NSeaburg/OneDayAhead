@@ -10,8 +10,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
 import { Message } from "@/lib/openai";
-// Import Reginald image directly
-import reginaldImage from "../../../public/reginald-worthington.png";
+// Use public folder path directly for Reginald image
+const reginaldImage = "/reginald-worthington.png";
 // Import globalStorage
 import globalStorage from "@/lib/globalStorage";
 

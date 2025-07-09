@@ -37,48 +37,77 @@ export default function SimpleFeedbackScreen({
   const [assessmentMessages, setAssessmentMessages] = useState<any[]>([]);
   const [teachingMessages, setTeachingMessages] = useState<any[]>([]);
 
-  // One-time initialization useEffect with [] dependency array
+  // Initialize feedback data with retry mechanism
   useEffect(() => {
     console.log("SimpleFeedbackScreen mounted");
     
-    // Log data sources for debugging
-    console.log("Props feedbackData:", propsFeedbackData);
-    console.log("Window.__assessmentData?.feedbackData:", window.__assessmentData?.feedbackData);
-    console.log("globalStorage.getFeedbackData():", globalStorage.getFeedbackData());
-    
-    // PRIORITY 1: Props data
-    if (propsFeedbackData) {
-      console.log("Using feedback data from props");
-      setFeedbackData({
-        summary: propsFeedbackData.summary,
-        contentKnowledgeScore: Number(propsFeedbackData.contentKnowledgeScore),
-        writingScore: Number(propsFeedbackData.writingScore),
-        nextSteps: propsFeedbackData.nextSteps
-      });
-    }
-    // PRIORITY 2: Global storage data
-    else {
+    const initializeFeedbackData = () => {
+      // Log data sources for debugging
+      console.log("Props feedbackData:", propsFeedbackData);
+      console.log("Window.__assessmentData?.feedbackData:", window.__assessmentData?.feedbackData);
+      console.log("globalStorage.getFeedbackData():", globalStorage.getFeedbackData());
+      
+      // PRIORITY 1: Props data
+      if (propsFeedbackData && (propsFeedbackData.contentKnowledgeScore || propsFeedbackData.writingScore)) {
+        console.log("Using feedback data from props");
+        setFeedbackData({
+          summary: propsFeedbackData.summary || "No summary available",
+          contentKnowledgeScore: Number(propsFeedbackData.contentKnowledgeScore) || 0,
+          writingScore: Number(propsFeedbackData.writingScore) || 0,
+          nextSteps: propsFeedbackData.nextSteps || "No next steps available"
+        });
+        return true;
+      }
+      
+      // PRIORITY 2: Global storage data
       const storedData = globalStorage.getFeedbackData();
-      if (storedData && (storedData.contentKnowledgeScore || storedData.writingScore)) {
+      if (storedData && (storedData.contentKnowledgeScore !== undefined || storedData.writingScore !== undefined)) {
         console.log("Using feedback data from globalStorage:", storedData);
         setFeedbackData({
-          summary: storedData.summary,
-          contentKnowledgeScore: Number(storedData.contentKnowledgeScore),
-          writingScore: Number(storedData.writingScore),
-          nextSteps: storedData.nextSteps
+          summary: storedData.summary || "No summary available",
+          contentKnowledgeScore: Number(storedData.contentKnowledgeScore) || 0,
+          writingScore: Number(storedData.writingScore) || 0,
+          nextSteps: storedData.nextSteps || "No next steps available"
         });
+        return true;
       }
+      
       // PRIORITY 3: Window data
-      else if (window.__assessmentData?.feedbackData) {
+      if (window.__assessmentData?.feedbackData) {
         const windowData = window.__assessmentData.feedbackData;
-        console.log("Using feedback data from window object:", windowData);
-        setFeedbackData({
-          summary: windowData.summary,
-          contentKnowledgeScore: Number(windowData.contentKnowledgeScore),
-          writingScore: Number(windowData.writingScore),
-          nextSteps: windowData.nextSteps
-        });
+        if (windowData.contentKnowledgeScore !== undefined || windowData.writingScore !== undefined) {
+          console.log("Using feedback data from window object:", windowData);
+          setFeedbackData({
+            summary: windowData.summary || "No summary available",
+            contentKnowledgeScore: Number(windowData.contentKnowledgeScore) || 0,
+            writingScore: Number(windowData.writingScore) || 0,
+            nextSteps: windowData.nextSteps || "No next steps available"
+          });
+          return true;
+        }
       }
+      
+      return false;
+    };
+    
+    // Try immediately
+    const found = initializeFeedbackData();
+    
+    // If no data found initially, retry after short delays
+    if (!found) {
+      console.log("No feedback data found initially, will retry...");
+      
+      const retryTimeouts = [500, 1000, 2000]; // Retry after 0.5s, 1s, 2s
+      
+      retryTimeouts.forEach((delay) => {
+        setTimeout(() => {
+          if (!initializeFeedbackData()) {
+            console.log(`Retry after ${delay}ms - still no feedback data`);
+          } else {
+            console.log(`Successfully loaded feedback data after ${delay}ms retry`);
+          }
+        }, delay);
+      });
     }
     
     // ASSESSMENT MESSAGES
