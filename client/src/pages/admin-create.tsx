@@ -6,9 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, MessageCircle, Save, CheckCircle, Upload, Plus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, CheckCircle, Upload, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useStreamingChat } from "@/hooks/useStreamingChat";
 
 interface ListeningTopic {
   id: string;
@@ -189,26 +188,13 @@ export default function AdminCreate() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // AI Chat for content creation assistance
-  const {
-    messages,
-    sendMessage,
-    isStreaming,
-    clearHistory
-  } = useStreamingChat("content-creation");
-
   useEffect(() => {
     // Check authentication
     if (!sessionStorage.getItem("adminAuthenticated")) {
       setLocation("/admin");
       return;
     }
-
-    // Initialize AI assistant with simple welcome message only
-    if (messages.length === 0) {
-      // Don't send any initial message - let the chat start empty
-    }
-  }, [setLocation, messages.length, sendMessage]);
+  }, [setLocation]);
 
   const updateField = (field: keyof ExperienceData, value: string | File | null) => {
     setExperienceData(prev => ({
@@ -1058,148 +1044,65 @@ export default function AdminCreate() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 h-[calc(100vh-80px)]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-          {/* Form Content - Left Side */}
-          <div className="flex flex-col h-full">
-            <Card className="flex-1 flex flex-col overflow-hidden">
-              <CardHeader className="flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Step {currentStep}: {STEPS[currentStep - 1].title}</CardTitle>
-                    <CardDescription>{STEPS[currentStep - 1].description}</CardDescription>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {currentStep} of {STEPS.length}
-                  </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <Card className="flex flex-col">
+            <CardHeader className="flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Step {currentStep}: {STEPS[currentStep - 1].title}</CardTitle>
+                  <CardDescription>{STEPS[currentStep - 1].description}</CardDescription>
                 </div>
-                <Progress value={(currentStep / STEPS.length) * 100} className="mt-4" />
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto pb-4">
-                {renderStepContent()}
-              </CardContent>
-              <div className="px-6 pb-6 pt-4 border-t bg-gray-50 flex-shrink-0">
-                <div className="flex justify-between">
-                  <Button
-                    onClick={handlePrevious}
-                    disabled={currentStep === 1}
-                    variant="outline"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Previous
-                  </Button>
-
-                  {currentStep === 7 ? (
-                    <Button
-                      onClick={handleCreateExperience}
-                      disabled={saving || !canProceed()}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {saving ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Create Experience
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleNext}
-                      disabled={!canProceed()}
-                    >
-                      Next
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  )}
+                <div className="text-sm text-gray-500">
+                  {currentStep} of {STEPS.length}
                 </div>
               </div>
-            </Card>
-          </div>
+              <Progress value={(currentStep / STEPS.length) * 100} className="mt-4" />
+            </CardHeader>
+            <CardContent className="flex-1 pb-4">
+              {renderStepContent()}
+            </CardContent>
+            <div className="px-6 pb-6 pt-4 border-t bg-gray-50 flex-shrink-0">
+              <div className="flex justify-between">
+                <Button
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1}
+                  variant="outline"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
 
-          {/* AI Assistant - Right Side */}
-          <div className="h-full">
-            <Card className="h-full flex flex-col">
-              <CardHeader className="flex-shrink-0">
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
-                  Content Creation Assistant
-                </CardTitle>
-                <CardDescription>
-                  Chat with AI to refine your learning experience design
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col overflow-hidden p-4">
-                <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4 min-h-0">
-                  {messages.length === 0 ? (
-                    <div className="text-center text-gray-500 mt-8">
-                      <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                      <p className="text-sm">Ask me anything about creating engaging learning experiences!</p>
-                    </div>
-                  ) : (
-                    messages.map((message, index) => (
-                      <div
-                        key={index}
-                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-[85%] p-3 rounded-lg ${
-                            message.role === 'user'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white border text-gray-900'
-                          }`}
-                        >
-                          <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                  {isStreaming && (
-                    <div className="flex justify-start">
-                      <div className="bg-white border p-3 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                          <span className="text-sm text-gray-600">AI is thinking...</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <Input
-                    placeholder="Ask for help with your learning experience..."
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        const message = e.currentTarget.value.trim();
-                        if (message) {
-                          sendMessage(message);
-                          e.currentTarget.value = '';
-                        }
-                      }
-                    }}
-                  />
+                {currentStep === 7 ? (
                   <Button
-                    onClick={() => {
-                      const input = document.querySelector('input[placeholder*="Ask for help"]') as HTMLInputElement;
-                      if (input && input.value.trim()) {
-                        sendMessage(input.value.trim());
-                        input.value = '';
-                      }
-                    }}
-                    disabled={isStreaming}
-                    size="sm"
+                    onClick={handleCreateExperience}
+                    disabled={saving || !canProceed()}
+                    className="bg-green-600 hover:bg-green-700"
                   >
-                    Send
+                    {saving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Create Experience
+                      </>
+                    )}
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                ) : (
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canProceed()}
+                  >
+                    Next
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

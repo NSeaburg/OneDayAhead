@@ -148,6 +148,11 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 10, 2025. Simplified admin content creation interface by removing chat component
+  - Removed AI chat assistant from the admin content creation form to streamline the interface
+  - Converted from 50/50 split layout to single full-width form using max-w-4xl container
+  - Fixed all avatar upload functionality - buttons now properly trigger file selection with visual feedback
+  - Form now provides cleaner, more focused experience for content package creation
 - July 10, 2025. Updated Content Creation Assistant context and welcome message
   - Enhanced the Content Creation Assistant system prompt to reference the three-branches experience as an exemplar model
   - Changed initial AI assistant message from "Let's get creating!" to a comprehensive introduction explaining how the assistant can help
