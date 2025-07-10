@@ -10,6 +10,13 @@ import path from "path";
 import fs from "fs";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import multer from "multer";
+
+// Configure multer for file uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -2789,8 +2796,13 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
     }
   });
 
-  // Create new complete learning experience from admin form
-  app.post("/api/content/create-package", async (req, res) => {
+  // Create new complete learning experience from admin form with avatar uploads
+  app.post("/api/content/create-package", upload.fields([
+    { name: 'assessmentAvatar', maxCount: 1 },
+    { name: 'highAvatar', maxCount: 1 },
+    { name: 'mediumAvatar', maxCount: 1 },
+    { name: 'lowAvatar', maxCount: 1 }
+  ]), async (req, res) => {
     try {
       const experienceData = req.body;
       
@@ -3066,9 +3078,32 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
         JSON.stringify(feedbackInstructionsConfig, null, 2)
       );
 
-      // TODO: Handle avatar file uploads in a future update
-      // For now, we'll use default avatars or the filename referenced in config
-      // Avatar files would be saved to the package directory when upload is implemented
+      // Handle avatar file uploads if present
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      // Save assessment bot avatar if uploaded
+      if (files?.assessmentAvatar?.[0]) {
+        const assessmentAvatarPath = path.join(packagePath, 'assessment-bot', `${experienceData.assessmentName || 'assessment'}-avatar.png`);
+        await fs.promises.writeFile(assessmentAvatarPath, files.assessmentAvatar[0].buffer);
+        console.log(`Saved assessment avatar to: ${assessmentAvatarPath}`);
+      }
+      
+      // Save teaching bot avatars if uploaded
+      const teachingLevels = ['high', 'medium', 'low'];
+      const avatarFields = ['highAvatar', 'mediumAvatar', 'lowAvatar'];
+      const botNames = [experienceData.highBotName, experienceData.mediumBotName, experienceData.lowBotName];
+      
+      for (let i = 0; i < teachingLevels.length; i++) {
+        const level = teachingLevels[i];
+        const avatarField = avatarFields[i];
+        const botName = botNames[i];
+        
+        if (files?.[avatarField]?.[0]) {
+          const avatarPath = path.join(packagePath, 'teaching-bots', `${level}-level`, `${botName || level}-avatar.png`);
+          await fs.promises.writeFile(avatarPath, files[avatarField][0].buffer);
+          console.log(`Saved ${level} teaching bot avatar to: ${avatarPath}`);
+        }
+      }
 
       res.json({ 
         success: true, 
