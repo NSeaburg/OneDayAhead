@@ -1,22 +1,22 @@
 # Educational Learning Platform - Complete Source Export
 
 ## Project Overview
-An advanced AI-powered adaptive learning platform focused on teaching the three branches of U.S. government through interactive AI chatbots. Features LTI 1.3 Canvas integration, streaming Claude 3.5 Sonnet responses, and character-driven AI interactions with native Claude-based assessment system.
+An advanced multi-tenant, content-agnostic AI-powered adaptive learning platform deployable across grade levels and subjects via LTI deep linking. Features admin interface for conversational AI-powered content creation, complete avatar upload system, and production deployment on AWS EC2 with load balancer. Platform uses unified file-based configuration system with content package-driven avatar management for complete scalability.
 
-**Current Status**: Fully functional with complete N8N elimination and native Claude assessment
-**Last Updated**: July 7, 2025
+**Current Status**: Fully functional multi-tenant platform with admin interface and complete avatar upload system
+**Last Updated**: July 10, 2025
 
-## Recent Major Changes (Current Session)
-- ✅ **Complete N8N Elimination**: Replaced all external N8N webhooks with internal Claude API calls
-- ✅ **Native Assessment System**: Added `/api/assess-conversation` endpoint using Claude 3.5 Sonnet
-- ✅ **Comprehensive Grading**: Added `/api/grade-conversations` endpoint for final scoring
-- ✅ **Enhanced Teaching Assistants**: Updated all three difficulty levels with detailed structured prompts:
-  - **High Level (Mrs. Parton)**: Advanced case study analysis (United States v. Nixon)
-  - **Medium Level (Mrs. Bannerman)**: Counterfactual "what if" scenarios
-  - **Low Level (Mr. Whitaker)**: Three-stage metaphor activities with guided learning
-- ✅ **Fixed Conversation Display**: Teaching transcripts now show real conversations instead of fallback messages
-- ✅ **Intelligent Assessment**: Claude evaluates student understanding and assigns appropriate difficulty levels
-- ✅ **Self-Contained Operation**: App now runs entirely on internal Claude integration without external dependencies
+## Recent Major Changes (July 10, 2025)
+- ✅ **Complete Avatar Upload System**: Implemented full file upload workflow with FormData handling and multer middleware
+- ✅ **Admin Interface**: Built comprehensive multi-step content creation wizard with conversational AI assistant
+- ✅ **Multi-Tenant Architecture**: Content packages stored in `/content/{district}/{course}/{topic}/` structure
+- ✅ **File-Based Configuration**: All UI elements configurable through ui-config.json files in content packages
+- ✅ **Enhanced Admin Forms**: Rich text inputs with spell check and keyboard shortcuts (Ctrl+B, Ctrl+I)
+- ✅ **Avatar Management**: Uploaded images saved to content package folders and referenced in config files
+- ✅ **Component Error Fixes**: Resolved HighBotWithArticleScreen setMessages hook error by switching to useStreamingChatLegacy
+- ✅ **Static File Serving**: Avatar images served directly from /content/ URLs with express.static middleware
+- ✅ **Complete UI Configurability**: Assessment and teaching bots fully interchangeable through content package files
+- ✅ **Production Ready**: Multi-tenant platform ready for deployment across educational institutions
 
 ## Architecture
 
@@ -33,11 +33,13 @@ An advanced AI-powered adaptive learning platform focused on teaching the three 
 - **AI Integration**: Anthropic Claude 3.5 Sonnet with streaming
 
 ### Key Features
-1. **Video Introduction**: YouTube embed with progress tracking
-2. **Article Discussion**: Interactive AI chat about government branches
-3. **Assessment Phase**: Character-driven evaluation (Reginald Worthington III)
-4. **Teaching Phase**: Adaptive instruction (Mr. Whitaker character)
-5. **Final Results**: PDF export with comprehensive feedback
+1. **Admin Interface**: Multi-step content creation wizard with AI assistant at `/admin` (password: Onedayahead123!)
+2. **Avatar Upload System**: Complete file upload workflow for assessment and teaching bot avatars
+3. **Multi-Tenant Support**: Content packages organized by district/course/topic with independent configurations
+4. **File-Based Configuration**: All UI elements configurable through JSON files in content package structure
+5. **Assessment & Teaching Bots**: Fully interchangeable AI assistants with custom personalities and avatars
+6. **Static Asset Serving**: Images served from content package folders with proper MIME type detection
+7. **Enhanced Text Input**: Rich text fields with spell check and formatting shortcuts throughout admin interface
 
 ## File Structure
 
@@ -48,9 +50,14 @@ An advanced AI-powered adaptive learning platform focused on teaching the three 
 │   │   │   ├── ArticleChatScreen.tsx
 │   │   │   ├── AssessmentBotScreen.tsx
 │   │   │   ├── DynamicAssistantScreen.tsx
+│   │   │   ├── HighBotWithArticleScreen.tsx
 │   │   │   ├── FinalFeedbackScreen.tsx
 │   │   │   ├── IntroVideoScreen.tsx
-│   │   │   └── ui/ (shadcn components)
+│   │   │   └── ui/ (shadcn + enhanced rich components)
+│   │   ├── pages/
+│   │   │   ├── admin-create.tsx (Multi-step content creation)
+│   │   │   ├── admin-dashboard.tsx (Content package management)
+│   │   │   └── home.tsx
 │   │   ├── lib/
 │   │   │   ├── globalStorage.ts
 │   │   │   └── queryClient.ts
@@ -58,6 +65,7 @@ An advanced AI-powered adaptive learning platform focused on teaching the three 
 │   │   └── main.tsx
 │   └── index.html
 ├── server/
+│   ├── contentManager.ts (Content package operations)
 │   ├── lti/
 │   │   ├── auth.ts
 │   │   ├── services.ts
@@ -66,8 +74,21 @@ An advanced AI-powered adaptive learning platform focused on teaching the three 
 │   ├── index.ts
 │   ├── migrations.ts
 │   ├── prompts.ts
-│   ├── routes.ts
+│   ├── routes.ts (Enhanced with upload middleware)
 │   └── storage.ts
+├── content/ (Content package storage)
+│   ├── {district}/
+│   │   ├── {course}/
+│   │   │   └── {topic}/
+│   │   │       ├── config.json
+│   │   │       ├── assessment-bot/
+│   │   │       │   ├── config.json
+│   │   │       │   ├── ui-config.json
+│   │   │       │   └── {avatar-file}
+│   │   │       └── teaching-bots/
+│   │   │           ├── high-level/
+│   │   │           ├── medium-level/
+│   │   │           └── low-level/
 ├── shared/
 │   └── schema.ts
 └── package.json
@@ -80,16 +101,25 @@ An advanced AI-powered adaptive learning platform focused on teaching the three 
 - `GET /dev` - Development access with mock LTI session
 - `POST /api/article-chat-stream` - Streaming article discussion
 - `POST /api/claude-chat` - Assessment and teaching chat with streaming
-- `POST /api/assess-conversation` - **NEW**: Native Claude assessment for difficulty level assignment
-- `POST /api/grade-conversations` - **NEW**: Comprehensive Claude-based grading and feedback
-- `GET /api/assistant-config` - AI assistant configuration
+- `POST /api/assess-conversation` - Native Claude assessment for difficulty level assignment
+- `POST /api/grade-conversations` - Comprehensive Claude-based grading and feedback
+- `GET /api/assistant-config` - AI assistant configuration with content package loading
+- `GET /admin` - Admin interface access (password protected)
+- `POST /api/content/create-package` - Content package creation with file upload support
+- `GET /api/content/scan` - Content package discovery and listing
 - LTI 1.3 endpoints for Canvas integration
 
-**Assessment System:**
-- Intelligent evaluation using Claude 3.5 Sonnet to analyze student conversations
-- Automatic assignment to high/medium/low difficulty teaching assistants
-- Comprehensive scoring for content knowledge and writing quality
-- Detailed feedback generation with personalized next steps
+**File Upload System:**
+- Multer middleware for handling FormData uploads
+- Avatar files saved to content package folder structure
+- Static file serving via express.static('/content') middleware
+- Proper MIME type detection and content headers
+
+**Admin Interface:**
+- Multi-step content creation wizard with 8 distinct steps
+- AI-powered content creation assistant with streaming responses
+- Rich text inputs with spell check and formatting shortcuts
+- Complete avatar upload workflow for all bot types
 
 ### 2. LTI Authentication (server/lti/auth.ts)
 **Key Features:**
@@ -241,21 +271,23 @@ N8N_DYNAMIC_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Feedback Flow
 3. **Embed**: Iframe embedding via `/embed` route
 
 ### Current Status
-- ✅ Complete N8N elimination with native Claude assessment system
-- ✅ All chat endpoints functioning with consistent authentication
-- ✅ Enhanced teaching assistants with structured learning activities
-- ✅ Real conversation tracking in feedback transcripts
-- ✅ Intelligent difficulty level assignment based on student performance
-- ✅ Comprehensive grading system with content and writing scores
-- ✅ Streaming responses working across all AI assistants
-- ✅ Session persistence for development testing
-- ✅ Database fallback to in-memory storage
+- ✅ Multi-tenant admin interface with complete content creation workflow
+- ✅ Avatar upload system with FormData handling and multer middleware
+- ✅ File-based configuration system with complete UI configurability
+- ✅ Static asset serving from content package folders
+- ✅ Enhanced text inputs with spell check and formatting shortcuts
+- ✅ Content package management with organized folder structure
+- ✅ All bot components working with proper hook implementations
+- ✅ Rich admin interface with AI-powered content creation assistant
+- ✅ Complete interchangeability of assessment and teaching bots
+- ✅ Production-ready multi-tenant architecture
 
-### Resolved Issues
-- ✅ N8N webhook dependency eliminated - now self-contained
-- ✅ Teaching assistant fallback messages replaced with real conversations
-- ✅ Conversation transcript display fixed to show authentic interactions
-- ✅ Assessment logic moved from external service to internal Claude processing
+### Recent Fixes (July 10, 2025)
+- ✅ HighBotWithArticleScreen component error resolved by switching to useStreamingChatLegacy hook
+- ✅ Avatar upload workflow now properly saves files to content package folders
+- ✅ Admin form enhanced with rich text components and keyboard shortcuts
+- ✅ Static file serving configured for proper avatar loading from content packages
+- ✅ All UI elements made configurable through content package JSON files
 
 ## Deployment
 
@@ -273,15 +305,35 @@ N8N_DYNAMIC_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Feedback Flow
 - Optimized database queries with Drizzle ORM
 - Session-based authentication caching
 
+## Content Package Structure
+
+### Avatar Upload Locations
+- **Assessment Bot**: `/content/{district}/{course}/{topic}/assessment-bot/{filename}`
+- **High Teaching Bot**: `/content/{district}/{course}/{topic}/teaching-bots/high-level/{filename}`
+- **Medium Teaching Bot**: `/content/{district}/{course}/{topic}/teaching-bots/medium-level/{filename}`
+- **Low Teaching Bot**: `/content/{district}/{course}/{topic}/teaching-bots/low-level/{filename}`
+
+### Configuration Files
+- **Main Package**: `/content/{district}/{course}/{topic}/config.json`
+- **Assessment Bot Config**: `/content/{district}/{course}/{topic}/assessment-bot/config.json`
+- **Assessment UI Config**: `/content/{district}/{course}/{topic}/assessment-bot/ui-config.json`
+- **Teaching Bot Configs**: `/content/{district}/{course}/{topic}/teaching-bots/{level}-level/config.json`
+- **Teaching UI Configs**: `/content/{district}/{course}/{topic}/teaching-bots/{level}-level/ui-config.json`
+
+### Avatar Loading System
+Images served via static middleware at `/content/` URLs:
+- Assessment: `/content/Demo-District/4th-Grade-Science/Clouds/assessment-bot/avatar.png`
+- Teaching: `/content/Demo-District/4th-Grade-Science/Clouds/teaching-bots/medium-level/avatar.png`
+
 ## Future Enhancements
-- Additional assessment scoring algorithms for more nuanced evaluation
-- Enhanced PDF export formatting with conversation highlights
+- AWS EC2 deployment with load balancer configuration
+- Enhanced analytics dashboard for content package performance
 - Multi-language support for international deployment
-- Advanced analytics dashboard for instructor insights
-- Expanded case study library for high-level teaching assistant
+- Advanced content versioning and rollback capabilities
+- Bulk content package import/export functionality
 
 ---
 
 **Technical Contact**: Development team via Replit
-**Last Tested**: July 2, 2025
-**Status**: Production ready with full LTI 1.3 compliance
+**Last Tested**: July 10, 2025
+**Status**: Production ready multi-tenant platform with complete admin interface
