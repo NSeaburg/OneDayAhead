@@ -47,6 +47,8 @@ export default function DynamicAssistantScreen({
   const [isSendingToN8N, setIsSendingToN8N] = useState(false);
   const [chatStartTime] = useState<number>(Date.now()); // Track when the chat started
   const [showArticle, setShowArticle] = useState(false); // Track if the article is visible
+  const [uiConfig, setUiConfig] = useState<any>(null);
+  const [uiConfigLoading, setUiConfigLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   // We already receive assessmentThreadId as prop, so we don't need a separate state variable
   const { toast } = useToast();
@@ -58,6 +60,34 @@ export default function DynamicAssistantScreen({
   
   // Get proficiency level from teachingAssistance if available
   const proficiencyLevel = teachingAssistance?.level || "unknown";
+
+  // Load UI configuration and system prompt for this teaching bot level
+  useEffect(() => {
+    const loadUIConfig = async () => {
+      if (!contentPackage || proficiencyLevel === "unknown") {
+        setUiConfigLoading(false);
+        return;
+      }
+
+      try {
+        const configPath = `/content/${contentPackage.district}/${contentPackage.course}/${contentPackage.topic}/teaching-bots/${proficiencyLevel}-level/ui-config.json`;
+        const response = await fetch(configPath);
+        
+        if (response.ok) {
+          const config = await response.json();
+          setUiConfig(config);
+        } else {
+          console.warn(`Failed to load UI config from ${configPath}, using fallbacks`);
+        }
+      } catch (error) {
+        console.error("Error loading teaching bot UI config:", error);
+      } finally {
+        setUiConfigLoading(false);
+      }
+    };
+
+    loadUIConfig();
+  }, [contentPackage, proficiencyLevel]);
   
   // Helper functions for teacher profiles (moved up so they can be used in uiConfig)
   const getTeacherName = () => {
@@ -116,9 +146,8 @@ export default function DynamicAssistantScreen({
     return "Your learning assistant will guide you through the key concepts from the material you've just studied."; // Default fallback
   };
   
-  // Get UI configuration from content package or use defaults
-  const botConfig = contentPackage?.teachingBots?.[proficiencyLevel];
-  const uiConfig = botConfig?.uiConfig || {
+  // Use loaded UI config or fallbacks
+  const currentUIConfig = uiConfig || {
     botTitle: getTeacherTitle(),
     botDescription: getTeacherDescription(),
     chatHeaderTitle: `Learning with ${getTeacherName()}`,
@@ -126,14 +155,7 @@ export default function DynamicAssistantScreen({
       title: "Teaching Approach",
       description: getGuidanceApproach()
     },
-    focusAreas: {
-      title: "What we'll explore",
-      topics: []
-    },
-    progressSection: {
-      title: "Learning Progress",
-      milestones: []
-    },
+    focusAreas: [],
     encouragementSection: {
       title: "Keep in mind",
       description: "Your teacher will guide you through this material at your pace."
@@ -144,8 +166,8 @@ export default function DynamicAssistantScreen({
 
   // Choose the appropriate initial message based on UI config or fallback
   let initialMessage = "";
-  if (uiConfig.initialGreeting) {
-    initialMessage = uiConfig.initialGreeting;
+  if (currentUIConfig.initialGreeting) {
+    initialMessage = currentUIConfig.initialGreeting;
   } else if (isUsingFallback) {
     initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?";
   } else if (proficiencyLevel === "high") {
@@ -158,8 +180,10 @@ export default function DynamicAssistantScreen({
     initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
   }
   
-  // Use the teachingAssistance systemPrompt if available, otherwise use the default
-  const activeSystemPrompt = teachingAssistance?.systemPrompt || systemPrompt;
+  // Use the teachingAssistance systemPrompt if available, otherwise try content package, otherwise fallback
+  const activeSystemPrompt = teachingAssistance?.systemPrompt || 
+    contentPackage?.teachingBots?.[proficiencyLevel]?.personality || 
+    systemPrompt;
   
   // Log which system prompt we're using
   console.log(`DynamicAssistantScreen using ${teachingAssistance ? 'Claude-specific' : 'default'} system prompt for level: ${proficiencyLevel}`);
@@ -172,6 +196,15 @@ export default function DynamicAssistantScreen({
   const [threadId] = useState(`claude-teaching-${Date.now()}`);
   const [currentStreamingMessage, setCurrentStreamingMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+
+  // Add initial message when UI config loads
+  useEffect(() => {
+    if (!uiConfigLoading && currentUIConfig.initialGreeting && messages.length === 0) {
+      setMessages([{ role: 'assistant', content: currentUIConfig.initialGreeting }]);
+    } else if (!uiConfigLoading && !currentUIConfig.initialGreeting && initialMessage && messages.length === 0) {
+      setMessages([{ role: 'assistant', content: initialMessage }]);
+    }
+  }, [uiConfigLoading, currentUIConfig.initialGreeting, initialMessage, messages.length]);
 
   // Simple send message function with teaching assistant support
   const sendMessage = async (message: string) => {
@@ -487,30 +520,30 @@ export default function DynamicAssistantScreen({
                     className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
                   />
                   <h2 className="font-bold text-xl text-gray-800">{getTeacherName()}</h2>
-                  <p className="text-sm text-gray-600 font-medium">{uiConfig.botTitle}</p>
+                  <p className="text-sm text-gray-600 font-medium">{currentUIConfig.botTitle}</p>
                 </div>
                 
                 <p className="text-sm text-gray-700 mb-4">
-                  {uiConfig.botDescription}
+                  {currentUIConfig.botDescription}
                 </p>
                 
                 <hr className="my-4 border-gray-200" />
                 
                 <div className="mb-4">
-                  <h3 className="font-semibold text-gray-800 mb-2">{uiConfig.teachingApproach.title}</h3>
+                  <h3 className="font-semibold text-gray-800 mb-2">{currentUIConfig.teachingApproach.title}</h3>
                   <p className="text-sm text-gray-700">
-                    {uiConfig.teachingApproach.description}
+                    {currentUIConfig.teachingApproach.description}
                   </p>
                 </div>
                 
                 <hr className="my-4 border-gray-200" />
                 
                 {/* Focus Areas Section */}
-                {uiConfig.focusAreas && uiConfig.focusAreas.topics.length > 0 && (
+                {currentUIConfig.focusAreas && currentUIConfig.focusAreas.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-2">{uiConfig.focusAreas.title}</h3>
+                    <h3 className="font-semibold text-gray-800 mb-2">Focus Areas</h3>
                     <div className="space-y-2">
-                      {uiConfig.focusAreas.topics.map((topic, index) => (
+                      {currentUIConfig.focusAreas.map((topic, index) => (
                         <div key={topic.id || index} className="flex items-start">
                           <div className={`w-2 h-2 rounded-full mt-1.5 mr-2 flex-shrink-0 ${
                             proficiencyLevel === "high" ? "bg-green-500" :
@@ -528,15 +561,15 @@ export default function DynamicAssistantScreen({
                 )}
                 
                 {/* Encouragement/Challenge Section */}
-                {(uiConfig.encouragementSection || uiConfig.challengeSection) && (
+                {(currentUIConfig.encouragementSection || currentUIConfig.challengeSection) && (
                   <div className="mt-4">
                     <hr className="my-4 border-gray-200" />
                     <div className="bg-gray-50 p-3 rounded-md">
                       <h4 className="font-semibold text-gray-800 text-sm mb-1">
-                        {uiConfig.challengeSection?.title || uiConfig.encouragementSection?.title}
+                        {currentUIConfig.challengeSection?.title || currentUIConfig.encouragementSection?.title}
                       </h4>
                       <p className="text-sm text-gray-700">
-                        {uiConfig.challengeSection?.description || uiConfig.encouragementSection?.description}
+                        {currentUIConfig.challengeSection?.description || currentUIConfig.encouragementSection?.description}
                       </p>
                     </div>
                   </div>
@@ -569,7 +602,7 @@ export default function DynamicAssistantScreen({
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
               <h2 className="font-semibold text-lg text-gray-800">
-                {uiConfig.chatHeaderTitle}
+                {currentUIConfig.chatHeaderTitle}
               </h2>
               
               {proficiencyLevel !== "unknown" && (
@@ -679,7 +712,7 @@ export default function DynamicAssistantScreen({
                 <AutoResizeTextarea
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder={uiConfig.inputPlaceholder}
+                  placeholder={currentUIConfig.inputPlaceholder}
                   className="flex-grow focus:border-blue-500"
                   maxRows={7}
                   onKeyDown={(e) => {
