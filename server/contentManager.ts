@@ -82,6 +82,7 @@ export interface BotConfig {
   personality: string;
   config: any;
   keywords?: any;
+  uiConfig?: any;
 }
 
 export class ContentManager {
@@ -215,6 +216,16 @@ export class ContentManager {
         // Keywords are optional
       }
       
+      // Load UI config if available
+      let uiConfig = null;
+      try {
+        const uiConfigPath = path.join(botPath, 'ui-config.json');
+        const uiConfigData = await fs.promises.readFile(uiConfigPath, 'utf8');
+        uiConfig = JSON.parse(uiConfigData);
+      } catch (error) {
+        // UI config is optional
+      }
+      
       return {
         name: config.name,
         description: config.description,
@@ -222,7 +233,8 @@ export class ContentManager {
         role: config.role,
         personality: config.personality || "",
         config,
-        keywords
+        keywords,
+        uiConfig
       };
     } catch (error) {
       console.error(`Error loading bot config from ${botPath}:`, error);

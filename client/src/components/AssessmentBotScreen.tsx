@@ -77,30 +77,57 @@ export default function AssessmentBotScreen({
   const isCompletionMessageSent = useRef<boolean>(false); // Track if completion message was sent
   const { toast } = useToast();
   
-  // Assessment topics with tracking
-  const [topics, setTopics] = useState<AssessmentTopic[]>([
-    {
-      id: "governmental-structure",
-      name: "Governmental Structure",
-      description: "Can you clearly explain how power is divided into three branches?",
-      isCompleted: false,
-      keywords: ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
+  // Get UI configuration from content package or use defaults
+  const uiConfig = contentPackage?.assessmentBot?.uiConfig || {
+    botTitle: "Aristocratic Observer",
+    botDescription: "Dispatched by His Majesty's service...",
+    chatHeaderTitle: "Royal Assessment",
+    listeningSection: {
+      title: "What he's listening for",
+      topics: []
     },
-    {
-      id: "checks-balances",
-      name: "The System of Checks and Balances",
-      description: "Do you understand how the branches hold each other in check?",
-      isCompleted: false,
-      keywords: ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
+    progressSection: {
+      title: "Assessment Progress",
+      completionThreshold: 8,
+      completionMessage: "Assessment Complete"
     },
-    {
-      id: "branch-roles",
-      name: "Roles of the Branches",
-      description: "Can you describe what Congress, the President, and the Courts actually do?",
-      isCompleted: false,
-      keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
-    }
-  ]);
+    keepInMindSection: {
+      title: "Keep in mind",
+      description: "He will use your responses to recommend a learning path..."
+    },
+    inputPlaceholder: "Type your response here...",
+    initialGreeting: null
+  };
+
+  // Assessment topics with tracking - from UI config or defaults
+  const [topics, setTopics] = useState<AssessmentTopic[]>(
+    uiConfig.listeningSection?.topics?.map((topic: any) => ({
+      ...topic,
+      isCompleted: false
+    })) || [
+      {
+        id: "governmental-structure",
+        name: "Governmental Structure",
+        description: "Can you clearly explain how power is divided into three branches?",
+        isCompleted: false,
+        keywords: ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
+      },
+      {
+        id: "checks-balances",
+        name: "The System of Checks and Balances",
+        description: "Do you understand how the branches hold each other in check?",
+        isCompleted: false,
+        keywords: ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
+      },
+      {
+        id: "branch-roles",
+        name: "Roles of the Branches",
+        description: "Can you describe what Congress, the President, and the Courts actually do?",
+        isCompleted: false,
+        keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
+      }
+    ]
+  );
   
   // Use simple approach like article bot - system prompt from config
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
@@ -204,10 +231,13 @@ export default function AssessmentBotScreen({
     // Clear existing messages
     setMessages([]);
     
-    // Set the initial welcome message from Reginald
+    // Set the initial welcome message from UI config or default
+    const initialGreeting = uiConfig.initialGreeting || 
+      'Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty\'s service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call "democracy" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government\'s structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*';
+    
     setMessages([{
       role: 'assistant',
-      content: 'Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty\'s service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call "democracy" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government\'s structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*'
+      content: initialGreeting
     }]);
   }, []);
   
@@ -274,12 +304,13 @@ export default function AssessmentBotScreen({
       setKeywordsUsed(updatedKeywordsUsed);
       
       // Increment progress bar by 1 (only once per message, even if multiple keywords found)
-      if (keywordProgress < 8) {
-        const newProgress = Math.min(8, keywordProgress + 1);
+      const threshold = uiConfig.progressSection.completionThreshold;
+      if (keywordProgress < threshold) {
+        const newProgress = Math.min(threshold, keywordProgress + 1);
         setKeywordProgress(newProgress);
         
         // Check if progress is now complete
-        if (newProgress === 8 && !progressComplete) {
+        if (newProgress === threshold && !progressComplete) {
           setProgressComplete(true);
         }
       }
@@ -523,17 +554,17 @@ export default function AssessmentBotScreen({
                 className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
               />
               <h2 className="font-bold text-xl text-gray-800">{displayName}</h2>
-              <p className="text-sm text-gray-600 font-medium">Aristocratic Observer</p>
+              <p className="text-sm text-gray-600 font-medium">{uiConfig.botTitle}</p>
             </div>
             
             <p className="text-sm text-gray-700 mb-4">
-              Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown.
+              {uiConfig.botDescription}
             </p>
             
             <hr className="my-4 border-gray-200" />
             
             <div className="mb-4">
-              <h3 className="font-semibold text-gray-800 mb-2">What he's listening for</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">{uiConfig.listeningSection.title}</h3>
               <ul className="space-y-3">
                 {topics.map((topic) => (
                   <li key={topic.id} className="flex items-start">
@@ -566,14 +597,14 @@ export default function AssessmentBotScreen({
               {/* Assessment Progress Bar */}
               <div className="mt-5">
                 <div className="flex justify-between items-center mb-1">
-                  <p className="text-xs font-medium text-gray-600">Assessment Progress</p>
+                  <p className="text-xs font-medium text-gray-600">{uiConfig.progressSection.title}</p>
                 </div>
                 <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
                   <motion.div 
                     className="h-full bg-green-500"
                     initial={{ width: '0%' }}
                     animate={{ 
-                      width: `${(keywordProgress / 8) * 100}%`,
+                      width: `${(keywordProgress / uiConfig.progressSection.completionThreshold) * 100}%`,
                     }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   />
@@ -605,7 +636,7 @@ export default function AssessmentBotScreen({
                       >
                         ✨
                       </motion.span>
-                      <span>Assessment Complete</span>
+                      <span>{uiConfig.progressSection.completionMessage}</span>
                       <motion.span
                         initial={{ rotate: 0 }}
                         animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
@@ -623,9 +654,9 @@ export default function AssessmentBotScreen({
             <hr className="my-4 border-gray-200" />
             
             <div>
-              <h3 className="font-semibold text-gray-800 mb-2">Keep in mind</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">{uiConfig.keepInMindSection.title}</h3>
               <p className="text-sm text-gray-700">
-                Reginald will use your responses to recommend a learning path that makes sense for you. Do your best—he may be smug, but he's paying attention.
+                {uiConfig.keepInMindSection.description}
               </p>
             </div>
           </div>
@@ -634,7 +665,7 @@ export default function AssessmentBotScreen({
         {/* Right column - Chat interface */}
         <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
           <div className="p-3 md:p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
-            <h2 className="font-bold text-base md:text-lg text-gray-800">Royal Assessment: Three Branches of Government</h2>
+            <h2 className="font-bold text-base md:text-lg text-gray-800">{uiConfig.chatHeaderTitle}</h2>
           </div>
           
           <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-4 min-h-0">
@@ -652,7 +683,7 @@ export default function AssessmentBotScreen({
                     </div>
                   )}
                   <span className="text-xs text-gray-500 mt-1">
-                    {message.role === 'assistant' ? 'Reginald Worthington III' : 'You'}
+                    {message.role === 'assistant' ? displayName : 'You'}
                   </span>
                 </div>
                 <div className={`ml-10 ${
@@ -707,7 +738,7 @@ export default function AssessmentBotScreen({
               <AutoResizeTextarea
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type your response here..."
+                placeholder={uiConfig.inputPlaceholder}
                 className="flex-grow focus:border-green-500"
                 maxRows={4}
                 onKeyDown={(e) => {

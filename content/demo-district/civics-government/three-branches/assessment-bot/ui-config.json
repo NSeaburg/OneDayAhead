@@ -1,0 +1,39 @@
+{
+  "botTitle": "Aristocratic Observer",
+  "botDescription": "Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as \"democracy.\" He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown.",
+  "chatHeaderTitle": "Royal Assessment: Three Branches of Government",
+  "listeningSection": {
+    "title": "What he's listening for",
+    "topics": [
+      {
+        "id": "governmental-structure",
+        "name": "Governmental Structure",
+        "description": "Can you clearly explain how power is divided into three branches?",
+        "keywords": ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
+      },
+      {
+        "id": "checks-balances",
+        "name": "The System of Checks and Balances",
+        "description": "Do you understand how the branches hold each other in check?",
+        "keywords": ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
+      },
+      {
+        "id": "branch-roles",
+        "name": "Roles of the Branches",
+        "description": "Can you describe what Congress, the President, and the Courts actually do?",
+        "keywords": ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
+      }
+    ]
+  },
+  "progressSection": {
+    "title": "Assessment Progress",
+    "completionThreshold": 8,
+    "completionMessage": "Assessment Complete"
+  },
+  "keepInMindSection": {
+    "title": "Keep in mind",
+    "description": "Reginald will use your responses to recommend a learning path that makes sense for you. Do your best—he may be smug, but he's paying attention."
+  },
+  "inputPlaceholder": "Type your response here...",
+  "initialGreeting": "Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty's service to study your peculiar experiment in self-governance.\n\nI have graciously agreed to examine this quaint little system you call \"democracy\" before its inevitable collapse. How amusing!\n\nPerhaps you would be willing to enlighten me about your government's structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n\n(adjusts cravat with practiced flourish)"
+}
