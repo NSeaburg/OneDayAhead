@@ -2867,6 +2867,205 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       const configPath = path.join(packagePath, 'config.json');
       await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
 
+      // Create UI configuration files for assessment bot
+      const assessmentBotPath = path.join(packagePath, 'assessment-bot');
+      await fs.promises.mkdir(assessmentBotPath, { recursive: true });
+      
+      const assessmentUIConfig = {
+        botTitle: experienceData.assessmentBotTitle || experienceData.assessmentName || "Assessment Bot",
+        botDescription: experienceData.assessmentDescription || "Let's explore your understanding",
+        chatHeaderTitle: experienceData.assessmentChatHeaderTitle || "Assessment Chat",
+        listeningSection: {
+          title: "I'm listening for",
+          topics: experienceData.assessmentListeningTopics || []
+        },
+        progressSection: {
+          title: experienceData.assessmentProgressTitle || "Assessment Progress",
+          threshold: experienceData.assessmentProgressThreshold || 8
+        },
+        keepInMindSection: {
+          title: experienceData.assessmentKeepInMindTitle || "Keep in mind",
+          description: experienceData.assessmentKeepInMindDescription || "Be specific and detailed in your responses"
+        },
+        inputPlaceholder: experienceData.assessmentInputPlaceholder || "Type your response here...",
+        initialGreeting: experienceData.assessmentInitialGreeting || ""
+      };
+      
+      await fs.promises.writeFile(
+        path.join(assessmentBotPath, 'ui-config.json'), 
+        JSON.stringify(assessmentUIConfig, null, 2)
+      );
+
+      // Create UI configuration files for teaching bots
+      const teachingBotsPath = path.join(packagePath, 'teaching-bots');
+      
+      // High level UI config
+      const highLevelPath = path.join(teachingBotsPath, 'high-level');
+      await fs.promises.mkdir(highLevelPath, { recursive: true });
+      
+      const highUIConfig = {
+        botTitle: experienceData.highBotTitle || experienceData.highBotName || "Advanced Analysis",
+        botDescription: experienceData.highBotDescription || "Let's dive deep into advanced concepts",
+        chatHeaderTitle: experienceData.highChatHeaderTitle || "Advanced Discussion",
+        teachingApproach: {
+          title: experienceData.highTeachingApproachTitle || "Teaching Approach",
+          description: experienceData.highTeachingApproachDescription || "Advanced analytical exploration"
+        },
+        focusAreas: experienceData.highFocusTopics || [],
+        challengeSection: {
+          title: experienceData.highChallengeTitle || "Ready for a challenge?",
+          description: experienceData.highChallengeDescription || "Let's explore complex connections"
+        },
+        inputPlaceholder: experienceData.highInputPlaceholder || "Type your message here...",
+        initialGreeting: experienceData.highInitialGreeting || ""
+      };
+      
+      await fs.promises.writeFile(
+        path.join(highLevelPath, 'ui-config.json'), 
+        JSON.stringify(highUIConfig, null, 2)
+      );
+
+      // Medium level UI config
+      const mediumLevelPath = path.join(teachingBotsPath, 'medium-level');
+      await fs.promises.mkdir(mediumLevelPath, { recursive: true });
+      
+      const mediumUIConfig = {
+        botTitle: experienceData.mediumBotTitle || experienceData.mediumBotName || "Guided Learning",
+        botDescription: experienceData.mediumBotDescription || "Let's strengthen your understanding together",
+        chatHeaderTitle: experienceData.mediumChatHeaderTitle || "Focused Discussion",
+        teachingApproach: {
+          title: experienceData.mediumTeachingApproachTitle || "Teaching Approach",
+          description: experienceData.mediumTeachingApproachDescription || "Building deeper understanding step by step"
+        },
+        focusAreas: experienceData.mediumFocusTopics || [],
+        encouragementSection: {
+          title: experienceData.mediumEncouragementTitle || "You're doing great!",
+          description: experienceData.mediumEncouragementDescription || "Let's keep building your knowledge"
+        },
+        inputPlaceholder: experienceData.mediumInputPlaceholder || "Type your message here...",
+        initialGreeting: experienceData.mediumInitialGreeting || ""
+      };
+      
+      await fs.promises.writeFile(
+        path.join(mediumLevelPath, 'ui-config.json'), 
+        JSON.stringify(mediumUIConfig, null, 2)
+      );
+
+      // Low level UI config
+      const lowLevelPath = path.join(teachingBotsPath, 'low-level');
+      await fs.promises.mkdir(lowLevelPath, { recursive: true });
+      
+      const lowUIConfig = {
+        botTitle: experienceData.lowBotTitle || experienceData.lowBotName || "Foundation Building",
+        botDescription: experienceData.lowBotDescription || "Let's build a strong foundation together",
+        chatHeaderTitle: experienceData.lowChatHeaderTitle || "Foundational Learning",
+        teachingApproach: {
+          title: experienceData.lowTeachingApproachTitle || "Teaching Approach",
+          description: experienceData.lowTeachingApproachDescription || "Starting with the basics and building up"
+        },
+        focusAreas: experienceData.lowFocusTopics || [],
+        encouragementSection: {
+          title: experienceData.lowEncouragementTitle || "Keep learning!",
+          description: experienceData.lowEncouragementDescription || "Every step forward is progress"
+        },
+        inputPlaceholder: experienceData.lowInputPlaceholder || "Type your message here...",
+        initialGreeting: experienceData.lowInitialGreeting || ""
+      };
+      
+      await fs.promises.writeFile(
+        path.join(lowLevelPath, 'ui-config.json'), 
+        JSON.stringify(lowUIConfig, null, 2)
+      );
+
+      // Create assessment criteria file
+      const assessmentCriteriaConfig = {
+        name: experienceData.name,
+        description: experienceData.description,
+        subject: experienceData.course,
+        gradeLevel: "General",
+        evaluationPrompt: `Evaluate the student's understanding of ${experienceData.topic} based on the following criteria`,
+        routingCriteria: {
+          high: {
+            description: experienceData.highCriteria || "Strong understanding demonstrated",
+            indicators: [],
+            teachingBot: "high",
+            minScore: 0.7
+          },
+          medium: {
+            description: experienceData.mediumCriteria || "Basic understanding with some gaps",
+            indicators: [],
+            teachingBot: "medium",
+            minScore: 0.4
+          },
+          low: {
+            description: experienceData.lowCriteria || "Needs foundational support",
+            indicators: [],
+            teachingBot: "low",
+            minScore: 0
+          }
+        },
+        fallbackLevel: "medium"
+      };
+      
+      await fs.promises.writeFile(
+        path.join(packagePath, 'assessment-criteria.json'), 
+        JSON.stringify(assessmentCriteriaConfig, null, 2)
+      );
+
+      // Create feedback instructions file
+      const feedbackInstructionsConfig = {
+        name: experienceData.name,
+        description: experienceData.description,
+        subject: experienceData.course,
+        gradeLevel: "General",
+        gradingPrompt: `Provide comprehensive feedback on the student's understanding of ${experienceData.topic}`,
+        feedbackComponents: {
+          summary: {
+            description: "Overall performance summary",
+            length: "2-3 sentences"
+          },
+          contentKnowledgeScore: {
+            description: "Content knowledge score",
+            scale: "0-4"
+          },
+          writingScore: {
+            description: "Writing quality score",
+            scale: "0-4"
+          },
+          nextSteps: {
+            description: "Recommended next steps",
+            requirements: ["Be specific", "Be actionable", "Be encouraging"]
+          }
+        },
+        rubricGuidelines: {
+          excellentPerformance: {
+            contentRange: "3.5-4.0",
+            writingRange: "3.5-4.0",
+            characteristics: ["Deep understanding", "Clear communication", "Insightful connections"]
+          },
+          proficientPerformance: {
+            contentRange: "2.5-3.4",
+            writingRange: "2.5-3.4",
+            characteristics: ["Good understanding", "Clear explanations", "Some connections"]
+          },
+          developingPerformance: {
+            contentRange: "1.5-2.4",
+            writingRange: "1.5-2.4",
+            characteristics: ["Basic understanding", "Simple explanations", "Limited connections"]
+          },
+          beginningPerformance: {
+            contentRange: "0-1.4",
+            writingRange: "0-1.4",
+            characteristics: ["Minimal understanding", "Unclear explanations", "No connections"]
+          }
+        }
+      };
+      
+      await fs.promises.writeFile(
+        path.join(packagePath, 'feedback-instructions.json'), 
+        JSON.stringify(feedbackInstructionsConfig, null, 2)
+      );
+
       // TODO: Handle avatar file uploads in a future update
       // For now, we'll use default avatars or the filename referenced in config
       // Avatar files would be saved to the package directory when upload is implemented

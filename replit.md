@@ -148,6 +148,17 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 10, 2025. Enhanced admin content creation form to support complete UI configurability collection
+  - Expanded admin intake form from 5 to 8 steps to collect all UI configuration data
+  - Added new Step 3: Assessment Bot UI configuration (botTitle, chatHeader, listening topics, progress settings, input placeholder, initial greeting)
+  - Added new Step 4: Assessment Criteria (high/medium/low performance criteria for routing)
+  - Moved Teaching Assistants to Step 5 (bot names, descriptions, avatars, system prompts)
+  - Added new Step 6: Teaching Bot UI configuration (botTitle, chatHeader, teaching approach, focus areas, encouragement/challenge sections)
+  - Updated backend `/api/content/create-package` to generate all ui-config.json files for assessment and teaching bots
+  - Backend now creates assessment-criteria.json and feedback-instructions.json with collected criteria
+  - Added AssessmentTopicManager and FocusTopicManager components for dynamic list management
+  - Form now collects ALL configurable UI elements that were made interchangeable in previous work
+  - Admin can create complete content packages with full UI customization in a clean, user-friendly interface
 - July 10, 2025. Completed full UI configurability for teaching bots to match assessment bot configurability
   - Created ui-config.json files for all three teaching bot levels (low/Whitaker, medium/Bannerman, high/Parton)
   - Updated DynamicAssistantScreen component to use UI configurations for all screen elements

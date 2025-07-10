@@ -6,9 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, MessageCircle, Save, CheckCircle, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, MessageCircle, Save, CheckCircle, Upload, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
+
+interface ListeningTopic {
+  id: string;
+  name: string;
+  description: string;
+  keywords: string[];
+}
+
+interface FocusTopic {
+  id: string;
+  name: string;
+  description: string;
+}
 
 interface ExperienceData {
   // Basic Info
@@ -24,6 +37,17 @@ interface ExperienceData {
   assessmentPersonality: string;
   assessmentAvatar: File | null;
   assessmentCriteria: string;
+  
+  // Assessment Bot UI Config
+  assessmentBotTitle: string;
+  assessmentChatHeaderTitle: string;
+  assessmentListeningTopics: ListeningTopic[];
+  assessmentProgressTitle: string;
+  assessmentProgressThreshold: number;
+  assessmentKeepInMindTitle: string;
+  assessmentKeepInMindDescription: string;
+  assessmentInputPlaceholder: string;
+  assessmentInitialGreeting: string;
   
   // Assessment Criteria
   highCriteria: string;
@@ -45,14 +69,49 @@ interface ExperienceData {
   lowBotDescription: string;
   lowBotPersonality: string;
   lowBotAvatar: File | null;
+  
+  // Teaching Bot UI Config - High Level
+  highBotTitle: string;
+  highChatHeaderTitle: string;
+  highTeachingApproachTitle: string;
+  highTeachingApproachDescription: string;
+  highFocusTopics: FocusTopic[];
+  highChallengeTitle: string;
+  highChallengeDescription: string;
+  highInputPlaceholder: string;
+  highInitialGreeting: string;
+  
+  // Teaching Bot UI Config - Medium Level
+  mediumBotTitle: string;
+  mediumChatHeaderTitle: string;
+  mediumTeachingApproachTitle: string;
+  mediumTeachingApproachDescription: string;
+  mediumFocusTopics: FocusTopic[];
+  mediumEncouragementTitle: string;
+  mediumEncouragementDescription: string;
+  mediumInputPlaceholder: string;
+  mediumInitialGreeting: string;
+  
+  // Teaching Bot UI Config - Low Level
+  lowBotTitle: string;
+  lowChatHeaderTitle: string;
+  lowTeachingApproachTitle: string;
+  lowTeachingApproachDescription: string;
+  lowFocusTopics: FocusTopic[];
+  lowEncouragementTitle: string;
+  lowEncouragementDescription: string;
+  lowInputPlaceholder: string;
+  lowInitialGreeting: string;
 }
 
 const STEPS = [
   { id: 1, title: "Basic Information", description: "Experience details and topic" },
   { id: 2, title: "Assessment Bot", description: "AI assistant for evaluation" },
-  { id: 3, title: "Assessment Criteria", description: "How to evaluate student performance" },
-  { id: 4, title: "Teaching Assistants", description: "Adaptive learning bots" },
-  { id: 5, title: "Review & Create", description: "Final review and creation" }
+  { id: 3, title: "Assessment Bot UI", description: "User interface configuration" },
+  { id: 4, title: "Assessment Criteria", description: "How to evaluate student performance" },
+  { id: 5, title: "Teaching Assistants", description: "Adaptive learning bots" },
+  { id: 6, title: "Teaching Bot UI", description: "Interface for each teaching level" },
+  { id: 7, title: "Review & Create", description: "Final review and creation" }
 ];
 
 export default function AdminCreate() {
@@ -68,6 +127,17 @@ export default function AdminCreate() {
     assessmentPersonality: "",
     assessmentAvatar: null,
     assessmentCriteria: "",
+    // Assessment Bot UI Config
+    assessmentBotTitle: "",
+    assessmentChatHeaderTitle: "",
+    assessmentListeningTopics: [],
+    assessmentProgressTitle: "Assessment Progress",
+    assessmentProgressThreshold: 8,
+    assessmentKeepInMindTitle: "Keep in mind",
+    assessmentKeepInMindDescription: "",
+    assessmentInputPlaceholder: "Type your response here...",
+    assessmentInitialGreeting: "",
+    // Assessment Criteria
     highCriteria: "",
     mediumCriteria: "",
     lowCriteria: "",
@@ -82,7 +152,37 @@ export default function AdminCreate() {
     lowBotName: "",
     lowBotDescription: "",
     lowBotPersonality: "",
-    lowBotAvatar: null
+    lowBotAvatar: null,
+    // Teaching Bot UI Config - High Level
+    highBotTitle: "",
+    highChatHeaderTitle: "",
+    highTeachingApproachTitle: "Teaching Approach",
+    highTeachingApproachDescription: "",
+    highFocusTopics: [],
+    highChallengeTitle: "",
+    highChallengeDescription: "",
+    highInputPlaceholder: "Type your message here...",
+    highInitialGreeting: "",
+    // Teaching Bot UI Config - Medium Level
+    mediumBotTitle: "",
+    mediumChatHeaderTitle: "",
+    mediumTeachingApproachTitle: "Teaching Approach",
+    mediumTeachingApproachDescription: "",
+    mediumFocusTopics: [],
+    mediumEncouragementTitle: "",
+    mediumEncouragementDescription: "",
+    mediumInputPlaceholder: "Type your message here...",
+    mediumInitialGreeting: "",
+    // Teaching Bot UI Config - Low Level
+    lowBotTitle: "",
+    lowChatHeaderTitle: "",
+    lowTeachingApproachTitle: "Teaching Approach",
+    lowTeachingApproachDescription: "",
+    lowFocusTopics: [],
+    lowEncouragementTitle: "",
+    lowEncouragementDescription: "",
+    lowInputPlaceholder: "Type your message here...",
+    lowInitialGreeting: ""
   });
   
   const [saving, setSaving] = useState(false);
@@ -138,10 +238,15 @@ What learning experience would you like to create? Tell me about your subject, g
       case 2:
         return experienceData.assessmentName && experienceData.assessmentPersonality;
       case 3:
-        return experienceData.highCriteria && experienceData.mediumCriteria && experienceData.lowCriteria;
+        return experienceData.assessmentBotTitle && experienceData.assessmentChatHeaderTitle && 
+               experienceData.assessmentListeningTopics.length > 0;
       case 4:
-        return experienceData.highBotPersonality && experienceData.mediumBotPersonality && experienceData.lowBotPersonality;
+        return experienceData.highCriteria && experienceData.mediumCriteria && experienceData.lowCriteria;
       case 5:
+        return experienceData.highBotPersonality && experienceData.mediumBotPersonality && experienceData.lowBotPersonality;
+      case 6:
+        return experienceData.highBotTitle && experienceData.mediumBotTitle && experienceData.lowBotTitle;
+      case 7:
         return true;
       default:
         return false;
@@ -149,7 +254,7 @@ What learning experience would you like to create? Tell me about your subject, g
   };
 
   const handleNext = () => {
-    if (canProceed() && currentStep < 5) {
+    if (canProceed() && currentStep < 7) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -332,6 +437,88 @@ What learning experience would you like to create? Tell me about your subject, g
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold">Assessment Bot User Interface</h3>
+              <p className="text-gray-600">Configure how the assessment bot appears to students</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="assessmentBotTitle">Bot Title</Label>
+                <Input
+                  id="assessmentBotTitle"
+                  value={experienceData.assessmentBotTitle}
+                  onChange={(e) => updateField("assessmentBotTitle", e.target.value)}
+                  placeholder="e.g., Aristocratic Observer"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="assessmentChatHeaderTitle">Chat Header Title</Label>
+                <Input
+                  id="assessmentChatHeaderTitle"
+                  value={experienceData.assessmentChatHeaderTitle}
+                  onChange={(e) => updateField("assessmentChatHeaderTitle", e.target.value)}
+                  placeholder="e.g., Assessment: American Civil War"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="assessmentInitialGreeting">Initial Greeting</Label>
+              <Textarea
+                id="assessmentInitialGreeting"
+                value={experienceData.assessmentInitialGreeting}
+                onChange={(e) => updateField("assessmentInitialGreeting", e.target.value)}
+                placeholder="The first message the bot sends to students..."
+                rows={4}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="assessmentInputPlaceholder">Input Placeholder</Label>
+              <Input
+                id="assessmentInputPlaceholder"
+                value={experienceData.assessmentInputPlaceholder}
+                onChange={(e) => updateField("assessmentInputPlaceholder", e.target.value)}
+                placeholder="e.g., Type your response here..."
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Listening Topics</Label>
+              <p className="text-sm text-gray-600">Add topics the bot is evaluating (shown in the UI)</p>
+              <AssessmentTopicManager
+                topics={experienceData.assessmentListeningTopics}
+                onChange={(topics) => updateField("assessmentListeningTopics", topics)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="assessmentKeepInMindTitle">Keep in Mind Section Title</Label>
+                <Input
+                  id="assessmentKeepInMindTitle"
+                  value={experienceData.assessmentKeepInMindTitle}
+                  onChange={(e) => updateField("assessmentKeepInMindTitle", e.target.value)}
+                  placeholder="e.g., Keep in mind"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="assessmentKeepInMindDescription">Keep in Mind Description</Label>
+                <Input
+                  id="assessmentKeepInMindDescription"
+                  value={experienceData.assessmentKeepInMindDescription}
+                  onChange={(e) => updateField("assessmentKeepInMindDescription", e.target.value)}
+                  placeholder="Brief reminder for students"
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">Assessment Evaluation Criteria</h3>
               <p className="text-gray-600">Define how Claude should evaluate student performance and route them to appropriate teaching assistants.</p>
             </div>
@@ -385,7 +572,7 @@ What learning experience would you like to create? Tell me about your subject, g
           </div>
         );
 
-      case 4:
+      case 5:
         return (
           <div className="space-y-8">
             {/* High Level Bot */}
@@ -549,7 +736,227 @@ What learning experience would you like to create? Tell me about your subject, g
           </div>
         );
 
-      case 5:
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold">Teaching Bot User Interface</h3>
+              <p className="text-gray-600">Configure how each teaching bot appears to students</p>
+            </div>
+            
+            {/* High Level UI Config */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-green-700">High Level Bot Interface</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Bot Title</Label>
+                    <Input
+                      value={experienceData.highBotTitle}
+                      onChange={(e) => updateField("highBotTitle", e.target.value)}
+                      placeholder="e.g., Expert Analysis"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Chat Header</Label>
+                    <Input
+                      value={experienceData.highChatHeaderTitle}
+                      onChange={(e) => updateField("highChatHeaderTitle", e.target.value)}
+                      placeholder="e.g., Advanced Instruction"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Teaching Approach Description</Label>
+                  <Textarea
+                    value={experienceData.highTeachingApproachDescription}
+                    onChange={(e) => updateField("highTeachingApproachDescription", e.target.value)}
+                    placeholder="Describe the teaching approach..."
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Focus Areas</Label>
+                  <FocusTopicManager
+                    topics={experienceData.highFocusTopics}
+                    onChange={(topics) => updateField("highFocusTopics", topics)}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Challenge Title</Label>
+                    <Input
+                      value={experienceData.highChallengeTitle}
+                      onChange={(e) => updateField("highChallengeTitle", e.target.value)}
+                      placeholder="e.g., Ready for a challenge?"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Challenge Description</Label>
+                    <Input
+                      value={experienceData.highChallengeDescription}
+                      onChange={(e) => updateField("highChallengeDescription", e.target.value)}
+                      placeholder="Challenge message..."
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Initial Greeting</Label>
+                  <Textarea
+                    value={experienceData.highInitialGreeting}
+                    onChange={(e) => updateField("highInitialGreeting", e.target.value)}
+                    placeholder="First message to students..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Medium Level UI Config */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-yellow-700">Medium Level Bot Interface</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Bot Title</Label>
+                    <Input
+                      value={experienceData.mediumBotTitle}
+                      onChange={(e) => updateField("mediumBotTitle", e.target.value)}
+                      placeholder="e.g., Guided Learning"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Chat Header</Label>
+                    <Input
+                      value={experienceData.mediumChatHeaderTitle}
+                      onChange={(e) => updateField("mediumChatHeaderTitle", e.target.value)}
+                      placeholder="e.g., Focused Instruction"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Teaching Approach Description</Label>
+                  <Textarea
+                    value={experienceData.mediumTeachingApproachDescription}
+                    onChange={(e) => updateField("mediumTeachingApproachDescription", e.target.value)}
+                    placeholder="Describe the teaching approach..."
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Focus Areas</Label>
+                  <FocusTopicManager
+                    topics={experienceData.mediumFocusTopics}
+                    onChange={(topics) => updateField("mediumFocusTopics", topics)}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Encouragement Title</Label>
+                    <Input
+                      value={experienceData.mediumEncouragementTitle}
+                      onChange={(e) => updateField("mediumEncouragementTitle", e.target.value)}
+                      placeholder="e.g., You're doing great!"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Encouragement Description</Label>
+                    <Input
+                      value={experienceData.mediumEncouragementDescription}
+                      onChange={(e) => updateField("mediumEncouragementDescription", e.target.value)}
+                      placeholder="Encouragement message..."
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Initial Greeting</Label>
+                  <Textarea
+                    value={experienceData.mediumInitialGreeting}
+                    onChange={(e) => updateField("mediumInitialGreeting", e.target.value)}
+                    placeholder="First message to students..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Low Level UI Config */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-red-700">Low Level Bot Interface</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Bot Title</Label>
+                    <Input
+                      value={experienceData.lowBotTitle}
+                      onChange={(e) => updateField("lowBotTitle", e.target.value)}
+                      placeholder="e.g., Foundation Builder"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Chat Header</Label>
+                    <Input
+                      value={experienceData.lowChatHeaderTitle}
+                      onChange={(e) => updateField("lowChatHeaderTitle", e.target.value)}
+                      placeholder="e.g., Building Understanding"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Teaching Approach Description</Label>
+                  <Textarea
+                    value={experienceData.lowTeachingApproachDescription}
+                    onChange={(e) => updateField("lowTeachingApproachDescription", e.target.value)}
+                    placeholder="Describe the teaching approach..."
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Focus Areas</Label>
+                  <FocusTopicManager
+                    topics={experienceData.lowFocusTopics}
+                    onChange={(topics) => updateField("lowFocusTopics", topics)}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Encouragement Title</Label>
+                    <Input
+                      value={experienceData.lowEncouragementTitle}
+                      onChange={(e) => updateField("lowEncouragementTitle", e.target.value)}
+                      placeholder="e.g., Keep learning!"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Encouragement Description</Label>
+                    <Input
+                      value={experienceData.lowEncouragementDescription}
+                      onChange={(e) => updateField("lowEncouragementDescription", e.target.value)}
+                      placeholder="Encouragement message..."
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Initial Greeting</Label>
+                  <Textarea
+                    value={experienceData.lowInitialGreeting}
+                    onChange={(e) => updateField("lowInitialGreeting", e.target.value)}
+                    placeholder="First message to students..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 7:
         return (
           <div className="space-y-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
@@ -576,9 +983,6 @@ What learning experience would you like to create? Tell me about your subject, g
                 </div>
                 <div className="text-sm">
                   <strong>Description:</strong> {experienceData.description}
-                </div>
-                <div className="text-sm">
-                  <strong>Article Title:</strong> {experienceData.articleTitle}
                 </div>
                 <div className="text-sm">
                   <strong>Assessment Bot:</strong> {experienceData.assessmentName}
@@ -731,7 +1135,7 @@ What learning experience would you like to create? Tell me about your subject, g
                 Previous
               </Button>
 
-              {currentStep === 5 ? (
+              {currentStep === 7 ? (
                 <Button
                   onClick={handleCreateExperience}
                   disabled={saving || !canProceed()}
@@ -762,6 +1166,140 @@ What learning experience would you like to create? Tell me about your subject, g
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Component for managing assessment listening topics
+function AssessmentTopicManager({ topics, onChange }: { topics: ListeningTopic[], onChange: (topics: ListeningTopic[]) => void }) {
+  const addTopic = () => {
+    const newTopic: ListeningTopic = {
+      id: Date.now().toString(),
+      name: "",
+      description: "",
+      keywords: []
+    };
+    onChange([...topics, newTopic]);
+  };
+
+  const updateTopic = (id: string, field: keyof ListeningTopic, value: any) => {
+    onChange(topics.map(topic => 
+      topic.id === id ? { ...topic, [field]: value } : topic
+    ));
+  };
+
+  const removeTopic = (id: string) => {
+    onChange(topics.filter(topic => topic.id !== id));
+  };
+
+  return (
+    <div className="space-y-4">
+      {topics.map((topic) => (
+        <Card key={topic.id}>
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-4">
+              <div className="flex-1 space-y-3">
+                <Input
+                  placeholder="Topic name (e.g., Executive Branch)"
+                  value={topic.name}
+                  onChange={(e) => updateTopic(topic.id, 'name', e.target.value)}
+                />
+                <Input
+                  placeholder="Description"
+                  value={topic.description}
+                  onChange={(e) => updateTopic(topic.id, 'description', e.target.value)}
+                />
+                <Input
+                  placeholder="Keywords (comma-separated)"
+                  value={topic.keywords.join(', ')}
+                  onChange={(e) => updateTopic(topic.id, 'keywords', e.target.value.split(',').map(k => k.trim()).filter(k => k))}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeTopic(topic.id)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={addTopic}
+        className="w-full"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add Topic
+      </Button>
+    </div>
+  );
+}
+
+// Component for managing teaching focus topics
+function FocusTopicManager({ topics, onChange }: { topics: FocusTopic[], onChange: (topics: FocusTopic[]) => void }) {
+  const addTopic = () => {
+    const newTopic: FocusTopic = {
+      id: Date.now().toString(),
+      name: "",
+      description: ""
+    };
+    onChange([...topics, newTopic]);
+  };
+
+  const updateTopic = (id: string, field: keyof FocusTopic, value: string) => {
+    onChange(topics.map(topic => 
+      topic.id === id ? { ...topic, [field]: value } : topic
+    ));
+  };
+
+  const removeTopic = (id: string) => {
+    onChange(topics.filter(topic => topic.id !== id));
+  };
+
+  return (
+    <div className="space-y-4">
+      {topics.map((topic) => (
+        <Card key={topic.id}>
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-4">
+              <div className="flex-1 space-y-3">
+                <Input
+                  placeholder="Focus area (e.g., Checks and Balances)"
+                  value={topic.name}
+                  onChange={(e) => updateTopic(topic.id, 'name', e.target.value)}
+                />
+                <Input
+                  placeholder="Description of this focus area"
+                  value={topic.description}
+                  onChange={(e) => updateTopic(topic.id, 'description', e.target.value)}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeTopic(topic.id)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={addTopic}
+        className="w-full"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add Focus Area
+      </Button>
     </div>
   );
 }
