@@ -148,10 +148,11 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
-- July 9, 2025. Fixed teaching bot chat interface scrolling to match Reggie's behavior  
-  - Changed DynamicAssistantScreen chat container from growing page to fixed-height scrollable container
+- July 9, 2025. Fixed teaching bot chat interface scrolling and sizing to match Reggie's behavior  
+  - Changed DynamicAssistantScreen container from `h-full` to `h-screen` for consistent full-height layout
   - Applied same CSS structure as AssessmentBotScreen: `flex-1 overflow-y-auto min-h-0` for chat messages area
   - Added `flex-shrink-0` to header and input areas to prevent compression
+  - Chat container now loads at full height immediately, matching Reggie's interface appearance
   - Chat conversations now scroll within container instead of making page longer
   - Teaching bot interface now behaves consistently with Reggie's assessment interface
 - July 9, 2025. Fixed feedback page data flow issues after reset button usage

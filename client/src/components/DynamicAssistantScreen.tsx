@@ -418,10 +418,10 @@ export default function DynamicAssistantScreen({
   };
 
   return (
-    <div className="flex flex-col p-4 md:p-6 h-full">
+    <div className="h-screen p-4 md:p-6 flex flex-col">
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">Specialized Guidance</h1>
       
-      <div className="flex flex-col md:flex-row gap-6 flex-grow min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
         {/* Left column - Teacher profile or Article */}
         {proficiencyLevel !== "unknown" && (
           <div className={`${showArticle && proficiencyLevel === "high" ? 'md:w-3/5' : 'md:w-1/3'} flex flex-col transition-all duration-300`}>
@@ -516,8 +516,8 @@ export default function DynamicAssistantScreen({
         )}
         
         {/* Right column - Chat interface */}
-        <div className={`${proficiencyLevel === "high" && showArticle ? 'md:w-2/5' : proficiencyLevel !== "unknown" ? 'md:w-2/3' : 'w-full'} flex-grow flex flex-col transition-all duration-300`}>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
+        <div className={`${proficiencyLevel === "high" && showArticle ? 'md:w-2/5' : proficiencyLevel !== "unknown" ? 'md:w-2/3' : 'w-full'} flex-1 flex flex-col transition-all duration-300 min-h-0`}>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
               <h2 className="font-semibold text-lg text-gray-800">
                 {proficiencyLevel === "high" ? "Mrs. Parton" :
