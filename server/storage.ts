@@ -1,6 +1,6 @@
 import { 
   users, sessions, conversations, feedbacks,
-  ltiPlatforms, ltiDeployments, ltiRegistrations, ltiContexts, ltiUsers, tenants, ltiGrades,
+  ltiPlatforms, ltiDeployments, ltiRegistrations, ltiContexts, ltiUsers, tenants, ltiGrades, ltiAssignmentConfigs,
   type User, type InsertUser, 
   type Session, type InsertSession,
   type Conversation, type InsertConversation,
@@ -11,7 +11,8 @@ import {
   type LtiContext, type InsertLtiContext,
   type LtiUser, type InsertLtiUser,
   type Tenant, type InsertTenant,
-  type LtiGrade, type InsertLtiGrade
+  type LtiGrade, type InsertLtiGrade,
+  type LtiAssignmentConfig, type InsertLtiAssignmentConfig
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -207,6 +208,25 @@ class MemoryStorage implements IStorage {
   }
   async getLtiGradesByUser(): Promise<LtiGrade[]> { return []; }
   async updateLtiGradeSubmission(): Promise<LtiGrade | undefined> { return undefined; }
+  
+  // LTI Assignment Config methods
+  async createOrUpdateLtiAssignmentConfig(data: InsertLtiAssignmentConfig): Promise<LtiAssignmentConfig> {
+    return {
+      id: 1,
+      platformId: data.platformId,
+      contextId: data.contextId,
+      resourceLinkId: data.resourceLinkId,
+      contentPackageId: data.contentPackageId,
+      district: data.district,
+      course: data.course,
+      topic: data.topic,
+      config: data.config,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+  
+  async getLtiAssignmentConfig(): Promise<LtiAssignmentConfig | undefined> { return undefined; }
 }
 
 // Storage interface with all the methods we need
@@ -260,6 +280,10 @@ export interface IStorage {
   createLtiGrade(data: InsertLtiGrade): Promise<LtiGrade>;
   getLtiGradesByUser(ltiUserId: number): Promise<LtiGrade[]>;
   updateLtiGradeSubmission(id: number, status: string): Promise<LtiGrade | undefined>;
+  
+  // LTI Assignment Config methods
+  createOrUpdateLtiAssignmentConfig(data: InsertLtiAssignmentConfig): Promise<LtiAssignmentConfig>;
+  getLtiAssignmentConfig(platformId: number, contextId: string, resourceLinkId: string): Promise<LtiAssignmentConfig | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -478,6 +502,46 @@ export class DatabaseStorage implements IStorage {
       .where(eq(ltiGrades.id, id))
       .returning();
     return grade;
+  }
+
+  // LTI Assignment Config methods
+  async createOrUpdateLtiAssignmentConfig(data: InsertLtiAssignmentConfig): Promise<LtiAssignmentConfig> {
+    // Check if config already exists
+    const existing = await this.getLtiAssignmentConfig(data.platformId, data.contextId, data.resourceLinkId);
+    
+    if (existing) {
+      // Update existing config
+      const [updated] = await db.update(ltiAssignmentConfigs)
+        .set({
+          contentPackageId: data.contentPackageId,
+          district: data.district,
+          course: data.course,
+          topic: data.topic,
+          config: data.config,
+          updatedAt: new Date()
+        })
+        .where(eq(ltiAssignmentConfigs.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new config
+      const [created] = await db.insert(ltiAssignmentConfigs).values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+      return created;
+    }
+  }
+
+  async getLtiAssignmentConfig(platformId: number, contextId: string, resourceLinkId: string): Promise<LtiAssignmentConfig | undefined> {
+    const [config] = await db.select().from(ltiAssignmentConfigs)
+      .where(and(
+        eq(ltiAssignmentConfigs.platformId, platformId),
+        eq(ltiAssignmentConfigs.contextId, contextId),
+        eq(ltiAssignmentConfigs.resourceLinkId, resourceLinkId)
+      ));
+    return config;
   }
 }
 

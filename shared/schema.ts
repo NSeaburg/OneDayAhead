@@ -115,6 +115,21 @@ export const ltiGrades = pgTable("lti_grades", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// LTI Assignment Configuration - stores content package selection
+export const ltiAssignmentConfigs = pgTable("lti_assignment_configs", {
+  id: serial("id").primaryKey(),
+  platformId: integer("platform_id").references(() => ltiPlatforms.id),
+  contextId: text("context_id").notNull(),
+  resourceLinkId: text("resource_link_id").notNull(),
+  contentPackageId: text("content_package_id").notNull(),
+  district: text("district").notNull(),
+  course: text("course").notNull(),
+  topic: text("topic").notNull(),
+  config: json("config"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -202,6 +217,17 @@ export const insertLtiGradeSchema = createInsertSchema(ltiGrades).pick({
   submissionStatus: true,
 });
 
+export const insertLtiAssignmentConfigSchema = createInsertSchema(ltiAssignmentConfigs).pick({
+  platformId: true,
+  contextId: true,
+  resourceLinkId: true,
+  contentPackageId: true,
+  district: true,
+  course: true,
+  topic: true,
+  config: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -236,3 +262,6 @@ export type Tenant = typeof tenants.$inferSelect;
 
 export type InsertLtiGrade = z.infer<typeof insertLtiGradeSchema>;
 export type LtiGrade = typeof ltiGrades.$inferSelect;
+
+export type InsertLtiAssignmentConfig = z.infer<typeof insertLtiAssignmentConfigSchema>;
+export type LtiAssignmentConfig = typeof ltiAssignmentConfigs.$inferSelect;

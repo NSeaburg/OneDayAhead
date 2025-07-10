@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { LtiKeyManager, getLtiConfig } from './config';
 import { generateNonce, LtiSession } from './auth';
 import { storage } from '../storage';
+import { contentManager } from '../contentManager';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
@@ -54,7 +55,20 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
     }
 
     // Decode and validate JWT (this will be done by auth middleware)
-    // For now, redirect to the main application
+    // Extract custom parameters from the launch
+    let contentPackageId = '';
+    
+    if (req.lti?.claims) {
+      const customClaim = req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/custom'];
+      if (customClaim) {
+        // Extract content package information from custom parameters
+        contentPackageId = customClaim.content_package_id || 
+                          customClaim.custom_content_package_id || 
+                          'demo-district/civics-government/three-branches'; // Default fallback
+      }
+    }
+
+    // Build target URL with content package information
     const targetUrl = process.env.NODE_ENV === 'development' 
       ? '/?lti_launch=true'
       : '/?lti_launch=true';
@@ -64,8 +78,12 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
       // Create session in database for LTI user
       const session = await storage.createSession(1); // Will be updated with proper user ID
       
-      // Redirect to frontend with session information
-      res.redirect(`${targetUrl}&session_id=${session.sessionId}&lti_context=${encodeURIComponent(JSON.stringify(req.lti.claims))}`);
+      // Add content package ID to the redirect URL
+      const redirectUrl = contentPackageId 
+        ? `${targetUrl}&session_id=${session.sessionId}&experience=${encodeURIComponent(contentPackageId)}&lti_context=${encodeURIComponent(JSON.stringify(req.lti.claims))}`
+        : `${targetUrl}&session_id=${session.sessionId}&lti_context=${encodeURIComponent(JSON.stringify(req.lti.claims))}`;
+      
+      res.redirect(redirectUrl);
     } else {
       res.redirect(targetUrl);
     }
@@ -102,19 +120,165 @@ router.post('/deep-linking', async (req: LtiSession, res: Response) => {
       return res.status(400).json({ error: 'No deep linking settings provided' });
     }
 
-    // For now, return available content items
-    const contentItems = [
-      {
-        type: 'ltiResourceLink',
-        title: 'Government Branches Learning Module',
-        text: 'Interactive learning experience about the three branches of U.S. government',
-        url: getLtiConfig().launchUrl,
-        custom: {
-          module_type: 'government_branches',
-          assessment_enabled: 'true'
-        }
+    // Scan available content packages
+    const packages = await contentManager.scanContentPackages();
+    
+    // Convert packages to LTI content items
+    const contentItems = packages.map(pkg => ({
+      type: 'ltiResourceLink',
+      title: pkg.name,
+      text: `${pkg.description} - ${pkg.assessmentBot.name}`,
+      url: getLtiConfig().launchUrl,
+      custom: {
+        content_package_id: pkg.id,
+        district: pkg.district,
+        course: pkg.course,
+        topic: pkg.topic,
+        assessment_enabled: 'true'
       }
-    ];
+    }));
+
+    // Generate HTML for content selection
+    const packageList = packages.map((pkg, index) => `
+      <div class="content-item">
+        <input type="radio" id="content${index}" name="selectedContent" value='${JSON.stringify({
+          type: 'ltiResourceLink',
+          title: pkg.name,
+          text: `${pkg.description} - ${pkg.assessmentBot.name}`,
+          url: getLtiConfig().launchUrl,
+          custom: {
+            content_package_id: pkg.id,
+            district: pkg.district,
+            course: pkg.course,
+            topic: pkg.topic,
+            assessment_enabled: 'true'
+          }
+        }).replace(/'/g, '&apos;')}' ${index === 0 ? 'checked' : ''}>
+        <label for="content${index}">
+          <h3>${pkg.name}</h3>
+          <p><strong>Course:</strong> ${pkg.course.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+          <p><strong>Description:</strong> ${pkg.description}</p>
+          <p><strong>Assessment Bot:</strong> ${pkg.assessmentBot.name} - ${pkg.assessmentBot.description}</p>
+        </label>
+      </div>
+    `).join('');
+
+    // Return the content selection interface
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Select Learning Content</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+          h1 { color: #333; }
+          .content-item { 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+          }
+          .content-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+          }
+          .content-item input[type="radio"] {
+            margin-right: 10px;
+          }
+          .content-item label {
+            cursor: pointer;
+            display: block;
+          }
+          .content-item h3 { 
+            margin: 0 0 10px 0; 
+            color: #0066cc;
+          }
+          .content-item p { 
+            margin: 5px 0; 
+            color: #666;
+          }
+          .submit-btn { 
+            background: #0066cc; 
+            color: white; 
+            padding: 12px 30px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+          }
+          .submit-btn:hover {
+            background: #0052a3;
+          }
+          .error { 
+            color: #d32f2f; 
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Select Learning Content</h1>
+        ${packages.length === 0 ? '<p class="error">No content packages available. Please create content packages first.</p>' : ''}
+        <form id="deepLinkForm" method="post" action="${deepLinkSettings.deep_link_return_url}">
+          ${packageList}
+          <input type="hidden" name="JWT" id="jwtToken" value="">
+          ${packages.length > 0 ? '<button type="submit" class="submit-btn">Add Selected Content to Course</button>' : ''}
+        </form>
+        
+        <script>
+          document.getElementById('deepLinkForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const selectedRadio = document.querySelector('input[name="selectedContent"]:checked');
+            if (!selectedRadio) {
+              alert('Please select a content package');
+              return;
+            }
+            
+            const selectedContent = JSON.parse(selectedRadio.value);
+            
+            // Create the JWT with selected content
+            const response = await fetch('/api/lti/deep-linking/jwt', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contentItem: selectedContent,
+                deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
+                claims: ${JSON.stringify(claims)}
+              })
+            });
+            
+            const { token } = await response.json();
+            document.getElementById('jwtToken').value = token;
+            
+            // Submit the form
+            this.submit();
+          });
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Deep linking error:', error);
+    res.status(500).json({ error: 'Deep linking failed' });
+  }
+});
+
+// Deep Linking JWT Generation Endpoint
+router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
+  try {
+    const { contentItem, deepLinkSettings, claims } = req.body;
+    
+    if (!contentItem || !deepLinkSettings || !claims) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
 
     // Create deep linking response JWT
     const keyManager = LtiKeyManager.getInstance();
@@ -126,42 +290,17 @@ router.post('/deep-linking', async (req: LtiSession, res: Response) => {
       exp: Math.floor(Date.now() / 1000) + 3600,
       iat: Math.floor(Date.now() / 1000),
       nonce: generateNonce(),
-      'https://purl.imsglobal.org/spec/lti-dl/claim/content_items': contentItems,
-      'https://purl.imsglobal.org/spec/lti/claim/deployment_id': claims['https://purl.imsglobal.org/spec/lti/claim/deployment_id']
+      'https://purl.imsglobal.org/spec/lti-dl/claim/content_items': [contentItem],
+      'https://purl.imsglobal.org/spec/lti/claim/deployment_id': claims['https://purl.imsglobal.org/spec/lti/claim/deployment_id'],
+      'https://purl.imsglobal.org/spec/lti-dl/claim/message': 'Content successfully added to course'
     };
 
     const token = jwt.sign(deepLinkResponse, privateKey.toPEM(true), { algorithm: 'RS256' });
-
-    // Return the content selection interface
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Select Content</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .content-item { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
-          .submit-btn { background: #0066cc; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
-        </style>
-      </head>
-      <body>
-        <h1>Select Learning Content</h1>
-        <div class="content-item">
-          <h3>Government Branches Learning Module</h3>
-          <p>Interactive learning experience about the three branches of U.S. government</p>
-          <input type="checkbox" id="content1" value="government_branches" checked>
-          <label for="content1">Add to course</label>
-        </div>
-        <form method="post" action="${deepLinkSettings.deep_link_return_url}">
-          <input type="hidden" name="JWT" value="${token}">
-          <button type="submit" class="submit-btn">Add Selected Content</button>
-        </form>
-      </body>
-      </html>
-    `);
+    
+    res.json({ token });
   } catch (error) {
-    console.error('Deep linking error:', error);
-    res.status(500).json({ error: 'Deep linking failed' });
+    console.error('Deep linking JWT generation error:', error);
+    res.status(500).json({ error: 'Failed to generate JWT' });
   }
 });
 

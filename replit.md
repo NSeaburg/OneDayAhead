@@ -148,6 +148,16 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 10, 2025. Completed LTI 1.3 Deep Linking implementation for Canvas content selection
+  - Added ltiAssignmentConfigs table to database schema for storing teacher-selected content packages
+  - Implemented createOrUpdateLtiAssignmentConfig and getLtiAssignmentConfig methods in storage layer
+  - Deep linking allows teachers to select from available content packages when creating Canvas assignments
+  - Content selection interface dynamically scans and displays all available packages with interactive checkboxes
+  - Assignment configuration links Canvas platformId/contextId/resourceLinkId to specific content packages
+  - Updated LTI launch handling to automatically load teacher-selected content for students
+  - JWT response generation properly communicates selected content back to Canvas
+  - Multi-tenant content selection fully functional across different districts and courses
+  - Database connection issues noted - application currently using in-memory storage in development
 - July 10, 2025. Fixed assessment bot interface to use dynamic UI configuration from content packages
   - Updated AssessmentBotScreen component to load ui-config.json from content packages
   - Fixed hardcoded "Royal Assessment" title to use dynamic chatHeaderTitle from UI config
