@@ -66,10 +66,9 @@ export default function AdminDashboard() {
   };
 
   const handleLaunchPackage = (pkg: ContentPackage) => {
-    // Open learning experience in new tab for testing
+    // Navigate to learning experience in current window for testing
     const experienceId = `${encodeURIComponent(pkg.district)}/${encodeURIComponent(pkg.course)}/${encodeURIComponent(pkg.topic)}`;
-    const testUrl = `/?experience=${experienceId}`;
-    window.open(testUrl, '_blank');
+    setLocation(`/?experience=${experienceId}`);
   };
 
   const handleDeletePackage = async (pkg: ContentPackage) => {
