@@ -148,6 +148,22 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 10, 2025. Fixed assessment bot interface to use dynamic UI configuration from content packages
+  - Updated AssessmentBotScreen component to load ui-config.json from content packages
+  - Fixed hardcoded "Royal Assessment" title to use dynamic chatHeaderTitle from UI config
+  - Fixed hardcoded "Aristocratic Observer" to use dynamic botTitle and botDescription
+  - Fixed hardcoded assessment criteria to load topics from UI config listeningSection
+  - Fixed hardcoded "What he's listening for" to use dynamic title with correct pronouns
+  - Fixed avatar loading to properly serve from content package folders
+  - Fixed initial greeting to use configured initialGreeting text from content packages
+  - Fixed input placeholder to use configured text instead of hardcoded values
+  - Assessment bot interface now fully uses content package configuration instead of Reggie fallbacks
+  - Launch button in admin dashboard now opens experiences in preview window for proper debugging
+- July 10, 2025. Enhanced admin form with spell check and keyboard shortcuts for all text inputs
+  - Created RichInput and RichTextarea components with spell check support (red underlines for misspelled words)
+  - Added keyboard shortcuts for formatting: Ctrl+B for bold, Ctrl+I for italic across all text fields
+  - Replaced all standard Input and Textarea components with enhanced versions throughout admin interface
+  - Improved user experience with real-time spell checking and formatting capabilities in content creation
 - July 10, 2025. Simplified admin content creation interface by removing chat component
   - Removed AI chat assistant from the admin content creation form to streamline the interface
   - Converted from 50/50 split layout to single full-width form using max-w-4xl container

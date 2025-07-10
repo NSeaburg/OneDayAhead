@@ -77,8 +77,8 @@ export default function AssessmentBotScreen({
   const isCompletionMessageSent = useRef<boolean>(false); // Track if completion message was sent
   const { toast } = useToast();
   
-  // Get UI configuration from content package or use defaults
-  const uiConfig = contentPackage?.assessmentBot?.uiConfig || {
+  // State for UI configuration
+  const [uiConfig, setUiConfig] = useState({
     botTitle: "Aristocratic Observer",
     botDescription: "Dispatched by His Majesty's service...",
     chatHeaderTitle: "Royal Assessment",
@@ -97,11 +97,32 @@ export default function AssessmentBotScreen({
     },
     inputPlaceholder: "Type your response here...",
     initialGreeting: null
-  };
+  });
+
+  // Load UI configuration from content package
+  useEffect(() => {
+    if (contentPackage && contentPackage.district && contentPackage.course && contentPackage.topic) {
+      const loadUIConfig = async () => {
+        try {
+          const response = await fetch(`/content/${encodeURIComponent(contentPackage.district)}/${encodeURIComponent(contentPackage.course)}/${encodeURIComponent(contentPackage.topic)}/assessment-bot/ui-config.json`);
+          if (response.ok) {
+            const config = await response.json();
+            setUiConfig(config);
+          }
+        } catch (error) {
+          console.error("Failed to load UI config:", error);
+        }
+      };
+      loadUIConfig();
+    }
+  }, [contentPackage]);
 
   // Assessment topics with tracking - from UI config or defaults
-  const [topics, setTopics] = useState<AssessmentTopic[]>(
-    uiConfig.listeningSection?.topics?.map((topic: any) => ({
+  const [topics, setTopics] = useState<AssessmentTopic[]>([]);
+
+  // Update topics when UI config loads
+  useEffect(() => {
+    const loadedTopics = uiConfig.listeningSection?.topics?.map((topic: any) => ({
       ...topic,
       isCompleted: false
     })) || [
@@ -126,8 +147,9 @@ export default function AssessmentBotScreen({
         isCompleted: false,
         keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
       }
-    ]
-  );
+    ];
+    setTopics(loadedTopics);
+  }, [uiConfig]);
   
   // Use simple approach like article bot - system prompt from config
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
@@ -228,18 +250,21 @@ export default function AssessmentBotScreen({
     console.log("AssessmentBotScreen mounted with bot avatar:", botAvatar);
     console.log("AssessmentBotScreen computed avatar src:", avatarSrc);
     
-    // Clear existing messages
-    setMessages([]);
-    
-    // Set the initial welcome message from UI config or default
-    const initialGreeting = uiConfig.initialGreeting || 
-      'Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty\'s service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call "democracy" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government\'s structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*';
-    
-    setMessages([{
-      role: 'assistant',
-      content: initialGreeting
-    }]);
-  }, []);
+    // Only set initial greeting if we have UI config loaded or on first mount
+    if (uiConfig.initialGreeting !== null) {
+      // Clear existing messages
+      setMessages([]);
+      
+      // Set the initial welcome message from UI config or default
+      const initialGreeting = uiConfig.initialGreeting || 
+        'Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty\'s service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call "democracy" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government\'s structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*';
+      
+      setMessages([{
+        role: 'assistant',
+        content: initialGreeting
+      }]);
+    }
+  }, [uiConfig.initialGreeting, systemPrompt, botName, botAvatar]);
   
   // Scroll chat container to bottom when new messages appear or when typing
   useEffect(() => {
@@ -304,7 +329,7 @@ export default function AssessmentBotScreen({
       setKeywordsUsed(updatedKeywordsUsed);
       
       // Increment progress bar by 1 (only once per message, even if multiple keywords found)
-      const threshold = uiConfig.progressSection.completionThreshold;
+      const threshold = uiConfig.progressSection.threshold || 8;
       if (keywordProgress < threshold) {
         const newProgress = Math.min(threshold, keywordProgress + 1);
         setKeywordProgress(newProgress);
@@ -604,7 +629,7 @@ export default function AssessmentBotScreen({
                     className="h-full bg-green-500"
                     initial={{ width: '0%' }}
                     animate={{ 
-                      width: `${(keywordProgress / uiConfig.progressSection.completionThreshold) * 100}%`,
+                      width: `${(keywordProgress / (uiConfig.progressSection.threshold || 8)) * 100}%`,
                     }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   />
@@ -636,7 +661,7 @@ export default function AssessmentBotScreen({
                       >
                         ✨
                       </motion.span>
-                      <span>{uiConfig.progressSection.completionMessage}</span>
+                      <span>{uiConfig.progressSection.completionMessage || "Assessment Complete"}</span>
                       <motion.span
                         initial={{ rotate: 0 }}
                         animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
