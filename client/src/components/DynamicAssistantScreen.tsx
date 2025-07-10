@@ -747,27 +747,14 @@ export default function DynamicAssistantScreen({
           </Button>
         ) : <div></div>}
         
-        <div className="flex gap-2">
-          <Button
-            onClick={() => {
-              globalStorage.clearAllData();
-              window.location.reload();
-            }}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100"
-          >
-            Reset Chat
-          </Button>
-          
-          <Button
-            onClick={handleNext}
-            disabled={isLoading || isSendingToN8N}
-            className="bg-primary hover:bg-primary/90 text-white"
-          >
-            Next
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          onClick={handleNext}
+          disabled={isLoading || isSendingToN8N}
+          className="bg-primary hover:bg-primary/90 text-white"
+        >
+          Next
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
