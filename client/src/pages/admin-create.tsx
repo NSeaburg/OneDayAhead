@@ -3,8 +3,10 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RichInput } from "@/components/ui/rich-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextarea } from "@/components/ui/rich-textarea";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Save, CheckCircle, Upload, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -280,7 +282,7 @@ export default function AdminCreate() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="district">District</Label>
-                <Input
+                <RichInput
                   id="district"
                   value={experienceData.district}
                   onChange={(e) => updateField("district", e.target.value)}
@@ -289,7 +291,7 @@ export default function AdminCreate() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="course">Course</Label>
-                <Input
+                <RichInput
                   id="course"
                   value={experienceData.course}
                   onChange={(e) => updateField("course", e.target.value)}
@@ -298,7 +300,7 @@ export default function AdminCreate() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="topic">Topic</Label>
-                <Input
+                <RichInput
                   id="topic"
                   value={experienceData.topic}
                   onChange={(e) => updateField("topic", e.target.value)}
@@ -309,7 +311,7 @@ export default function AdminCreate() {
             
             <div className="space-y-2">
               <Label htmlFor="name">Experience Name</Label>
-              <Input
+              <RichInput
                 id="name"
                 value={experienceData.name}
                 onChange={(e) => updateField("name", e.target.value)}
@@ -319,7 +321,7 @@ export default function AdminCreate() {
             
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
+              <RichTextarea
                 id="description"
                 value={experienceData.description}
                 onChange={(e) => updateField("description", e.target.value)}
@@ -336,7 +338,7 @@ export default function AdminCreate() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="assessmentName">Assessment Bot Name</Label>
-                <Input
+                <RichInput
                   id="assessmentName"
                   value={experienceData.assessmentName}
                   onChange={(e) => updateField("assessmentName", e.target.value)}
@@ -345,7 +347,7 @@ export default function AdminCreate() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="assessmentDescription">Description</Label>
-                <Input
+                <RichInput
                   id="assessmentDescription"
                   value={experienceData.assessmentDescription}
                   onChange={(e) => updateField("assessmentDescription", e.target.value)}
@@ -357,7 +359,7 @@ export default function AdminCreate() {
             <div className="space-y-2">
               <Label htmlFor="assessmentAvatar">Assessment Bot Avatar</Label>
               <div className="flex items-center gap-4">
-                <Input
+                <RichInput
                   id="assessmentAvatar"
                   type="file"
                   accept="image/png,image/jpeg"
@@ -386,7 +388,7 @@ export default function AdminCreate() {
             
             <div className="space-y-2">
               <Label htmlFor="assessmentCriteria">Assessment Criteria Display</Label>
-              <Textarea
+              <RichTextarea
                 id="assessmentCriteria"
                 value={experienceData.assessmentCriteria}
                 onChange={(e) => updateField("assessmentCriteria", e.target.value)}
@@ -400,7 +402,7 @@ export default function AdminCreate() {
             
             <div className="space-y-2">
               <Label htmlFor="assessmentPersonality">Assessment Bot System Prompt</Label>
-              <Textarea
+              <RichTextarea
                 id="assessmentPersonality"
                 value={experienceData.assessmentPersonality}
                 onChange={(e) => updateField("assessmentPersonality", e.target.value)}
@@ -426,7 +428,7 @@ export default function AdminCreate() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="assessmentBotTitle">Bot Title</Label>
-                <Input
+                <RichInput
                   id="assessmentBotTitle"
                   value={experienceData.assessmentBotTitle}
                   onChange={(e) => updateField("assessmentBotTitle", e.target.value)}
@@ -435,7 +437,7 @@ export default function AdminCreate() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="assessmentChatHeaderTitle">Chat Header Title</Label>
-                <Input
+                <RichInput
                   id="assessmentChatHeaderTitle"
                   value={experienceData.assessmentChatHeaderTitle}
                   onChange={(e) => updateField("assessmentChatHeaderTitle", e.target.value)}
@@ -446,7 +448,7 @@ export default function AdminCreate() {
             
             <div className="space-y-2">
               <Label htmlFor="assessmentInitialGreeting">Initial Greeting</Label>
-              <Textarea
+              <RichTextarea
                 id="assessmentInitialGreeting"
                 value={experienceData.assessmentInitialGreeting}
                 onChange={(e) => updateField("assessmentInitialGreeting", e.target.value)}
@@ -457,7 +459,7 @@ export default function AdminCreate() {
             
             <div className="space-y-2">
               <Label htmlFor="assessmentInputPlaceholder">Input Placeholder</Label>
-              <Input
+              <RichInput
                 id="assessmentInputPlaceholder"
                 value={experienceData.assessmentInputPlaceholder}
                 onChange={(e) => updateField("assessmentInputPlaceholder", e.target.value)}
@@ -477,7 +479,7 @@ export default function AdminCreate() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="assessmentKeepInMindTitle">Keep in Mind Section Title</Label>
-                <Input
+                <RichInput
                   id="assessmentKeepInMindTitle"
                   value={experienceData.assessmentKeepInMindTitle}
                   onChange={(e) => updateField("assessmentKeepInMindTitle", e.target.value)}
@@ -486,7 +488,7 @@ export default function AdminCreate() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="assessmentKeepInMindDescription">Keep in Mind Description</Label>
-                <Input
+                <RichInput
                   id="assessmentKeepInMindDescription"
                   value={experienceData.assessmentKeepInMindDescription}
                   onChange={(e) => updateField("assessmentKeepInMindDescription", e.target.value)}
@@ -512,7 +514,7 @@ export default function AdminCreate() {
                   <CardDescription>What indicates a student has strong understanding?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.highCriteria}
                     onChange={(e) => updateField("highCriteria", e.target.value)}
                     placeholder="Students who demonstrate high performance will show..."
@@ -527,7 +529,7 @@ export default function AdminCreate() {
                   <CardDescription>What indicates basic understanding with some gaps?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.mediumCriteria}
                     onChange={(e) => updateField("mediumCriteria", e.target.value)}
                     placeholder="Students who demonstrate medium performance will show..."
@@ -542,7 +544,7 @@ export default function AdminCreate() {
                   <CardDescription>What indicates students need foundational support?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.lowCriteria}
                     onChange={(e) => updateField("lowCriteria", e.target.value)}
                     placeholder="Students who demonstrate low performance will show..."
@@ -567,7 +569,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bot Name</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.highBotName}
                       onChange={(e) => updateField("highBotName", e.target.value)}
                       placeholder="e.g., Dr. Smith"
@@ -575,7 +577,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.highBotDescription}
                       onChange={(e) => updateField("highBotDescription", e.target.value)}
                       placeholder="Brief description"
@@ -585,7 +587,7 @@ export default function AdminCreate() {
                 <div className="space-y-2">
                   <Label>Avatar</Label>
                   <div className="flex items-center gap-4">
-                    <Input
+                    <RichInput
                       id="highBotAvatar"
                       type="file"
                       accept="image/png,image/jpeg"
@@ -610,7 +612,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>System Prompt</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.highBotPersonality}
                     onChange={(e) => updateField("highBotPersonality", e.target.value)}
                     placeholder="System prompt for advanced students..."
@@ -631,7 +633,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bot Name</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.mediumBotName}
                       onChange={(e) => updateField("mediumBotName", e.target.value)}
                       placeholder="e.g., Ms. Johnson"
@@ -639,7 +641,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.mediumBotDescription}
                       onChange={(e) => updateField("mediumBotDescription", e.target.value)}
                       placeholder="Brief description"
@@ -649,7 +651,7 @@ export default function AdminCreate() {
                 <div className="space-y-2">
                   <Label>Avatar</Label>
                   <div className="flex items-center gap-4">
-                    <Input
+                    <RichInput
                       id="mediumBotAvatar"
                       type="file"
                       accept="image/png,image/jpeg"
@@ -674,7 +676,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>System Prompt</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.mediumBotPersonality}
                     onChange={(e) => updateField("mediumBotPersonality", e.target.value)}
                     placeholder="System prompt for medium level students..."
@@ -695,7 +697,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bot Name</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.lowBotName}
                       onChange={(e) => updateField("lowBotName", e.target.value)}
                       placeholder="e.g., Mr. Wilson"
@@ -703,7 +705,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.lowBotDescription}
                       onChange={(e) => updateField("lowBotDescription", e.target.value)}
                       placeholder="Brief description"
@@ -713,7 +715,7 @@ export default function AdminCreate() {
                 <div className="space-y-2">
                   <Label>Avatar</Label>
                   <div className="flex items-center gap-4">
-                    <Input
+                    <RichInput
                       id="lowBotAvatar"
                       type="file"
                       accept="image/png,image/jpeg"
@@ -738,7 +740,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>System Prompt</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.lowBotPersonality}
                     onChange={(e) => updateField("lowBotPersonality", e.target.value)}
                     placeholder="System prompt for students needing support..."
@@ -768,7 +770,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bot Title</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.highBotTitle}
                       onChange={(e) => updateField("highBotTitle", e.target.value)}
                       placeholder="e.g., Expert Analysis"
@@ -776,7 +778,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Chat Header</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.highChatHeaderTitle}
                       onChange={(e) => updateField("highChatHeaderTitle", e.target.value)}
                       placeholder="e.g., Advanced Instruction"
@@ -785,7 +787,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>Teaching Approach Description</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.highTeachingApproachDescription}
                     onChange={(e) => updateField("highTeachingApproachDescription", e.target.value)}
                     placeholder="Describe the teaching approach..."
@@ -802,7 +804,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Challenge Title</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.highChallengeTitle}
                       onChange={(e) => updateField("highChallengeTitle", e.target.value)}
                       placeholder="e.g., Ready for a challenge?"
@@ -810,7 +812,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Challenge Description</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.highChallengeDescription}
                       onChange={(e) => updateField("highChallengeDescription", e.target.value)}
                       placeholder="Challenge message..."
@@ -819,7 +821,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>Initial Greeting</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.highInitialGreeting}
                     onChange={(e) => updateField("highInitialGreeting", e.target.value)}
                     placeholder="First message to students..."
@@ -838,7 +840,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bot Title</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.mediumBotTitle}
                       onChange={(e) => updateField("mediumBotTitle", e.target.value)}
                       placeholder="e.g., Guided Learning"
@@ -846,7 +848,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Chat Header</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.mediumChatHeaderTitle}
                       onChange={(e) => updateField("mediumChatHeaderTitle", e.target.value)}
                       placeholder="e.g., Focused Instruction"
@@ -855,7 +857,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>Teaching Approach Description</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.mediumTeachingApproachDescription}
                     onChange={(e) => updateField("mediumTeachingApproachDescription", e.target.value)}
                     placeholder="Describe the teaching approach..."
@@ -872,7 +874,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Encouragement Title</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.mediumEncouragementTitle}
                       onChange={(e) => updateField("mediumEncouragementTitle", e.target.value)}
                       placeholder="e.g., You're doing great!"
@@ -880,7 +882,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Encouragement Description</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.mediumEncouragementDescription}
                       onChange={(e) => updateField("mediumEncouragementDescription", e.target.value)}
                       placeholder="Encouragement message..."
@@ -889,7 +891,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>Initial Greeting</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.mediumInitialGreeting}
                     onChange={(e) => updateField("mediumInitialGreeting", e.target.value)}
                     placeholder="First message to students..."
@@ -908,7 +910,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bot Title</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.lowBotTitle}
                       onChange={(e) => updateField("lowBotTitle", e.target.value)}
                       placeholder="e.g., Foundation Builder"
@@ -916,7 +918,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Chat Header</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.lowChatHeaderTitle}
                       onChange={(e) => updateField("lowChatHeaderTitle", e.target.value)}
                       placeholder="e.g., Building Understanding"
@@ -925,7 +927,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>Teaching Approach Description</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.lowTeachingApproachDescription}
                     onChange={(e) => updateField("lowTeachingApproachDescription", e.target.value)}
                     placeholder="Describe the teaching approach..."
@@ -942,7 +944,7 @@ export default function AdminCreate() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Encouragement Title</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.lowEncouragementTitle}
                       onChange={(e) => updateField("lowEncouragementTitle", e.target.value)}
                       placeholder="e.g., Keep learning!"
@@ -950,7 +952,7 @@ export default function AdminCreate() {
                   </div>
                   <div className="space-y-2">
                     <Label>Encouragement Description</Label>
-                    <Input
+                    <RichInput
                       value={experienceData.lowEncouragementDescription}
                       onChange={(e) => updateField("lowEncouragementDescription", e.target.value)}
                       placeholder="Encouragement message..."
@@ -959,7 +961,7 @@ export default function AdminCreate() {
                 </div>
                 <div className="space-y-2">
                   <Label>Initial Greeting</Label>
-                  <Textarea
+                  <RichTextarea
                     value={experienceData.lowInitialGreeting}
                     onChange={(e) => updateField("lowInitialGreeting", e.target.value)}
                     placeholder="First message to students..."
@@ -1138,17 +1140,17 @@ function AssessmentTopicManager({ topics, onChange }: { topics: ListeningTopic[]
           <CardContent className="pt-4">
             <div className="flex items-start gap-4">
               <div className="flex-1 space-y-3">
-                <Input
+                <RichInput
                   placeholder="Topic name (e.g., Executive Branch)"
                   value={topic.name}
                   onChange={(e) => updateTopic(topic.id, 'name', e.target.value)}
                 />
-                <Input
+                <RichInput
                   placeholder="Description"
                   value={topic.description}
                   onChange={(e) => updateTopic(topic.id, 'description', e.target.value)}
                 />
-                <Input
+                <RichInput
                   placeholder="Keywords (comma-separated)"
                   value={topic.keywords.join(', ')}
                   onChange={(e) => updateTopic(topic.id, 'keywords', e.target.value.split(',').map(k => k.trim()).filter(k => k))}
@@ -1207,12 +1209,12 @@ function FocusTopicManager({ topics, onChange }: { topics: FocusTopic[], onChang
           <CardContent className="pt-4">
             <div className="flex items-start gap-4">
               <div className="flex-1 space-y-3">
-                <Input
+                <RichInput
                   placeholder="Focus area (e.g., Checks and Balances)"
                   value={topic.name}
                   onChange={(e) => updateTopic(topic.id, 'name', e.target.value)}
                 />
-                <Input
+                <RichInput
                   placeholder="Description of this focus area"
                   value={topic.description}
                   onChange={(e) => updateTopic(topic.id, 'description', e.target.value)}
