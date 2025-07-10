@@ -206,21 +206,16 @@ export default function AdminCreate() {
 
     // Initialize AI assistant
     if (messages.length === 0) {
-      sendMessage(`Hello! I'm your Content Creation Assistant. I'm here to help you design effective learning experiences for students.
+      sendMessage(`Let's get creating! I'm here to help you design an effective learning experience.
 
-I understand you're building a learning platform where:
-- Students engage in assessment conversations with character AI bots
-- Based on their performance level, they're routed to appropriate teaching assistants
-- Each assistant provides differentiated instruction based on assessment results
+I can help you with:
+- Crafting engaging character personalities for your AI bots
+- Writing clear assessment criteria that reveal student understanding  
+- Creating differentiated instruction for different performance levels
+- Designing system prompts that spark meaningful conversations
+- Developing evaluation rubrics for student routing
 
-I can help you craft:
-- Compelling character personalities for assessment bots
-- Clear assessment criteria that reveal student understanding
-- Teaching assistant personalities for different performance levels
-- System prompts that create engaging, educational conversations
-- Evaluation rubrics that guide student routing
-
-What learning experience would you like to create? Tell me about your subject, grade level, and what you want students to learn.`);
+What subject and topic would you like to create a learning experience for?`);
     }
   }, [setLocation, messages.length, sendMessage]);
 
@@ -1029,12 +1024,33 @@ What learning experience would you like to create? Tell me about your subject, g
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* AI Assistant - Left Side */}
-          <div className="lg:col-span-1">
-            <Card className="h-[600px] flex flex-col">
-              <CardHeader>
+      <div className="container mx-auto px-4 py-8 h-[calc(100vh-140px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 h-full">
+          {/* Form Content - Left Side */}
+          <div className="lg:col-span-3 flex flex-col">
+            <Card className="flex-1 flex flex-col">
+              <CardHeader className="flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Step {currentStep}: {STEPS[currentStep - 1].title}</CardTitle>
+                    <CardDescription>{STEPS[currentStep - 1].description}</CardDescription>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {currentStep} of {STEPS.length}
+                  </div>
+                </div>
+                <Progress value={(currentStep / STEPS.length) * 100} className="mt-4" />
+              </CardHeader>
+              <CardContent className="flex-1 overflow-y-auto">
+                {renderStepContent()}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* AI Assistant - Right Side */}
+          <div className="lg:col-span-2 flex flex-col">
+            <Card className="flex-1 flex flex-col min-h-0">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
                   Content Creation Assistant
@@ -1043,15 +1059,15 @@ What learning experience would you like to create? Tell me about your subject, g
                   Chat with AI to refine your learning experience design
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4">
+              <CardContent className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4 min-h-0">
                   {messages.map((message, index) => (
                     <div
                       key={index}
                       className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
+                        className={`max-w-[85%] p-3 rounded-lg ${
                           message.role === 'user'
                             ? 'bg-blue-600 text-white'
                             : 'bg-white border text-gray-900'
@@ -1072,7 +1088,7 @@ What learning experience would you like to create? Tell me about your subject, g
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0">
                   <Input
                     placeholder="Ask for help with your learning experience..."
                     onKeyDown={(e) => {
@@ -1103,67 +1119,46 @@ What learning experience would you like to create? Tell me about your subject, g
               </CardContent>
             </Card>
           </div>
+        </div>
+        
+        {/* Navigation moved outside the grid */}
+        <div className="flex justify-between mt-6">
+          <Button
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+            variant="outline"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Previous
+          </Button>
 
-          {/* Form Content - Right Side */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Step {currentStep}: {STEPS[currentStep - 1].title}</CardTitle>
-                    <CardDescription>{STEPS[currentStep - 1].description}</CardDescription>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {currentStep} of {STEPS.length}
-                  </div>
-                </div>
-                <Progress value={(currentStep / STEPS.length) * 100} className="mt-4" />
-              </CardHeader>
-              <CardContent>
-                {renderStepContent()}
-              </CardContent>
-            </Card>
-
-            {/* Navigation */}
-            <div className="flex justify-between mt-6">
-              <Button
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-                variant="outline"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-
-              {currentStep === 7 ? (
-                <Button
-                  onClick={handleCreateExperience}
-                  disabled={saving || !canProceed()}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Create Experience
-                    </>
-                  )}
-                </Button>
+          {currentStep === 7 ? (
+            <Button
+              onClick={handleCreateExperience}
+              disabled={saving || !canProceed()}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating...
+                </>
               ) : (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceed()}
-                >
-                  Next
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Create Experience
+                </>
               )}
-            </div>
-          </div>
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed()}
+            >
+              Next
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
