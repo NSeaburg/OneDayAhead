@@ -9,12 +9,7 @@
         "id": "1752156386752",
         "name": "Cloud Identification",
         "description": "The student can identify the 4 types of clouds.",
-        "keywords": [
-          "Cumulus",
-          "Stratus",
-          "Cirrus",
-          "Cumulonimbus"
-        ]
+        "keywords": ["Cumulus", "Stratus", "Cirrus", "Cumulonimbus"]
       }
     ]
   },
@@ -27,5 +22,5 @@
     "description": "Just because Nancy’s bursting with confidence doesn’t mean she’s always right. Your job is to listen carefully, spot her mistakes, and set the record straight."
   },
   "inputPlaceholder": "Type your response here..",
-  "initialGreeting": "[Confidential Note from the Teacher]\n\nHi there! I’m so glad you’re here—something tells me you’re exactly the kind of bright thinker this class needs.\n\nI’ve decided to seat you next to Nancy. She’s… well, let’s say she’s very enthusiastic. She loves science. She loves clouds. She loves raising her hand. In fact, she once asked if she could raise both hands—just to show how confident she was in her answers.\n\nThere’s just one little thing: Nancy doesn’t always get it right. In fact, she gets it wrong a lot. Loudly. With great confidence.\n\nThat’s where you come in. I need your help spotting her mistakes and kindly setting her straight. Think of it as a special mission—one only the sharpest students can handle."
+  "initialGreeting": "****[Confidential Note from the Teacher]****\n\nHi there! I’m so glad you’re here—something tells me you’re exactly the kind of bright thinker this class needs.\n\nI’ve seated you next to Nancy. She’s… very enthusiastic. Loves science. Loves clouds. Loves raising her hand. She once asked to raise both—just to show her confidence.\n\nOne small thing: Nancy doesn’t always get it right. In fact, she gets it wrong a lot. Loudly. With total confidence.\n\nThat’s where you come in. Spot her mistakes and kindly set her straight. This is a job for only the sharpest students."
 }
