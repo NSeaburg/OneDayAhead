@@ -376,12 +376,22 @@ export default function AdminCreate() {
                   type="file"
                   accept="image/png,image/jpeg"
                   onChange={(e) => updateField("assessmentAvatar", e.target.files?.[0] || null)}
-                  className="cursor-pointer"
+                  className="cursor-pointer hidden"
                 />
-                <Button type="button" variant="outline" size="sm">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => document.getElementById('assessmentAvatar')?.click()}
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Image
                 </Button>
+                {experienceData.assessmentAvatar && (
+                  <span className="text-sm text-green-600">
+                    ✓ {experienceData.assessmentAvatar.name}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-500">
                 Upload a PNG or JPEG image. It will be automatically cropped to a circle.
@@ -590,15 +600,26 @@ export default function AdminCreate() {
                   <Label>Avatar</Label>
                   <div className="flex items-center gap-4">
                     <Input
+                      id="highBotAvatar"
                       type="file"
                       accept="image/png,image/jpeg"
                       onChange={(e) => updateField("highBotAvatar", e.target.files?.[0] || null)}
-                      className="cursor-pointer"
+                      className="cursor-pointer hidden"
                     />
-                    <Button type="button" variant="outline" size="sm">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => document.getElementById('highBotAvatar')?.click()}
+                    >
                       <Upload className="h-4 w-4 mr-2" />
                       Upload
                     </Button>
+                    {experienceData.highBotAvatar && (
+                      <span className="text-sm text-green-600">
+                        ✓ {experienceData.highBotAvatar.name}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -643,15 +664,26 @@ export default function AdminCreate() {
                   <Label>Avatar</Label>
                   <div className="flex items-center gap-4">
                     <Input
+                      id="mediumBotAvatar"
                       type="file"
                       accept="image/png,image/jpeg"
                       onChange={(e) => updateField("mediumBotAvatar", e.target.files?.[0] || null)}
-                      className="cursor-pointer"
+                      className="cursor-pointer hidden"
                     />
-                    <Button type="button" variant="outline" size="sm">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => document.getElementById('mediumBotAvatar')?.click()}
+                    >
                       <Upload className="h-4 w-4 mr-2" />
                       Upload
                     </Button>
+                    {experienceData.mediumBotAvatar && (
+                      <span className="text-sm text-green-600">
+                        ✓ {experienceData.mediumBotAvatar.name}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -696,15 +728,26 @@ export default function AdminCreate() {
                   <Label>Avatar</Label>
                   <div className="flex items-center gap-4">
                     <Input
+                      id="lowBotAvatar"
                       type="file"
                       accept="image/png,image/jpeg"
                       onChange={(e) => updateField("lowBotAvatar", e.target.files?.[0] || null)}
-                      className="cursor-pointer"
+                      className="cursor-pointer hidden"
                     />
-                    <Button type="button" variant="outline" size="sm">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => document.getElementById('lowBotAvatar')?.click()}
+                    >
                       <Upload className="h-4 w-4 mr-2" />
                       Upload
                     </Button>
+                    {experienceData.lowBotAvatar && (
+                      <span className="text-sm text-green-600">
+                        ✓ {experienceData.lowBotAvatar.name}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -1091,7 +1134,7 @@ export default function AdminCreate() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col overflow-hidden p-4">
-                <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4">
+                <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4 min-h-0">
                   {messages.length === 0 ? (
                     <div className="text-center text-gray-500 mt-8">
                       <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
