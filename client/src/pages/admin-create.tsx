@@ -346,13 +346,17 @@ export default function AdminCreate() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="assessmentDescription">Description</Label>
-                <RichInput
+                <Label htmlFor="assessmentDescription">Bot Description</Label>
+                <RichTextarea
                   id="assessmentDescription"
                   value={experienceData.assessmentDescription}
                   onChange={(e) => updateField("assessmentDescription", e.target.value)}
-                  placeholder="Brief description of the assessment bot"
+                  placeholder="Detailed character description that appears under the bot title (like Reggie's aristocrat description). Describe the bot's personality, background, and what makes them unique..."
+                  rows={4}
                 />
+                <p className="text-xs text-gray-500">
+                  This appears as a paragraph under the bot title. Make it engaging and descriptive!
+                </p>
               </div>
             </div>
             
