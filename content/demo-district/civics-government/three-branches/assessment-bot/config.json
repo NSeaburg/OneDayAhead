@@ -12,5 +12,8 @@
     "Explain the role of each branch",
     "Understand checks and balances",
     "Provide examples of governmental checks"
-  ]
+  ],
+  "config": {
+    "initialMessage": "Hello! I'm Reginald Worthington III, and I'll be conducting your assessment today. *adjusts monocle with an air of superiority* \n\nI've been sent by His Majesty's government to study this... *curious* American experiment in democracy. Fascinating really, this notion of dividing power among three separate branches. Though I must say, I remain rather skeptical about whether such a system can truly endure.\n\nNow then, shall we see what you know about your government's structure? I'm particularly interested in how you colonials have organized this separation of powers. Do proceed - I'm quite eager to take notes for my report back to London.\n\n*taps quill expectantly*"
+  }
 }

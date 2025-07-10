@@ -1,42 +1,33 @@
 {
   "name": "Three Branches Government Assessment Criteria",
-  "description": "Criteria for routing students to appropriate teaching assistant level based on assessment performance",
+  "description": "Reginald will use your responses to recommend a learning path that makes sense for you. Do your best—your responses will help determine the most effective teaching approach.",
   "subject": "civics",
   "gradeLevel": "high-school",
   "evaluationPrompt": "You are assessing a conversation between an assessment bot and a student about the three branches of government. Analyze the student's understanding and classify their performance level.\n\nLook for these key concepts:\n1. **Basic Structure**: Can identify the three branches (legislative, executive, judicial)\n2. **Branch Functions**: Understands what each branch does (make laws, enforce laws, interpret laws)\n3. **Checks and Balances**: Knows how branches limit each other's power\n4. **Specific Examples**: Can provide concrete examples of checks (veto, impeachment, judicial review)\n5. **Understanding of Purpose**: Grasps why separation of powers exists\n\nClassify as:\n- **HIGH**: Demonstrates comprehensive understanding with specific examples and deeper insights\n- **MEDIUM**: Shows good basic understanding but lacks depth or specific examples\n- **LOW**: Limited understanding, needs foundational support\n\nRespond with only: HIGH, MEDIUM, or LOW",
   "routingCriteria": {
     "high": {
-      "description": "Advanced students who demonstrate comprehensive understanding",
+      "description": "Governmental Structure",
       "indicators": [
-        "Provides specific, accurate examples of checks and balances",
-        "Explains the reasoning behind separation of powers",
-        "Demonstrates understanding of constitutional principles",
-        "Uses proper governmental terminology",
-        "Shows critical thinking about governmental structure"
+        "Can you clearly explain how power is divided into three branches?",
+        "executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"
       ],
       "teachingBot": "high-level",
       "minScore": 85
     },
     "medium": {
-      "description": "Students with good basic understanding but need reinforcement",
+      "description": "The System of Checks and Balances",
       "indicators": [
-        "Correctly identifies three branches of government",
-        "Understands basic functions of each branch",
-        "Recognizes concept of checks and balances",
-        "May struggle with specific examples or deeper concepts",
-        "Shows engagement but limited depth"
+        "Do you understand how the branches hold each other in check?",
+        "checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"
       ],
       "teachingBot": "medium-level",
       "minScore": 60
     },
     "low": {
-      "description": "Students who need foundational support and scaffolding",
+      "description": "Roles of the Branches",
       "indicators": [
-        "Difficulty identifying all three branches",
-        "Confused about branch functions",
-        "Limited understanding of checks and balances",
-        "Needs basic conceptual support",
-        "May show misconceptions about government structure"
+        "Can you describe what Congress, the President, and the Courts actually do?",
+        "make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"
       ],
       "teachingBot": "low-level",
       "minScore": 0
