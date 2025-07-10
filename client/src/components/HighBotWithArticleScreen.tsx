@@ -242,7 +242,7 @@ export default function HighBotWithArticleScreen({
           (<div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-fit">
             <div className="flex flex-col items-center text-center mb-4">
               <img 
-                src="content/Demo-District-2/4th Grade Sciecne/Clouds/teaching-bots/high-level/Dr. High-avatar.png.png" 
+                src="content/Demo-District-2/4th Grade Sciecne/Clouds/teaching-bots/high-level/Dr. High-avatar.png" 
                 alt="Mrs. Parton" 
                 className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
               />
