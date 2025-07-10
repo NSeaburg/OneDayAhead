@@ -206,16 +206,14 @@ export default function AdminCreate() {
 
     // Initialize AI assistant
     if (messages.length === 0) {
-      sendMessage(`Let's get creating! I'm here to help you design an effective learning experience.
+      sendMessage(`Hello! I'm here to help you create an engaging learning experience. As we go through the form, I can help you:
 
-I can help you with:
-- Crafting engaging character personalities for your AI bots
-- Writing clear assessment criteria that reveal student understanding  
-- Creating differentiated instruction for different performance levels
-- Designing system prompts that spark meaningful conversations
-- Developing evaluation rubrics for student routing
+- Brainstorm character personalities for your AI teaching assistants
+- Design assessment criteria that effectively measure student understanding
+- Create differentiated learning activities for different proficiency levels
+- Make your experience engaging and pedagogically sound
 
-What subject and topic would you like to create a learning experience for?`);
+Feel free to ask me questions as you fill out each section. What subject or topic are you planning to teach?`);
     }
   }, [setLocation, messages.length, sendMessage]);
 
@@ -1024,11 +1022,11 @@ What subject and topic would you like to create a learning experience for?`);
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 h-[calc(100vh-140px)]">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 h-full">
+      <div className="container mx-auto px-4 py-8 h-[calc(100vh-80px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
           {/* Form Content - Left Side */}
-          <div className="lg:col-span-3 flex flex-col">
-            <Card className="flex-1 flex flex-col">
+          <div className="flex flex-col h-full">
+            <Card className="flex-1 flex flex-col overflow-hidden">
               <CardHeader className="flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1041,15 +1039,55 @@ What subject and topic would you like to create a learning experience for?`);
                 </div>
                 <Progress value={(currentStep / STEPS.length) * 100} className="mt-4" />
               </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto">
+              <CardContent className="flex-1 overflow-y-auto pb-4">
                 {renderStepContent()}
               </CardContent>
+              <div className="px-6 pb-6 pt-4 border-t bg-gray-50 flex-shrink-0">
+                <div className="flex justify-between">
+                  <Button
+                    onClick={handlePrevious}
+                    disabled={currentStep === 1}
+                    variant="outline"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Previous
+                  </Button>
+
+                  {currentStep === 7 ? (
+                    <Button
+                      onClick={handleCreateExperience}
+                      disabled={saving || !canProceed()}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {saving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Create Experience
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleNext}
+                      disabled={!canProceed()}
+                    >
+                      Next
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             </Card>
           </div>
 
           {/* AI Assistant - Right Side */}
-          <div className="lg:col-span-2 flex flex-col">
-            <Card className="flex-1 flex flex-col min-h-0">
+          <div className="h-full">
+            <Card className="h-full flex flex-col">
               <CardHeader className="flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
@@ -1059,8 +1097,8 @@ What subject and topic would you like to create a learning experience for?`);
                   Chat with AI to refine your learning experience design
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col min-h-0">
-                <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4 min-h-0">
+              <CardContent className="flex-1 flex flex-col overflow-hidden p-4">
+                <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4">
                   {messages.map((message, index) => (
                     <div
                       key={index}
@@ -1119,46 +1157,6 @@ What subject and topic would you like to create a learning experience for?`);
               </CardContent>
             </Card>
           </div>
-        </div>
-        
-        {/* Navigation moved outside the grid */}
-        <div className="flex justify-between mt-6">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            variant="outline"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Previous
-          </Button>
-
-          {currentStep === 7 ? (
-            <Button
-              onClick={handleCreateExperience}
-              disabled={saving || !canProceed()}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Create Experience
-                </>
-              )}
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              disabled={!canProceed()}
-            >
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
         </div>
       </div>
     </div>
