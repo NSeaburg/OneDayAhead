@@ -204,16 +204,9 @@ export default function AdminCreate() {
       return;
     }
 
-    // Initialize AI assistant
+    // Initialize AI assistant with simple welcome message only
     if (messages.length === 0) {
-      sendMessage(`Hello! I'm here to help you create an engaging learning experience. As we go through the form, I can help you:
-
-- Brainstorm character personalities for your AI teaching assistants
-- Design assessment criteria that effectively measure student understanding
-- Create differentiated learning activities for different proficiency levels
-- Make your experience engaging and pedagogically sound
-
-Feel free to ask me questions as you fill out each section. What subject or topic are you planning to teach?`);
+      // Don't send any initial message - let the chat start empty
     }
   }, [setLocation, messages.length, sendMessage]);
 
@@ -1099,22 +1092,29 @@ Feel free to ask me questions as you fill out each section. What subject or topi
               </CardHeader>
               <CardContent className="flex-1 flex flex-col overflow-hidden p-4">
                 <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto space-y-4 mb-4">
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[85%] p-3 rounded-lg ${
-                          message.role === 'user'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white border text-gray-900'
-                        }`}
-                      >
-                        <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                      </div>
+                  {messages.length === 0 ? (
+                    <div className="text-center text-gray-500 mt-8">
+                      <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-sm">Ask me anything about creating engaging learning experiences!</p>
                     </div>
-                  ))}
+                  ) : (
+                    messages.map((message, index) => (
+                      <div
+                        key={index}
+                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[85%] p-3 rounded-lg ${
+                            message.role === 'user'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white border text-gray-900'
+                          }`}
+                        >
+                          <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                   {isStreaming && (
                     <div className="flex justify-start">
                       <div className="bg-white border p-3 rounded-lg">
