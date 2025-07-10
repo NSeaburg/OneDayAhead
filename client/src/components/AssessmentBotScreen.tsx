@@ -77,50 +77,30 @@ export default function AssessmentBotScreen({
   const isCompletionMessageSent = useRef<boolean>(false); // Track if completion message was sent
   const { toast } = useToast();
   
-  // Assessment topics with tracking - use content package configuration or fallback defaults
-  const getAssessmentTopics = (): AssessmentTopic[] => {
-    // Try to get topics from content package assessment criteria routing
-    if (contentPackage?.assessmentCriteria?.routingCriteria) {
-      const criteria = contentPackage.assessmentCriteria.routingCriteria;
-      return Object.entries(criteria).map(([level, config]: [string, any], index) => ({
-        id: `topic-${index + 1}`,
-        name: config.description || `${level.charAt(0).toUpperCase() + level.slice(1)} Level Concepts`,
-        description: config.indicators?.[0] || `Understanding of ${level} level concepts`,
-        isCompleted: false,
-        keywords: config.indicators || [`${level}`, "concepts", "understanding"]
-      }));
+  // Assessment topics with tracking
+  const [topics, setTopics] = useState<AssessmentTopic[]>([
+    {
+      id: "governmental-structure",
+      name: "Governmental Structure",
+      description: "Can you clearly explain how power is divided into three branches?",
+      isCompleted: false,
+      keywords: ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
+    },
+    {
+      id: "checks-balances",
+      name: "The System of Checks and Balances",
+      description: "Do you understand how the branches hold each other in check?",
+      isCompleted: false,
+      keywords: ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
+    },
+    {
+      id: "branch-roles",
+      name: "Roles of the Branches",
+      description: "Can you describe what Congress, the President, and the Courts actually do?",
+      isCompleted: false,
+      keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
     }
-    
-    // Fallback topics based on content package subject
-    const subject = contentPackage?.course?.replace('-', ' ') || 'subject material';
-    const topic = contentPackage?.topic?.replace('-', ' ') || 'key concepts';
-    
-    return [
-      {
-        id: "foundational-understanding",
-        name: "Foundational Understanding", 
-        description: `Can you explain the basic concepts of ${topic}?`,
-        isCompleted: false,
-        keywords: [subject, topic, "understanding", "basic", "concepts", "explain"]
-      },
-      {
-        id: "application-knowledge",
-        name: "Application Knowledge",
-        description: `Can you apply ${topic} concepts to real situations?`,
-        isCompleted: false,
-        keywords: ["application", "apply", "real", "situations", "examples", "practice"]
-      },
-      {
-        id: "critical-analysis", 
-        name: "Critical Analysis",
-        description: `Can you analyze and evaluate ${topic} concepts?`,
-        isCompleted: false,
-        keywords: ["analyze", "evaluate", "critical", "thinking", "analysis", "assessment"]
-      }
-    ];
-  };
-
-  const [topics, setTopics] = useState<AssessmentTopic[]>(getAssessmentTopics());
+  ]);
   
   // Use simple approach like article bot - system prompt from config
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
@@ -224,13 +204,10 @@ export default function AssessmentBotScreen({
     // Clear existing messages
     setMessages([]);
     
-    // Set the initial welcome message from the assessment bot
-    const initialMessage = contentPackage?.assessmentBot?.config?.initialMessage || 
-      `Hello! I'm ${displayName}, and I'll be conducting your assessment today. I'm here to understand your current knowledge and help determine the best learning path for you. Let's begin our conversation - I'm looking forward to learning about what you know!`;
-    
+    // Set the initial welcome message from Reginald
     setMessages([{
       role: 'assistant',
-      content: initialMessage
+      content: 'Greetings, young colonial subjects! I am Reginald Worthington III, sent by His Majesty\'s service to study your peculiar experiment in self-governance.\nI have graciously agreed to examine this quaint little system you call "democracy" before its inevitable collapse. How amusing!\nPerhaps you would be willing to enlighten me about your government\'s structure? I shall endeavor to maintain a modicum of interest in your explanations, despite their obvious inferiority to our glorious British monarchy.\n*(adjusts cravat with practiced flourish)*'
     }]);
   }, []);
   
@@ -546,17 +523,17 @@ export default function AssessmentBotScreen({
                 className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
               />
               <h2 className="font-bold text-xl text-gray-800">{displayName}</h2>
-              <p className="text-sm text-gray-600 font-medium">{contentPackage?.assessmentBot?.role || "Assessment Assistant"}</p>
+              <p className="text-sm text-gray-600 font-medium">Aristocratic Observer</p>
             </div>
             
             <p className="text-sm text-gray-700 mb-4">
-              {contentPackage?.assessmentBot?.description || "Your assessment assistant will guide you through an interactive evaluation of your understanding."}
+              Dispatched by His Majesty's service in the early 1800s to evaluate this curious colonial experiment known as "democracy." He arrives skeptical, impeccably dressed, and absolutely certain you'll come to your senses and return to the Crown.
             </p>
             
             <hr className="my-4 border-gray-200" />
             
             <div className="mb-4">
-              <h3 className="font-semibold text-gray-800 mb-2">{contentPackage?.assessmentCriteria?.name || "Assessment Topics"}</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">What he's listening for</h3>
               <ul className="space-y-3">
                 {topics.map((topic) => (
                   <li key={topic.id} className="flex items-start">
@@ -589,7 +566,7 @@ export default function AssessmentBotScreen({
               {/* Assessment Progress Bar */}
               <div className="mt-5">
                 <div className="flex justify-between items-center mb-1">
-                  <p className="text-xs font-medium text-gray-600">{contentPackage?.assessmentCriteria?.name || "Assessment"} Progress</p>
+                  <p className="text-xs font-medium text-gray-600">Assessment Progress</p>
                 </div>
                 <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
                   <motion.div 
@@ -628,7 +605,7 @@ export default function AssessmentBotScreen({
                       >
                         ✨
                       </motion.span>
-                      <span>{contentPackage?.assessmentCriteria?.name || "Assessment"} Complete</span>
+                      <span>Assessment Complete</span>
                       <motion.span
                         initial={{ rotate: 0 }}
                         animate={{ rotate: [0, -15, 15, -10, 10, -5, 5, 0] }}
@@ -648,7 +625,7 @@ export default function AssessmentBotScreen({
             <div>
               <h3 className="font-semibold text-gray-800 mb-2">Keep in mind</h3>
               <p className="text-sm text-gray-700">
-                {contentPackage?.assessmentCriteria?.description || `${displayName} will use your responses to recommend a learning path that makes sense for you. Do your best—your responses will help determine the most effective teaching approach.`}
+                Reginald will use your responses to recommend a learning path that makes sense for you. Do your best—he may be smug, but he's paying attention.
               </p>
             </div>
           </div>
@@ -657,7 +634,7 @@ export default function AssessmentBotScreen({
         {/* Right column - Chat interface */}
         <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
           <div className="p-3 md:p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
-            <h2 className="font-bold text-base md:text-lg text-gray-800">{contentPackage?.name || "Assessment"}</h2>
+            <h2 className="font-bold text-base md:text-lg text-gray-800">Royal Assessment: Three Branches of Government</h2>
           </div>
           
           <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-4 min-h-0">
@@ -675,7 +652,7 @@ export default function AssessmentBotScreen({
                     </div>
                   )}
                   <span className="text-xs text-gray-500 mt-1">
-                    {message.role === 'assistant' ? displayName : 'You'}
+                    {message.role === 'assistant' ? 'Reginald Worthington III' : 'You'}
                   </span>
                 </div>
                 <div className={`ml-10 ${
