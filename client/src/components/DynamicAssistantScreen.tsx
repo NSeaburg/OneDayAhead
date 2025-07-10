@@ -58,10 +58,95 @@ export default function DynamicAssistantScreen({
   
   // Get proficiency level from teachingAssistance if available
   const proficiencyLevel = teachingAssistance?.level || "unknown";
+  
+  // Helper functions for teacher profiles (moved up so they can be used in uiConfig)
+  const getTeacherName = () => {
+    if (contentPackage?.teachingBots?.[proficiencyLevel]?.name) {
+      return contentPackage.teachingBots[proficiencyLevel].name;
+    }
+    if (proficiencyLevel === "high") {
+      return "Mrs. Parton";
+    }
+    if (proficiencyLevel === "medium") {
+      return "Mrs. Bannerman";
+    }
+    if (proficiencyLevel === "low") {
+      return "Mr. Whitaker";
+    }
+    return "Teaching Assistant"; // Default fallback
+  };
+  
+  const getTeacherTitle = () => {
+    if (proficiencyLevel === "high") {
+      return "Advanced Civics Instructor";
+    }
+    if (proficiencyLevel === "medium") {
+      return "Intermediate Civics Instructor";
+    }
+    if (proficiencyLevel === "low") {
+      return "Foundational Civics Instructor";
+    }
+    return "Teaching Assistant"; // Default fallback
+  };
+  
+  const getTeacherDescription = () => {
+    if (proficiencyLevel === "high") {
+      return "After teaching civics for over 30 years at top high schools, Mrs. Parton specializes in helping students apply core concepts to complex real-world cases. She's known for drawing out deeper connections and challenging students to think critically.";
+    }
+    if (proficiencyLevel === "medium") {
+      return "With 25 years of teaching experience, Mrs. Bannerman excels at helping students build on their foundational knowledge. She uses interesting hypothetical scenarios to help students think about how government structures impact real people.";
+    }
+    if (proficiencyLevel === "low") {
+      return "After teaching civics for over 30 years, Mr. Whitaker now helps students build strong foundations in government concepts. He's known for his clear explanations, helpful analogies, and patient approach to learning. He breaks down complex ideas into manageable parts.";
+    }
+    return "Your specialized learning assistant has been selected to guide you through this material based on your assessment results."; // Default fallback
+  };
 
-  // Choose the appropriate initial message based on proficiency level and fallback status
+  // Helper function to get guidance approach based on proficiency level
+  const getGuidanceApproach = () => {
+    if (proficiencyLevel === "high") {
+      return "Mrs. Parton will challenge you to think critically about advanced civics concepts and historical connections that go beyond the basics. She'll help you explore nuanced ideas about government systems.";
+    }
+    if (proficiencyLevel === "medium") {
+      return "Mrs. Bannerman will help strengthen your understanding of government concepts, clarify any misunderstandings, and introduce some more advanced ideas when you're ready.";
+    }
+    if (proficiencyLevel === "low") {
+      return "Mr. Whitaker will focus on building a solid foundation of key government concepts through clear explanations, helpful metaphors, and guided activities.";
+    }
+    return "Your learning assistant will guide you through the key concepts from the material you've just studied."; // Default fallback
+  };
+  
+  // Get UI configuration from content package or use defaults
+  const botConfig = contentPackage?.teachingBots?.[proficiencyLevel];
+  const uiConfig = botConfig?.uiConfig || {
+    botTitle: getTeacherTitle(),
+    botDescription: getTeacherDescription(),
+    chatHeaderTitle: `Learning with ${getTeacherName()}`,
+    teachingApproach: {
+      title: "Teaching Approach",
+      description: getGuidanceApproach()
+    },
+    focusAreas: {
+      title: "What we'll explore",
+      topics: []
+    },
+    progressSection: {
+      title: "Learning Progress",
+      milestones: []
+    },
+    encouragementSection: {
+      title: "Keep in mind",
+      description: "Your teacher will guide you through this material at your pace."
+    },
+    inputPlaceholder: "Type your response here...",
+    initialGreeting: null
+  };
+
+  // Choose the appropriate initial message based on UI config or fallback
   let initialMessage = "";
-  if (isUsingFallback) {
+  if (uiConfig.initialGreeting) {
+    initialMessage = uiConfig.initialGreeting;
+  } else if (isUsingFallback) {
     initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. (Note: The system is currently using a fallback assistant due to a technical issue. I'll still be able to help you with the learning material!) How can I help you with what you've just learned?";
   } else if (proficiencyLevel === "high") {
     initialMessage = "Hello there. I'm Mrs. Parton — retired civics teacher, and I'm here to help you apply what you've learned about how our government works when it's put to the test. We'll be using the United States v. Nixon case as our guide today. When you're ready, please click the 'Launch Article' button in my profile to read about this landmark case. Then, I'll ask you questions to help you think through how each branch played its part. (gathers a folder of well-worn case studies with a fond smile)";
@@ -338,23 +423,6 @@ export default function DynamicAssistantScreen({
     }
   };
   
-  // Helper functions for teacher profiles
-  const getTeacherName = () => {
-    if (contentPackage?.teachingBots?.[proficiencyLevel]?.name) {
-      return contentPackage.teachingBots[proficiencyLevel].name;
-    }
-    if (proficiencyLevel === "high") {
-      return "Mrs. Parton";
-    }
-    if (proficiencyLevel === "medium") {
-      return "Mrs. Bannerman";
-    }
-    if (proficiencyLevel === "low") {
-      return "Mr. Whitaker";
-    }
-    return "Teaching Assistant"; // Default fallback
-  };
-  
   const getTeacherImage = () => {
     // Always try to use content package avatar first
     if (contentPackage?.teachingBots?.[proficiencyLevel]?.avatar) {
@@ -375,46 +443,6 @@ export default function DynamicAssistantScreen({
     }
     
     return placeholderImage; // Final fallback
-  };
-  
-  const getTeacherTitle = () => {
-    if (proficiencyLevel === "high") {
-      return "Advanced Civics Instructor";
-    }
-    if (proficiencyLevel === "medium") {
-      return "Intermediate Civics Instructor";
-    }
-    if (proficiencyLevel === "low") {
-      return "Foundational Civics Instructor";
-    }
-    return "Teaching Assistant"; // Default fallback
-  };
-  
-  const getTeacherDescription = () => {
-    if (proficiencyLevel === "high") {
-      return "After teaching civics for over 30 years at top high schools, Mrs. Parton specializes in helping students apply core concepts to complex real-world cases. She's known for drawing out deeper connections and challenging students to think critically.";
-    }
-    if (proficiencyLevel === "medium") {
-      return "With 25 years of teaching experience, Mrs. Bannerman excels at helping students build on their foundational knowledge. She uses interesting hypothetical scenarios to help students think about how government structures impact real people.";
-    }
-    if (proficiencyLevel === "low") {
-      return "After teaching civics for over 30 years, Mr. Whitaker now helps students build strong foundations in government concepts. He's known for his clear explanations, helpful analogies, and patient approach to learning. He breaks down complex ideas into manageable parts.";
-    }
-    return "Your specialized learning assistant has been selected to guide you through this material based on your assessment results."; // Default fallback
-  };
-
-  // Helper function to get guidance approach based on proficiency level
-  const getGuidanceApproach = () => {
-    if (proficiencyLevel === "high") {
-      return "Mrs. Parton will challenge you to think critically about advanced civics concepts and historical connections that go beyond the basics. She'll help you explore nuanced ideas about government systems.";
-    }
-    if (proficiencyLevel === "medium") {
-      return "Mrs. Bannerman will help strengthen your understanding of government concepts, clarify any misunderstandings, and introduce some more advanced ideas when you're ready.";
-    }
-    if (proficiencyLevel === "low") {
-      return "Mr. Whitaker will focus on building a solid foundation of key government concepts through clear explanations, helpful metaphors, and guided activities.";
-    }
-    return "Your learning assistant will guide you through the key concepts from the material you've just studied."; // Default fallback
   };
 
   return (
@@ -459,39 +487,60 @@ export default function DynamicAssistantScreen({
                     className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
                   />
                   <h2 className="font-bold text-xl text-gray-800">{getTeacherName()}</h2>
-                  <p className="text-sm text-gray-600 font-medium">{getTeacherTitle()}</p>
+                  <p className="text-sm text-gray-600 font-medium">{uiConfig.botTitle}</p>
                 </div>
                 
                 <p className="text-sm text-gray-700 mb-4">
-                  {getTeacherDescription()}
+                  {uiConfig.botDescription}
                 </p>
                 
                 <hr className="my-4 border-gray-200" />
                 
                 <div className="mb-4">
-                  <h3 className="font-semibold text-gray-800 mb-2">Guidance Approach</h3>
+                  <h3 className="font-semibold text-gray-800 mb-2">{uiConfig.teachingApproach.title}</h3>
                   <p className="text-sm text-gray-700">
-                    {getGuidanceApproach()}
+                    {uiConfig.teachingApproach.description}
                   </p>
                 </div>
                 
                 <hr className="my-4 border-gray-200" />
                 
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Learning Focus</h3>
-                  <div className="flex items-center">
-                    <div className={`w-3 h-3 rounded-full mr-2 ${
-                      proficiencyLevel === "high" ? "bg-green-500" :
-                      proficiencyLevel === "medium" ? "bg-blue-500" :
-                      proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
-                    }`}></div>
-                    <p className="text-sm text-gray-700">
-                      {proficiencyLevel === "high" ? "Learning Through Case Study" :
-                      proficiencyLevel === "medium" ? "Learning Through Thought Experiments" :
-                      proficiencyLevel === "low" ? "Learning Through Metaphor" : "Standard Approach"}
-                    </p>
+                {/* Focus Areas Section */}
+                {uiConfig.focusAreas && uiConfig.focusAreas.topics.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">{uiConfig.focusAreas.title}</h3>
+                    <div className="space-y-2">
+                      {uiConfig.focusAreas.topics.map((topic, index) => (
+                        <div key={topic.id || index} className="flex items-start">
+                          <div className={`w-2 h-2 rounded-full mt-1.5 mr-2 flex-shrink-0 ${
+                            proficiencyLevel === "high" ? "bg-green-500" :
+                            proficiencyLevel === "medium" ? "bg-blue-500" :
+                            proficiencyLevel === "low" ? "bg-amber-500" : "bg-gray-400"
+                          }`}></div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{topic.name}</p>
+                            <p className="text-xs text-gray-600">{topic.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+                
+                {/* Encouragement/Challenge Section */}
+                {(uiConfig.encouragementSection || uiConfig.challengeSection) && (
+                  <div className="mt-4">
+                    <hr className="my-4 border-gray-200" />
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <h4 className="font-semibold text-gray-800 text-sm mb-1">
+                        {uiConfig.challengeSection?.title || uiConfig.encouragementSection?.title}
+                      </h4>
+                      <p className="text-sm text-gray-700">
+                        {uiConfig.challengeSection?.description || uiConfig.encouragementSection?.description}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Launch Article Button - Only for high proficiency level (Mrs. Parton) */}
                 {proficiencyLevel === "high" && (
@@ -520,9 +569,7 @@ export default function DynamicAssistantScreen({
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
               <h2 className="font-semibold text-lg text-gray-800">
-                {proficiencyLevel === "high" ? "Mrs. Parton" :
-                 proficiencyLevel === "medium" ? "Mrs. Bannerman" :
-                 proficiencyLevel === "low" ? "Mr. Whitaker" : "Dynamic Assistant"}
+                {uiConfig.chatHeaderTitle}
               </h2>
               
               {proficiencyLevel !== "unknown" && (
@@ -632,7 +679,7 @@ export default function DynamicAssistantScreen({
                 <AutoResizeTextarea
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Type your message here..."
+                  placeholder={uiConfig.inputPlaceholder}
                   className="flex-grow focus:border-blue-500"
                   maxRows={7}
                   onKeyDown={(e) => {

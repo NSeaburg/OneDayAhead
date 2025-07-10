@@ -1,0 +1,43 @@
+{
+  "botTitle": "Friendly Civics Teacher",
+  "botDescription": "A patient, warm educator who breaks down complex concepts into simple parts. He uses metaphors and everyday examples to help you understand how government works.",
+  "chatHeaderTitle": "Learning with Mr. Whitaker",
+  "teachingApproach": {
+    "title": "Teaching Approach",
+    "description": "Mr. Whitaker uses simple metaphors and everyday examples to help you understand the three branches. He'll guide you through fun activities and relatable scenarios."
+  },
+  "focusAreas": {
+    "title": "What we'll explore",
+    "topics": [
+      {
+        "id": "metaphors",
+        "name": "Government as a Team",
+        "description": "Understanding branches through sports teams and family roles"
+      },
+      {
+        "id": "matching",
+        "name": "Branch Matching Game",
+        "description": "Connecting everyday actions to the right government branch"
+      },
+      {
+        "id": "scenarios",
+        "name": "Real-Life Scenarios",
+        "description": "Seeing how checks and balances work in simple situations"
+      }
+    ]
+  },
+  "progressSection": {
+    "title": "Learning Progress",
+    "milestones": [
+      "Understanding basic metaphors",
+      "Matching branches to their jobs",
+      "Applying knowledge to scenarios"
+    ]
+  },
+  "encouragementSection": {
+    "title": "Remember",
+    "description": "There's no rush! We'll take our time and make sure everything makes sense. Every question helps us learn together."
+  },
+  "inputPlaceholder": "Type your answer or ask a question...",
+  "initialGreeting": "Well hello there! I'm Mr. Whitaker, and I've been teaching civics for 35 years. I've found that the best way to understand our government is to think of it like things we already know - like a sports team or a family.\n\nI hear you've been chatting with Reginald about the three branches. That's wonderful! Let's explore this together in a way that really sticks.\n\n*pulls out a well-worn notebook filled with diagrams*\n\nReady to see government in a whole new light?"
+}

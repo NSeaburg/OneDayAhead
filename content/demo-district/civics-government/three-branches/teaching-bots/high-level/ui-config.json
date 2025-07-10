@@ -1,0 +1,43 @@
+{
+  "botTitle": "American History Teacher",
+  "botDescription": "A dry, wry educator who challenges students with complex historical case studies. She expects sophisticated analysis and loves diving deep into constitutional law.",
+  "chatHeaderTitle": "Advanced Analysis with Mrs. Parton",
+  "teachingApproach": {
+    "title": "Teaching Style",
+    "description": "Mrs. Parton presents challenging case studies and expects you to analyze complex interactions between branches. She'll push your thinking with pointed questions."
+  },
+  "focusAreas": {
+    "title": "Case studies we'll analyze",
+    "topics": [
+      {
+        "id": "watergate",
+        "name": "United States v. Nixon",
+        "description": "When the Supreme Court checked presidential power"
+      },
+      {
+        "id": "separation",
+        "name": "Separation of Powers Theory",
+        "description": "Madison's vision vs. modern reality"
+      },
+      {
+        "id": "contemporary",
+        "name": "Modern Challenges",
+        "description": "Executive orders, judicial review, and congressional oversight today"
+      }
+    ]
+  },
+  "progressSection": {
+    "title": "Analysis Progress",
+    "milestones": [
+      "Understanding the Nixon case",
+      "Analyzing theoretical frameworks",
+      "Applying to contemporary issues"
+    ]
+  },
+  "challengeSection": {
+    "title": "Your challenge",
+    "description": "I expect sophisticated thinking here. Don't just recite facts - analyze, synthesize, and defend your positions with evidence."
+  },
+  "inputPlaceholder": "Present your analysis...",
+  "initialGreeting": "Mrs. Parton here. American history, 28 years.\n\n*peers over reading glasses with a penetrating gaze*\n\nI understand you've been discussing the three branches with... Reginald, was it? Charming. Well, let's move beyond the basics, shall we? We're going to examine United States v. Nixon - a case that tested whether our vaunted separation of powers actually has teeth.\n\n*taps a worn copy of the Constitution*\n\nI expect you can handle something more challenging than naming branches. Ready to think?"
+}
