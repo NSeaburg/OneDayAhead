@@ -201,13 +201,12 @@ export default function HighBotWithArticleScreen({
   return (
     <div className="flex flex-col p-4 md:p-6 h-full">
       <h1 className="text-2xl font-semibold text-gray-900 mb-4">United States v. Nixon: A Case Study</h1>
-      
       {/* Side by side layout for article and chat */}
       <div className="flex flex-col md:flex-row gap-4 flex-grow">
         {/* Left side - Article or Teacher Bio */}
         {showArticle ? (
           // Article view
-          <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          (<div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
               <h2 className="font-semibold text-lg text-gray-800">Article</h2>
               <Button 
@@ -237,35 +236,30 @@ export default function HighBotWithArticleScreen({
                 <p>In 1974, the Supreme Court issued a unanimous decision against President Nixon. The Court ruled that executive privilege is not absolute and cannot be used to block evidence needed for a criminal trial. Nixon was ordered to turn over the tapes. Within days, the tapes revealed serious misconduct, and Nixon resigned from office. The case demonstrated how all three branches—Congress investigating, the Courts ruling, and the President resisting—interacted under the Constitution. It remains a landmark example of how checks and balances work, even at the highest levels of government.</p>
               </div>
             </div>
-          </div>
+          </div>)
         ) : (
           // Teacher bio view
-          <div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-fit">
+          (<div className="w-full md:w-1/2 bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-fit">
             <div className="flex flex-col items-center text-center mb-4">
               <img 
-                src={mrsPartonImage} 
+                src="content/Demo-District-2/4th Grade Sciecne/Clouds/teaching-bots/high-level/Dr. High-avatar.png.png" 
                 alt="Mrs. Parton" 
                 className="w-28 h-28 border-2 border-gray-300 shadow-sm rounded-full object-cover mb-3"
               />
               <h2 className="font-bold text-xl text-gray-800">Mrs. Parton</h2>
               <p className="text-sm text-gray-600 font-medium">Advanced Civics Educator</p>
             </div>
-            
             <p className="text-sm text-gray-700 mb-4">
               After teaching civics for over 30 years at top high schools, Mrs. Parton specializes in helping students apply core concepts to complex real-world cases. She's known for drawing out deeper connections and challenging students to think critically.
             </p>
-            
             <hr className="my-4 border-gray-200" />
-            
             <div className="mb-4">
               <h3 className="font-semibold text-gray-800 mb-2">Guidance Approach</h3>
               <p className="text-sm text-gray-700">
                 Mrs. Parton will challenge you to think critically about advanced civics concepts and historical connections that go beyond the basics. She'll help you explore nuanced ideas about government systems.
               </p>
             </div>
-            
             <hr className="my-4 border-gray-200" />
-            
             <div>
               <h3 className="font-semibold text-gray-800 mb-2">Learning Focus</h3>
               <div className="flex items-center">
@@ -273,7 +267,6 @@ export default function HighBotWithArticleScreen({
                 <p className="text-sm text-gray-700">Learning Through Case Study</p>
               </div>
             </div>
-            
             {/* Launch Article Button */}
             <div className="mt-6">
               <hr className="my-4 border-gray-200" />
@@ -288,7 +281,7 @@ export default function HighBotWithArticleScreen({
                 Launch Article
               </Button>
             </div>
-          </div>
+          </div>)
         )}
         
         {/* High Bot chat on the right */}
@@ -415,7 +408,6 @@ export default function HighBotWithArticleScreen({
           </div>
         </div>
       </div>
-      
       <div className="mt-4 flex justify-between">
         {onPrevious ? (
           <Button
