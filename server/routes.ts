@@ -2799,12 +2799,24 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
   // Create new complete learning experience from admin form with avatar uploads
   app.post("/api/content/create-package", upload.fields([
     { name: 'assessmentAvatar', maxCount: 1 },
-    { name: 'highAvatar', maxCount: 1 },
-    { name: 'mediumAvatar', maxCount: 1 },
-    { name: 'lowAvatar', maxCount: 1 }
+    { name: 'highBotAvatar', maxCount: 1 },
+    { name: 'mediumBotAvatar', maxCount: 1 },
+    { name: 'lowBotAvatar', maxCount: 1 }
   ]), async (req, res) => {
     try {
-      const experienceData = req.body;
+      // Parse the FormData body - arrays and objects come as JSON strings
+      const experienceData = { ...req.body };
+      
+      // Parse JSON fields that were stringified
+      ['assessmentListeningTopics', 'highFocusTopics', 'mediumFocusTopics', 'lowFocusTopics'].forEach(field => {
+        if (experienceData[field] && typeof experienceData[field] === 'string') {
+          try {
+            experienceData[field] = JSON.parse(experienceData[field]);
+          } catch (e) {
+            experienceData[field] = [];
+          }
+        }
+      });
       
       // Validate required fields
       if (!experienceData.name || !experienceData.district || !experienceData.course || !experienceData.topic) {
@@ -2836,7 +2848,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
         assessmentBot: {
           name: experienceData.assessmentName || "Assessment Assistant",
           description: experienceData.assessmentDescription || "Assessment bot for this experience",
-          avatar: experienceData.assessmentAvatar ? `${experienceData.assessmentName || 'assessment'}-avatar.png` : 'reginald-worthington.png',
+          avatar: files?.assessmentAvatar?.[0] ? `${experienceData.assessmentName || 'assessment'}-avatar.png` : 'reginald-worthington.png',
           role: "assessment",
           personality: experienceData.assessmentPersonality,
           criteria: experienceData.assessmentCriteria || "",
@@ -2851,7 +2863,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
           high: {
             name: experienceData.highBotName || "High Level Assistant",
             description: experienceData.highBotDescription || "For advanced students",
-            avatar: experienceData.highBotAvatar ? `${experienceData.highBotName || 'high'}-avatar.png` : 'Parton.png',
+            avatar: files?.highBotAvatar?.[0] ? `${experienceData.highBotName || 'high'}-avatar.png` : 'Parton.png',
             role: "teaching",
             personality: experienceData.highBotPersonality,
             config: {}
@@ -2859,7 +2871,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
           medium: {
             name: experienceData.mediumBotName || "Medium Level Assistant", 
             description: experienceData.mediumBotDescription || "For students at grade level",
-            avatar: experienceData.mediumBotAvatar ? `${experienceData.mediumBotName || 'medium'}-avatar.png` : 'Bannerman.png',
+            avatar: files?.mediumBotAvatar?.[0] ? `${experienceData.mediumBotName || 'medium'}-avatar.png` : 'Bannerman.png',
             role: "teaching",
             personality: experienceData.mediumBotPersonality,
             config: {}
@@ -2867,7 +2879,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
           low: {
             name: experienceData.lowBotName || "Support Assistant",
             description: experienceData.lowBotDescription || "For students needing extra support",
-            avatar: experienceData.lowBotAvatar ? `${experienceData.lowBotName || 'low'}-avatar.png` : 'Whitaker.png',
+            avatar: files?.lowBotAvatar?.[0] ? `${experienceData.lowBotName || 'low'}-avatar.png` : 'Whitaker.png',
             role: "teaching", 
             personality: experienceData.lowBotPersonality,
             config: {}
@@ -3090,7 +3102,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       
       // Save teaching bot avatars if uploaded
       const teachingLevels = ['high', 'medium', 'low'];
-      const avatarFields = ['highAvatar', 'mediumAvatar', 'lowAvatar'];
+      const avatarFields = ['highBotAvatar', 'mediumBotAvatar', 'lowBotAvatar'];
       const botNames = [experienceData.highBotName, experienceData.mediumBotName, experienceData.lowBotName];
       
       for (let i = 0; i < teachingLevels.length; i++) {

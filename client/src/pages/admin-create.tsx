@@ -243,13 +243,30 @@ export default function AdminCreate() {
     setSaving(true);
     
     try {
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+      
+      // Add all text fields to FormData
+      Object.entries(experienceData).forEach(([key, value]) => {
+        if (value instanceof File) {
+          // Add file fields
+          formData.append(key, value);
+        } else if (Array.isArray(value)) {
+          // Handle array fields (like topics)
+          formData.append(key, JSON.stringify(value));
+        } else if (typeof value === 'object' && value !== null) {
+          // Handle object fields
+          formData.append(key, JSON.stringify(value));
+        } else {
+          // Add regular fields
+          formData.append(key, String(value || ''));
+        }
+      });
+
       const response = await fetch("/api/content/create-package", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         credentials: 'include',
-        body: JSON.stringify(experienceData),
+        body: formData,
       });
 
       if (!response.ok) {
