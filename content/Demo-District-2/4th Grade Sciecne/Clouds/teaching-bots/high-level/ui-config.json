@@ -1,0 +1,22 @@
+{
+  "botTitle": "Mr. High",
+  "botDescription": "High",
+  "chatHeaderTitle": "Mr. High",
+  "teachingApproach": {
+    "title": "Teaching Approach",
+    "description": "Getting High"
+  },
+  "focusAreas": [
+    {
+      "id": "1752156661732",
+      "name": "Mr. High",
+      "description": "Mr. High"
+    }
+  ],
+  "challengeSection": {
+    "title": "Ready to get High?",
+    "description": "We get high here."
+  },
+  "inputPlaceholder": "Type your message here...",
+  "initialGreeting": "Hi! Let's get high!"
+}

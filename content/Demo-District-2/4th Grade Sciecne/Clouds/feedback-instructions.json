@@ -1,0 +1,67 @@
+{
+  "name": "Cloud Formation and Identification",
+  "description": "In this course, you’ll explore how clouds form, what they’re made of, and the different types you might see floating above. You’ll learn how water vapor becomes a cloud, how temperature and air movement affect what kind of cloud appears, and how to identify major cloud types like cumulus, stratus, and cirrus. By the end, you’ll be able to look up at the sky and know exactly what kind of clouds you’re seeing—and what kind of weather they might bring with them.",
+  "subject": "4th Grade Sciecne",
+  "gradeLevel": "General",
+  "gradingPrompt": "Provide comprehensive feedback on the student's understanding of Clouds",
+  "feedbackComponents": {
+    "summary": {
+      "description": "Overall performance summary",
+      "length": "2-3 sentences"
+    },
+    "contentKnowledgeScore": {
+      "description": "Content knowledge score",
+      "scale": "0-4"
+    },
+    "writingScore": {
+      "description": "Writing quality score",
+      "scale": "0-4"
+    },
+    "nextSteps": {
+      "description": "Recommended next steps",
+      "requirements": [
+        "Be specific",
+        "Be actionable",
+        "Be encouraging"
+      ]
+    }
+  },
+  "rubricGuidelines": {
+    "excellentPerformance": {
+      "contentRange": "3.5-4.0",
+      "writingRange": "3.5-4.0",
+      "characteristics": [
+        "Deep understanding",
+        "Clear communication",
+        "Insightful connections"
+      ]
+    },
+    "proficientPerformance": {
+      "contentRange": "2.5-3.4",
+      "writingRange": "2.5-3.4",
+      "characteristics": [
+        "Good understanding",
+        "Clear explanations",
+        "Some connections"
+      ]
+    },
+    "developingPerformance": {
+      "contentRange": "1.5-2.4",
+      "writingRange": "1.5-2.4",
+      "characteristics": [
+        "Basic understanding",
+        "Simple explanations",
+        "Limited connections"
+      ]
+    },
+    "beginningPerformance": {
+      "contentRange": "0-1.4",
+      "writingRange": "0-1.4",
+      "characteristics": [
+        "Minimal understanding",
+        "Unclear explanations",
+        "No connections"
+      ]
+    }
+  }
+}

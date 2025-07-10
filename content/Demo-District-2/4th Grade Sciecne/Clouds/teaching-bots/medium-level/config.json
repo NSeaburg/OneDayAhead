@@ -1,0 +1,8 @@
+{
+  "name": "Medium Level Teacher",
+  "description": "Medium Level teaching bot for Clouds",
+  "avatar": "default-avatar.png",
+  "role": "teaching",
+  "level": "medium",
+  "subject": "general"
+}

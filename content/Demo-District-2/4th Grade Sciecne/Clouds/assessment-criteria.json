@@ -1,0 +1,28 @@
+{
+  "name": "Cloud Formation and Identification",
+  "description": "In this course, you’ll explore how clouds form, what they’re made of, and the different types you might see floating above. You’ll learn how water vapor becomes a cloud, how temperature and air movement affect what kind of cloud appears, and how to identify major cloud types like cumulus, stratus, and cirrus. By the end, you’ll be able to look up at the sky and know exactly what kind of clouds you’re seeing—and what kind of weather they might bring with them.",
+  "subject": "4th Grade Sciecne",
+  "gradeLevel": "General",
+  "evaluationPrompt": "Evaluate the student's understanding of Clouds based on the following criteria",
+  "routingCriteria": {
+    "high": {
+      "description": "Can name all 4 types of clouds",
+      "indicators": [],
+      "teachingBot": "high",
+      "minScore": 0.7
+    },
+    "medium": {
+      "description": "Can name 2 types of clouds",
+      "indicators": [],
+      "teachingBot": "medium",
+      "minScore": 0.4
+    },
+    "low": {
+      "description": "Cannot name any type of clouds",
+      "indicators": [],
+      "teachingBot": "low",
+      "minScore": 0
+    }
+  },
+  "fallbackLevel": "medium"
+}

@@ -1,0 +1,22 @@
+{
+  "botTitle": "Mrs. Medium",
+  "botDescription": "Medium",
+  "chatHeaderTitle": "Mrs. Medium",
+  "teachingApproach": {
+    "title": "Teaching Approach",
+    "description": "We get medium here"
+  },
+  "focusAreas": [
+    {
+      "id": "1752156712057",
+      "name": "Getting Medium",
+      "description": "Let's get Medium"
+    }
+  ],
+  "encouragementSection": {
+    "title": "Your really average",
+    "description": "Let's get average"
+  },
+  "inputPlaceholder": "Type your message here...",
+  "initialGreeting": "Hi! You are so average. Well done. "
+}

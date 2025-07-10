@@ -1,0 +1,22 @@
+{
+  "botTitle": "Mr Low",
+  "botDescription": "Low",
+  "chatHeaderTitle": "Let's get low",
+  "teachingApproach": {
+    "title": "Teaching Approach",
+    "description": "Getting low down. "
+  },
+  "focusAreas": [
+    {
+      "id": "1752156753782",
+      "name": "Getting low",
+      "description": "Get low get low get low get low"
+    }
+  ],
+  "encouragementSection": {
+    "title": "Get low!",
+    "description": "You got this."
+  },
+  "inputPlaceholder": "Type your message here...",
+  "initialGreeting": "Hi! You did bad. And now you are here. "
+}
