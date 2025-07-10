@@ -180,9 +180,9 @@ export default function DynamicAssistantScreen({
     initialMessage = "Hello! I'm your specialized assistant for this part of the learning journey. I've been selected based on your assessment responses to provide you with targeted guidance. How can I help you with the material you've just learned?";
   }
   
-  // Use the teachingAssistance systemPrompt if available, otherwise try content package, otherwise fallback
-  const activeSystemPrompt = teachingAssistance?.systemPrompt || 
-    contentPackage?.teachingBots?.[proficiencyLevel]?.personality || 
+  // Always prefer content package system prompt over teachingAssistance for dynamic config
+  const activeSystemPrompt = contentPackage?.teachingBots?.[proficiencyLevel]?.personality || 
+    teachingAssistance?.systemPrompt || 
     systemPrompt;
   
   // Log which system prompt we're using
@@ -649,9 +649,7 @@ export default function DynamicAssistantScreen({
                     )}
                     <span className="text-xs text-gray-500 mt-1">
                       {message.role === 'assistant' 
-                        ? (proficiencyLevel === "high" ? 'Mrs. Parton' : 
-                           proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 
-                           proficiencyLevel === "low" ? 'Mr. Whitaker' : 'Assistant') 
+                        ? getTeacherName()
                         : 'You'}
                     </span>
                   </div>
@@ -679,9 +677,7 @@ export default function DynamicAssistantScreen({
                       />
                     </div>
                     <span className="text-xs text-gray-500 mt-1">
-                      {proficiencyLevel === "high" ? 'Mrs. Parton' : 
-                       proficiencyLevel === "medium" ? 'Mrs. Bannerman' : 
-                       proficiencyLevel === "low" ? 'Mr. Whitaker' : 'Assistant'}
+                      {getTeacherName()}
                     </span>
                   </div>
                   <div className="ml-10 bg-blue-50 rounded-lg p-3 text-gray-700">
@@ -751,14 +747,27 @@ export default function DynamicAssistantScreen({
           </Button>
         ) : <div></div>}
         
-        <Button
-          onClick={handleNext}
-          disabled={isLoading || isSendingToN8N}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              globalStorage.clearAllData();
+              window.location.reload();
+            }}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            Reset Chat
+          </Button>
+          
+          <Button
+            onClick={handleNext}
+            disabled={isLoading || isSendingToN8N}
+            className="bg-primary hover:bg-primary/90 text-white"
+          >
+            Next
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

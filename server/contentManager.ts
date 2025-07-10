@@ -206,6 +206,16 @@ export class ContentManager {
       const configData = await fs.promises.readFile(configPath, 'utf8');
       const config = JSON.parse(configData);
       
+      // Try to load personality from personality.txt file (newer approach)
+      let personality = config.personality || "";
+      try {
+        const personalityPath = path.join(botPath, 'personality.txt');
+        personality = await fs.promises.readFile(personalityPath, 'utf8');
+      } catch (error) {
+        // personality.txt is optional, fall back to config.json
+        console.log(`No personality.txt found at ${botPath}, using config.json personality`);
+      }
+      
       // Load keywords if available
       let keywords = null;
       try {
@@ -231,7 +241,7 @@ export class ContentManager {
         description: config.description,
         avatar: config.avatar,
         role: config.role,
-        personality: config.personality || "",
+        personality,
         config,
         keywords,
         uiConfig
