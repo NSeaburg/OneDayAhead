@@ -6,7 +6,7 @@ import mrsPartonImage from "../../../public/Parton.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
-import { useStreamingChat } from "@/hooks/useStreamingChat";
+import { useStreamingChatLegacy } from "@/hooks/useStreamingChat";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
@@ -61,7 +61,7 @@ export default function HighBotWithArticleScreen({
     currentStreamingMessage, 
     isTyping,
     setMessages
-  } = useStreamingChat({
+  } = useStreamingChatLegacy({
     assistantId,
     systemPrompt,
     initialMessage,
