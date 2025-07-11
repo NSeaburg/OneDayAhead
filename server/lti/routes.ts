@@ -48,6 +48,12 @@ router.post('/login', async (req: Request, res: Response) => {
 // LTI Launch
 router.post('/launch', async (req: LtiSession, res: Response) => {
   try {
+    console.log('=== CANVAS LAUNCH DEBUG ===');
+    console.log('Request path:', req.path);
+    console.log('Request method:', req.method);
+    console.log('LTI Token present:', !!req.body.id_token);
+    console.log('State:', req.body.state);
+    
     const { id_token, state } = req.body;
     
     if (!id_token) {
@@ -59,7 +65,10 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
       const messageType = req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/message_type'];
       
       // Add logging to see what Canvas is sending
-      console.log('Message type received:', messageType);
+      console.log('Message type from Canvas:', messageType);
+      console.log('Target link URI:', req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
+      console.log('Deep link return URL:', req.lti.claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings']?.deep_link_return_url);
+      console.log('=== END DEBUG ===');
       console.log('Full LTI claims:', JSON.stringify(req.lti.claims, null, 2));
       
       // If this is a Deep Linking request, handle it here
