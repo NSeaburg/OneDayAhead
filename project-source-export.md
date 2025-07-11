@@ -1,12 +1,17 @@
 # Educational Learning Platform - Complete Source Export
 
 ## Project Overview
-An advanced multi-tenant, content-agnostic AI-powered adaptive learning platform deployable across grade levels and subjects via LTI deep linking. Features admin interface for conversational AI-powered content creation, complete avatar upload system, and production deployment on AWS EC2 with load balancer. Platform uses unified file-based configuration system with content package-driven avatar management for complete scalability.
+An advanced multi-tenant, content-agnostic AI-powered adaptive learning platform deployable across grade levels and subjects via LTI 1.3 Deep Linking. Features admin interface for conversational AI-powered content creation, complete avatar upload system, and production deployment on AWS EC2 with load balancer. Platform uses unified file-based configuration system with content package-driven avatar management for complete scalability.
 
-**Current Status**: Fully functional multi-tenant platform with admin interface and complete avatar upload system
-**Last Updated**: July 10, 2025
+**Current Status**: Fully functional multi-tenant platform with complete Canvas Deep Linking integration
+**Last Updated**: July 11, 2025
 
-## Recent Major Changes (July 10, 2025)
+## Recent Major Changes (July 11, 2025)
+- ✅ **Canvas Deep Linking Fixed**: Added proper Deep Linking scope and placement configurations for Canvas integration
+- ✅ **Message Type Detection**: Launch handler now properly detects LtiDeepLinkingRequest vs LtiResourceLinkRequest
+- ✅ **Canvas Placements**: Configured assignment_selection, link_selection, and editor_button for content selection
+
+## Previous Changes (July 10, 2025)
 - ✅ **Complete Avatar Upload System**: Implemented full file upload workflow with FormData handling and multer middleware
 - ✅ **Admin Interface**: Built comprehensive multi-step content creation wizard with conversational AI assistant
 - ✅ **Multi-Tenant Architecture**: Content packages stored in `/content/{district}/{course}/{topic}/` structure
@@ -107,7 +112,11 @@ An advanced multi-tenant, content-agnostic AI-powered adaptive learning platform
 - `GET /admin` - Admin interface access (password protected)
 - `POST /api/content/create-package` - Content package creation with file upload support
 - `GET /api/content/scan` - Content package discovery and listing
-- LTI 1.3 endpoints for Canvas integration
+- `GET /api/lti/config` - LTI 1.3 configuration for Canvas registration
+- `POST /api/lti/launch` - Main LTI launch endpoint with Deep Linking support
+- `POST /api/lti/login` - LTI OIDC login initiation
+- `GET /api/lti/jwks` - Public key set for Canvas verification
+- `POST /api/lti/deep-linking/jwt` - JWT generation for content selection
 
 **File Upload System:**
 - Multer middleware for handling FormData uploads
@@ -121,7 +130,21 @@ An advanced multi-tenant, content-agnostic AI-powered adaptive learning platform
 - Rich text inputs with spell check and formatting shortcuts
 - Complete avatar upload workflow for all bot types
 
-### 2. LTI Authentication (server/lti/auth.ts)
+### 2. LTI Routes (server/lti/routes.ts)
+**Key Features:**
+- Full LTI 1.3 authentication flow with JWT validation
+- Deep Linking content selection interface
+- Message type detection for proper request routing
+- Canvas-compliant configuration endpoint
+- JWT response generation for content selection
+
+**Deep Linking Implementation:**
+- Detects `LtiDeepLinkingRequest` message type in launch handler
+- Shows content selection interface with available packages
+- Generates signed JWT response for Canvas
+- Supports assignment_selection, link_selection, and editor_button placements
+
+### 3. LTI Authentication (server/lti/auth.ts)
 **Key Features:**
 - JWT-based authentication for Canvas integration
 - Development mode bypass with session persistence
@@ -281,8 +304,16 @@ N8N_DYNAMIC_WEBHOOK_URL=https://goldtrail.app.n8n.cloud/webhook/Feedback Flow
 - ✅ Rich admin interface with AI-powered content creation assistant
 - ✅ Complete interchangeability of assessment and teaching bots
 - ✅ Production-ready multi-tenant architecture
+- ✅ Canvas Deep Linking fully implemented with proper scope and placements
+- ✅ Message type detection for LtiDeepLinkingRequest vs LtiResourceLinkRequest
 
-### Recent Fixes (July 10, 2025)
+### Recent Fixes (July 11, 2025)
+- ✅ Canvas Deep Linking scope added: `https://purl.imsglobal.org/spec/lti-dl/scope/deep_linking`
+- ✅ Launch handler now detects message types and routes appropriately
+- ✅ Canvas placements configured: assignment_selection, link_selection, editor_button
+- ✅ LTI configuration endpoint provides complete Canvas registration JSON
+
+### Previous Fixes (July 10, 2025)
 - ✅ HighBotWithArticleScreen component error resolved by switching to useStreamingChatLegacy hook
 - ✅ Avatar upload workflow now properly saves files to content package folders
 - ✅ Admin form enhanced with rich text components and keyboard shortcuts
@@ -334,6 +365,27 @@ Images served via static middleware at `/content/` URLs:
 
 ---
 
+## Canvas Deep Linking Implementation Details
+
+### Configuration Requirements
+The LTI configuration at `/api/lti/config` now includes:
+- Deep Linking scope in the scopes array
+- Message types declaration for both Deep Linking and Resource Launch
+- Proper placement configurations for Canvas integration
+
+### How Deep Linking Works
+1. **Teacher Selection**: When teacher clicks "Add External Tool" in Canvas
+2. **Message Detection**: Launch handler checks for `LtiDeepLinkingRequest` message type
+3. **Content Picker**: Shows available content packages with radio button selection
+4. **JWT Response**: Generates signed JWT with selected content details
+5. **Canvas Integration**: Returns selected content to Canvas via deep_link_return_url
+
+### Canvas Registration
+Update your Canvas Developer Key with the configuration from:
+```
+https://app.onedayahead.com/api/lti/config
+```
+
 **Technical Contact**: Development team via Replit
-**Last Tested**: July 10, 2025
-**Status**: Production ready multi-tenant platform with complete admin interface
+**Last Tested**: July 11, 2025
+**Status**: Production ready with complete Canvas Deep Linking support
