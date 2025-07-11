@@ -54,8 +54,156 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
       return res.status(400).json({ error: 'Missing id_token' });
     }
 
-    // Decode and validate JWT (this will be done by auth middleware)
-    // Extract custom parameters from the launch
+    // Check if this is a Deep Linking request
+    if (req.lti?.claims) {
+      const messageType = req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/message_type'];
+      
+      // If this is a Deep Linking request, handle it here
+      if (messageType === 'LtiDeepLinkingRequest') {
+        console.log('Detected Deep Linking request in launch');
+        
+        const deepLinkSettings = req.lti.claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'];
+        
+        if (!deepLinkSettings) {
+          return res.status(400).json({ error: 'No deep linking settings provided' });
+        }
+
+        // Scan available content packages
+        const packages = await contentManager.scanContentPackages();
+        console.log(`Found ${packages.length} content packages for deep linking selection`);
+        
+        // Generate HTML for content selection
+        const packageList = packages.map((pkg, index) => `
+          <div class="content-item">
+            <input type="radio" id="content${index}" name="selectedContent" value='${JSON.stringify({
+              type: 'ltiResourceLink',
+              title: pkg.name,
+              text: `${pkg.description} - ${pkg.assessmentBot.name}`,
+              url: getLtiConfig().launchUrl,
+              custom: {
+                content_package_id: pkg.id,
+                district: pkg.district,
+                course: pkg.course,
+                topic: pkg.topic,
+                assessment_enabled: 'true'
+              }
+            }).replace(/'/g, '&apos;')}' ${index === 0 ? 'checked' : ''}>
+            <label for="content${index}">
+              <h3>${pkg.name}</h3>
+              <p><strong>Course:</strong> ${pkg.course.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+              <p><strong>Description:</strong> ${pkg.description}</p>
+              <p><strong>Assessment Bot:</strong> ${pkg.assessmentBot.name} - ${pkg.assessmentBot.description}</p>
+            </label>
+          </div>
+        `).join('');
+
+        // Return the content selection interface
+        return res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Select Learning Content</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+              h1 { color: #333; }
+              .content-item { 
+                border: 1px solid #ddd; 
+                padding: 20px; 
+                margin: 15px 0; 
+                border-radius: 8px; 
+                background-color: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                transition: all 0.3s ease;
+              }
+              .content-item:hover {
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                transform: translateY(-2px);
+              }
+              .content-item input[type="radio"] {
+                margin-right: 10px;
+              }
+              .content-item label {
+                cursor: pointer;
+                display: block;
+              }
+              .content-item h3 { 
+                margin: 0 0 10px 0; 
+                color: #0066cc;
+              }
+              .content-item p { 
+                margin: 5px 0; 
+                color: #666;
+              }
+              .submit-btn { 
+                background: #0066cc; 
+                color: white; 
+                padding: 12px 30px; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer;
+                font-size: 16px;
+                margin-top: 20px;
+                transition: background-color 0.3s ease;
+              }
+              .submit-btn:hover {
+                background: #0052a3;
+              }
+              .error { 
+                color: #d32f2f; 
+                margin: 10px 0;
+                padding: 10px;
+                background-color: #ffebee;
+                border-radius: 4px;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>Select Learning Content</h1>
+            ${packages.length === 0 ? '<p class="error">No content packages available. Please create content packages first.</p>' : ''}
+            <form id="deepLinkForm" method="post" action="${deepLinkSettings.deep_link_return_url}">
+              ${packageList}
+              <input type="hidden" name="JWT" id="jwtToken" value="">
+              ${packages.length > 0 ? '<button type="submit" class="submit-btn">Add Selected Content to Course</button>' : ''}
+            </form>
+            
+            <script>
+              document.getElementById('deepLinkForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const selectedRadio = document.querySelector('input[name="selectedContent"]:checked');
+                if (!selectedRadio) {
+                  alert('Please select a content package');
+                  return;
+                }
+                
+                const selectedContent = JSON.parse(selectedRadio.value);
+                
+                // Create the JWT with selected content
+                const response = await fetch('/api/lti/deep-linking/jwt', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    contentItem: selectedContent,
+                    deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
+                    claims: ${JSON.stringify(req.lti.claims)}
+                  })
+                });
+                
+                const { token } = await response.json();
+                document.getElementById('jwtToken').value = token;
+                
+                // Submit the form
+                this.submit();
+              });
+            </script>
+          </body>
+          </html>
+        `);
+      }
+    }
+
+    // Regular resource launch handling
     let contentPackageId = '';
     
     if (req.lti?.claims) {
@@ -574,11 +722,24 @@ router.get('/config', (req: Request, res: Response) => {
     description: 'Interactive AI-powered learning experience for U.S. government education',
     oidc_initiation_url: config.loginUrl,
     target_link_uri: config.launchUrl,
+    messages: [
+      {
+        type: 'LtiDeepLinkingRequest',
+        target_link_uri: config.deepLinkingUrl,
+        label: 'Select Learning Content'
+      },
+      {
+        type: 'LtiResourceLinkRequest', 
+        target_link_uri: config.launchUrl,
+        label: 'Launch Learning Module'
+      }
+    ],
     scopes: [
       'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
       'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
       'https://purl.imsglobal.org/spec/lti-ags/scope/score',
-      'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'
+      'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly',
+      'https://purl.imsglobal.org/spec/lti-dl/scope/deep_linking'
     ],
     extensions: [
       {
@@ -591,17 +752,44 @@ router.get('/config', (req: Request, res: Response) => {
             {
               text: 'Government Learning Module',
               enabled: true,
-              placement: 'assignment_menu',
-              message_type: 'LtiResourceLinkRequest',
-              target_link_uri: config.launchUrl,
-              canvas_icon_class: 'icon-quiz'
+              placement: 'assignment_selection',
+              message_type: 'LtiDeepLinkingRequest',
+              target_link_uri: config.deepLinkingUrl,
+              selection_width: 800,
+              selection_height: 600
             },
             {
-              text: 'Select Government Content',
+              text: 'Select Learning Content',
               enabled: true,
-              placement: 'module_menu',
+              placement: 'link_selection',
               message_type: 'LtiDeepLinkingRequest',
-              target_link_uri: config.deepLinkingUrl
+              target_link_uri: config.deepLinkingUrl,
+              selection_width: 800,
+              selection_height: 600
+            },
+            {
+              text: 'Add Learning Module',
+              enabled: true,
+              placement: 'editor_button',
+              message_type: 'LtiDeepLinkingRequest',
+              target_link_uri: config.deepLinkingUrl,
+              selection_width: 800,
+              selection_height: 600
+            },
+            {
+              text: 'Government Learning',
+              enabled: true,
+              placement: 'assignment_view',
+              message_type: 'LtiResourceLinkRequest',
+              target_link_uri: config.launchUrl
+            },
+            {
+              text: 'Government Learning',
+              enabled: true,
+              placement: 'course_navigation',
+              message_type: 'LtiResourceLinkRequest',
+              target_link_uri: config.launchUrl,
+              default: 'disabled'
             }
           ]
         }
