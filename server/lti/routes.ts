@@ -718,8 +718,8 @@ router.get('/config', (req: Request, res: Response) => {
   const config = getLtiConfig();
   
   res.json({
-    title: 'Government Branches Learning Platform',
-    description: 'Interactive AI-powered learning experience for U.S. government education',
+    title: 'One Day Ahead Learning Platform',
+    description: 'AI-powered adaptive learning platform for personalized educational experiences',
     oidc_initiation_url: config.loginUrl,
     target_link_uri: config.launchUrl,
     messages: [
@@ -744,13 +744,13 @@ router.get('/config', (req: Request, res: Response) => {
     extensions: [
       {
         domain: new URL(config.launchUrl).hostname,
-        tool_id: 'government-learning-platform',
+        tool_id: 'oda-learning-platform',
         platform: 'canvas.instructure.com',
         settings: {
-          text: 'Government Branches Learning',
+          text: 'One Day Ahead Learning',
           placements: [
             {
-              text: 'Government Learning Module',
+              text: 'Select Learning Module',
               enabled: true,
               placement: 'assignment_selection',
               message_type: 'LtiDeepLinkingRequest',
@@ -759,7 +759,7 @@ router.get('/config', (req: Request, res: Response) => {
               selection_height: 600
             },
             {
-              text: 'Select Learning Content',
+              text: 'Add Learning Content',
               enabled: true,
               placement: 'link_selection',
               message_type: 'LtiDeepLinkingRequest',
@@ -768,7 +768,7 @@ router.get('/config', (req: Request, res: Response) => {
               selection_height: 600
             },
             {
-              text: 'Add Learning Module',
+              text: 'Insert Learning Module',
               enabled: true,
               placement: 'editor_button',
               message_type: 'LtiDeepLinkingRequest',
@@ -777,14 +777,14 @@ router.get('/config', (req: Request, res: Response) => {
               selection_height: 600
             },
             {
-              text: 'Government Learning',
+              text: 'One Day Ahead Learning',
               enabled: true,
               placement: 'assignment_view',
               message_type: 'LtiResourceLinkRequest',
               target_link_uri: config.launchUrl
             },
             {
-              text: 'Government Learning',
+              text: 'One Day Ahead Learning',
               enabled: true,
               placement: 'course_navigation',
               message_type: 'LtiResourceLinkRequest',
