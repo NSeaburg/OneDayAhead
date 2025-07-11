@@ -58,6 +58,10 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
     if (req.lti?.claims) {
       const messageType = req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/message_type'];
       
+      // Add logging to see what Canvas is sending
+      console.log('Message type received:', messageType);
+      console.log('Full LTI claims:', JSON.stringify(req.lti.claims, null, 2));
+      
       // If this is a Deep Linking request, handle it here
       if (messageType === 'LtiDeepLinkingRequest') {
         console.log('Detected Deep Linking request in launch');
