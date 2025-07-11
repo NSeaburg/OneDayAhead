@@ -426,6 +426,145 @@ router.post('/scores/:lineitemId', async (req: LtiSession, res: Response) => {
   }
 });
 
+// Development route to test deep linking interface without LTI authentication
+router.get('/deep-linking-dev', async (req: Request, res: Response) => {
+  try {
+    console.log('🧪 Development deep linking interface requested');
+    
+    // Scan available content packages
+    const packages = await contentManager.scanContentPackages();
+    console.log(`🧪 Found ${packages.length} content packages for selection`);
+    
+    // Generate HTML for content selection (same as production but without JWT submission)
+    const packageList = packages.map((pkg, index) => `
+      <div class="content-item">
+        <input type="radio" id="content${index}" name="selectedContent" value='${JSON.stringify({
+          type: 'ltiResourceLink',
+          title: pkg.name,
+          text: `${pkg.description} - ${pkg.assessmentBot.name}`,
+          url: getLtiConfig().launchUrl,
+          custom: {
+            content_package_id: pkg.id,
+            district: pkg.district,
+            course: pkg.course,
+            topic: pkg.topic,
+            assessment_enabled: 'true'
+          }
+        }).replace(/'/g, '&apos;')}' ${index === 0 ? 'checked' : ''}>
+        <label for="content${index}">
+          <h3>${pkg.name}</h3>
+          <p><strong>Course:</strong> ${pkg.course.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+          <p><strong>Description:</strong> ${pkg.description}</p>
+          <p><strong>Assessment Bot:</strong> ${pkg.assessmentBot.name} - ${pkg.assessmentBot.description}</p>
+        </label>
+      </div>
+    `).join('');
+
+    // Return the content selection interface
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Select Learning Content (Development Mode)</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+          h1 { color: #333; }
+          .dev-banner {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            color: #856404;
+          }
+          .content-item { 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+          }
+          .content-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+          }
+          .content-item input[type="radio"] {
+            margin-right: 10px;
+          }
+          .content-item label {
+            cursor: pointer;
+            display: block;
+          }
+          .content-item h3 { 
+            margin: 0 0 10px 0; 
+            color: #0066cc;
+          }
+          .content-item p { 
+            margin: 5px 0; 
+            color: #666;
+          }
+          .submit-btn { 
+            background: #0066cc; 
+            color: white; 
+            padding: 12px 30px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+          }
+          .submit-btn:hover {
+            background: #0052a3;
+          }
+          .error { 
+            color: #d32f2f; 
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="dev-banner">
+          <strong>Development Mode:</strong> This is a test interface to verify deep linking content selection works properly. In production, this interface would be accessed through Canvas LTI authentication.
+        </div>
+        
+        <h1>Select Learning Content</h1>
+        ${packages.length === 0 ? '<p class="error">No content packages available. Please create content packages first.</p>' : ''}
+        <form id="deepLinkForm">
+          ${packageList}
+          ${packages.length > 0 ? '<button type="submit" class="submit-btn">Add Selected Content to Course</button>' : ''}
+        </form>
+        
+        <script>
+          document.getElementById('deepLinkForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const selectedRadio = document.querySelector('input[name="selectedContent"]:checked');
+            if (!selectedRadio) {
+              alert('Please select a content package');
+              return;
+            }
+            
+            const selectedContent = JSON.parse(selectedRadio.value);
+            
+            // Show success message for development
+            alert('Success! In Canvas, this would:\\n\\n1. Generate a signed JWT with the selected content\\n2. Submit back to Canvas\\n3. Canvas would add the content to the assignment\\n\\nSelected: ' + selectedContent.title);
+          });
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Development deep linking error:', error);
+    res.status(500).json({ error: 'Development deep linking failed' });
+  }
+});
+
 // LTI Configuration/Registration endpoint
 router.get('/config', (req: Request, res: Response) => {
   const config = getLtiConfig();
