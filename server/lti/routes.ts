@@ -719,88 +719,41 @@ router.get('/config', (req: Request, res: Response) => {
   
   res.json({
     title: 'One Day Ahead Learning Platform',
-    description: 'AI-powered adaptive learning platform for personalized educational experiences',
+    description: 'AI-powered adaptive learning platform',
     oidc_initiation_url: config.loginUrl,
     target_link_uri: config.launchUrl,
-    messages: [
-      {
-        type: 'LtiDeepLinkingRequest',
-        target_link_uri: config.deepLinkingUrl,
-        label: 'Select Learning Content'
-      },
-      {
-        type: 'LtiResourceLinkRequest', 
-        target_link_uri: config.launchUrl,
-        label: 'Launch Learning Module'
-      }
-    ],
     scopes: [
       'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
+      'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
       'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
       'https://purl.imsglobal.org/spec/lti-ags/scope/score',
-      'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly',
-      'https://purl.imsglobal.org/spec/lti-dl/scope/deep_linking'
+      'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'
     ],
+    public_jwk_url: config.jwksUrl,
     extensions: [
       {
-        domain: new URL(config.launchUrl).hostname,
-        tool_id: 'oda-learning-platform',
         platform: 'canvas.instructure.com',
         settings: {
-          text: 'One Day Ahead Learning',
           placements: [
             {
-              text: 'Select Learning Module',
-              enabled: true,
               placement: 'assignment_selection',
               message_type: 'LtiDeepLinkingRequest',
-              target_link_uri: config.deepLinkingUrl,
-              selection_width: 800,
-              selection_height: 600
-            },
-            {
-              text: 'Add Learning Content',
-              enabled: true,
-              placement: 'link_selection',
-              message_type: 'LtiDeepLinkingRequest',
-              target_link_uri: config.deepLinkingUrl,
-              selection_width: 800,
-              selection_height: 600
-            },
-            {
-              text: 'Insert Learning Module',
-              enabled: true,
-              placement: 'editor_button',
-              message_type: 'LtiDeepLinkingRequest',
-              target_link_uri: config.deepLinkingUrl,
-              selection_width: 800,
-              selection_height: 600
-            },
-            {
-              text: 'One Day Ahead Learning',
-              enabled: true,
-              placement: 'assignment_view',
-              message_type: 'LtiResourceLinkRequest',
               target_link_uri: config.launchUrl
             },
             {
-              text: 'One Day Ahead Learning',
-              enabled: true,
-              placement: 'course_navigation',
-              message_type: 'LtiResourceLinkRequest',
-              target_link_uri: config.launchUrl,
-              default: 'disabled'
+              placement: 'link_selection', 
+              message_type: 'LtiDeepLinkingRequest',
+              target_link_uri: config.launchUrl
+            },
+            {
+              placement: 'editor_button',
+              message_type: 'LtiDeepLinkingRequest',
+              target_link_uri: config.launchUrl
             }
           ]
         }
       }
-    ],
-    public_jwk_url: config.jwksUrl,
-    custom_fields: {
-      canvas_user_id: '$Canvas.user.id',
-      canvas_course_id: '$Canvas.course.id',
-      canvas_assignment_id: '$Canvas.assignment.id'
-    }
+    ]
   });
 });
 
