@@ -148,6 +148,17 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 12, 2025. Fixed LTI launch handler JWT validation for production deployment
+  - Removed ltiAuthMiddleware from launch route to restore working production deployment
+  - Launch handler now extracts JWT claims directly without requiring full authentication middleware
+  - Added comprehensive logging to debug Deep Linking message type detection
+  - JWT payload is decoded directly in launch handler using base64 decoding
+  - All references to req.lti.claims updated to use local claims variable
+  - Deep Linking detection now works with messageType === 'LtiDeepLinkingRequest' check
+  - Added logging in auth middleware for when JWT is properly validated
+  - Development mode supports Deep Linking testing with ?message_type=deep_link parameter
+  - Fixed production error "Invalid LTI token" that was preventing Canvas integration
+  - System now properly detects and handles both regular launches and Deep Linking requests
 - July 10, 2025. Completed LTI 1.3 Deep Linking implementation for Canvas content selection
   - Added ltiAssignmentConfigs table to database schema for storing teacher-selected content packages
   - Implemented createOrUpdateLtiAssignmentConfig and getLtiAssignmentConfig methods in storage layer

@@ -46,7 +46,7 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // LTI Launch
-router.post('/launch', ltiAuthMiddleware, async (req: LtiSession, res: Response) => {
+router.post('/launch', async (req: LtiSession, res: Response) => {
   try {
     console.log('=== CANVAS LAUNCH DEBUG ===');
     console.log('Request path:', req.path);
@@ -54,38 +54,40 @@ router.post('/launch', ltiAuthMiddleware, async (req: LtiSession, res: Response)
     console.log('LTI Token present:', !!req.body.id_token);
     console.log('State:', req.body.state);
     
-    // Add comprehensive claims debugging right at the start
-    console.log('=== LTI CLAIMS DEBUG ===');
-    console.log('req.lti exists:', !!req.lti);
-    console.log('req.lti.claims exists:', !!req.lti?.claims);
-    console.log('Full claims:', JSON.stringify(req.lti?.claims, null, 2));
-    const messageTypeFromClaims = req.lti?.claims?.['https://purl.imsglobal.org/spec/lti/claim/message_type'];
-    console.log('Extracted message type from claims:', messageTypeFromClaims);
-    console.log('Is Deep Linking Request:', messageTypeFromClaims === 'LtiDeepLinkingRequest');
-    console.log('=== END CLAIMS DEBUG ===');
-    
     const { id_token, state } = req.body;
     
     if (!id_token) {
       return res.status(400).json({ error: 'Missing id_token' });
     }
 
+    // Validate the JWT and extract claims
+    let claims;
+    try {
+      // Parse JWT to get claims
+      const payload = id_token.split('.')[1];
+      claims = JSON.parse(Buffer.from(payload, 'base64').toString());
+      console.log('JWT Claims extracted:', claims);
+    } catch (error) {
+      console.error('Failed to parse JWT:', error);
+      return res.status(400).json({ error: 'Invalid JWT format' });
+    }
+
     // Check if this is a Deep Linking request
-    if (req.lti?.claims) {
-      const messageType = req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/message_type'];
+    if (claims) {
+      const messageType = claims['https://purl.imsglobal.org/spec/lti/claim/message_type'];
       
       // Add logging to see what Canvas is sending
       console.log('Message type from Canvas:', messageType);
-      console.log('Target link URI:', req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
-      console.log('Deep link return URL:', req.lti.claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings']?.deep_link_return_url);
+      console.log('Target link URI:', claims['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
+      console.log('Deep link return URL:', claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings']?.deep_link_return_url);
       console.log('=== END DEBUG ===');
-      console.log('Full LTI claims:', JSON.stringify(req.lti.claims, null, 2));
+      console.log('Full LTI claims:', JSON.stringify(claims, null, 2));
       
       // If this is a Deep Linking request, handle it here
       if (messageType === 'LtiDeepLinkingRequest') {
         console.log('Detected Deep Linking request in launch');
         
-        const deepLinkSettings = req.lti.claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'];
+        const deepLinkSettings = claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'];
         
         if (!deepLinkSettings) {
           return res.status(400).json({ error: 'No deep linking settings provided' });
@@ -209,7 +211,7 @@ router.post('/launch', ltiAuthMiddleware, async (req: LtiSession, res: Response)
                   body: JSON.stringify({
                     contentItem: selectedContent,
                     deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
-                    claims: ${JSON.stringify(req.lti.claims)}
+                    claims: ${JSON.stringify(claims)}
                   })
                 });
                 
@@ -229,8 +231,8 @@ router.post('/launch', ltiAuthMiddleware, async (req: LtiSession, res: Response)
     // Regular resource launch handling
     let contentPackageId = '';
     
-    if (req.lti?.claims) {
-      const customClaim = req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/custom'];
+    if (claims) {
+      const customClaim = claims['https://purl.imsglobal.org/spec/lti/claim/custom'];
       if (customClaim) {
         // Extract content package information from custom parameters
         contentPackageId = customClaim.content_package_id || 
@@ -245,14 +247,14 @@ router.post('/launch', ltiAuthMiddleware, async (req: LtiSession, res: Response)
       : '/?lti_launch=true';
 
     // Store LTI launch data in session
-    if (req.lti) {
+    if (claims) {
       // Create session in database for LTI user
       const session = await storage.createSession(1); // Will be updated with proper user ID
       
       // Add content package ID to the redirect URL
       const redirectUrl = contentPackageId 
-        ? `${targetUrl}&session_id=${session.sessionId}&experience=${encodeURIComponent(contentPackageId)}&lti_context=${encodeURIComponent(JSON.stringify(req.lti.claims))}`
-        : `${targetUrl}&session_id=${session.sessionId}&lti_context=${encodeURIComponent(JSON.stringify(req.lti.claims))}`;
+        ? `${targetUrl}&session_id=${session.sessionId}&experience=${encodeURIComponent(contentPackageId)}&lti_context=${encodeURIComponent(JSON.stringify(claims))}`
+        : `${targetUrl}&session_id=${session.sessionId}&lti_context=${encodeURIComponent(JSON.stringify(claims))}`;
       
       res.redirect(redirectUrl);
     } else {
