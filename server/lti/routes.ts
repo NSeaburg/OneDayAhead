@@ -269,26 +269,8 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
 // JWKS Endpoint - Public key set for Canvas to verify our tokens
 router.get('/jwks', async (req: Request, res: Response) => {
   try {
-    // Return a simplified JWKS for development/testing
-    const publicKey = process.env.LTI_PUBLIC_KEY || `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0yH7UuyAAuRkIxNEm7+b
-3HudXWqjn1g6pCU+ewqKNfnyzVO8lM854PrwkrKCAQEAEODnqgzjYPtD8l5Ky9Y3
-fAHxeKqTHT3bNzqcwKqQTlq5KZQ8J7Pj8j3o2HfRtNQ1jhQYJQ9VrY+MQ3RJz1HZ
-gHqL3F3zOD8J8dKfnHZW3b1HT7zQ8dPZq3f8V3qJ3L3LJ3Dq0Q+U8Q1rHq5L8Q1r
-Gf2fz8b7Q6Q3j5J8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1r
-Q8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQ8Q1rQIDAQAB
------END PUBLIC KEY-----`;
-    
-    // Simple JWKS response for development
-    const keySet = {
-      keys: [{
-        kty: "RSA",
-        use: "sig",
-        kid: "lti-key-1",
-        n: "0yH7UuyAAuRkIxNEm7-b3HudXWqjn1g6pCU-ewqKNfnyzVO8lM854PrwkrKCAQEA",
-        e: "AQAB"
-      }]
-    };
+    const keyManager = LtiKeyManager.getInstance();
+    const keySet = await keyManager.getPublicKeySet();
     
     res.json(keySet);
   } catch (error) {
@@ -439,19 +421,12 @@ router.post('/deep-linking', async (req: LtiSession, res: Response) => {
             const response = await fetch('/api/lti/deep-linking/jwt', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
               body: JSON.stringify({
                 contentItem: selectedContent,
                 deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
                 claims: ${JSON.stringify(claims)}
               })
             });
-            
-            if (!response.ok) {
-              const errorText = await response.text();
-              alert('Failed to create JWT: ' + errorText);
-              return;
-            }
             
             const { token } = await response.json();
             document.getElementById('jwtToken').value = token;
@@ -478,7 +453,10 @@ router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
-    // Create deep linking response JWT using built-in crypto
+    // Create deep linking response JWT
+    const keyManager = LtiKeyManager.getInstance();
+    const privateKey = await keyManager.getPrivateKey();
+    
     const deepLinkResponse = {
       iss: getLtiConfig().clientId,
       aud: claims.iss,
@@ -490,39 +468,7 @@ router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
       'https://purl.imsglobal.org/spec/lti-dl/claim/message': 'Content successfully added to course'
     };
 
-    // Use a simple private key for development/testing
-    const privateKey = process.env.LTI_PRIVATE_KEY || `-----BEGIN PRIVATE KEY-----
-MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDTIftS7IAC5GQj
-E0Sbv5vce51daqOfWDqkJT57Coo1+fLNU7yUzzng+vCSvZ5nAeehbGK0I14Ie9ZK
-piYGGVWMvO4ZUYuR1l2N2nAADbmq3dRxNHeDzQ/UjTpMMiJSD/eLfdSts5DGQwiU
-vJ1I8WQazW+4KdOkTuMWE3DAMVqiosh80N6oQF/7juIGBboLr1KhVpmVUmaw92oS
-/aVMQBpVxbgzXcFZ3/0c87jO/yHCXHxsP7x1/G3u7lUst1kfu6jMHRWowGXMWGrd
-C9dk00P/EanhP1FgFLTidX0xt7wrSyH7va05DVbOgbVRav6SU2wJDydQDyI00QSL
-xy5Ph9ifAgMBAAECggEAC7JwGOiBsRH+hZOdiJ7FdPd465eAXXrHCO1dTaDIW8mE
-t6EXgLZjB6wEua8oAEnyj2wQoy1Ab5TjdZBIlAGW+UHwU6vDtpPbQVl5kgSF+vQ+
-Pvqqp70rztlM17LWru2JMouz8DRTZYCKOv9LcXfvgAKjWV8hMBMExrt9/XqJLHBh
-i1n/fVe/XZlemCSo9mi95cmLIXCrDs3+poWxRUYwofg4O0SUMH+OlL/2uZYcJSAe
-DuT+52Y0n4t7bUhVh7B9einZPJUARPZcaWKkI3QBoKpvx7UVEyExBD+2f4z8oMzg
-oe+pDp2u1j5VUhUjmWifyvoeK8icm0lVga1EI8urVQKBgQDpq5TmBNaTI3aBHo7r
-IEGvV1AJ8ofvrlVfGBpwfUlAqx5NLR/2LR+ULMumQHFIT2k2F2Y3LMpmKIVaNaKu
-24NfR2ZkKVLDf960UemyaBrBkCtArDaKV+9E/MgpsNsX0HUDZLF+owqBXbI9ORO3
-+cKnFBWQEcCaAfCoLm7h6eG7zQKBgQDnTw0qZ3clh480b8ue+0ossabjeFwWAYlS
-TwODYR3k8sIOPNzTYiq9sI5MSXf50Zl4iCDOULhhXD4FGXtKMt+o21sWhxvJGpIV
-CoNBN/vNjurkWYIKsSsmTbfBbdZ1w7ouC1Qfkmv5oLhHi4dxYPRtyoYu+10ce4zQ
-BOvfCTcyGwKBgBlyXw/BnSB+7yvWiRff9mdC6et7ZwRaBuAJPu/bJPwO5ojfDij/
-9v1q926OfAe05i9G0xHVJeGELimJx8KlEyRwIR1tRp8VsMoQVZPhNHC544vydSoR
-s3Pe12l64hEw2V1aPN4eoUk/S+bQ7W3OnD0XudVrqX7cETovfFHL55JNAoGAMMfG
-EgRB50NAWyGcgomiKezJMj2GxglK6XXKWuGXSVo8vH3vYBDazKg4SjRQPfoK8JVc
-vcXeLIIkfjTSgGJcMqMYAZc6r92PoypVZeKlksMqHEAYIaMdY3WOZBeC29EMKXuw
-IPxjEwDm/Aeb57g3tBO62pueFkyj9JalG6M45bMCgYB8iFBk60R0H9rbl1FKCr9U
-ZqgRzJ+88fzpRrgI9UR1s9qfb/37gB3jAtSZJx4TZl0kqoFDzqtc7PTipuiK2hem
-8deqL+/DdzRR3x6nj1SIWBcW0KT6KvANUVuNlSwwL/kqoN+/tU+xdDMZIp7NEN8p
-0uYpnxSwLSB3QZXhesZN8g==
------END PRIVATE KEY-----`;
-
-    // For development, use HS256 with a simple secret
-    const jwtSecret = process.env.JWT_SECRET || 'development-secret-key';
-    const token = jwt.sign(deepLinkResponse, jwtSecret, { algorithm: 'HS256' });
+    const token = jwt.sign(deepLinkResponse, privateKey.toPEM(true), { algorithm: 'RS256' });
     
     res.json({ token });
   } catch (error) {

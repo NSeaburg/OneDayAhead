@@ -1,6 +1,6 @@
 import { generateKeyPair } from 'crypto';
 import { promisify } from 'util';
-// Note: node-jose has import issues, so we'll skip the complex key management for now
+import * as jose from 'node-jose';
 
 const generateKeyPairAsync = promisify(generateKeyPair);
 
