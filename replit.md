@@ -148,6 +148,15 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 12, 2025. Fixed RSA private key parsing and JWKS endpoint for Canvas Deep Linking
+  - Fixed RSA private key parsing issue by detecting single-line key format and reformatting with proper newlines
+  - JWKS endpoint now successfully generates public key set from private key for Canvas JWT verification
+  - Added automatic key format detection and correction for keys stored as single line in environment variables
+  - Private key content is split into 64-character lines for proper PEM format compliance
+  - Deep Linking JWT generation updated to use same key parsing approach for consistency
+  - Canvas can now verify JWTs signed by the application using the JWKS endpoint at /api/lti/jwks
+  - Key parsing handles both escaped newlines (\n) and single-line formats automatically
+  - JWKS response includes proper key ID (kid) format using client_id_key_1 pattern
 - July 12, 2025. Successfully fixed Deep Linking JWT generation for Canvas production deployment
   - Fixed JWT signing error by implementing HS256 fallback for both development and production environments
   - Added error handling in Deep Linking interface JavaScript with user-friendly alerts

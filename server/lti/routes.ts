@@ -296,11 +296,44 @@ router.get('/jwks', async (req: Request, res: Response) => {
     const config = getLtiConfig();
     
     // Get the private key and parse it
-    const privateKeyPem = process.env.LTI_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKeyPem = process.env.LTI_PRIVATE_KEY?.trim();
+    
+    if (privateKeyPem) {
+      // Check if it's a single-line key with no actual newlines
+      if (!privateKeyPem.includes('\n') && privateKeyPem.includes('-----BEGIN') && privateKeyPem.includes('-----END')) {
+        console.log('Detected single-line key format, attempting to fix...');
+        // Look for the header and footer patterns
+        const headerMatch = privateKeyPem.match(/(-----BEGIN [A-Z ]+-----)/);
+        const footerMatch = privateKeyPem.match(/(-----END [A-Z ]+-----)/);
+        
+        if (headerMatch && footerMatch) {
+          const header = headerMatch[1];
+          const footer = footerMatch[1];
+          const headerEnd = privateKeyPem.indexOf(header) + header.length;
+          const footerStart = privateKeyPem.indexOf(footer);
+          const keyContent = privateKeyPem.substring(headerEnd, footerStart).trim();
+          
+          // Reconstruct with proper newlines - add newline every 64 characters for base64
+          const formattedContent = keyContent.match(/.{1,64}/g)?.join('\n') || keyContent;
+          privateKeyPem = `${header}\n${formattedContent}\n${footer}`;
+        } else {
+          console.error('Could not parse header/footer from single-line key');
+        }
+      }
+      
+      // Also handle escaped newlines
+      privateKeyPem = privateKeyPem.replace(/\\n/g, '\n');
+    }
     if (!privateKeyPem) {
       console.error('No LTI_PRIVATE_KEY found for JWKS generation');
       return res.status(500).json({ error: 'Private key not configured' });
     }
+    
+    // Verify the key format
+    console.log('Private key starts with:', privateKeyPem.substring(0, 30));
+    console.log('Private key ends with:', privateKeyPem.substring(privateKeyPem.length - 30));
+    console.log('Private key length:', privateKeyPem.length);
+    console.log('Number of newlines:', (privateKeyPem.match(/\n/g) || []).length);
     
     try {
       // Create a key object from the PEM
@@ -565,7 +598,33 @@ router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
     }
     
     // For production or when key is provided, use RS256
-    const privateKeyPem = process.env.LTI_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKeyPem = process.env.LTI_PRIVATE_KEY?.trim();
+    
+    if (privateKeyPem) {
+      // Check if it's a single-line key with no actual newlines
+      if (!privateKeyPem.includes('\n') && privateKeyPem.includes('-----BEGIN') && privateKeyPem.includes('-----END')) {
+        console.log('Deep Linking: Detected single-line key format, attempting to fix...');
+        // Look for the header and footer patterns
+        const headerMatch = privateKeyPem.match(/(-----BEGIN [A-Z ]+-----)/);
+        const footerMatch = privateKeyPem.match(/(-----END [A-Z ]+-----)/);
+        
+        if (headerMatch && footerMatch) {
+          const header = headerMatch[1];
+          const footer = footerMatch[1];
+          const headerEnd = privateKeyPem.indexOf(header) + header.length;
+          const footerStart = privateKeyPem.indexOf(footer);
+          const keyContent = privateKeyPem.substring(headerEnd, footerStart).trim();
+          
+          // Reconstruct with proper newlines - add newline every 64 characters for base64
+          const formattedContent = keyContent.match(/.{1,64}/g)?.join('\n') || keyContent;
+          privateKeyPem = `${header}\n${formattedContent}\n${footer}`;
+        }
+      }
+      
+      // Also handle escaped newlines
+      privateKeyPem = privateKeyPem.replace(/\\n/g, '\n');
+    }
+    
     if (!privateKeyPem) {
       console.error('No LTI_PRIVATE_KEY found - RS256 signing requires a private key');
       return res.status(500).json({ error: 'Private key not configured' });
