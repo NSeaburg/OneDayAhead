@@ -4,6 +4,7 @@ import { generateNonce, LtiSession, ltiAuthMiddleware } from './auth';
 import { storage } from '../storage';
 import { contentManager } from '../contentManager';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -292,10 +293,42 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
 // JWKS Endpoint - Public key set for Canvas to verify our tokens
 router.get('/jwks', async (req: Request, res: Response) => {
   try {
-    const keyManager = LtiKeyManager.getInstance();
-    const keySet = await keyManager.getPublicKeySet();
+    const config = getLtiConfig();
     
-    res.json(keySet);
+    // Get the private key and parse it
+    const privateKeyPem = process.env.LTI_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    if (!privateKeyPem) {
+      console.error('No LTI_PRIVATE_KEY found for JWKS generation');
+      return res.status(500).json({ error: 'Private key not configured' });
+    }
+    
+    try {
+      // Create a key object from the PEM
+      const privateKey = crypto.createPrivateKey(privateKeyPem);
+      const publicKey = crypto.createPublicKey(privateKey);
+      
+      // Export the public key in JWK format
+      const jwk = publicKey.export({ format: 'jwk' });
+      
+      // Add the key ID and use information
+      jwk.kid = `${config.clientId}_key_1`;
+      jwk.use = 'sig';
+      jwk.alg = 'RS256';
+      
+      // Return JWKS format
+      const jwks = {
+        keys: [jwk]
+      };
+      
+      console.log('JWKS response:', JSON.stringify(jwks, null, 2));
+      res.json(jwks);
+    } catch (keyError) {
+      console.error('Failed to process RSA key:', keyError);
+      return res.status(500).json({ 
+        error: 'Failed to generate JWKS',
+        details: keyError.message 
+      });
+    }
   } catch (error) {
     console.error('JWKS error:', error);
     res.status(500).json({ error: 'Failed to retrieve key set' });
@@ -531,27 +564,35 @@ router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
       return res.json({ token });
     }
     
-    // For production or when key is provided, try to use RS256
-    const privateKeyPem = process.env.LTI_PRIVATE_KEY;
+    // For production or when key is provided, use RS256
+    const privateKeyPem = process.env.LTI_PRIVATE_KEY?.replace(/\\n/g, '\n');
     if (!privateKeyPem) {
-      console.log('No LTI_PRIVATE_KEY found, using HS256 fallback');
-      const fallbackSecret = process.env.NODE_ENV === 'production' ? 'production-fallback-secret-2025' : 'development-secret-key';
-      const token = jwt.sign(deepLinkResponse, fallbackSecret, { algorithm: 'HS256' });
-      return res.json({ token });
+      console.error('No LTI_PRIVATE_KEY found - RS256 signing requires a private key');
+      return res.status(500).json({ error: 'Private key not configured' });
     }
     
-    // Try to sign the JWT - if the key format is wrong, fall back to HS256
+    // Generate a consistent key ID based on the client ID
+    const kid = `${config.clientId}_key_1`;
+    
+    // Sign the JWT with RS256 and include the key ID
     try {
-      const token = jwt.sign(deepLinkResponse, privateKeyPem, { algorithm: 'RS256' });
+      const token = jwt.sign(deepLinkResponse, privateKeyPem, { 
+        algorithm: 'RS256',
+        header: {
+          kid: kid,
+          typ: 'JWT',
+          alg: 'RS256'
+        }
+      });
+      console.log('Successfully signed Deep Linking JWT with RS256, kid:', kid);
       return res.json({ token });
     } catch (rsaError) {
-      console.error('RS256 signing failed:', rsaError.message);
-      
-      // Fall back to HS256 if RS256 fails (for both dev and prod until proper keys are configured)
-      console.log('Falling back to HS256 due to RSA key issues');
-      const fallbackSecret = process.env.NODE_ENV === 'production' ? 'production-fallback-secret-2025' : 'development-secret-key';
-      const token = jwt.sign(deepLinkResponse, fallbackSecret, { algorithm: 'HS256' });
-      return res.json({ token });
+      console.error('RS256 signing failed:', rsaError);
+      console.error('Private key format may be incorrect. Ensure it includes BEGIN/END RSA PRIVATE KEY headers');
+      return res.status(500).json({ 
+        error: 'Failed to sign JWT with RS256',
+        details: rsaError.message 
+      });
     }
   } catch (error) {
     console.error('Deep linking JWT generation error:', error);
