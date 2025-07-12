@@ -1,128 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deep Linking Test Interface</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; margin-bottom: 20px; }
-        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
-        .test-button { background: #0066cc; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 5px 10px 0; }
-        .test-button:hover { background: #0052a3; }
-        .results { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px; white-space: pre-wrap; }
-        .error { color: #d32f2f; }
-        .success { color: #2e7d32; }
-    </style>
+    <title>Test Deep Linking Flow</title>
 </head>
 <body>
-    <div class="container">
-        <h1>LTI 1.3 Deep Linking Test Interface</h1>
-        
-        <div class="test-section">
-            <h3>1. Test Content Package Discovery</h3>
-            <p>This tests if the system can find available content packages.</p>
-            <button class="test-button" onclick="testContentPackages()">Test Package Scanning</button>
-            <div id="packages-result" class="results"></div>
-        </div>
+    <h1>Test LTI Deep Linking Request</h1>
+    <p>This page simulates a Canvas Deep Linking request to test the JWT claims debugging.</p>
+    
+    <form id="ltiForm" method="POST" action="http://localhost:5000/api/lti/launch">
+        <input type="hidden" name="id_token" id="idToken" value="">
+        <input type="hidden" name="state" value="test-state-123">
+        <button type="submit">Test Deep Linking Launch</button>
+    </form>
 
-        <div class="test-section">
-            <h3>2. Test LTI Configuration</h3>
-            <p>This tests the LTI configuration endpoint that Canvas uses.</p>
-            <button class="test-button" onclick="testLtiConfig()">Test LTI Config</button>
-            <div id="config-result" class="results"></div>
-        </div>
-
-        <div class="test-section">
-            <h3>3. Simulate Deep Linking Flow</h3>
-            <p>This simulates what happens when Canvas initiates deep linking.</p>
-            <button class="test-button" onclick="simulateDeepLinking()">Simulate Canvas Deep Link</button>
-            <div id="deeplink-result" class="results"></div>
-        </div>
-
-        <div class="test-section">
-            <h3>4. Test Deep Linking Interface</h3>
-            <p>Open the deep linking selection interface in a new window.</p>
-            <button class="test-button" onclick="openDeepLinkInterface()">Open Deep Link Interface</button>
-            <div id="interface-result" class="results"></div>
-        </div>
-    </div>
+    <h2>Development Test (No JWT)</h2>
+    <p>In development mode, the auth middleware should create mock claims.</p>
+    <button onclick="testDevMode()">Test Dev Mode Launch</button>
 
     <script>
-        async function testContentPackages() {
-            const resultDiv = document.getElementById('packages-result');
-            resultDiv.textContent = 'Testing content package discovery...';
-            
-            try {
-                const response = await fetch('/api/content/packages');
-                const packages = await response.json();
-                
-                if (packages && packages.length > 0) {
-                    resultDiv.className = 'results success';
-                    resultDiv.textContent = `✅ Found ${packages.length} content packages:\n\n${packages.map(pkg => `- ${pkg.name} (${pkg.id})\n  Assessment Bot: ${pkg.assessmentBot.name}\n  Description: ${pkg.description}`).join('\n\n')}`;
-                } else {
-                    resultDiv.className = 'results error';
-                    resultDiv.textContent = '❌ No content packages found. Please check the /content directory.';
-                }
-            } catch (error) {
-                resultDiv.className = 'results error';
-                resultDiv.textContent = `❌ Error testing packages: ${error.message}`;
-            }
-        }
-
-        async function testLtiConfig() {
-            const resultDiv = document.getElementById('config-result');
-            resultDiv.textContent = 'Testing LTI configuration...';
-            
-            try {
-                const response = await fetch('/api/lti/config');
-                const config = await response.json();
-                
-                if (config && config.extensions && config.extensions.length > 0) {
-                    resultDiv.className = 'results success';
-                    resultDiv.textContent = `✅ LTI Configuration loaded successfully:\n\nTitle: ${config.title}\nOIDC URL: ${config.oidc_initiation_url}\nLaunch URL: ${config.target_link_uri}\nJWKS URL: ${config.public_jwk_url}\n\nDeep Linking Placements: ${config.extensions[0].settings.placements.filter(p => p.message_type === 'LtiDeepLinkingRequest').length}`;
-                } else {
-                    resultDiv.className = 'results error';
-                    resultDiv.textContent = '❌ Invalid LTI configuration received.';
-                }
-            } catch (error) {
-                resultDiv.className = 'results error';
-                resultDiv.textContent = `❌ Error testing LTI config: ${error.message}`;
-            }
-        }
-
-        async function simulateDeepLinking() {
-            const resultDiv = document.getElementById('deeplink-result');
-            resultDiv.textContent = 'Simulating Canvas deep linking request...';
-            
-            // This will fail because we don't have proper LTI context, but it shows us how the endpoint behaves
-            try {
-                const response = await fetch('/api/lti/deep-linking', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        // Mock Canvas-style request (this will be rejected due to missing LTI context)
-                        claims: {},
-                        deep_linking_settings: {
-                            deep_link_return_url: 'https://canvas.example.com/return'
-                        }
-                    })
-                });
-                
-                const result = await response.text();
-                resultDiv.className = 'results error';
-                resultDiv.textContent = `Expected result: Authentication required\nResponse: ${result}`;
-            } catch (error) {
-                resultDiv.className = 'results error';
-                resultDiv.textContent = `❌ Error simulating deep link: ${error.message}`;
-            }
-        }
-
-        function openDeepLinkInterface() {
-            const resultDiv = document.getElementById('interface-result');
-            resultDiv.className = 'results';
-            resultDiv.textContent = '📝 Note: The deep linking interface requires proper LTI authentication from Canvas.\n\nIn a real Canvas environment:\n1. Teacher clicks "Select Government Content" in Canvas\n2. Canvas sends authenticated LTI request to /api/lti/deep-linking\n3. System shows content selection interface\n4. Teacher selects content and clicks "Add"\n5. System generates JWT response back to Canvas\n\nThe interface is implemented and ready for Canvas integration.';
+        // This would normally be a JWT from Canvas
+        // For testing, we'll submit without a token to trigger development mode
+        function testDevMode() {
+            fetch('http://localhost:5000/api/lti/launch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    state: 'dev-test-state'
+                })
+            })
+            .then(res => res.text())
+            .then(data => {
+                console.log('Response:', data);
+                alert('Check server logs for debug output');
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error: ' + err.message);
+            });
         }
     </script>
 </body>

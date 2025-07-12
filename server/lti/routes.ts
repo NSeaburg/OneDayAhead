@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { LtiKeyManager, getLtiConfig } from './config';
-import { generateNonce, LtiSession } from './auth';
+import { generateNonce, LtiSession, ltiAuthMiddleware } from './auth';
 import { storage } from '../storage';
 import { contentManager } from '../contentManager';
 import jwt from 'jsonwebtoken';
@@ -46,13 +46,23 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // LTI Launch
-router.post('/launch', async (req: LtiSession, res: Response) => {
+router.post('/launch', ltiAuthMiddleware, async (req: LtiSession, res: Response) => {
   try {
     console.log('=== CANVAS LAUNCH DEBUG ===');
     console.log('Request path:', req.path);
     console.log('Request method:', req.method);
     console.log('LTI Token present:', !!req.body.id_token);
     console.log('State:', req.body.state);
+    
+    // Add comprehensive claims debugging right at the start
+    console.log('=== LTI CLAIMS DEBUG ===');
+    console.log('req.lti exists:', !!req.lti);
+    console.log('req.lti.claims exists:', !!req.lti?.claims);
+    console.log('Full claims:', JSON.stringify(req.lti?.claims, null, 2));
+    const messageTypeFromClaims = req.lti?.claims?.['https://purl.imsglobal.org/spec/lti/claim/message_type'];
+    console.log('Extracted message type from claims:', messageTypeFromClaims);
+    console.log('Is Deep Linking Request:', messageTypeFromClaims === 'LtiDeepLinkingRequest');
+    console.log('=== END CLAIMS DEBUG ===');
     
     const { id_token, state } = req.body;
     

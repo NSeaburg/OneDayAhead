@@ -150,7 +150,12 @@ export async function ltiAuthMiddleware(req: LtiSession, res: Response, next: Ne
         nonce: 'dev-nonce',
         'https://purl.imsglobal.org/spec/lti/claim/deployment_id': 'dev-deployment',
         'https://purl.imsglobal.org/spec/lti/claim/target_link_uri': req.originalUrl,
-        'https://purl.imsglobal.org/spec/lti/claim/message_type': 'LtiResourceLinkRequest',
+        'https://purl.imsglobal.org/spec/lti/claim/message_type': req.query?.message_type === 'deep_link' ? 'LtiDeepLinkingRequest' : 'LtiResourceLinkRequest',
+        'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings': req.query?.message_type === 'deep_link' ? {
+          deep_link_return_url: 'https://canvas.instructure.com/deep_linking_response',
+          accept_types: ['ltiResourceLink'],
+          accept_presentation_document_targets: ['iframe']
+        } : undefined,
         'https://purl.imsglobal.org/spec/lti/claim/resource_link': {
           id: 'dev-resource-123'
         },
@@ -204,10 +209,12 @@ export async function ltiAuthMiddleware(req: LtiSession, res: Response, next: Ne
     req.lti = ltiContext;
 
     // Add detailed logging after JWT validation
+    console.log('=== AUTH MIDDLEWARE: JWT VALIDATED ===');
     console.log('Message type from Canvas:', req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/message_type']);
     console.log('Target link URI:', req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
     console.log('Deep link return URL:', req.lti.claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings']?.deep_link_return_url);
-    console.log('=== END DEBUG ===');
+    console.log('req.lti object created successfully');
+    console.log('=== END AUTH MIDDLEWARE DEBUG ===');
 
     next();
   } catch (error) {
