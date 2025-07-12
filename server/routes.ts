@@ -74,6 +74,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "https://canvas.instructure.com", // Specific Canvas domain
             "https://*.canvaslms.com", // Additional Canvas domain
           ],
+          formAction: [
+            "'self'",
+            "https://*.instructure.com", // Allow form submission to Canvas
+            "https://*.canvas.com",
+            "https://canvas.instructure.com",
+            "https://*.canvaslms.com",
+          ],
           scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", "data:", "https:"],

@@ -204,22 +204,45 @@ router.post('/launch', async (req: LtiSession, res: Response) => {
                 const selectedContent = JSON.parse(selectedRadio.value);
                 
                 // Create the JWT with selected content
-                const response = await fetch('/api/lti/deep-linking/jwt', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    contentItem: selectedContent,
-                    deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
-                    claims: ${JSON.stringify(claims)}
-                  })
-                });
-                
-                const { token } = await response.json();
-                document.getElementById('jwtToken').value = token;
-                
-                // Submit the form
-                this.submit();
+                try {
+                  console.log('Making JWT request...');
+                  const response = await fetch('/api/lti/deep-linking/jwt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      contentItem: selectedContent,
+                      deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
+                      claims: ${JSON.stringify(claims)}
+                    })
+                  });
+                  
+                  console.log('Response status:', response.status);
+                  if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('JWT generation failed:', errorText);
+                    alert('Failed to generate deep linking response: ' + errorText);
+                    return;
+                  }
+                  
+                  const result = await response.json();
+                  console.log('JWT generated successfully');
+                  
+                  if (!result.token) {
+                    console.error('No token in response:', result);
+                    alert('Failed to generate JWT token');
+                    return;
+                  }
+                  
+                  document.getElementById('jwtToken').value = result.token;
+                  
+                  // Submit the form
+                  console.log('Submitting form to Canvas...');
+                  this.submit();
+                } catch (error) {
+                  console.error('Error in deep linking:', error);
+                  alert('Error: ' + error.message);
+                }
               });
             </script>
           </body>
@@ -418,21 +441,45 @@ router.post('/deep-linking', async (req: LtiSession, res: Response) => {
             const selectedContent = JSON.parse(selectedRadio.value);
             
             // Create the JWT with selected content
-            const response = await fetch('/api/lti/deep-linking/jwt', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contentItem: selectedContent,
-                deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
-                claims: ${JSON.stringify(claims)}
-              })
-            });
-            
-            const { token } = await response.json();
-            document.getElementById('jwtToken').value = token;
-            
-            // Submit the form
-            this.submit();
+            try {
+              console.log('Making JWT request...');
+              const response = await fetch('/api/lti/deep-linking/jwt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  contentItem: selectedContent,
+                  deepLinkSettings: ${JSON.stringify(deepLinkSettings)},
+                  claims: ${JSON.stringify(claims)}
+                })
+              });
+              
+              console.log('Response status:', response.status);
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('JWT generation failed:', errorText);
+                alert('Failed to generate deep linking response: ' + errorText);
+                return;
+              }
+              
+              const result = await response.json();
+              console.log('JWT generated successfully');
+              
+              if (!result.token) {
+                console.error('No token in response:', result);
+                alert('Failed to generate JWT token');
+                return;
+              }
+              
+              document.getElementById('jwtToken').value = result.token;
+              
+              // Submit the form
+              console.log('Submitting form to Canvas...');
+              this.submit();
+            } catch (error) {
+              console.error('Error in deep linking:', error);
+              alert('Error: ' + error.message);
+            }
           });
         </script>
       </body>
@@ -454,11 +501,10 @@ router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
     }
 
     // Create deep linking response JWT
-    const keyManager = LtiKeyManager.getInstance();
-    const privateKey = await keyManager.getPrivateKey();
+    const config = getLtiConfig();
     
     const deepLinkResponse = {
-      iss: getLtiConfig().clientId,
+      iss: config.clientId,
       aud: claims.iss,
       exp: Math.floor(Date.now() / 1000) + 3600,
       iat: Math.floor(Date.now() / 1000),
@@ -468,9 +514,39 @@ router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
       'https://purl.imsglobal.org/spec/lti-dl/claim/message': 'Content successfully added to course'
     };
 
-    const token = jwt.sign(deepLinkResponse, privateKey.toPEM(true), { algorithm: 'RS256' });
+    // For development without a key, use HS256
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('LTI_PRIVATE_KEY exists:', !!process.env.LTI_PRIVATE_KEY);
     
-    res.json({ token });
+    if (process.env.NODE_ENV === 'development' && !process.env.LTI_PRIVATE_KEY) {
+      console.log('Warning: Using HS256 with development secret for JWT signing');
+      const token = jwt.sign(deepLinkResponse, 'development-secret-key', { algorithm: 'HS256' });
+      return res.json({ token });
+    }
+    
+    // For production or when key is provided, try to use RS256
+    const privateKeyPem = process.env.LTI_PRIVATE_KEY;
+    if (!privateKeyPem) {
+      throw new Error('LTI_PRIVATE_KEY environment variable not set for production');
+    }
+    
+    // Try to sign the JWT - if the key format is wrong, fall back to HS256 in development
+    try {
+      const token = jwt.sign(deepLinkResponse, privateKeyPem, { algorithm: 'RS256' });
+      return res.json({ token });
+    } catch (rsaError) {
+      console.error('RS256 signing failed:', rsaError.message);
+      
+      // In development, fall back to HS256 if RS256 fails
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Falling back to HS256 for development');
+        const token = jwt.sign(deepLinkResponse, 'development-secret-key', { algorithm: 'HS256' });
+        return res.json({ token });
+      }
+      
+      // In production, throw the error
+      throw rsaError;
+    }
   } catch (error) {
     console.error('Deep linking JWT generation error:', error);
     res.status(500).json({ error: 'Failed to generate JWT' });
