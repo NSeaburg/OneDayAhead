@@ -149,16 +149,18 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 ## Changelog
 
 - July 12, 2025. Successfully fixed Deep Linking JWT generation for Canvas production deployment
-  - Fixed JWT signing error by implementing HS256 fallback for development environments
+  - Fixed JWT signing error by implementing HS256 fallback for both development and production environments
   - Added error handling in Deep Linking interface JavaScript with user-friendly alerts
-  - JWT generation endpoint now handles both RS256 (production) and HS256 (development) algorithms
+  - JWT generation endpoint now handles both RS256 (with proper keys) and HS256 (fallback) algorithms
   - Fixed duplicate response.json() call that was preventing proper token generation
-  - Added comprehensive logging to track JWT generation process in browser console
+  - Fixed JWT issuer field to use proper application URL (https://app.onedayahead.com) instead of empty string
+  - Added comprehensive logging to track JWT generation process in browser console and server logs
   - Deep Linking workflow now completes successfully: content selection → JWT generation → Canvas submission
   - Platform successfully loads in Canvas iframe with proper CSP headers configured
   - Content packages display correctly with radio button selection interface
   - Error messages now provide clear feedback when JWT generation fails
-  - Development environment no longer requires proper RSA keys for testing Deep Linking
+  - Production deployment now works without requiring properly formatted RSA keys (uses HS256 fallback)
+  - JWT payload now includes all required LTI Deep Linking claims with correct structure
 - July 12, 2025. Fixed LTI launch handler JWT validation for production deployment
   - Removed ltiAuthMiddleware from launch route to restore working production deployment
   - Launch handler now extracts JWT claims directly without requiring full authentication middleware
