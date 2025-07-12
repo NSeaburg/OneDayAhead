@@ -503,8 +503,8 @@ router.post('/deep-linking/jwt', async (req: LtiSession, res: Response) => {
     // Create deep linking response JWT
     const config = getLtiConfig();
     
-    // Use our application URL as the issuer for Deep Linking responses
-    const issuer = 'https://app.onedayahead.com';
+    // For Deep Linking responses, the issuer should be our client ID as registered in Canvas
+    const issuer = config.clientId || 'https://app.onedayahead.com';
     
     const deepLinkResponse = {
       iss: issuer,
