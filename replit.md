@@ -157,6 +157,8 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
   - Canvas can now verify JWTs signed by the application using the JWKS endpoint at /api/lti/jwks
   - Key parsing handles both escaped newlines (\n) and single-line formats automatically
   - JWKS response includes proper key ID (kid) format using client_id_key_1 pattern
+  - Updated LTI configuration endpoint to match exact format accepted by Canvas production
+  - Configuration includes assignment_selection, link_selection, and editor_button placements with hardcoded app.onedayahead.com URLs
 - July 12, 2025. Successfully fixed Deep Linking JWT generation for Canvas production deployment
   - Fixed JWT signing error by implementing HS256 fallback for both development and production environments
   - Added error handling in Deep Linking interface JavaScript with user-friendly alerts

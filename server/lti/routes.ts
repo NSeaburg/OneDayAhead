@@ -968,37 +968,37 @@ router.get('/config', (req: Request, res: Response) => {
   const config = getLtiConfig();
   
   res.json({
-    title: 'One Day Ahead Learning Platform',
-    description: 'AI-powered adaptive learning platform',
-    oidc_initiation_url: config.loginUrl,
-    target_link_uri: config.launchUrl,
-    scopes: [
-      'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
-      'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
-      'https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly',
-      'https://purl.imsglobal.org/spec/lti-ags/scope/score',
-      'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'
+    "title": "One Day Ahead Learning Platform",
+    "description": "AI-powered adaptive learning platform",
+    "oidc_initiation_url": "https://app.onedayahead.com/api/lti/login",
+    "target_link_uri": "https://app.onedayahead.com/api/lti/launch",
+    "scopes": [
+      "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
+      "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly",
+      "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly",
+      "https://purl.imsglobal.org/spec/lti-ags/scope/score",
+      "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly"
     ],
-    public_jwk_url: config.jwksUrl,
-    extensions: [
+    "public_jwk_url": "https://app.onedayahead.com/api/lti/jwks",
+    "extensions": [
       {
-        platform: 'canvas.instructure.com',
-        settings: {
-          placements: [
+        "platform": "canvas.instructure.com",
+        "settings": {
+          "placements": [
             {
-              placement: 'assignment_selection',
-              message_type: 'LtiDeepLinkingRequest',
-              target_link_uri: config.launchUrl
+              "placement": "assignment_selection",
+              "message_type": "LtiDeepLinkingRequest",
+              "target_link_uri": "https://app.onedayahead.com/api/lti/launch"
             },
             {
-              placement: 'link_selection', 
-              message_type: 'LtiDeepLinkingRequest',
-              target_link_uri: config.launchUrl
+              "placement": "link_selection",
+              "message_type": "LtiDeepLinkingRequest",
+              "target_link_uri": "https://app.onedayahead.com/api/lti/launch"
             },
             {
-              placement: 'editor_button',
-              message_type: 'LtiDeepLinkingRequest',
-              target_link_uri: config.launchUrl
+              "placement": "editor_button",
+              "message_type": "LtiDeepLinkingRequest",
+              "target_link_uri": "https://app.onedayahead.com/api/lti/launch"
             }
           ]
         }
