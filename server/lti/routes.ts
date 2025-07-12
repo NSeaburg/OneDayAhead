@@ -587,6 +587,49 @@ router.post('/scores/:lineitemId', async (req: LtiSession, res: Response) => {
   }
 });
 
+// Test route to simulate Deep Linking request with full logging
+router.post('/test-deep-linking', async (req: LtiSession, res: Response) => {
+  // Simulate a Deep Linking request for testing logging
+  const mockClaims = {
+    iss: 'https://canvas.instructure.com',
+    sub: 'test-user-123',
+    aud: 'test-client',
+    exp: Date.now() / 1000 + 3600,
+    iat: Date.now() / 1000,
+    nonce: 'test-nonce',
+    'https://purl.imsglobal.org/spec/lti/claim/deployment_id': 'test-deployment',
+    'https://purl.imsglobal.org/spec/lti/claim/target_link_uri': 'https://app.onedayahead.com/api/lti/launch',
+    'https://purl.imsglobal.org/spec/lti/claim/message_type': 'LtiDeepLinkingRequest',
+    'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings': {
+      deep_link_return_url: 'https://canvas.instructure.com/deep_linking_response',
+      accept_types: ['ltiResourceLink'],
+      accept_presentation_document_targets: ['iframe']
+    }
+  };
+  
+  req.lti = {
+    claims: mockClaims,
+    platform: { id: 1, name: 'Test Platform' },
+    context: { id: 1, contextId: 'test-context' },
+    user: { id: 1, name: 'Test User' },
+    tenant: { id: 1, name: 'Test Tenant' }
+  };
+  
+  console.log('=== TESTING DEEP LINKING DEBUG ===');
+  console.log('Request path:', req.path);
+  console.log('Request method:', req.method);
+  console.log('Message type from Canvas:', req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/message_type']);
+  console.log('Target link URI:', req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
+  console.log('Deep link return URL:', req.lti.claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings']?.deep_link_return_url);
+  console.log('=== END DEBUG ===');
+  
+  res.json({ 
+    success: true, 
+    message: 'Deep Linking test completed - check server logs for debug output',
+    messageType: req.lti.claims['https://purl.imsglobal.org/spec/lti/claim/message_type']
+  });
+});
+
 // Development route to test deep linking interface without LTI authentication
 router.get('/deep-linking-dev', async (req: Request, res: Response) => {
   try {
