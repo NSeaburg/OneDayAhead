@@ -130,6 +130,27 @@ export const ltiAssignmentConfigs = pgTable("lti_assignment_configs", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// AI Usage Tracking for cost monitoring and abuse prevention
+export const aiUsage = pgTable("ai_usage", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").references(() => sessions.sessionId, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull(), // API endpoint used (e.g., "/api/claude-chat")
+  estimatedTokens: integer("estimated_tokens").notNull(), // (input_chars + output_chars) / 4
+  inputChars: integer("input_chars").notNull(),
+  outputChars: integer("output_chars").notNull(),
+  ipAddress: text("ip_address"), // For IP-based blocking
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Blocked IPs for abuse prevention
+export const blockedIps = pgTable("blocked_ips", {
+  id: serial("id").primaryKey(),
+  ipAddress: text("ip_address").notNull().unique(),
+  reason: text("reason").notNull(),
+  blockedUntil: timestamp("blocked_until").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -228,6 +249,21 @@ export const insertLtiAssignmentConfigSchema = createInsertSchema(ltiAssignmentC
   config: true,
 });
 
+export const insertAiUsageSchema = createInsertSchema(aiUsage).pick({
+  sessionId: true,
+  endpoint: true,
+  estimatedTokens: true,
+  inputChars: true,
+  outputChars: true,
+  ipAddress: true,
+});
+
+export const insertBlockedIpSchema = createInsertSchema(blockedIps).pick({
+  ipAddress: true,
+  reason: true,
+  blockedUntil: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -265,3 +301,9 @@ export type LtiGrade = typeof ltiGrades.$inferSelect;
 
 export type InsertLtiAssignmentConfig = z.infer<typeof insertLtiAssignmentConfigSchema>;
 export type LtiAssignmentConfig = typeof ltiAssignmentConfigs.$inferSelect;
+
+export type InsertAiUsage = z.infer<typeof insertAiUsageSchema>;
+export type AiUsage = typeof aiUsage.$inferSelect;
+
+export type InsertBlockedIp = z.infer<typeof insertBlockedIpSchema>;
+export type BlockedIp = typeof blockedIps.$inferSelect;

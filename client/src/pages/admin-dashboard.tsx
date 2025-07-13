@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2, Play } from "lucide-react";
+import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2, Play, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ContentPackage {
@@ -208,11 +208,15 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Create New Button */}
-        <div className="mb-6">
+        {/* Action Buttons */}
+        <div className="mb-6 flex gap-4">
           <Button onClick={handleCreateNew} size="lg" className="bg-blue-600 hover:bg-blue-700">
             <Plus className="h-5 w-5 mr-2" />
             Create New Learning Experience
+          </Button>
+          <Button onClick={() => setLocation("/admin/ai-usage")} variant="outline" size="lg">
+            <BarChart3 className="h-5 w-5 mr-2" />
+            AI Usage Dashboard
           </Button>
         </div>
 

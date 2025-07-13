@@ -1,6 +1,7 @@
 import { 
   users, sessions, conversations, feedbacks,
   ltiPlatforms, ltiDeployments, ltiRegistrations, ltiContexts, ltiUsers, tenants, ltiGrades, ltiAssignmentConfigs,
+  aiUsage, blockedIps,
   type User, type InsertUser, 
   type Session, type InsertSession,
   type Conversation, type InsertConversation,
@@ -12,7 +13,9 @@ import {
   type LtiUser, type InsertLtiUser,
   type Tenant, type InsertTenant,
   type LtiGrade, type InsertLtiGrade,
-  type LtiAssignmentConfig, type InsertLtiAssignmentConfig
+  type LtiAssignmentConfig, type InsertLtiAssignmentConfig,
+  type AiUsage, type InsertAiUsage,
+  type BlockedIp, type InsertBlockedIp
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -227,6 +230,69 @@ class MemoryStorage implements IStorage {
   }
   
   async getLtiAssignmentConfig(): Promise<LtiAssignmentConfig | undefined> { return undefined; }
+  
+  // AI Usage Tracking methods (in-memory implementation)
+  async recordAiUsage(data: InsertAiUsage): Promise<AiUsage> {
+    return {
+      id: 1,
+      sessionId: data.sessionId,
+      endpoint: data.endpoint,
+      estimatedTokens: data.estimatedTokens,
+      inputChars: data.inputChars,
+      outputChars: data.outputChars,
+      ipAddress: data.ipAddress,
+      createdAt: new Date()
+    };
+  }
+  
+  async getDailyMessageCount(sessionId: string, date: Date): Promise<number> {
+    // In-memory implementation returns 0 for development
+    return 0;
+  }
+  
+  async getDailyExperienceCount(sessionId: string, date: Date): Promise<number> {
+    // In-memory implementation returns 0 for development
+    return 0;
+  }
+  
+  async getDailyTokenUsage(date: Date): Promise<number> {
+    // In-memory implementation returns 0 for development
+    return 0;
+  }
+  
+  async getAiUsageStats(startDate: Date, endDate: Date): Promise<{
+    totalRequests: number;
+    totalTokens: number;
+    estimatedCost: number;
+    topUsers: Array<{ sessionId: string; requestCount: number; tokenCount: number; }>;
+  }> {
+    return {
+      totalRequests: 0,
+      totalTokens: 0,
+      estimatedCost: 0,
+      topUsers: []
+    };
+  }
+  
+  // IP Blocking methods (in-memory implementation)
+  async blockIp(data: InsertBlockedIp): Promise<BlockedIp> {
+    return {
+      id: 1,
+      ipAddress: data.ipAddress,
+      reason: data.reason,
+      blockedUntil: data.blockedUntil,
+      createdAt: new Date()
+    };
+  }
+  
+  async isIpBlocked(ipAddress: string): Promise<boolean> {
+    // In-memory implementation returns false for development
+    return false;
+  }
+  
+  async unblockIp(ipAddress: string): Promise<void> {
+    // In-memory implementation - no-op
+  }
 }
 
 // Storage interface with all the methods we need
@@ -284,6 +350,23 @@ export interface IStorage {
   // LTI Assignment Config methods
   createOrUpdateLtiAssignmentConfig(data: InsertLtiAssignmentConfig): Promise<LtiAssignmentConfig>;
   getLtiAssignmentConfig(platformId: number, contextId: string, resourceLinkId: string): Promise<LtiAssignmentConfig | undefined>;
+  
+  // AI Usage Tracking methods
+  recordAiUsage(data: InsertAiUsage): Promise<AiUsage>;
+  getDailyMessageCount(sessionId: string, date: Date): Promise<number>;
+  getDailyExperienceCount(sessionId: string, date: Date): Promise<number>;
+  getDailyTokenUsage(date: Date): Promise<number>;
+  getAiUsageStats(startDate: Date, endDate: Date): Promise<{
+    totalRequests: number;
+    totalTokens: number;
+    estimatedCost: number;
+    topUsers: Array<{ sessionId: string; requestCount: number; tokenCount: number; }>;
+  }>;
+  
+  // IP Blocking methods
+  blockIp(data: InsertBlockedIp): Promise<BlockedIp>;
+  isIpBlocked(ipAddress: string): Promise<boolean>;
+  unblockIp(ipAddress: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -542,6 +625,140 @@ export class DatabaseStorage implements IStorage {
         eq(ltiAssignmentConfigs.resourceLinkId, resourceLinkId)
       ));
     return config;
+  }
+
+  // AI Usage Tracking methods
+  async recordAiUsage(data: InsertAiUsage): Promise<AiUsage> {
+    const [usage] = await db.insert(aiUsage).values({
+      ...data,
+      createdAt: new Date()
+    }).returning();
+    return usage;
+  }
+
+  async getDailyMessageCount(sessionId: string, date: Date): Promise<number> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await db.select({
+      count: db.sql`count(*)`
+    }).from(aiUsage)
+      .where(and(
+        eq(aiUsage.sessionId, sessionId),
+        db.sql`${aiUsage.createdAt} >= ${startOfDay}`,
+        db.sql`${aiUsage.createdAt} <= ${endOfDay}`
+      ));
+    
+    return Number(result[0]?.count || 0);
+  }
+
+  async getDailyExperienceCount(sessionId: string, date: Date): Promise<number> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Count completed experiences (feedback entries) for the day
+    const result = await db.select({
+      count: db.sql`count(*)`
+    }).from(feedbacks)
+      .where(and(
+        eq(feedbacks.sessionId, sessionId),
+        db.sql`${feedbacks.createdAt} >= ${startOfDay}`,
+        db.sql`${feedbacks.createdAt} <= ${endOfDay}`
+      ));
+    
+    return Number(result[0]?.count || 0);
+  }
+
+  async getDailyTokenUsage(date: Date): Promise<number> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await db.select({
+      total: db.sql`sum(${aiUsage.estimatedTokens})`
+    }).from(aiUsage)
+      .where(and(
+        db.sql`${aiUsage.createdAt} >= ${startOfDay}`,
+        db.sql`${aiUsage.createdAt} <= ${endOfDay}`
+      ));
+    
+    return Number(result[0]?.total || 0);
+  }
+
+  async getAiUsageStats(startDate: Date, endDate: Date): Promise<{
+    totalRequests: number;
+    totalTokens: number;
+    estimatedCost: number;
+    topUsers: Array<{ sessionId: string; requestCount: number; tokenCount: number; }>;
+  }> {
+    // Get total requests and tokens
+    const totals = await db.select({
+      totalRequests: db.sql`count(*)`,
+      totalTokens: db.sql`sum(${aiUsage.estimatedTokens})`
+    }).from(aiUsage)
+      .where(and(
+        db.sql`${aiUsage.createdAt} >= ${startDate}`,
+        db.sql`${aiUsage.createdAt} <= ${endDate}`
+      ));
+
+    // Get top users
+    const topUsers = await db.select({
+      sessionId: aiUsage.sessionId,
+      requestCount: db.sql`count(*)`,
+      tokenCount: db.sql`sum(${aiUsage.estimatedTokens})`
+    }).from(aiUsage)
+      .where(and(
+        db.sql`${aiUsage.createdAt} >= ${startDate}`,
+        db.sql`${aiUsage.createdAt} <= ${endDate}`
+      ))
+      .groupBy(aiUsage.sessionId)
+      .orderBy(db.sql`count(*) desc`)
+      .limit(10);
+
+    const totalRequests = Number(totals[0]?.totalRequests || 0);
+    const totalTokens = Number(totals[0]?.totalTokens || 0);
+    const estimatedCost = totalTokens * 0.001; // Rough estimate
+
+    return {
+      totalRequests,
+      totalTokens,
+      estimatedCost,
+      topUsers: topUsers.map(user => ({
+        sessionId: user.sessionId || '',
+        requestCount: Number(user.requestCount),
+        tokenCount: Number(user.tokenCount)
+      }))
+    };
+  }
+
+  // IP Blocking methods
+  async blockIp(data: InsertBlockedIp): Promise<BlockedIp> {
+    const [blocked] = await db.insert(blockedIps).values({
+      ...data,
+      createdAt: new Date()
+    }).returning();
+    return blocked;
+  }
+
+  async isIpBlocked(ipAddress: string): Promise<boolean> {
+    const now = new Date();
+    const [blocked] = await db.select()
+      .from(blockedIps)
+      .where(and(
+        eq(blockedIps.ipAddress, ipAddress),
+        db.sql`${blockedIps.blockedUntil} > ${now}`
+      ));
+    return !!blocked;
+  }
+
+  async unblockIp(ipAddress: string): Promise<void> {
+    await db.delete(blockedIps)
+      .where(eq(blockedIps.ipAddress, ipAddress));
   }
 }
 

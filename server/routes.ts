@@ -11,6 +11,19 @@ import fs from "fs";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import multer from "multer";
+import {
+  aiRateLimit,
+  aiRateLimit10Min, 
+  ipRateLimit,
+  circuitBreakerMiddleware,
+  requireLtiSession,
+  checkBlockedIp,
+  validateMessage,
+  checkDailyUsage,
+  limitConversationLength,
+  trackAiUsage,
+  estimateTokens
+} from "./aiAbuseMiddleware";
 
 // Configure multer for file uploads
 const upload = multer({ 
@@ -102,7 +115,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Rate limiting
+  // Global rate limiting and security middleware
+  app.use(checkBlockedIp); // Check for blocked IPs first
+  app.use(circuitBreakerMiddleware); // Platform-wide circuit breaker
+  app.use(ipRateLimit); // IP-based rate limiting (500/hour)
+  
+  // General rate limiting (less strict for non-AI endpoints)
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
@@ -567,7 +585,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Special endpoint for the article assistant chat using Claude 3.7 Sonnet (non-streaming)
-  app.post("/api/article-chat", async (req, res) => {
+  app.post("/api/article-chat", 
+    requireLtiSession,
+    aiRateLimit,
+    aiRateLimit10Min,
+    validateMessage,
+    checkDailyUsage,
+    async (req, res) => {
     try {
       const { messages } = req.body;
 
@@ -608,13 +632,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a thread ID
       const messageId = "claude-article-" + Date.now();
 
-      // Store the conversation if we have a session ID
+      // Store the conversation and track AI usage
       const sessionId = req.sessionId;
       if (sessionId) {
         try {
-          // Create a new conversation with the messages
+          // Limit conversation length for AI context
+          const limitedMessages = limitConversationLength(anthropicMessages);
           const allMessages = [
-            ...anthropicMessages,
+            ...limitedMessages,
             { role: "assistant", content },
           ];
 
@@ -625,6 +650,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             assistantType: "article",
             messages: allMessages,
           });
+          
+          // Track AI usage for cost monitoring
+          const inputText = anthropicMessages.map(m => m.content).join(' ');
+          await trackAiUsage(sessionId, "/api/article-chat", inputText, content, req.ip);
+          
           console.log(
             `Stored article conversation for session ${sessionId}, thread ${messageId}`,
           );
@@ -656,7 +686,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Streaming endpoint for the article assistant chat
-  app.post("/api/article-chat-stream", async (req, res) => {
+  app.post("/api/article-chat-stream", 
+    requireLtiSession,
+    aiRateLimit,
+    aiRateLimit10Min,
+    validateMessage,
+    checkDailyUsage,
+    async (req, res) => {
     try {
       const { messages } = req.body;
 
@@ -1223,7 +1259,13 @@ When the student has completed both activities, thank them warmly and end the co
   });
 
   // NEW: Claude-based assessment evaluation endpoint (replaces N8N webhook)
-  app.post("/api/assess-conversation", async (req, res) => {
+  app.post("/api/assess-conversation", 
+    requireLtiSession,
+    aiRateLimit,
+    aiRateLimit10Min,
+    validateMessage,
+    checkDailyUsage,
+    async (req, res) => {
     try {
       const { conversationData, threadId, courseName, chatDurationSeconds, contentPackage } = req.body;
       const sessionId = req.sessionId;
@@ -1306,6 +1348,10 @@ Based on the assessment criteria, determine the student's understanding level an
       const evaluationContent = evaluation.content[0]?.type === "text" 
         ? evaluation.content[0].text 
         : "{}";
+
+      // Track AI usage for cost monitoring
+      const inputText = evaluationMessages.map(m => m.content).join(' ');
+      await trackAiUsage(sessionId, "/api/assess-conversation", inputText, evaluationContent, req.ip);
 
       let assessmentResult;
       try {
@@ -1462,7 +1508,13 @@ Stage 3: Checks and Balances – "Who Can Stop This?"
   });
 
   // NEW: Claude-based comprehensive grading endpoint (replaces second N8N webhook)
-  app.post("/api/grade-conversations", async (req, res) => {
+  app.post("/api/grade-conversations", 
+    requireLtiSession,
+    aiRateLimit,
+    aiRateLimit10Min,
+    validateMessage,
+    checkDailyUsage,
+    async (req, res) => {
     try {
       const {
         teachingConversation,
@@ -1602,6 +1654,10 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       const gradingContent = grading.content[0]?.type === "text" 
         ? grading.content[0].text 
         : "{}";
+
+      // Track AI usage for cost monitoring
+      const inputText = gradingMessages.map(m => m.content).join(' ');
+      await trackAiUsage(sessionId, "/api/grade-conversations", inputText, gradingContent, req.ip);
 
       let gradingResult;
       try {
@@ -2203,7 +2259,13 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
   });
 
   // Streaming endpoint for assessment and teaching bots
-  app.post("/api/claude-chat", async (req, res) => {
+  app.post("/api/claude-chat", 
+    requireLtiSession,
+    aiRateLimit,
+    aiRateLimit10Min,
+    validateMessage,
+    checkDailyUsage,
+    async (req, res) => {
     try {
       const { messages, systemPrompt, threadId, assistantType } = req.body;
 
@@ -3376,6 +3438,52 @@ Keep responses concise and practical. Focus on helping the educator make their l
     } catch (error) {
       console.error('Test page error:', error);
       res.status(500).send('Error generating test page');
+    }
+  });
+
+  // AI Usage Dashboard API endpoint
+  app.get("/api/admin/ai-usage", async (req, res) => {
+    try {
+      const now = new Date();
+      
+      // Calculate date ranges
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
+      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const weekStart = new Date(today);
+      weekStart.setDate(weekStart.getDate() - 7);
+      
+      const monthStart = new Date(today);
+      monthStart.setDate(monthStart.getDate() - 30);
+      
+      const endOfToday = new Date(today);
+      endOfToday.setHours(23, 59, 59, 999);
+      
+      const endOfYesterday = new Date(yesterday);
+      endOfYesterday.setHours(23, 59, 59, 999);
+
+      // Get usage stats for different periods
+      const [todayStats, yesterdayStats, weekStats, monthStats] = await Promise.all([
+        storage.getAiUsageStats(today, endOfToday),
+        storage.getAiUsageStats(yesterday, endOfYesterday),
+        storage.getAiUsageStats(weekStart, endOfToday),
+        storage.getAiUsageStats(monthStart, endOfToday)
+      ]);
+
+      res.json({
+        today: todayStats,
+        yesterday: yesterdayStats,
+        week: weekStats,
+        month: monthStats
+      });
+    } catch (error) {
+      console.error("Error fetching AI usage stats:", error);
+      res.status(500).json({
+        error: "Failed to fetch AI usage statistics"
+      });
     }
   });
 
