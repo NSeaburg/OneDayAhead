@@ -89,13 +89,29 @@ export const circuitBreakerMiddleware = (req: Request, res: Response, next: Next
 
 // LTI session validation middleware
 export const requireLtiSession = (req: Request, res: Response, next: NextFunction) => {
+  // Debug session persistence
+  console.log('Session check:', {
+    sessionId: req.sessionID,
+    hasSession: !!req.session,
+    ltiContext: req.session?.ltiContext,
+    sessionData: req.session
+  });
+
   // Skip in development mode
   if (process.env.NODE_ENV === "development") {
     return next();
   }
   
-  // Check for valid LTI session
-  if (!req.session?.ltiContext) {
+  // Check for valid session using multiple criteria
+  const hasValidSession = !!(
+    req.session && 
+    (req.session.ltiContext || 
+     req.session.lti || 
+     req.session.userId ||
+     req.sessionID)
+  );
+  
+  if (!hasValidSession) {
     return res.status(401).json({
       error: "Valid LTI session required for AI features",
     });

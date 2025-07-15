@@ -148,6 +148,13 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 15, 2025. Fixed Canvas iframe session authentication issues for AI endpoints
+  - Updated express-session configuration to use sameSite: 'none' in production for iframe compatibility
+  - Enhanced requireLtiSession middleware to check multiple session criteria (ltiContext, lti, userId, sessionID)
+  - Added comprehensive session debugging logs to track session persistence issues
+  - All frontend API calls already include credentials: 'include' for proper cookie handling
+  - Session cookies now properly configured for cross-origin iframe usage in Canvas
+  - AI abuse prevention middleware now works correctly with Canvas LTI sessions
 - July 12, 2025. Fixed RSA private key parsing and JWKS endpoint for Canvas Deep Linking
   - Fixed RSA private key parsing issue by detecting single-line key format and reformatting with proper newlines
   - JWKS endpoint now successfully generates public key set from private key for Canvas JWT verification

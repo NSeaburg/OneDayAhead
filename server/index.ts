@@ -28,6 +28,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // Required for iframe in production
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
     httpOnly: true
   }
