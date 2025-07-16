@@ -138,35 +138,66 @@ export const checkBlockedIp = async (req: Request, res: Response, next: NextFunc
   next();
 };
 
-// Message validation middleware
+// Message validation middleware - handles both single message and messages array formats
 export const validateMessage = (req: Request, res: Response, next: NextFunction) => {
-  const { message } = req.body;
+  const { message, messages } = req.body;
   
-  if (!message || typeof message !== "string") {
-    return res.status(400).json({
-      error: "Message is required and must be a string",
-    });
-  }
+  // Handle different endpoint formats
+  let messagesToValidate: string[] = [];
   
-  // Check message length
-  if (message.length > 2000) {
-    return res.status(400).json({
-      error: "Message too long. Maximum 2,000 characters allowed.",
-    });
-  }
-  
-  // Check for suspicious patterns
-  const suspiciousPatterns = [
-    /(.)\1{50,}/, // Same character repeated 50+ times
-    /^(.{1,100})\1{3,}$/, // Same phrase repeated 4+ times
-  ];
-  
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(message)) {
-      console.warn(`🚨 Suspicious message pattern detected from IP ${req.ip}: ${message.substring(0, 100)}...`);
+  // For endpoints that send a single message
+  if (message) {
+    if (typeof message !== "string") {
       return res.status(400).json({
-        error: "Message contains suspicious patterns",
+        error: "Message must be a string",
       });
+    }
+    messagesToValidate = [message];
+  }
+  
+  // For endpoints that send an array of messages (like claude-chat)
+  if (messages) {
+    if (!Array.isArray(messages)) {
+      return res.status(400).json({
+        error: "Messages must be an array",
+      });
+    }
+    
+    // Extract content from message objects
+    messagesToValidate = messages
+      .filter((msg: any) => msg && msg.content && typeof msg.content === "string")
+      .map((msg: any) => msg.content);
+  }
+  
+  // If neither format is provided, reject
+  if (messagesToValidate.length === 0) {
+    return res.status(400).json({
+      error: "Message or messages array is required",
+    });
+  }
+  
+  // Validate each message
+  for (const msg of messagesToValidate) {
+    // Check message length
+    if (msg.length > 2000) {
+      return res.status(400).json({
+        error: "Message too long. Maximum 2,000 characters allowed.",
+      });
+    }
+    
+    // Check for suspicious patterns
+    const suspiciousPatterns = [
+      /(.)\1{50,}/, // Same character repeated 50+ times
+      /^(.{1,100})\1{3,}$/, // Same phrase repeated 4+ times
+    ];
+    
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(msg)) {
+        console.warn(`🚨 Suspicious message pattern detected from IP ${req.ip}: ${msg.substring(0, 100)}...`);
+        return res.status(400).json({
+          error: "Message contains suspicious patterns",
+        });
+      }
     }
   }
   
