@@ -7,7 +7,7 @@ export const aiRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 5, // 5 AI requests per minute
   message: "Too many AI requests. Please wait before sending another message.",
-  keyGenerator: (req) => req.session?.sessionID || req.ip,
+  keyGenerator: (req) => req.sessionId || req.session?.sessionID || req.sessionID || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -16,7 +16,7 @@ export const aiRateLimit10Min = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 30, // 30 AI requests per 10 minutes
   message: "You've reached the 10-minute limit for AI requests. Please wait before continuing.",
-  keyGenerator: (req) => req.session?.sessionID || req.ip,
+  keyGenerator: (req) => req.sessionId || req.session?.sessionID || req.sessionID || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -206,8 +206,15 @@ export const validateMessage = (req: Request, res: Response, next: NextFunction)
 
 // Daily usage check middleware
 export const checkDailyUsage = async (req: Request, res: Response, next: NextFunction) => {
-  const sessionId = req.session?.sessionID;
+  // Try multiple ways to get session ID based on the middleware being used
+  const sessionId = req.sessionId || req.session?.sessionID || req.sessionID;
   if (!sessionId) {
+    console.log('❌ Daily usage check failed - no session ID found:', {
+      sessionId: req.sessionId,
+      sessionSessionID: req.session?.sessionID,
+      reqSessionID: req.sessionID,
+      hasSession: !!req.session
+    });
     return res.status(401).json({
       error: "Session required",
     });
