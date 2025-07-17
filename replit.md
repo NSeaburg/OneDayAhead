@@ -148,6 +148,12 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 17, 2025. Enhanced CSP security headers for production deployment
+  - Implemented environment-aware Content Security Policy to eliminate Replit development script errors in production
+  - Added detection for deployed production environment (app.onedayahead.com) with strict CSP
+  - Removed Replit script sources from production CSP while maintaining development functionality
+  - Enhanced frame-ancestors policy with specific LMS domain allowlists for production security
+  - Security configuration now ready for school district vetting with clean CSP compliance
 - July 15, 2025. Fixed Canvas iframe session authentication issues for AI endpoints
   - Updated express-session configuration to use sameSite: 'none' in production for iframe compatibility
   - Enhanced requireLtiSession middleware to check multiple session criteria (ltiContext, lti, userId, sessionID)
