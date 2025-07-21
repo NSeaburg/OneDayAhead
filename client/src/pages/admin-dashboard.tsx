@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2, Play, BarChart3 } from "lucide-react";
+import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2, Play, BarChart3, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ContentPackage {
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
@@ -309,6 +309,18 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Quick Navigation Back to New Intake */}
+      <div className="fixed bottom-6 right-6">
+        <Button
+          onClick={() => setLocation('/admin/new-intake')}
+          className="bg-green-600 hover:bg-green-700 shadow-lg"
+          size="sm"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to New Intake
+        </Button>
       </div>
     </div>
   );
