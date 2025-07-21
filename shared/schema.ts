@@ -307,3 +307,91 @@ export type AiUsage = typeof aiUsage.$inferSelect;
 
 export type InsertBlockedIp = z.infer<typeof insertBlockedIpSchema>;
 export type BlockedIp = typeof blockedIps.$inferSelect;
+
+// Content Packages - stores all content created through the admin wizard
+export const contentPackages = pgTable("content_packages", {
+  id: serial("id").primaryKey(),
+  packageId: text("package_id").notNull().unique(), // e.g., "demo-district/civics-government/three-branches"
+  name: text("name").notNull(), // Display name for the package
+  description: text("description"),
+  district: text("district").notNull(),
+  course: text("course").notNull(), 
+  topic: text("topic").notNull(),
+  status: text("status").notNull().default("draft"), // draft, published, archived
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  publishedAt: timestamp("published_at"),
+  version: integer("version").notNull().default(1),
+});
+
+export const insertContentPackageSchema = createInsertSchema(contentPackages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ContentPackageInsert = z.infer<typeof insertContentPackageSchema>;
+export type ContentPackage = typeof contentPackages.$inferSelect;
+
+// Content Package Components - stores individual pieces of content
+export const contentComponents = pgTable("content_components", {
+  id: serial("id").primaryKey(),
+  packageId: integer("package_id").notNull().references(() => contentPackages.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // "article", "video", "assessment_bot", "teaching_bot_low", "teaching_bot_medium", "teaching_bot_high", "ui_config", "assessment_criteria", "feedback_instructions"
+  data: json("data").notNull(), // Stores all the component-specific data
+  ordering: integer("ordering").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertContentComponentSchema = createInsertSchema(contentComponents).pick({
+  packageId: true,
+  type: true,
+  data: true,
+  ordering: true,
+});
+export type ContentComponentInsert = z.infer<typeof insertContentComponentSchema>;
+export type ContentComponent = typeof contentComponents.$inferSelect;
+
+// Content Creation Sessions - tracks wizard progress
+export const contentCreationSessions = pgTable("content_creation_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  packageId: integer("package_id").references(() => contentPackages.id, { onDelete: "cascade" }),
+  currentStep: integer("current_step").notNull().default(1),
+  wizardData: json("wizard_data").notNull().default({}), // Stores progress through the wizard
+  conversationHistory: json("conversation_history").notNull().default([]), // AI conversation with the teacher
+  status: text("status").notNull().default("active"), // active, completed, abandoned
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertContentCreationSessionSchema = createInsertSchema(contentCreationSessions).pick({
+  userId: true,
+  packageId: true,
+  currentStep: true,
+  wizardData: true,
+  conversationHistory: true,
+  status: true,
+  completedAt: true,
+});
+export type ContentCreationSessionInsert = z.infer<typeof insertContentCreationSessionSchema>;
+export type ContentCreationSession = typeof contentCreationSessions.$inferSelect;
+
+// Content Package Permissions - controls who can edit packages
+export const contentPermissions = pgTable("content_permissions", {
+  id: serial("id").primaryKey(),
+  packageId: integer("package_id").notNull().references(() => contentPackages.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  permission: text("permission").notNull().default("view"), // view, edit, admin
+  grantedBy: integer("granted_by").references(() => users.id),
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+});
+
+export const insertContentPermissionSchema = createInsertSchema(contentPermissions).omit({
+  id: true,
+  grantedAt: true,
+});
+export type ContentPermissionInsert = z.infer<typeof insertContentPermissionSchema>;
+export type ContentPermission = typeof contentPermissions.$inferSelect;

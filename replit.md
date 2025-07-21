@@ -148,6 +148,18 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 21, 2025. Major architectural redesign - replaced file-based content system with database-driven conversational AI wizard
+  - Added comprehensive database schema for content packages with four new tables:
+    - content_packages: Stores all educational content created through the admin wizard
+    - content_components: Individual pieces of content (articles, videos, AI bots, UI configs)
+    - content_creation_sessions: Tracks teacher progress through the conversational wizard
+    - content_permissions: Controls who can view/edit content packages
+  - Removed all hardcoded references to "three branches of government" content throughout the codebase
+  - Updated AssessmentBotScreen and NewFeedbackScreen components to use fully dynamic content loading
+  - Fixed LSP diagnostics errors related to UI configuration property names (threshold → completionThreshold)
+  - Database schema designed to support conversational AI wizard that guides teachers through 5 interactive stages
+  - Content packages maintain same interface structure for student experience while backend storage moves to database
+  - System now ready for conversational wizard development with clean database architecture
 - July 17, 2025. Enhanced CSP security headers for production deployment
   - Implemented environment-aware Content Security Policy to eliminate Replit development script errors in production
   - Added detection for deployed production environment (app.onedayahead.com) with strict CSP

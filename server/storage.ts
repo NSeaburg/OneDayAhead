@@ -2,6 +2,7 @@ import {
   users, sessions, conversations, feedbacks,
   ltiPlatforms, ltiDeployments, ltiRegistrations, ltiContexts, ltiUsers, tenants, ltiGrades, ltiAssignmentConfigs,
   aiUsage, blockedIps,
+  contentPackages, contentComponents, contentCreationSessions, contentPermissions,
   type User, type InsertUser, 
   type Session, type InsertSession,
   type Conversation, type InsertConversation,
@@ -15,7 +16,11 @@ import {
   type LtiGrade, type InsertLtiGrade,
   type LtiAssignmentConfig, type InsertLtiAssignmentConfig,
   type AiUsage, type InsertAiUsage,
-  type BlockedIp, type InsertBlockedIp
+  type BlockedIp, type InsertBlockedIp,
+  type ContentPackage, type ContentPackageInsert,
+  type ContentComponent, type ContentComponentInsert,
+  type ContentCreationSession, type ContentCreationSessionInsert,
+  type ContentPermission, type ContentPermissionInsert
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";

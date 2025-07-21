@@ -79,11 +79,11 @@ export default function AssessmentBotScreen({
   
   // State for UI configuration
   const [uiConfig, setUiConfig] = useState({
-    botTitle: "Aristocratic Observer",
-    botDescription: "Dispatched by His Majesty's service...",
-    chatHeaderTitle: "Royal Assessment",
+    botTitle: "Assessment Bot",
+    botDescription: "Your assessment bot will evaluate your understanding of the topic.",
+    chatHeaderTitle: "Assessment Session",
     listeningSection: {
-      title: "What he's listening for",
+      title: "What we're listening for",
       topics: []
     },
     progressSection: {
@@ -93,7 +93,7 @@ export default function AssessmentBotScreen({
     },
     keepInMindSection: {
       title: "Keep in mind",
-      description: "He will use your responses to recommend a learning path..."
+      description: "Your responses will be used to recommend a personalized learning path..."
     },
     inputPlaceholder: "Type your response here...",
     initialGreeting: null
@@ -127,25 +127,25 @@ export default function AssessmentBotScreen({
       isCompleted: false
     })) || [
       {
-        id: "governmental-structure",
-        name: "Governmental Structure",
-        description: "Can you clearly explain how power is divided into three branches?",
+        id: "topic-1",
+        name: "Topic 1",
+        description: "First assessment topic",
         isCompleted: false,
-        keywords: ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
+        keywords: []
       },
       {
-        id: "checks-balances",
-        name: "The System of Checks and Balances",
-        description: "Do you understand how the branches hold each other in check?",
+        id: "topic-2",
+        name: "Topic 2",
+        description: "Second assessment topic",
         isCompleted: false,
-        keywords: ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
+        keywords: []
       },
       {
-        id: "branch-roles",
-        name: "Roles of the Branches",
-        description: "Can you describe what Congress, the President, and the Courts actually do?",
+        id: "topic-3",
+        name: "Topic 3",
+        description: "Third assessment topic",
         isCompleted: false,
-        keywords: ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
+        keywords: []
       }
     ];
     setTopics(loadedTopics);
@@ -329,7 +329,7 @@ export default function AssessmentBotScreen({
       setKeywordsUsed(updatedKeywordsUsed);
       
       // Increment progress bar by 1 (only once per message, even if multiple keywords found)
-      const threshold = uiConfig.progressSection.threshold || 8;
+      const threshold = uiConfig.progressSection.completionThreshold || 8;
       if (keywordProgress < threshold) {
         const newProgress = Math.min(threshold, keywordProgress + 1);
         setKeywordProgress(newProgress);
@@ -629,7 +629,7 @@ export default function AssessmentBotScreen({
                     className="h-full bg-green-500"
                     initial={{ width: '0%' }}
                     animate={{ 
-                      width: `${(keywordProgress / (uiConfig.progressSection.threshold || 8)) * 100}%`,
+                      width: `${(keywordProgress / (uiConfig.progressSection.completionThreshold || 8)) * 100}%`,
                     }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                   />
