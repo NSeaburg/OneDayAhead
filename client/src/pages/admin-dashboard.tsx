@@ -61,6 +61,10 @@ export default function AdminDashboard() {
     setLocation("/admin/create");
   };
 
+  const handleNewIntake = () => {
+    setLocation("/admin/new-intake");
+  };
+
   const handleEditPackage = (pkg: ContentPackage) => {
     setLocation(`/admin/edit/${pkg.district}/${pkg.course}/${pkg.topic}`);
   };
@@ -210,9 +214,13 @@ export default function AdminDashboard() {
 
         {/* Action Buttons */}
         <div className="mb-6 flex gap-4">
-          <Button onClick={handleCreateNew} size="lg" className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleNewIntake} size="lg" className="bg-green-600 hover:bg-green-700">
             <Plus className="h-5 w-5 mr-2" />
-            Create New Learning Experience
+            New Intake (Conversational)
+          </Button>
+          <Button onClick={handleCreateNew} variant="outline" size="lg">
+            <Plus className="h-5 w-5 mr-2" />
+            Old Intake (Form-based)
           </Button>
           <Button onClick={() => setLocation("/admin/ai-usage")} variant="outline" size="lg">
             <BarChart3 className="h-5 w-5 mr-2" />
