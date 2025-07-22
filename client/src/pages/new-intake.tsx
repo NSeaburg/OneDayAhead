@@ -109,16 +109,24 @@ export default function NewIntake() {
     if (!previousStage) return false;
     
     const explicitComponents = previousStage.components.filter(c => c.type === 'explicit');
+    
+    // If no explicit components, stage is always navigable
+    if (explicitComponents.length === 0) return true;
+    
     return explicitComponents.every(c => c.completed);
   };
 
   const getStageProgress = (stage: Stage) => {
     const explicitComponents = stage.components.filter(c => c.type === 'explicit');
     const completedExplicit = explicitComponents.filter(c => c.completed).length;
+    
+    // If there are no explicit components, the stage is never "complete" by default
+    const hasExplicitComponents = explicitComponents.length > 0;
+    
     return {
       completed: completedExplicit,
       total: explicitComponents.length,
-      isComplete: completedExplicit === explicitComponents.length
+      isComplete: hasExplicitComponents && completedExplicit === explicitComponents.length
     };
   };
 
