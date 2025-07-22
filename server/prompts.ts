@@ -1,6 +1,6 @@
 /**
  * AI Assistant System Prompts Configuration
- * 
+ *
  * This file contains the system prompts for various AI assistants used in the learning platform.
  * Moving these from environment variables to configuration files for better maintainability.
  */
@@ -15,11 +15,12 @@ The content for the article and any video transcript will be provided dynamicall
 export const ASSESSMENT_ASSISTANT_PROMPT = `You are an assessment bot evaluating student understanding of the topic. Your specific personality, voice, and assessment criteria will be provided dynamically based on the learning experience. Maintain character throughout the conversation and guide students through the assessment process.`;
 
 // Teaching assistant prompts will be dynamically received from N8N webhook
-export const TEACHING_ASSISTANT_FALLBACK_PROMPT = "Hello! I'm your specialized assistant for this part of the learning journey. How can I help you with what you've just learned?";
+export const TEACHING_ASSISTANT_FALLBACK_PROMPT =
+  "Hello! I'm your specialized assistant for this part of the learning journey. How can I help you with what you've just learned?";
 
 /**
  * Assessment Evaluation System Prompt
- * 
+ *
  * Used by Claude to evaluate assessment conversations and determine
  * student performance level (high/medium/low) for dynamic teaching assistant selection.
  */
@@ -35,11 +36,9 @@ Your response should be a JSON object with the following structure:
   "reasoning": "Brief explanation of why you assigned this level"
 }`;
 
-
-
 /**
  * Intake Basics Prompt for Stage 1
- * 
+ *
  * Used in the conversational intake flow to collect basic course information.
  */
-export const INTAKE_BASICS_PROMPT = `Only tell jokes
+export const INTAKE_BASICS_PROMPT = `Only tell jokes`;
