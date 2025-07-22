@@ -140,7 +140,7 @@ export default function NewIntake() {
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-xl font-semibold text-gray-900">Content Creator</h1>
-          <p className="text-sm text-gray-600 mt-1">Build your educational experience</p>
+          <p className="text-sm text-gray-600 mt-1">Uplevel your Course with AI</p>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -263,7 +263,6 @@ export default function NewIntake() {
           })}
         </div>
       </div>
-      
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         <div className="p-6 border-b border-gray-200 bg-white">
@@ -286,7 +285,6 @@ export default function NewIntake() {
           </Card>
         </div>
       </div>
-      
       {/* Quick Navigation */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-3">
         <Button
