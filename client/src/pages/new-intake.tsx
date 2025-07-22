@@ -26,6 +26,7 @@ interface Component {
 interface IntakeChatProps {
   stage: Stage;
   onComponentComplete: (componentId: string) => void;
+  onCriteriaUpdate: (criteria: CriteriaState) => void;
 }
 
 interface Message {
@@ -53,7 +54,7 @@ const CRITERIA_LABELS = {
   learningObjectives: "Learning Objectives"
 } as const;
 
-function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
+function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -68,14 +69,6 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   const [collectedData, setCollectedData] = useState<Record<string, string>>(
     {},
   );
-  const [criteria, setCriteria] = useState<CriteriaState>({
-    schoolDistrict: { detected: false, value: null, confidence: 0 },
-    school: { detected: false, value: null, confidence: 0 },
-    subject: { detected: false, value: null, confidence: 0 },
-    topic: { detected: false, value: null, confidence: 0 },
-    gradeLevel: { detected: false, value: null, confidence: 0 },
-    learningObjectives: { detected: false, value: null, confidence: 0 },
-  });
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -200,7 +193,7 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
         
         // Update criteria state with analysis results
         if (analysisResult.criteria) {
-          setCriteria(prev => {
+          onCriteriaUpdate(prev => {
             const updated = { ...prev };
             Object.keys(analysisResult.criteria).forEach((key) => {
               const criterion = analysisResult.criteria[key];
@@ -219,51 +212,9 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   };
 
   return (
-    <div className="h-full flex gap-4">
-      {/* Criteria Sidebar */}
-      <Card className="w-80 flex-shrink-0">
-        <div className="p-4 border-b">
-          <h3 className="font-medium text-gray-900">Progress</h3>
-          <p className="text-sm text-gray-500">Information collected</p>
-        </div>
-        <div className="p-4 space-y-3">
-          {Object.entries(CRITERIA_LABELS).map(([key, label]) => {
-            const criterion = criteria[key as keyof CriteriaState];
-            return (
-              <div key={key} className="flex items-center gap-3">
-                <div className={cn(
-                  "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300",
-                  criterion.detected 
-                    ? "bg-green-100 text-green-600" 
-                    : "bg-gray-100 text-gray-400"
-                )}>
-                  {criterion.detected ? (
-                    <Check className="w-4 h-4 animate-in zoom-in duration-300" />
-                  ) : (
-                    <Circle className="w-4 h-4" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className={cn(
-                    "text-sm font-medium transition-colors",
-                    criterion.detected ? "text-green-700" : "text-gray-700"
-                  )}>
-                    {label}
-                  </p>
-                  {criterion.detected && criterion.value && (
-                    <p className="text-xs text-green-600 mt-1 animate-in slide-in-from-top-1 duration-300">
-                      {criterion.value}
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
+    <div className="h-full">
       {/* Chat Interface */}
-      <Card className="flex-1 flex flex-col">
+      <Card className="h-full flex flex-col">
         {/* Chat Header */}
         <div className="p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex items-center gap-3">
@@ -366,6 +317,15 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
 }
 
 export default function NewIntake() {
+  const [criteria, setCriteria] = useState<CriteriaState>({
+    schoolDistrict: { detected: false, value: null, confidence: 0 },
+    school: { detected: false, value: null, confidence: 0 },
+    subject: { detected: false, value: null, confidence: 0 },
+    topic: { detected: false, value: null, confidence: 0 },
+    gradeLevel: { detected: false, value: null, confidence: 0 },
+    learningObjectives: { detected: false, value: null, confidence: 0 },
+  });
+  
   const [stages, setStages] = useState<Stage[]>([
     {
       id: 1,
@@ -432,6 +392,10 @@ export default function NewIntake() {
     );
   };
 
+  const handleCriteriaUpdate = (updater: (prev: CriteriaState) => CriteriaState) => {
+    setCriteria(updater);
+  };
+
   const currentStage = stages[0]; // For now, just show Stage 1
 
   return (
@@ -479,32 +443,70 @@ export default function NewIntake() {
                         {stage.description}
                       </p>
 
-                      <div className="space-y-2">
-                        {stage.components.map((component) => (
-                          <div
-                            key={component.id}
-                            className="flex items-center gap-2"
-                          >
+                      {/* For Stage 1, show dynamic progress criteria */}
+                      {stage.id === 1 ? (
+                        <div className="space-y-2">
+                          {Object.entries(CRITERIA_LABELS).map(([key, label]) => {
+                            const criterion = criteria[key as keyof CriteriaState];
+                            return (
+                              <div key={key} className="flex items-center gap-2">
+                                <div className={cn(
+                                  "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300",
+                                  criterion.detected 
+                                    ? "bg-green-500 text-white" 
+                                    : "bg-gray-300 text-gray-500"
+                                )}>
+                                  {criterion.detected ? (
+                                    <Check className="w-3 h-3 animate-in zoom-in duration-300" />
+                                  ) : (
+                                    <Circle className="w-2 h-2" />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <span className={cn(
+                                    "text-xs transition-colors",
+                                    criterion.detected ? "text-green-700 font-medium" : "text-gray-700"
+                                  )}>
+                                    {label}
+                                  </span>
+                                  {criterion.detected && criterion.value && (
+                                    <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 truncate">
+                                      {criterion.value}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {stage.components.map((component) => (
                             <div
-                              className={`w-3 h-3 rounded-full ${
-                                component.completed
-                                  ? "bg-green-500"
-                                  : "bg-gray-300"
-                              }`}
-                            />
-                            <div className="flex-1">
-                              <span className="text-xs text-gray-700">
-                                {component.title}
-                              </span>
-                              {component.note && (
-                                <span className="text-xs text-gray-500 ml-1">
-                                  ({component.note})
+                              key={component.id}
+                              className="flex items-center gap-2"
+                            >
+                              <div
+                                className={`w-3 h-3 rounded-full ${
+                                  component.completed
+                                    ? "bg-green-500"
+                                    : "bg-gray-300"
+                                }`}
+                              />
+                              <div className="flex-1">
+                                <span className="text-xs text-gray-700">
+                                  {component.title}
                                 </span>
-                              )}
+                                {component.note && (
+                                  <span className="text-xs text-gray-500 ml-1">
+                                    ({component.note})
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
 
                       {stage.hasTestButton && (
                         <Button size="sm" className="w-full mt-3">
@@ -531,6 +533,7 @@ export default function NewIntake() {
               <IntakeChat
                 stage={currentStage}
                 onComponentComplete={handleComponentComplete}
+                onCriteriaUpdate={handleCriteriaUpdate}
               />
             </div>
           </div>
