@@ -69,13 +69,13 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
         credentials: 'include',
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are a helpful content creation assistant guiding teachers through collecting basic information about their course. Ask one question at a time and collect: school district, school, subject, topic, grade level, and learning objectives.' },
             ...messages.map(msg => ({ 
               role: msg.isBot ? 'assistant' : 'user', 
               content: msg.content 
             })),
             { role: 'user', content: userMessage.content }
-          ]
+          ],
+          assistantType: 'intake-basics'
         })
       });
 

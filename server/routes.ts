@@ -46,6 +46,8 @@ import {
   ASSESSMENT_ASSISTANT_PROMPT,
   TEACHING_ASSISTANT_FALLBACK_PROMPT,
   ASSESSMENT_EVALUATION_PROMPT,
+  CONTENT_CREATION_ASSISTANT_PROMPT,
+  INTAKE_BASICS_PROMPT,
 } from "./prompts";
 
 import { contentManager } from "./contentManager";
@@ -3272,27 +3274,9 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       let systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
       
       if (assistantType === "content-creation") {
-        systemPrompt = `You are a Content Creation Assistant specializing in educational experience design. You help educators create effective learning experiences by:
-
-1. Understanding learning objectives and outcomes
-2. Designing engaging content and assessments  
-3. Creating character-based AI personalities that motivate students
-4. Developing differentiated instruction for different ability levels
-5. Thinking through assessment strategies that reveal true understanding
-
-You are knowledgeable about:
-- Pedagogical best practices and learning theory
-- Student engagement strategies
-- Assessment design and rubric development
-- Differentiated instruction techniques
-- Character development for educational AI assistants
-- Cognitive load theory and effective content design
-
-When creating content, you can reference existing successful experiences as examples. For instance, the "three-branches" civics experience demonstrates effective character-based assessment (Reginald) and differentiated teaching assistants (Whitaker, Bannerman, Parton) with activities tailored to different proficiency levels.
-
-You ask probing questions to help educators think deeply about their learning design choices. You provide specific, actionable advice and help workshop ideas to make them more effective.
-
-Keep responses concise and practical. Focus on helping the educator make their learning experience as effective as possible for students.`;
+        systemPrompt = CONTENT_CREATION_ASSISTANT_PROMPT;
+      } else if (assistantType === "intake-basics") {
+        systemPrompt = INTAKE_BASICS_PROMPT;
       }
 
       try {
