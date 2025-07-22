@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot } from "lucide-react";
+import { Bot, Check, Circle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface Stage {
   id: number;
@@ -34,6 +35,24 @@ interface Message {
   timestamp: Date;
 }
 
+interface CriteriaState {
+  schoolDistrict: { detected: boolean; value: string | null; confidence: number };
+  school: { detected: boolean; value: string | null; confidence: number };
+  subject: { detected: boolean; value: string | null; confidence: number };
+  topic: { detected: boolean; value: string | null; confidence: number };
+  gradeLevel: { detected: boolean; value: string | null; confidence: number };
+  learningObjectives: { detected: boolean; value: string | null; confidence: number };
+}
+
+const CRITERIA_LABELS = {
+  schoolDistrict: "School District",
+  school: "School Name", 
+  subject: "Subject Area",
+  topic: "Topic/Unit",
+  gradeLevel: "Grade Level",
+  learningObjectives: "Learning Objectives"
+} as const;
+
 function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -49,6 +68,14 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   const [collectedData, setCollectedData] = useState<Record<string, string>>(
     {},
   );
+  const [criteria, setCriteria] = useState<CriteriaState>({
+    schoolDistrict: { detected: false, value: null, confidence: 0 },
+    school: { detected: false, value: null, confidence: 0 },
+    subject: { detected: false, value: null, confidence: 0 },
+    topic: { detected: false, value: null, confidence: 0 },
+    gradeLevel: { detected: false, value: null, confidence: 0 },
+    learningObjectives: { detected: false, value: null, confidence: 0 },
+  });
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -129,8 +156,10 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
         }
       }
 
-      // TODO: Parse response for component completion signals
-      // For now, simulate completion after getting answers
+      // Trigger background analysis after bot response is complete
+      if (botResponse) {
+        analyzeConversation(botResponse);
+      }
     } catch (error) {
       console.error("Chat error:", error);
       setMessages((prev) => [
@@ -148,24 +177,109 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
     setIsLoading(false);
   };
 
+  // Background analysis function
+  const analyzeConversation = async (botResponse: string) => {
+    try {
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.isBot ? "assistant" : "user",
+        content: msg.content,
+      }));
+
+      const response = await fetch("/api/intake/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          botResponse,
+          conversationHistory,
+        }),
+      });
+
+      if (response.ok) {
+        const analysisResult = await response.json();
+        
+        // Update criteria state with analysis results
+        if (analysisResult.criteria) {
+          setCriteria(prev => {
+            const updated = { ...prev };
+            Object.keys(analysisResult.criteria).forEach((key) => {
+              const criterion = analysisResult.criteria[key];
+              if (criterion.detected && criterion.confidence > 0.7) {
+                updated[key as keyof CriteriaState] = criterion;
+              }
+            });
+            return updated;
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Analysis error:", error);
+      // Fail silently - analysis is not critical to conversation flow
+    }
+  };
+
   return (
-    <Card className="h-full flex flex-col">
-      {/* Chat Header */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-900">
-              Intake Assistant
-            </h3>
-            <p className="text-sm text-gray-500">
-              Let's gather your course information
-            </p>
+    <div className="h-full flex gap-4">
+      {/* Criteria Sidebar */}
+      <Card className="w-80 flex-shrink-0">
+        <div className="p-4 border-b">
+          <h3 className="font-medium text-gray-900">Progress</h3>
+          <p className="text-sm text-gray-500">Information collected</p>
+        </div>
+        <div className="p-4 space-y-3">
+          {Object.entries(CRITERIA_LABELS).map(([key, label]) => {
+            const criterion = criteria[key as keyof CriteriaState];
+            return (
+              <div key={key} className="flex items-center gap-3">
+                <div className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300",
+                  criterion.detected 
+                    ? "bg-green-100 text-green-600" 
+                    : "bg-gray-100 text-gray-400"
+                )}>
+                  {criterion.detected ? (
+                    <Check className="w-4 h-4 animate-in zoom-in duration-300" />
+                  ) : (
+                    <Circle className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className={cn(
+                    "text-sm font-medium transition-colors",
+                    criterion.detected ? "text-green-700" : "text-gray-700"
+                  )}>
+                    {label}
+                  </p>
+                  {criterion.detected && criterion.value && (
+                    <p className="text-xs text-green-600 mt-1 animate-in slide-in-from-top-1 duration-300">
+                      {criterion.value}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Chat Interface */}
+      <Card className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900">
+                Intake Assistant
+              </h3>
+              <p className="text-sm text-gray-500">
+                Let's gather your course information
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
@@ -246,7 +360,8 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
           </Button>
         </div>
       </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
 

@@ -3359,6 +3359,80 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
     }
   });
 
+  // Intake analysis endpoint for real-time criteria detection
+  app.post("/api/intake/analyze", async (req, res) => {
+    try {
+      const { botResponse, conversationHistory } = req.body;
+
+      if (!botResponse) {
+        return res.status(400).json({ error: "Bot response is required" });
+      }
+
+      // Create analysis prompt for Claude
+      const analysisPrompt = `Analyze this conversation to extract specific intake criteria. Return a JSON object indicating which pieces of information have been confidently identified.
+
+Criteria to detect:
+1. schoolDistrict - School district or organization name (can be "N/A")
+2. school - Specific school name
+3. subject - Subject area (math, science, history, etc.)
+4. topic - Specific topic/unit being covered
+5. gradeLevel - Grade level(s) of students
+6. learningObjectives - Learning goals/objectives
+
+Return ONLY this JSON format:
+{
+  "criteria": {
+    "schoolDistrict": { "detected": true/false, "value": "extracted value or null", "confidence": 0.0-1.0 },
+    "school": { "detected": true/false, "value": "extracted value or null", "confidence": 0.0-1.0 },
+    "subject": { "detected": true/false, "value": "extracted value or null", "confidence": 0.0-1.0 },
+    "topic": { "detected": true/false, "value": "extracted value or null", "confidence": 0.0-1.0 },
+    "gradeLevel": { "detected": true/false, "value": "extracted value or null", "confidence": 0.0-1.0 },
+    "learningObjectives": { "detected": true/false, "value": "extracted value or null", "confidence": 0.0-1.0 }
+  }
+}
+
+Only mark detected: true if you are confident (>0.7) the information was clearly mentioned.
+
+Latest bot response to analyze:
+"${botResponse}"
+
+Full conversation context:
+${JSON.stringify(conversationHistory)}`;
+
+      // Use Claude to analyze the conversation
+      const response = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 1000,
+        temperature: 0.1,
+        messages: [
+          {
+            role: "user",
+            content: analysisPrompt,
+          },
+        ],
+      });
+
+      const analysisText = response.content[0].type === 'text' ? response.content[0].text : '';
+      
+      // Parse Claude's JSON response
+      let analysisResult;
+      try {
+        // Extract JSON from Claude's response (in case it's wrapped in markdown)
+        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : analysisText;
+        analysisResult = JSON.parse(jsonStr);
+      } catch (parseError) {
+        console.error("Failed to parse Claude analysis response:", parseError);
+        return res.status(500).json({ error: "Failed to parse analysis result" });
+      }
+
+      res.json(analysisResult);
+    } catch (error) {
+      console.error("Error in intake analysis:", error);
+      res.status(500).json({ error: "Failed to analyze intake criteria" });
+    }
+  });
+
   // Production Deep Linking Test Route
   app.get('/test-deep-linking', async (req, res) => {
     try {
