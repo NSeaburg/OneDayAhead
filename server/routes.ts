@@ -3272,8 +3272,13 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       // Choose system prompt based on assistant type
       let systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
       
+      // Debug logging to see what's happening
+      console.log(`🔍 DEBUG Claude Chat - assistantType: "${assistantType}"`);
+      console.log(`🔍 DEBUG Claude Chat - INTAKE_BASICS_PROMPT: "${INTAKE_BASICS_PROMPT}"`);
+      
       if (assistantType === "intake-basics") {
         systemPrompt = INTAKE_BASICS_PROMPT;
+        console.log(`✅ DEBUG Claude Chat - Using INTAKE_BASICS_PROMPT: "${systemPrompt}"`);
       } else if (assistantType === "content-creation") {
         // Content creation assistant for admin interface
         systemPrompt = `You are a Content Creation Assistant specializing in educational experience design. You help educators create effective learning experiences by:
@@ -3287,6 +3292,14 @@ Draw inspiration from exemplar models like the Three Branches of Government expe
 
 Ask clarifying questions to understand the educator's vision, subject matter, target audience, and desired outcomes. Provide specific, actionable suggestions for bot personalities, assessment criteria, and learning activities.`;
       }
+      
+      // Final debug log to see what system prompt is actually being sent to Claude
+      console.log(`🎯 DEBUG Claude Chat - Final systemPrompt (first 100 chars): "${systemPrompt.substring(0, 100)}..."`);
+      console.log(`🎯 DEBUG Claude Chat - systemPrompt length: ${systemPrompt.length}`);
+      console.log(`🎯 DEBUG Claude Chat - Is it the joke prompt? ${systemPrompt === INTAKE_BASICS_PROMPT}`);
+      console.log(`🎯 DEBUG Claude Chat - Is it the article prompt? ${systemPrompt === ARTICLE_ASSISTANT_SYSTEM_PROMPT}`);
+      console.log(`🎯 DEBUG Claude Chat - Messages count: ${anthropicMessages.length}`);
+      console.log(`🎯 DEBUG Claude Chat - First user message: "${anthropicMessages.length > 0 ? anthropicMessages[anthropicMessages.length - 1]?.content?.substring(0, 50) + '...' : 'None'}"`);
 
       try {
         // Send the initial thread ID
