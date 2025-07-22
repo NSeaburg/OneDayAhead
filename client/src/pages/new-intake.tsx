@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Check, ChevronDown, ChevronRight, TestTube, ExternalLink, Settings } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, TestTube, ExternalLink, Settings, Send, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Stage {
   id: number;
@@ -18,6 +20,200 @@ interface Component {
   completed: boolean;
   type: 'explicit' | 'implicit' | 'bot-assisted' | 'file-upload';
   note?: string;
+}
+
+interface IntakeChatProps {
+  stage: Stage;
+  onComponentComplete: (componentId: string) => void;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  isBot: boolean;
+  timestamp: Date;
+}
+
+function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      content: "Hi! Before we begin building, let's get some basics down. Tell me a little about your teaching situation. What subject are we working with?",
+      isBot: true,
+      timestamp: new Date()
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [collectedData, setCollectedData] = useState<Record<string, string>>({});
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: input.trim(),
+      isBot: false,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      // Send to chat endpoint for processing
+      const response = await fetch('/api/claude/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          message: userMessage.content,
+          context: {
+            stage: 'intake-basics',
+            collectedData,
+            completedComponents: stage.components.filter(c => c.completed).map(c => c.id)
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to get response');
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      let botResponse = '';
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: '',
+        isBot: true,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                botResponse += data.content;
+                setMessages(prev => prev.map(msg => 
+                  msg.id === botMessage.id 
+                    ? { ...msg, content: botResponse }
+                    : msg
+                ));
+              }
+            } catch (e) {
+              // Ignore JSON parsing errors for streaming
+            }
+          }
+        }
+      }
+
+      // TODO: Parse response for component completion signals
+      // For now, simulate completion after getting answers
+      
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 2).toString(),
+        content: "I'm sorry, I'm having trouble processing your response. Could you try again?",
+        isBot: true,
+        timestamp: new Date()
+      }]);
+    }
+
+    setIsLoading(false);
+  };
+
+  return (
+    <Card className="h-full flex flex-col">
+      {/* Chat Header */}
+      <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+            <Bot className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="font-medium text-gray-900">Content Creation Assistant</h3>
+            <p className="text-sm text-gray-500">Let's design your learning experience together</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messages.map((message) => (
+            <div key={message.id} className={`flex gap-3 ${message.isBot ? '' : 'flex-row-reverse'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                message.isBot 
+                  ? 'bg-blue-100 text-blue-600' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {message.isBot ? <Bot className="w-4 h-4" /> : <span className="text-sm font-medium">U</span>}
+              </div>
+              <div className={`max-w-[80%] ${message.isBot ? '' : 'text-right'}`}>
+                <div className={`rounded-lg px-4 py-2 ${
+                  message.isBot 
+                    ? 'bg-gray-100 text-gray-900' 
+                    : 'bg-blue-600 text-white'
+                }`}>
+                  {message.content}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {message.timestamp.toLocaleTimeString()}
+                </div>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="bg-gray-100 rounded-lg px-4 py-2">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Input */}
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type your response..."
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            disabled={isLoading}
+            className="flex-1"
+          />
+          <Button 
+            onClick={handleSend}
+            disabled={!input.trim() || isLoading}
+            size="sm"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 const stages: Stage[] = [
@@ -285,14 +481,32 @@ export default function NewIntake() {
         </div>
         
         <div className="flex-1 p-6">
-          <Card className="h-full p-6">
-            <div className="h-full flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <h3 className="text-lg font-medium mb-2">Stage {currentStage} Content</h3>
-                <p>Form and chat interface will be implemented in Phase 2</p>
+          {currentStage === 1 ? (
+            <IntakeChat 
+              stage={stageData.find(s => s.id === 1)!}
+              onComponentComplete={(componentId: string) => {
+                setStageData(prev => prev.map(stage => 
+                  stage.id === 1 
+                    ? {
+                        ...stage,
+                        components: stage.components.map(comp =>
+                          comp.id === componentId ? { ...comp, completed: true } : comp
+                        )
+                      }
+                    : stage
+                ));
+              }}
+            />
+          ) : (
+            <Card className="h-full p-6">
+              <div className="h-full flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium mb-2">Stage {currentStage} Content</h3>
+                  <p>Stage {currentStage} interface will be implemented later</p>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
       {/* Quick Navigation */}
