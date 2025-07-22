@@ -38,7 +38,7 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi! Before we begin building, let's get some basics down. Tell me a little about your teaching situation. What subject are we working with?",
+      content: "Hi! I'm here to help you build an AI Powered learning experience to uplevel your existing course. It's going to take us about 10 minutes and we will build it together simply by chatting. It might be smart to have your course open in another tab, and to gather any resources, rubrics or standards you might want to give me. Ready to get started?",
       isBot: true,
       timestamp: new Date()
     }
