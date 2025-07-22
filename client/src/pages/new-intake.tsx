@@ -27,6 +27,7 @@ const stages: Stage[] = [
     description: "Let's get to know each other",
     components: [
       { id: "school-district", title: "School District", completed: false, type: 'explicit', note: "or N/A" },
+      { id: "school", title: "School", completed: false, type: 'explicit' },
       { id: "subject", title: "Subject", completed: false, type: 'explicit' },
       { id: "topic", title: "Topic", completed: false, type: 'explicit' },
       { id: "grade-level", title: "Grade Level", completed: false, type: 'explicit' },
