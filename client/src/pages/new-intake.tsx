@@ -22,8 +22,8 @@ interface Component {
 const stages: Stage[] = [
   {
     id: 1,
-    title: "Basic Information",
-    description: "Content package fundamentals",
+    title: "The Basics",
+    description: "Let's get to know each other",
     components: [
       { id: "package-name", title: "Package Name", completed: false, type: 'explicit' },
       { id: "subject-topic", title: "Subject & Topic", completed: false, type: 'explicit' },
