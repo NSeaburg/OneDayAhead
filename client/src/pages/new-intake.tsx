@@ -18,7 +18,7 @@ interface Component {
   id: string;
   title: string;
   completed: boolean;
-  type: 'explicit' | 'implicit' | 'bot-assisted' | 'file-upload';
+  type: "explicit" | "implicit" | "bot-assisted" | "file-upload";
   note?: string;
 }
 
@@ -37,15 +37,18 @@ interface Message {
 function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      content: "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It starts with an assessment—students will interact with a smart bot that figures out what they already know (or don't), then routes them to the next best learning step.\n\nThis will take about 10 minutes, and we'll build it together by chatting. If you've got rubrics or standards handy, great—but no pressure. Just be ready to describe the course you want to improve. Ready to begin?",
+      id: "1",
+      content:
+        "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
       isBot: true,
-      timestamp: new Date()
-    }
+      timestamp: new Date(),
+    },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [collectedData, setCollectedData] = useState<Record<string, string>>({});
+  const [collectedData, setCollectedData] = useState<Record<string, string>>(
+    {},
+  );
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -54,64 +57,69 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
       id: Date.now().toString(),
       content: input.trim(),
       isBot: false,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
     setIsLoading(true);
 
     try {
       // Send to chat endpoint for processing
-      const response = await fetch('/api/claude/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+      const response = await fetch("/api/claude/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           messages: [
-            ...messages.map(msg => ({ 
-              role: msg.isBot ? 'assistant' : 'user', 
-              content: msg.content 
+            ...messages.map((msg) => ({
+              role: msg.isBot ? "assistant" : "user",
+              content: msg.content,
             })),
-            { role: 'user', content: userMessage.content }
+            { role: "user", content: userMessage.content },
           ],
-          assistantType: 'intake-basics'
-        })
+          assistantType: "intake-basics",
+        }),
       });
 
-      if (!response.ok) throw new Error('Failed to get response');
+      if (!response.ok) throw new Error("Failed to get response");
 
       const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
+      if (!reader) throw new Error("No response body");
 
-      let botResponse = '';
+      let botResponse = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split('\n').filter(line => line.trim());
+        const lines = chunk.split("\n").filter((line) => line.trim());
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
+            if (data === "[DONE]") continue;
+
             try {
               const parsed = JSON.parse(data);
               if (parsed.content) {
                 botResponse += parsed.content;
-                
+
                 // Update bot message in real time
-                setMessages(prev => {
-                  const withoutLastBot = prev.filter(msg => !(msg.isBot && msg.id === 'streaming'));
-                  return [...withoutLastBot, {
-                    id: 'streaming',
-                    content: botResponse,
-                    isBot: true,
-                    timestamp: new Date()
-                  }];
+                setMessages((prev) => {
+                  const withoutLastBot = prev.filter(
+                    (msg) => !(msg.isBot && msg.id === "streaming"),
+                  );
+                  return [
+                    ...withoutLastBot,
+                    {
+                      id: "streaming",
+                      content: botResponse,
+                      isBot: true,
+                      timestamp: new Date(),
+                    },
+                  ];
                 });
               }
             } catch (e) {
@@ -123,15 +131,18 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
 
       // TODO: Parse response for component completion signals
       // For now, simulate completion after getting answers
-      
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 2).toString(),
-        content: "I'm sorry, I'm having trouble processing your response. Could you try again?",
-        isBot: true,
-        timestamp: new Date()
-      }]);
+      console.error("Chat error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 2).toString(),
+          content:
+            "I'm sorry, I'm having trouble processing your response. Could you try again?",
+          isBot: true,
+          timestamp: new Date(),
+        },
+      ]);
     }
 
     setIsLoading(false);
@@ -146,8 +157,12 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
             <Bot className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="font-medium text-gray-900">Content Creation Assistant</h3>
-            <p className="text-sm text-gray-500">Let's design your learning experience together</p>
+            <h3 className="font-medium text-gray-900">
+              Content Creation Assistant
+            </h3>
+            <p className="text-sm text-gray-500">
+              Let's design your learning experience together
+            </p>
           </div>
         </div>
       </div>
@@ -156,21 +171,36 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message) => (
-            <div key={message.id} className={`flex gap-3 ${message.isBot ? '' : 'flex-row-reverse'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.isBot 
-                  ? 'bg-blue-100 text-blue-600' 
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-                {message.isBot ? <Bot className="w-4 h-4" /> : <span className="text-sm font-medium">U</span>}
+            <div
+              key={message.id}
+              className={`flex gap-3 ${message.isBot ? "" : "flex-row-reverse"}`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  message.isBot
+                    ? "bg-blue-100 text-blue-600"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {message.isBot ? (
+                  <Bot className="w-4 h-4" />
+                ) : (
+                  <span className="text-sm font-medium">U</span>
+                )}
               </div>
-              <div className={`max-w-[80%] ${message.isBot ? '' : 'text-right'}`}>
-                <div className={`rounded-lg px-4 py-2 ${
-                  message.isBot 
-                    ? 'bg-gray-100 text-gray-900' 
-                    : 'bg-blue-600 text-white'
-                }`}>
-                  {message.content}
+              <div
+                className={`max-w-[80%] ${message.isBot ? "" : "text-right"}`}
+              >
+                <div
+                  className={`rounded-lg px-4 py-2 ${
+                    message.isBot
+                      ? "bg-gray-100 text-gray-900"
+                      : "bg-blue-600 text-white"
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap">
+                    {message.content}
+                  </div>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
                   {message.timestamp.toLocaleTimeString()}
@@ -186,8 +216,14 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
               <div className="bg-gray-100 rounded-lg px-4 py-2">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -202,7 +238,7 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your response..."
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            onKeyPress={(e) => e.key === "Enter" && handleSend()}
             disabled={isLoading}
           />
           <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
@@ -221,36 +257,64 @@ export default function NewIntake() {
       title: "The Basics",
       description: "Let's get to know each other",
       components: [
-        { id: 'district', title: 'School District', completed: false, type: 'explicit', note: 'or N/A' },
-        { id: 'school', title: 'School', completed: false, type: 'explicit' },
-        { id: 'subject', title: 'Subject', completed: false, type: 'explicit' },
-        { id: 'topic', title: 'Topic', completed: false, type: 'explicit' },
-        { id: 'grade', title: 'Grade Level', completed: false, type: 'explicit' },
-        { id: 'objectives', title: 'Learning Objectives', completed: false, type: 'bot-assisted' }
-      ]
+        {
+          id: "district",
+          title: "School District",
+          completed: false,
+          type: "explicit",
+          note: "or N/A",
+        },
+        { id: "school", title: "School", completed: false, type: "explicit" },
+        { id: "subject", title: "Subject", completed: false, type: "explicit" },
+        { id: "topic", title: "Topic", completed: false, type: "explicit" },
+        {
+          id: "grade",
+          title: "Grade Level",
+          completed: false,
+          type: "explicit",
+        },
+        {
+          id: "objectives",
+          title: "Learning Objectives",
+          completed: false,
+          type: "bot-assisted",
+        },
+      ],
     },
     {
       id: 2,
       title: "Context Collection",
       description: "What have your students already done in this course?",
       components: [
-        { id: 'existing-resources', title: 'Existing Resources', completed: false, type: 'file-upload', note: 'PDFs, videos, articles' },
-        { id: 'student-work', title: 'Student Work Samples', completed: false, type: 'file-upload', note: 'optional' }
+        {
+          id: "existing-resources",
+          title: "Existing Resources",
+          completed: false,
+          type: "file-upload",
+          note: "PDFs, videos, articles",
+        },
+        {
+          id: "student-work",
+          title: "Student Work Samples",
+          completed: false,
+          type: "file-upload",
+          note: "optional",
+        },
       ],
-      hasTestButton: false
+      hasTestButton: false,
     },
     // ... other stages would go here
   ]);
 
   const handleComponentComplete = (componentId: string) => {
-    setStages(prev => prev.map(stage => ({
-      ...stage,
-      components: stage.components.map(comp => 
-        comp.id === componentId 
-          ? { ...comp, completed: true }
-          : comp
-      )
-    })));
+    setStages((prev) =>
+      prev.map((stage) => ({
+        ...stage,
+        components: stage.components.map((comp) =>
+          comp.id === componentId ? { ...comp, completed: true } : comp,
+        ),
+      })),
+    );
   };
 
   const currentStage = stages[0]; // For now, just show Stage 1
@@ -263,47 +327,73 @@ export default function NewIntake() {
           <div className="w-80 space-y-4">
             <Card className="p-4 bg-white">
               <h2 className="font-semibold text-lg mb-2">Content Creator</h2>
-              <p className="text-sm text-gray-600 mb-4">Uplevel your Course with AI</p>
-              
+              <p className="text-sm text-gray-600 mb-4">
+                Uplevel your Course with AI
+              </p>
+
               <div className="space-y-4">
                 {stages.map((stage, index) => {
                   const isActive = index === 0; // For now, only first stage is active
-                  const completedCount = stage.components.filter(c => c.completed).length;
-                  
+                  const completedCount = stage.components.filter(
+                    (c) => c.completed,
+                  ).length;
+
                   return (
-                    <div key={stage.id} className={`border rounded-lg p-3 ${isActive ? 'border-blue-200 bg-blue-50' : 'border-gray-200'}`}>
+                    <div
+                      key={stage.id}
+                      className={`border rounded-lg p-3 ${isActive ? "border-blue-200 bg-blue-50" : "border-gray-200"}`}
+                    >
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
-                          isActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                        }`}>
+                        <span
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+                            isActive
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-200 text-gray-600"
+                          }`}
+                        >
                           {stage.id}
                         </span>
                         <div className="flex-1">
                           <h3 className="font-medium text-sm">{stage.title}</h3>
-                          <p className="text-xs text-gray-500">{completedCount}/{stage.components.length}</p>
+                          <p className="text-xs text-gray-500">
+                            {completedCount}/{stage.components.length}
+                          </p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-600 mb-3">{stage.description}</p>
-                      
+                      <p className="text-xs text-gray-600 mb-3">
+                        {stage.description}
+                      </p>
+
                       <div className="space-y-2">
                         {stage.components.map((component) => (
-                          <div key={component.id} className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${
-                              component.completed ? 'bg-green-500' : 'bg-gray-300'
-                            }`} />
+                          <div
+                            key={component.id}
+                            className="flex items-center gap-2"
+                          >
+                            <div
+                              className={`w-3 h-3 rounded-full ${
+                                component.completed
+                                  ? "bg-green-500"
+                                  : "bg-gray-300"
+                              }`}
+                            />
                             <div className="flex-1">
-                              <span className="text-xs text-gray-700">{component.title}</span>
+                              <span className="text-xs text-gray-700">
+                                {component.title}
+                              </span>
                               {component.note && (
-                                <span className="text-xs text-gray-500 ml-1">({component.note})</span>
+                                <span className="text-xs text-gray-500 ml-1">
+                                  ({component.note})
+                                </span>
                               )}
                             </div>
                           </div>
                         ))}
                       </div>
-                      
+
                       {stage.hasTestButton && (
                         <Button size="sm" className="w-full mt-3">
-                          {stage.testButtonText || 'Test'}
+                          {stage.testButtonText || "Test"}
                         </Button>
                       )}
                     </div>
@@ -323,7 +413,10 @@ export default function NewIntake() {
             </Card>
 
             <div className="h-[600px]">
-              <IntakeChat stage={currentStage} onComponentComplete={handleComponentComplete} />
+              <IntakeChat
+                stage={currentStage}
+                onComponentComplete={handleComponentComplete}
+              />
             </div>
           </div>
         </div>
