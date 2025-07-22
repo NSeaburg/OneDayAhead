@@ -316,8 +316,7 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
           </Button>
         </div>
       </div>
-      </Card>
-    </div>
+    </Card>
   );
 }
 

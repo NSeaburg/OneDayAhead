@@ -23,7 +23,7 @@ import {
   type ContentPermission, type ContentPermissionInsert
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 // In-memory storage for development without database
@@ -756,7 +756,7 @@ export class DatabaseStorage implements IStorage {
       .from(blockedIps)
       .where(and(
         eq(blockedIps.ipAddress, ipAddress),
-        db.sql`${blockedIps.blockedUntil} > ${now}`
+        gt(blockedIps.blockedUntil, now)
       ));
     return !!blocked;
   }

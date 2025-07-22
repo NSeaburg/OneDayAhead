@@ -654,7 +654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Track AI usage for cost monitoring
           const inputText = anthropicMessages.map(m => m.content).join(' ');
-          await trackAiUsage(sessionId, "/api/article-chat", inputText, content, req.ip);
+          await trackAiUsage(sessionId, "/api/article-chat", inputText, content, req.ip || "unknown");
           
           console.log(
             `Stored article conversation for session ${sessionId}, thread ${messageId}`,
@@ -1352,7 +1352,7 @@ Based on the assessment criteria, determine the student's understanding level an
 
       // Track AI usage for cost monitoring
       const inputText = evaluationMessages.map(m => m.content).join(' ');
-      await trackAiUsage(sessionId, "/api/assess-conversation", inputText, evaluationContent, req.ip);
+      await trackAiUsage(sessionId, "/api/assess-conversation", inputText, evaluationContent, req.ip || "unknown");
 
       let assessmentResult;
       try {
@@ -1658,7 +1658,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
 
       // Track AI usage for cost monitoring
       const inputText = gradingMessages.map(m => m.content).join(' ');
-      await trackAiUsage(sessionId, "/api/grade-conversations", inputText, gradingContent, req.ip);
+      await trackAiUsage(sessionId, "/api/grade-conversations", inputText, gradingContent, req.ip || "unknown");
 
       let gradingResult;
       try {
@@ -2182,12 +2182,12 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
             console.log(`Stored feedback data for session ${sessionId}`);
 
             // Process LTI grade passback if this is an LTI session
-            if (req.lti?.claims) {
+            if ((req as any).lti?.claims) {
               try {
                 const gradeSuccess =
                   await ltiServices.processAssessmentCompletion(
                     sessionId,
-                    req.lti.claims,
+                    (req as any).lti.claims,
                     {
                       contentKnowledgeScore:
                         feedbackData.contentKnowledgeScore || 0,
@@ -2876,6 +2876,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
     try {
       // Parse the FormData body - arrays and objects come as JSON strings
       const experienceData = { ...req.body };
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
       // Parse JSON fields that were stringified
       ['assessmentListeningTopics', 'highFocusTopics', 'mediumFocusTopics', 'lowFocusTopics'].forEach(field => {
@@ -3160,8 +3161,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
         JSON.stringify(feedbackInstructionsConfig, null, 2)
       );
 
-      // Handle avatar file uploads if present
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      // Handle avatar file uploads if present (files variable already declared above)
       
       // Save assessment bot avatar if uploaded
       if (files?.assessmentAvatar?.[0]) {
@@ -3622,7 +3622,7 @@ ${JSON.stringify(conversationHistory)}`;
       
       // Use pdf-parse to extract text from PDF buffer
       const pdfParse = await import('pdf-parse');
-      const data = await pdfParse.default(req.file.buffer);
+      const data = await (pdfParse as any).default(req.file.buffer);
       
       res.json({
         success: true,

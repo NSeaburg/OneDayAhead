@@ -50,6 +50,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node-jose": "^1.1.13",
+    "@types/pdf-parse": "^1.1.5",
     "@types/pg": "^8.10.9",
     "@types/react-pdf": "^5.0.7",
     "@types/uuid": "^10.0.0",
