@@ -3487,6 +3487,125 @@ Keep responses concise and practical. Focus on helping the educator make their l
     }
   });
 
+  // File processing endpoints for Stage 2 content collection
+  
+  // YouTube transcript extraction endpoint
+  app.post("/api/intake/extract-youtube", async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: "YouTube URL is required" });
+      }
+      
+      // Extract video ID from YouTube URL
+      let videoId = '';
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+        /youtube\.com\/v\/([^&\n?#]+)/
+      ];
+      
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) {
+          videoId = match[1];
+          break;
+        }
+      }
+      
+      if (!videoId) {
+        return res.status(400).json({ error: "Invalid YouTube URL" });
+      }
+      
+      // Use youtube-transcript package to get transcript
+      const { YoutubeTranscript } = await import('youtube-transcript');
+      const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+      
+      // Combine transcript chunks into a single text
+      const fullText = transcript.map(item => item.text).join(' ');
+      
+      res.json({
+        success: true,
+        videoId,
+        transcript: fullText,
+        chunks: transcript.length,
+        duration: transcript[transcript.length - 1]?.offset || 0
+      });
+      
+    } catch (error: any) {
+      console.error('YouTube transcript extraction error:', error);
+      res.status(500).json({
+        error: "Failed to extract YouTube transcript",
+        details: error.message
+      });
+    }
+  });
+  
+  // PDF text extraction endpoint
+  app.post("/api/intake/extract-pdf", upload.single('pdf'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "PDF file is required" });
+      }
+      
+      if (req.file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ error: "File must be a PDF" });
+      }
+      
+      // Use pdf-parse to extract text from PDF buffer
+      const pdfParse = await import('pdf-parse');
+      const data = await pdfParse.default(req.file.buffer);
+      
+      res.json({
+        success: true,
+        filename: req.file.originalname,
+        text: data.text,
+        pages: data.numpages,
+        info: data.info
+      });
+      
+    } catch (error: any) {
+      console.error('PDF extraction error:', error);
+      res.status(500).json({
+        error: "Failed to extract PDF text",
+        details: error.message
+      });
+    }
+  });
+  
+  // Text file processing endpoint
+  app.post("/api/intake/extract-text", upload.single('textfile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Text file is required" });
+      }
+      
+      // Check if it's a text file
+      const allowedTypes = ['text/plain', 'text/csv', 'application/rtf'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: "File must be a text file (txt, csv, rtf)" });
+      }
+      
+      // Convert buffer to text
+      const text = req.file.buffer.toString('utf-8');
+      
+      res.json({
+        success: true,
+        filename: req.file.originalname,
+        text: text,
+        size: req.file.size,
+        encoding: 'utf-8'
+      });
+      
+    } catch (error: any) {
+      console.error('Text file extraction error:', error);
+      res.status(500).json({
+        error: "Failed to extract text from file",
+        details: error.message
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -16,7 +16,8 @@ interface Component {
   id: string;
   title: string;
   completed: boolean;
-  type: 'explicit' | 'implicit';
+  type: 'explicit' | 'implicit' | 'bot-assisted' | 'file-upload';
+  note?: string;
 }
 
 const stages: Stage[] = [
@@ -25,24 +26,24 @@ const stages: Stage[] = [
     title: "The Basics",
     description: "Let's get to know each other",
     components: [
-      { id: "package-name", title: "Package Name", completed: false, type: 'explicit' },
-      { id: "subject-topic", title: "Subject & Topic", completed: false, type: 'explicit' },
+      { id: "school-district", title: "School District", completed: false, type: 'explicit', note: "or N/A" },
+      { id: "subject", title: "Subject", completed: false, type: 'explicit' },
+      { id: "topic", title: "Topic", completed: false, type: 'explicit' },
       { id: "grade-level", title: "Grade Level", completed: false, type: 'explicit' },
-      { id: "learning-objectives", title: "Learning Objectives", completed: false, type: 'implicit' },
+      { id: "learning-objectives", title: "Learning Objectives", completed: false, type: 'explicit' },
     ]
   },
   {
     id: 2,
-    title: "Article Discussion Bot",
-    description: "Create the conversational article assistant",
+    title: "Context Collection",
+    description: "What have your students already done in this course?",
     components: [
-      { id: "article-content", title: "Article Content", completed: false, type: 'explicit' },
-      { id: "bot-personality", title: "Bot Personality", completed: false, type: 'explicit' },
-      { id: "discussion-prompts", title: "Discussion Prompts", completed: false, type: 'implicit' },
-      { id: "conversation-flow", title: "Conversation Flow", completed: false, type: 'implicit' },
+      { id: "course-context", title: "Course Context", completed: false, type: 'bot-assisted', note: "bot-filled text" },
+      { id: "immediate-prep", title: "Immediate Preparation", completed: false, type: 'bot-assisted', note: "what they just did" },
+      { id: "file-uploads", title: "Content Files", completed: false, type: 'file-upload', note: "YouTube, PDFs, text" },
     ],
     hasTestButton: true,
-    testButtonText: "Test Article Discussion"
+    testButtonText: "Test File Processing"
   },
   {
     id: 3,
@@ -235,8 +236,8 @@ export default function NewIntake() {
                           {component.completed ? <Check className="w-2.5 h-2.5" /> : '•'}
                         </div>
                         <span>{component.title}</span>
-                        {component.type === 'implicit' && (
-                          <span className="text-xs text-gray-400 ml-auto">auto</span>
+                        {component.note && (
+                          <span className="text-xs text-gray-400 ml-auto">{component.note}</span>
                         )}
                       </div>
                     ))}

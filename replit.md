@@ -148,6 +148,15 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 22, 2025. Redesigned Stage 1 and Stage 2 requirements based on explicit user feedback
+  - Stage 1 "The Basics": Now collects school district (with N/A option), subject, topic, grade level, and learning objectives - all explicit data collection
+  - Stage 2 "Context Collection": Focuses on course context and file processing for content mining
+  - Added file processing capabilities: YouTube transcript extraction, PDF text extraction, and text file processing
+  - Updated UI to show component types: explicit, bot-assisted, file-upload with helpful notes
+  - Enhanced navigation system between new intake and admin dashboard for development efficiency
+  - Installed pdf-parse, youtube-transcript, and @types/multer packages for file processing
+  - Added three new API endpoints: /api/intake/extract-youtube, /api/intake/extract-pdf, /api/intake/extract-text
+  - System now ready for conversational AI wizard with bot assistance for language cleanup and suggestions
 - July 21, 2025. Major architectural redesign - replaced file-based content system with database-driven conversational AI wizard
   - Added comprehensive database schema for content packages with four new tables:
     - content_packages: Stores all educational content created through the admin wizard
