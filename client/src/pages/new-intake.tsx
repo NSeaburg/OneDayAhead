@@ -219,7 +219,51 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <div className="h-full flex gap-4">
+      {/* Criteria Sidebar */}
+      <Card className="w-80 flex-shrink-0">
+        <div className="p-4 border-b">
+          <h3 className="font-medium text-gray-900">Progress</h3>
+          <p className="text-sm text-gray-500">Information collected</p>
+        </div>
+        <div className="p-4 space-y-3">
+          {Object.entries(CRITERIA_LABELS).map(([key, label]) => {
+            const criterion = criteria[key as keyof CriteriaState];
+            return (
+              <div key={key} className="flex items-center gap-3">
+                <div className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300",
+                  criterion.detected 
+                    ? "bg-green-100 text-green-600" 
+                    : "bg-gray-100 text-gray-400"
+                )}>
+                  {criterion.detected ? (
+                    <Check className="w-4 h-4 animate-in zoom-in duration-300" />
+                  ) : (
+                    <Circle className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className={cn(
+                    "text-sm font-medium transition-colors",
+                    criterion.detected ? "text-green-700" : "text-gray-700"
+                  )}>
+                    {label}
+                  </p>
+                  {criterion.detected && criterion.value && (
+                    <p className="text-xs text-green-600 mt-1 animate-in slide-in-from-top-1 duration-300">
+                      {criterion.value}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Chat Interface */}
+      <Card className="flex-1 flex flex-col">
         {/* Chat Header */}
         <div className="p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex items-center gap-3">
@@ -316,7 +360,8 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
           </Button>
         </div>
       </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
