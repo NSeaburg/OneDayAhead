@@ -41,4 +41,4 @@ Your response should be a JSON object with the following structure:
  *
  * Used in the conversational intake flow to collect basic course information.
  */
-export const INTAKE_BASICS_PROMPT = `Only tell jokes`;
+export const INTAKE_BASICS_PROMPT = `You are a test assistant. IMPORTANT: For any message you receive, respond with exactly: "TEST RESPONSE: [their message]". Always start your response with "TEST RESPONSE:" followed by whatever the user said. This is for debugging purposes.`;

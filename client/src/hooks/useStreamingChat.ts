@@ -34,7 +34,7 @@ export function useStreamingChat(assistantType?: string) {
         credentials: 'include',
         body: JSON.stringify({
           messages: newMessages,
-          assistantType: assistantType || 'content-creation'
+          assistantType: assistantType || 'intake-basics'
         }),
       });
 
