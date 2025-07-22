@@ -46,7 +46,6 @@ import {
   ASSESSMENT_ASSISTANT_PROMPT,
   TEACHING_ASSISTANT_FALLBACK_PROMPT,
   ASSESSMENT_EVALUATION_PROMPT,
-  CONTENT_CREATION_ASSISTANT_PROMPT,
   INTAKE_BASICS_PROMPT,
 } from "./prompts";
 
@@ -3273,9 +3272,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       // Choose system prompt based on assistant type
       let systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
       
-      if (assistantType === "content-creation") {
-        systemPrompt = CONTENT_CREATION_ASSISTANT_PROMPT;
-      } else if (assistantType === "intake-basics") {
+      if (assistantType === "intake-basics") {
         systemPrompt = INTAKE_BASICS_PROMPT;
       }
 
