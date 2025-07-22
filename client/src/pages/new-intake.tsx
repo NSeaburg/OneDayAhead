@@ -158,10 +158,10 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
           </div>
           <div>
             <h3 className="font-medium text-gray-900">
-              Content Creation Assistant
+              Intake Assistant
             </h3>
             <p className="text-sm text-gray-500">
-              Let's design your learning experience together
+              Let's gather your course information
             </p>
           </div>
         </div>
