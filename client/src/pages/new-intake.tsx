@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Check, ChevronDown, ChevronRight, TestTube, ExternalLink, Settings, Send, Bot } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Bot } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -38,7 +38,7 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi! I'm here to help you build an AI Powered learning experience to uplevel your existing course. It's going to take us about 10 minutes and we will build it together simply by chatting. It might be smart to have your course open in another tab, and to gather any resources, rubrics or standards you might want to give me. Ready to get started?",
+      content: "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It starts with an assessment—students will interact with a smart bot that figures out what they already know (or don't), then routes them to the next best learning step.\n\nThis will take about 10 minutes, and we'll build it together by chatting. If you've got rubrics or standards handy, great—but no pressure. Just be ready to describe the course you want to improve. Ready to begin?",
       isBot: true,
       timestamp: new Date()
     }
@@ -85,33 +85,34 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
       if (!reader) throw new Error('No response body');
 
       let botResponse = '';
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '',
-        isBot: true,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, botMessage]);
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split('\n');
+        const lines = chunk.split('\n').filter(line => line.trim());
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
             try {
-              const data = JSON.parse(line.slice(6));
-              if (data.content) {
-                botResponse += data.content;
-                setMessages(prev => prev.map(msg => 
-                  msg.id === botMessage.id 
-                    ? { ...msg, content: botResponse }
-                    : msg
-                ));
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                botResponse += parsed.content;
+                
+                // Update bot message in real time
+                setMessages(prev => {
+                  const withoutLastBot = prev.filter(msg => !(msg.isBot && msg.id === 'streaming'));
+                  return [...withoutLastBot, {
+                    id: 'streaming',
+                    content: botResponse,
+                    isBot: true,
+                    timestamp: new Date()
+                  }];
+                });
               }
             } catch (e) {
               // Ignore JSON parsing errors for streaming
@@ -203,14 +204,9 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
             placeholder="Type your response..."
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             disabled={isLoading}
-            className="flex-1"
           />
-          <Button 
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            size="sm"
-          >
-            <Send className="w-4 h-4" />
+          <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+            Send
           </Button>
         </div>
       </div>
@@ -218,300 +214,120 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
   );
 }
 
-const stages: Stage[] = [
-  {
-    id: 1,
-    title: "The Basics",
-    description: "Let's get to know each other",
-    components: [
-      { id: "school-district", title: "School District", completed: false, type: 'explicit', note: "or N/A" },
-      { id: "school", title: "School", completed: false, type: 'explicit' },
-      { id: "subject", title: "Subject", completed: false, type: 'explicit' },
-      { id: "topic", title: "Topic", completed: false, type: 'explicit' },
-      { id: "grade-level", title: "Grade Level", completed: false, type: 'explicit' },
-      { id: "learning-objectives", title: "Learning Objectives", completed: false, type: 'explicit' },
-    ]
-  },
-  {
-    id: 2,
-    title: "Context Collection",
-    description: "What have your students already done in this course?",
-    components: [
-      { id: "course-context", title: "Course Context", completed: false, type: 'bot-assisted', note: "bot-filled text" },
-      { id: "immediate-prep", title: "Immediate Preparation", completed: false, type: 'bot-assisted', note: "what they just did" },
-      { id: "file-uploads", title: "Content Files", completed: false, type: 'file-upload', note: "YouTube, PDFs, text" },
-    ],
-    hasTestButton: true,
-    testButtonText: "Test File Processing"
-  },
-  {
-    id: 3,
-    title: "Assessment Bot",
-    description: "Design the evaluation character and criteria",
-    components: [
-      { id: "assessment-character", title: "Assessment Character", completed: false, type: 'explicit' },
-      { id: "evaluation-criteria", title: "Evaluation Criteria", completed: false, type: 'explicit' },
-      { id: "question-types", title: "Question Types", completed: false, type: 'implicit' },
-      { id: "scoring-rubric", title: "Scoring Rubric", completed: false, type: 'implicit' },
-    ],
-    hasTestButton: true,
-    testButtonText: "Test Assessment Bot"
-  },
-  {
-    id: 4,
-    title: "Teaching Assistants",
-    description: "Create differentiated teaching bots",
-    components: [
-      { id: "routing-logic", title: "Routing Logic", completed: false, type: 'explicit' },
-      { id: "high-level-bot", title: "High-Level Teaching Bot", completed: false, type: 'explicit' },
-      { id: "medium-level-bot", title: "Medium-Level Teaching Bot", completed: false, type: 'explicit' },
-      { id: "low-level-bot", title: "Low-Level Teaching Bot", completed: false, type: 'explicit' },
-      { id: "teaching-strategies", title: "Teaching Strategies", completed: false, type: 'implicit' },
-    ],
-    hasTestButton: true,
-    testButtonText: "Test Routing Logic"
-  },
-  {
-    id: 5,
-    title: "Final Configuration",
-    description: "Polish and prepare for launch",
-    components: [
-      { id: "ui-customization", title: "UI Customization", completed: false, type: 'implicit' },
-      { id: "feedback-system", title: "Feedback System", completed: false, type: 'implicit' },
-      { id: "final-review", title: "Final Review", completed: false, type: 'explicit' },
-    ],
-    hasTestButton: true,
-    testButtonText: "Test Full Experience"
-  }
-];
-
 export default function NewIntake() {
-  const [currentStage, setCurrentStage] = useState(1);
-  const [expandedStages, setExpandedStages] = useState<number[]>([1]);
-  const [stageData, setStageData] = useState(stages);
+  const [stages, setStages] = useState<Stage[]>([
+    {
+      id: 1,
+      title: "The Basics",
+      description: "Let's get to know each other",
+      components: [
+        { id: 'district', title: 'School District', completed: false, type: 'explicit', note: 'or N/A' },
+        { id: 'school', title: 'School', completed: false, type: 'explicit' },
+        { id: 'subject', title: 'Subject', completed: false, type: 'explicit' },
+        { id: 'topic', title: 'Topic', completed: false, type: 'explicit' },
+        { id: 'grade', title: 'Grade Level', completed: false, type: 'explicit' },
+        { id: 'objectives', title: 'Learning Objectives', completed: false, type: 'bot-assisted' }
+      ]
+    },
+    {
+      id: 2,
+      title: "Context Collection",
+      description: "What have your students already done in this course?",
+      components: [
+        { id: 'existing-resources', title: 'Existing Resources', completed: false, type: 'file-upload', note: 'PDFs, videos, articles' },
+        { id: 'student-work', title: 'Student Work Samples', completed: false, type: 'file-upload', note: 'optional' }
+      ],
+      hasTestButton: false
+    },
+    // ... other stages would go here
+  ]);
 
-  const toggleStageExpanded = (stageId: number) => {
-    setExpandedStages(prev => 
-      prev.includes(stageId) 
-        ? prev.filter(id => id !== stageId)
-        : [...prev, stageId]
-    );
+  const handleComponentComplete = (componentId: string) => {
+    setStages(prev => prev.map(stage => ({
+      ...stage,
+      components: stage.components.map(comp => 
+        comp.id === componentId 
+          ? { ...comp, completed: true }
+          : comp
+      )
+    })));
   };
 
-  const canNavigateToStage = (stageId: number) => {
-    // Can always go backwards or to current stage
-    if (stageId <= currentStage) return true;
-    
-    // Can only go forward if previous stage is complete
-    const previousStage = stageData.find(s => s.id === stageId - 1);
-    if (!previousStage) return false;
-    
-    const explicitComponents = previousStage.components.filter(c => c.type === 'explicit');
-    
-    // If no explicit components, stage is always navigable
-    if (explicitComponents.length === 0) return true;
-    
-    return explicitComponents.every(c => c.completed);
-  };
-
-  const getStageProgress = (stage: Stage) => {
-    const explicitComponents = stage.components.filter(c => c.type === 'explicit');
-    const completedExplicit = explicitComponents.filter(c => c.completed).length;
-    
-    // If there are no explicit components, the stage is never "complete" by default
-    const hasExplicitComponents = explicitComponents.length > 0;
-    
-    return {
-      completed: completedExplicit,
-      total: explicitComponents.length,
-      isComplete: hasExplicitComponents && completedExplicit === explicitComponents.length
-    };
-  };
-
-  const handleStageNavigation = (stageId: number) => {
-    if (canNavigateToStage(stageId)) {
-      setCurrentStage(stageId);
-      if (!expandedStages.includes(stageId)) {
-        setExpandedStages(prev => [...prev, stageId]);
-      }
-    }
-  };
-
-  const handleTestStage = (stageId: number) => {
-    // TODO: Implement test functionality
-    console.log(`Testing stage ${stageId}`);
-  };
+  const currentStage = stages[0]; // For now, just show Stage 1
 
   return (
-    <div className="h-screen flex bg-gray-50 relative">
-      {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-900">Content Creator</h1>
-          <p className="text-sm text-gray-600 mt-1">Uplevel your Course with AI</p>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {stageData.map((stage) => {
-            const progress = getStageProgress(stage);
-            const isExpanded = expandedStages.includes(stage.id);
-            const canNavigate = canNavigateToStage(stage.id);
-            const isCurrentStage = stage.id === currentStage;
-            
-            return (
-              <div key={stage.id} className="space-y-1">
-                {/* Stage Header */}
-                <div 
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                    isCurrentStage 
-                      ? 'bg-blue-50 border border-blue-200' 
-                      : canNavigate 
-                        ? 'hover:bg-gray-50' 
-                        : 'opacity-50 cursor-not-allowed'
-                  }`}
-                  onClick={() => handleStageNavigation(stage.id)}
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleStageExpanded(stage.id);
-                    }}
-                    className="p-1 hover:bg-gray-100 rounded"
-                  >
-                    {isExpanded ? 
-                      <ChevronDown className="w-4 h-4 text-gray-500" /> : 
-                      <ChevronRight className="w-4 h-4 text-gray-500" />
-                    }
-                  </button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex gap-8">
+          {/* Left Sidebar */}
+          <div className="w-80 space-y-4">
+            <Card className="p-4 bg-white">
+              <h2 className="font-semibold text-lg mb-2">Content Creator</h2>
+              <p className="text-sm text-gray-600 mb-4">Uplevel your Course with AI</p>
+              
+              <div className="space-y-4">
+                {stages.map((stage, index) => {
+                  const isActive = index === 0; // For now, only first stage is active
+                  const completedCount = stage.components.filter(c => c.completed).length;
                   
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                      progress.isComplete 
-                        ? 'bg-green-100 text-green-700' 
-                        : isCurrentStage
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {progress.isComplete ? <Check className="w-3 h-3" /> : stage.id}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${
-                          canNavigate ? 'text-gray-900' : 'text-gray-400'
+                  return (
+                    <div key={stage.id} className={`border rounded-lg p-3 ${isActive ? 'border-blue-200 bg-blue-50' : 'border-gray-200'}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+                          isActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                         }`}>
-                          {stage.title}
+                          {stage.id}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          progress.isComplete 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          {progress.completed}/{progress.total}
-                        </span>
-                      </div>
-                      <p className={`text-xs ${
-                        canNavigate ? 'text-gray-500' : 'text-gray-400'
-                      }`}>
-                        {stage.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Stage Components */}
-                {isExpanded && (
-                  <div className="ml-6 space-y-1">
-                    {stage.components.map((component) => (
-                      <div 
-                        key={component.id}
-                        className={`flex items-center gap-3 p-2 rounded text-sm cursor-pointer transition-colors ${
-                          component.completed 
-                            ? 'text-green-700 hover:bg-green-50' 
-                            : component.type === 'explicit'
-                              ? 'text-gray-700 hover:bg-gray-50'
-                              : 'text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                          component.completed 
-                            ? 'bg-green-100 text-green-700' 
-                            : component.type === 'explicit'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          {component.completed ? <Check className="w-2.5 h-2.5" /> : '•'}
+                        <div className="flex-1">
+                          <h3 className="font-medium text-sm">{stage.title}</h3>
+                          <p className="text-xs text-gray-500">{completedCount}/{stage.components.length}</p>
                         </div>
-                        <span>{component.title}</span>
-                        {component.note && (
-                          <span className="text-xs text-gray-400 ml-auto">{component.note}</span>
-                        )}
                       </div>
-                    ))}
-                    
-                    {/* Test Button */}
-                    {stage.hasTestButton && (
-                      <div className="pt-2 mt-2 border-t border-gray-100">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full justify-center gap-2"
-                          onClick={() => handleTestStage(stage.id)}
-                          disabled={!progress.isComplete}
-                        >
-                          <TestTube className="w-3 h-3" />
-                          {stage.testButtonText}
+                      <p className="text-xs text-gray-600 mb-3">{stage.description}</p>
+                      
+                      <div className="space-y-2">
+                        {stage.components.map((component) => (
+                          <div key={component.id} className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${
+                              component.completed ? 'bg-green-500' : 'bg-gray-300'
+                            }`} />
+                            <div className="flex-1">
+                              <span className="text-xs text-gray-700">{component.title}</span>
+                              {component.note && (
+                                <span className="text-xs text-gray-500 ml-1">({component.note})</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {stage.hasTestButton && (
+                        <Button size="sm" className="w-full mt-3">
+                          {stage.testButtonText || 'Test'}
                         </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        <div className="p-6 border-b border-gray-200 bg-white">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Stage {currentStage}: {stageData.find(s => s.id === currentStage)?.title}
-          </h2>
-          <p className="text-gray-600 mt-1">
-            {stageData.find(s => s.id === currentStage)?.description}
-          </p>
-        </div>
-        
-        <div className="flex-1 p-6">
-          {currentStage === 1 ? (
-            <IntakeChat 
-              stage={stageData.find(s => s.id === 1)!}
-              onComponentComplete={(componentId: string) => {
-                setStageData(prev => prev.map(stage => 
-                  stage.id === 1 
-                    ? {
-                        ...stage,
-                        components: stage.components.map(comp =>
-                          comp.id === componentId ? { ...comp, completed: true } : comp
-                        )
-                      }
-                    : stage
-                ));
-              }}
-            />
-          ) : (
-            <Card className="h-full p-6">
-              <div className="h-full flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <h3 className="text-lg font-medium mb-2">Stage {currentStage} Content</h3>
-                  <p>Stage {currentStage} interface will be implemented later</p>
-                </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </Card>
-          )}
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <Card className="p-6 bg-white mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Stage {currentStage.id}: {currentStage.title}
+              </h1>
+              <p className="text-gray-600">{currentStage.description}</p>
+            </Card>
+
+            <div className="h-[600px]">
+              <IntakeChat stage={currentStage} onComponentComplete={handleComponentComplete} />
+            </div>
+          </div>
         </div>
       </div>
-
     </div>
   );
 }
