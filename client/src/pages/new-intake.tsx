@@ -68,12 +68,14 @@ function IntakeChat({ stage, onComponentComplete }: IntakeChatProps) {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          message: userMessage.content,
-          context: {
-            stage: 'intake-basics',
-            collectedData,
-            completedComponents: stage.components.filter(c => c.completed).map(c => c.id)
-          }
+          messages: [
+            { role: 'system', content: 'You are a helpful content creation assistant guiding teachers through collecting basic information about their course. Ask one question at a time and collect: school district, school, subject, topic, grade level, and learning objectives.' },
+            ...messages.map(msg => ({ 
+              role: msg.isBot ? 'assistant' : 'user', 
+              content: msg.content 
+            })),
+            { role: 'user', content: userMessage.content }
+          ]
         })
       });
 
@@ -509,27 +511,7 @@ export default function NewIntake() {
           )}
         </div>
       </div>
-      {/* Quick Navigation */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
-        <Button
-          onClick={() => window.open('/admin/dashboard', '_blank')}
-          className="bg-blue-600 hover:bg-blue-700 shadow-lg"
-          size="sm"
-        >
-          <Settings className="w-4 h-4 mr-2" />
-          Admin Dashboard
-          <ExternalLink className="w-3 h-3 ml-2" />
-        </Button>
-        <Button
-          onClick={() => window.open('/', '_blank')}
-          variant="outline"
-          className="shadow-lg bg-white"
-          size="sm"
-        >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Student Experience
-        </Button>
-      </div>
+
     </div>
   );
 }
