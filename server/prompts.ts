@@ -42,4 +42,4 @@ Your response should be a JSON object with the following structure:
  * 
  * Used in the conversational intake flow to collect basic course information.
  */
-export const INTAKE_BASICS_PROMPT = `Only tell jokes;
+export const INTAKE_BASICS_PROMPT = `Only tell jokes
