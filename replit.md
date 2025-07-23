@@ -152,9 +152,9 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
   - Built separate Stage 2 bot ("intake-context") with specialized prompt for content collection
   - Enhanced stage progression to pass all Stage 1 criteria values and context to Stage 2 bot
   - Fixed conversation continuity - users don't realize they're switching bots during progression
-  - Improved progress tracking to show Stage 1 as completed (6/6) with green checkmark when moving to Stage 2
+  - Updated Stage 1 to collect 5 criteria (5/5) instead of 6 - removed learning objectives for later stage
   - Updated Stage 2 components: removed "Student Work Samples", renamed "Existing Resources" to "Student Facing Resources"
-  - Added drag-and-drop file upload zone in Stage 2 progress sidebar for all file types
+  - Added drag-and-drop file upload zone and dedicated YouTube URL input in Stage 2 progress sidebar
   - Fixed stage collapse behavior - completed stages show green checkmark but collapse when not active
   - System now uses two specialized bots: Stage 1 for basic criteria, Stage 2 for course context and materials
 - July 23, 2025. Implemented two-phase intake criteria collection system to prevent value mismatches

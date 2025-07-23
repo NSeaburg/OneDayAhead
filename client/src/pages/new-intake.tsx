@@ -45,7 +45,6 @@ interface CriteriaState {
   subject: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
   topic: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
   gradeLevel: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
-  learningObjectives: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
 }
 
 const CRITERIA_LABELS = {
@@ -53,8 +52,7 @@ const CRITERIA_LABELS = {
   school: "School Name", 
   subject: "Subject Area",
   topic: "Topic/Unit",
-  gradeLevel: "Grade Level",
-  learningObjectives: "Learning Objectives"
+  gradeLevel: "Grade Level"
 } as const;
 
 function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression }: IntakeChatProps) {
@@ -392,7 +390,6 @@ export default function NewIntake() {
     subject: { detected: false, value: null, confidence: 0, finalValue: null },
     topic: { detected: false, value: null, confidence: 0, finalValue: null },
     gradeLevel: { detected: false, value: null, confidence: 0, finalValue: null },
-    learningObjectives: { detected: false, value: null, confidence: 0, finalValue: null },
   });
   
   const [stages, setStages] = useState<Stage[]>([
@@ -416,12 +413,6 @@ export default function NewIntake() {
           title: "Grade Level",
           completed: false,
           type: "explicit",
-        },
-        {
-          id: "objectives",
-          title: "Learning Objectives",
-          completed: false,
-          type: "bot-assisted",
         },
       ],
     },
@@ -468,7 +459,6 @@ export default function NewIntake() {
         subject: criteria.subject.finalValue || "Not specified",
         topic: criteria.topic.finalValue || "Not specified",
         gradeLevel: criteria.gradeLevel.finalValue || "Not specified",
-        learningObjectives: criteria.learningObjectives.finalValue || "Not specified",
         completionMessage
       };
       
