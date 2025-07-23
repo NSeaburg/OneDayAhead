@@ -431,18 +431,11 @@ export default function NewIntake() {
       description: "What have your students already done in this course?",
       components: [
         {
-          id: "existing-resources",
-          title: "Existing Resources",
+          id: "student-resources",
+          title: "Student Facing Resources",
           completed: false,
           type: "file-upload",
-          note: "PDFs, videos, articles",
-        },
-        {
-          id: "student-work",
-          title: "Student Work Samples",
-          completed: false,
-          type: "file-upload",
-          note: "optional",
+          note: "Drag and drop all file types",
         },
       ],
       hasTestButton: false,
@@ -522,7 +515,7 @@ export default function NewIntake() {
                     ? Object.values(criteria).filter(criterion => criterion.finalValue !== null && criterion.finalValue !== undefined).length
                     : stage.components.filter((c) => c.completed).length;
                   
-                  const isExpanded = isActive || shouldShowAsCompleted;
+                  const isExpanded = isActive;
 
                   return (
                     <div
@@ -618,27 +611,42 @@ export default function NewIntake() {
                       ) : (
                         <div className="space-y-2">
                           {stage.components.map((component) => (
-                            <div
-                              key={component.id}
-                              className="flex items-center gap-2"
-                            >
-                              <div
-                                className={`w-3 h-3 rounded-full ${
-                                  component.completed
-                                    ? "bg-green-500"
-                                    : "bg-gray-300"
-                                }`}
-                              />
-                              <div className="flex-1">
-                                <span className="text-xs text-gray-700">
-                                  {component.title}
-                                </span>
-                                {component.note && (
-                                  <span className="text-xs text-gray-500 ml-1">
-                                    ({component.note})
+                            <div key={component.id} className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`w-3 h-3 rounded-full ${
+                                    component.completed
+                                      ? "bg-green-500"
+                                      : "bg-gray-300"
+                                  }`}
+                                />
+                                <div className="flex-1">
+                                  <span className="text-xs text-gray-700">
+                                    {component.title}
                                   </span>
-                                )}
+                                  {component.note && (
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      ({component.note})
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                              
+                              {/* Add file drop zone for Stage 2 file upload component */}
+                              {stage.id === 2 && component.type === "file-upload" && (
+                                <div className="ml-5 mt-2">
+                                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer">
+                                    <div className="text-center">
+                                      <div className="text-xs text-gray-500 mb-1">
+                                        Drop files here or click to browse
+                                      </div>
+                                      <div className="text-xs text-gray-400">
+                                        PDF, DOC, TXT, images, videos
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>

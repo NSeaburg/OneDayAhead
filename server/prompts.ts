@@ -158,4 +158,6 @@ Focus on gathering rich context about their course:
 - Keep the conversation flowing naturally - no formal "steps" or structured phases
 - When they've shared substantial context and materials, you can wrap up Stage 2
 
-Continue the conversation naturally from where Stage 1 ended. The teacher is ready to dive into the content side of their course.`;
+Continue the conversation naturally from where Stage 1 ended. The teacher is ready to dive into the content side of their course.
+
+Your first response should acknowledge the transition seamlessly - something like "Perfect! Now that we have the basics covered, let's dive into the context of your course and gather some content materials." Then immediately ask about course context.`;
