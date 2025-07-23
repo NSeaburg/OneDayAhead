@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, Check, Circle, Send, User } from "lucide-react";
+import { Bot, Check, Circle, Send, User, Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,19 @@ interface IntakeChatProps {
   onComponentComplete: (componentId: string) => void;
   onCriteriaUpdate: (updater: (prev: CriteriaState) => CriteriaState) => void;
   onStageProgression: (completionMessage: string) => void;
+  uploadedFiles: UploadedFile[];
+  onFileUpload: (file: UploadedFile) => void;
+  onFileRemove: (fileId: string) => void;
+}
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  extractedContent?: string;
+  interpretation?: string;
+  processingStatus: 'processing' | 'completed' | 'error';
 }
 
 interface Message {
@@ -55,7 +68,7 @@ const CRITERIA_LABELS = {
   gradeLevel: "Grade Level"
 } as const;
 
-function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression }: IntakeChatProps) {
+function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression, uploadedFiles, onFileUpload, onFileRemove }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
     if (botType === "intake-context" && stageContext) {
@@ -88,6 +101,8 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
   const [collectedData, setCollectedData] = useState<Record<string, string>>(
     {},
   );
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [processingYoutube, setProcessingYoutube] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Handle bot type changes (when switching stages) - preserve conversation
@@ -98,6 +113,147 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
       console.log("Stage 2 bot activated - preserving conversation continuity");
     }
   }, [botType]);
+
+  // Handle file uploads and processing
+  const handleFileUpload = async (files: FileList) => {
+    for (const file of Array.from(files)) {
+      const uploadedFile: UploadedFile = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        processingStatus: 'processing'
+      };
+
+      onFileUpload(uploadedFile);
+
+      // Process the file based on type
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        let endpoint = '';
+        if (file.type.includes('pdf')) {
+          endpoint = '/api/intake/extract-pdf';
+        } else if (file.type.includes('text')) {
+          endpoint = '/api/intake/extract-text';
+        } else {
+          // For other file types, we'll just store basic info
+          onFileUpload({
+            ...uploadedFile,
+            processingStatus: 'completed',
+            extractedContent: `File uploaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
+            interpretation: 'File uploaded successfully. Content will be available for the teaching bot to reference.'
+          });
+          continue;
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          onFileUpload({
+            ...uploadedFile,
+            processingStatus: 'completed',
+            extractedContent: result.text,
+            interpretation: `Extracted text from ${file.name}. This content appears to be educational material that can be referenced by the AI assistant.`
+          });
+
+          // Send file interpretation to the bot
+          if (botType === "intake-context") {
+            const interpretationMessage: Message = {
+              id: Date.now().toString(),
+              content: `I've processed your uploaded file "${file.name}". Here's what I found:\n\n**File Type:** ${file.type}\n**Content Preview:** ${result.text.substring(0, 200)}...\n\nIs this the content you intended to upload? Should I use this material when building your learning experience?`,
+              isBot: true,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, interpretationMessage]);
+          }
+        } else {
+          onFileUpload({
+            ...uploadedFile,
+            processingStatus: 'error',
+            interpretation: 'Failed to process file content.'
+          });
+        }
+      } catch (error) {
+        onFileUpload({
+          ...uploadedFile,
+          processingStatus: 'error',
+          interpretation: 'Error processing file.'
+        });
+      }
+    }
+  };
+
+  // Handle YouTube URL extraction
+  const handleYoutubeExtract = async () => {
+    if (!youtubeUrl.trim() || processingYoutube) return;
+
+    setProcessingYoutube(true);
+    
+    try {
+      const response = await fetch('/api/intake/extract-youtube', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: youtubeUrl }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        const youtubeFile: UploadedFile = {
+          id: Date.now().toString(),
+          name: result.title || 'YouTube Video',
+          type: 'video/youtube',
+          size: 0,
+          processingStatus: 'completed',
+          extractedContent: result.transcript,
+          interpretation: `Extracted transcript from YouTube video: "${result.title}". This appears to be educational content that students will reference in their learning.`
+        };
+
+        onFileUpload(youtubeFile);
+
+        // Send interpretation to bot
+        if (botType === "intake-context") {
+          const interpretationMessage: Message = {
+            id: Date.now().toString(),
+            content: `I've extracted the transcript from your YouTube video "${result.title}".\n\n**Video Content:** This appears to be educational material about your topic.\n**Transcript Length:** ${result.transcript.length} characters\n\nIs this the video content your students will be learning from? Should I include this in the AI learning experience?`,
+            isBot: true,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, interpretationMessage]);
+        }
+
+        setYoutubeUrl("");
+      } else {
+        // Handle extraction error
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          content: `I had trouble extracting the transcript from that YouTube URL. Could you check the URL or try a different video? The URL should be in the format: https://www.youtube.com/watch?v=...`,
+          isBot: true,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: `I encountered an error processing that YouTube URL. Please try again or check if the URL is correct.`,
+        isBot: true,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+
+    setProcessingYoutube(false);
+  };
 
   // Auto-scroll to bottom when messages change (same as successful bots)
   useEffect(() => {
@@ -384,6 +540,7 @@ export default function NewIntake() {
   const [currentStageId, setCurrentStageId] = useState<number>(1);
   const [currentBotType, setCurrentBotType] = useState<string>("intake-basics");
   const [stageContext, setStageContext] = useState<Record<string, any>>({});
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: { detected: false, value: null, confidence: 0, finalValue: null },
     school: { detected: false, value: null, confidence: 0, finalValue: null },
@@ -447,6 +604,25 @@ export default function NewIntake() {
 
   const handleCriteriaUpdate = (updater: (prev: CriteriaState) => CriteriaState) => {
     setCriteria(updater);
+  };
+
+  const handleFileUpload = (file: UploadedFile) => {
+    setUploadedFiles(prev => {
+      const existingIndex = prev.findIndex(f => f.id === file.id);
+      if (existingIndex >= 0) {
+        // Update existing file
+        const updated = [...prev];
+        updated[existingIndex] = file;
+        return updated;
+      } else {
+        // Add new file
+        return [...prev, file];
+      }
+    });
+  };
+
+  const handleFileRemove = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
   const handleStageProgression = (completionMessage: string) => {
@@ -625,16 +801,60 @@ export default function NewIntake() {
                               {/* Add file drop zone and YouTube URL input for Stage 2 file upload component */}
                               {stage.id === 2 && component.type === "file-upload" && (
                                 <div className="ml-5 mt-2 space-y-3">
-                                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer">
+                                  <input
+                                    type="file"
+                                    id="file-upload"
+                                    multiple
+                                    className="hidden"
+                                    onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                                    accept=".pdf,.txt,.doc,.docx,.png,.jpg,.jpeg"
+                                  />
+                                  <label
+                                    htmlFor="file-upload"
+                                    className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer block"
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      const files = e.dataTransfer.files;
+                                      if (files.length > 0) {
+                                        handleFileUpload(files);
+                                      }
+                                    }}
+                                    onDragOver={(e) => e.preventDefault()}
+                                  >
                                     <div className="text-center">
+                                      <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
                                       <div className="text-xs text-gray-500 mb-1">
                                         Drop files here or click to browse
                                       </div>
                                       <div className="text-xs text-gray-400">
-                                        PDF, DOC, TXT, images, videos
+                                        PDF, DOC, TXT, images
                                       </div>
                                     </div>
-                                  </div>
+                                  </label>
+                                  
+                                  {/* Show uploaded files */}
+                                  {uploadedFiles.length > 0 && (
+                                    <div className="space-y-1">
+                                      {uploadedFiles.map((file) => (
+                                        <div key={file.id} className="flex items-center gap-2 text-xs bg-gray-100 p-2 rounded">
+                                          <div className="flex-1">
+                                            <div className="font-medium">{file.name}</div>
+                                            <div className="text-gray-500">
+                                              {file.processingStatus === 'processing' && 'Processing...'}
+                                              {file.processingStatus === 'completed' && '✓ Processed'}
+                                              {file.processingStatus === 'error' && '⚠ Error'}
+                                            </div>
+                                          </div>
+                                          <button
+                                            onClick={() => onFileRemove(file.id)}
+                                            className="text-gray-400 hover:text-red-500"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                   
                                   <div className="space-y-2">
                                     <div className="text-xs text-gray-600 font-medium">
@@ -643,11 +863,17 @@ export default function NewIntake() {
                                     <div className="flex gap-2">
                                       <input
                                         type="url"
+                                        value={youtubeUrl}
+                                        onChange={(e) => setYoutubeUrl(e.target.value)}
                                         placeholder="Paste YouTube URL here..."
                                         className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                       />
-                                      <button className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                                        Extract
+                                      <button
+                                        onClick={handleYoutubeExtract}
+                                        disabled={!youtubeUrl.trim() || processingYoutube}
+                                        className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        {processingYoutube ? 'Processing...' : 'Extract'}
                                       </button>
                                     </div>
                                   </div>
@@ -681,6 +907,9 @@ export default function NewIntake() {
             onComponentComplete={handleComponentComplete}
             onCriteriaUpdate={handleCriteriaUpdate}
             onStageProgression={handleStageProgression}
+            uploadedFiles={uploadedFiles}
+            onFileUpload={handleFileUpload}
+            onFileRemove={handleFileRemove}
           />
         </div>
       </div>
