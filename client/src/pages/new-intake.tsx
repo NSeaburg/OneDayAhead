@@ -204,11 +204,8 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
         content: msg.content,
       }));
 
-      // Check if this is a summary message from the intake bot
-      const isSummary = botResponse.toLowerCase().includes("let me summarize") || 
-                       botResponse.toLowerCase().includes("here's what i understand") ||
-                       botResponse.toLowerCase().includes("to recap") ||
-                       botResponse.toLowerCase().includes("based on our conversation");
+      // Check if this is a summary message using the specific trigger phrase
+      const isSummary = botResponse.includes("Ok! Here's what I've got so far");
 
       const response = await fetch("/api/intake/analyze", {
         method: "POST",
