@@ -27,6 +27,7 @@ interface IntakeChatProps {
   stage: Stage;
   onComponentComplete: (componentId: string) => void;
   onCriteriaUpdate: (updater: (prev: CriteriaState) => CriteriaState) => void;
+  onStageProgression: (completionMessage: string) => void;
 }
 
 interface Message {
@@ -54,7 +55,7 @@ const CRITERIA_LABELS = {
   learningObjectives: "Learning Objectives"
 } as const;
 
-function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChatProps) {
+function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate, onStageProgression }: IntakeChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -175,6 +176,9 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
 
         // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
+        
+        // Check for stage progression
+        onStageProgression(botResponse);
       }
     } catch (error) {
       console.error("Chat error:", error);
@@ -349,6 +353,7 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
 }
 
 export default function NewIntake() {
+  const [currentStageId, setCurrentStageId] = useState<number>(1);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: { detected: false, value: null, confidence: 0, finalValue: null },
     school: { detected: false, value: null, confidence: 0, finalValue: null },
@@ -428,7 +433,14 @@ export default function NewIntake() {
     setCriteria(updater);
   };
 
-  const currentStage = stages[0]; // For now, just show Stage 1
+  const handleStageProgression = (completionMessage: string) => {
+    // Check if the bot is moving to the next stage
+    if (completionMessage.includes("Great! Let's move on to understanding the content of your course.")) {
+      setCurrentStageId(2);
+    }
+  };
+
+  const currentStage = stages.find(stage => stage.id === currentStageId) || stages[0];
 
   return (
     <div className="h-screen p-2 md:p-4 flex flex-col bg-gray-50">
@@ -454,15 +466,16 @@ export default function NewIntake() {
 
             <div className="space-y-4">
                 {stages.map((stage, index) => {
-                  const isActive = index === 0; // For now, only first stage is active
+                  const isActive = stage.id === currentStageId;
                   const completedCount = stage.components.filter(
                     (c) => c.completed,
                   ).length;
+                  const isExpanded = isActive;
 
                   return (
                     <div
                       key={stage.id}
-                      className={`border rounded-lg p-3 ${isActive ? "border-blue-200 bg-blue-50" : "border-gray-200"}`}
+                      className={`border rounded-lg p-3 transition-all duration-300 ${isActive ? "border-blue-200 bg-blue-50" : "border-gray-200"}`}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <span
@@ -481,12 +494,17 @@ export default function NewIntake() {
                           </p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-600 mb-3">
-                        {stage.description}
-                      </p>
+                      {isExpanded && (
+                        <p className="text-xs text-gray-600 mb-3">
+                          {stage.description}
+                        </p>
+                      )}
 
-                      {/* For Stage 1, show dynamic progress criteria */}
-                      {stage.id === 1 ? (
+                      {/* Expanded content - only show if stage is active */}
+                      {isExpanded && (
+                        <>
+                          {/* For Stage 1, show dynamic progress criteria */}
+                          {stage.id === 1 ? (
                         <div className="space-y-2">
                           {Object.entries(CRITERIA_LABELS).map(([key, label]) => {
                             const criterion = criteria[key as keyof CriteriaState];
@@ -561,10 +579,12 @@ export default function NewIntake() {
                         </div>
                       )}
 
-                      {stage.hasTestButton && (
-                        <Button size="sm" className="w-full mt-3">
-                          {stage.testButtonText || "Test"}
-                        </Button>
+                          {stage.hasTestButton && (
+                            <Button size="sm" className="w-full mt-3">
+                              {stage.testButtonText || "Test"}
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   );
@@ -579,6 +599,7 @@ export default function NewIntake() {
             stage={currentStage}
             onComponentComplete={handleComponentComplete}
             onCriteriaUpdate={handleCriteriaUpdate}
+            onStageProgression={handleStageProgression}
           />
         </div>
       </div>
