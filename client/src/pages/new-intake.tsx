@@ -632,9 +632,9 @@ export default function NewIntake() {
                                 </div>
                               </div>
                               
-                              {/* Add file drop zone for Stage 2 file upload component */}
+                              {/* Add file drop zone and YouTube URL input for Stage 2 file upload component */}
                               {stage.id === 2 && component.type === "file-upload" && (
-                                <div className="ml-5 mt-2">
+                                <div className="ml-5 mt-2 space-y-3">
                                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer">
                                     <div className="text-center">
                                       <div className="text-xs text-gray-500 mb-1">
@@ -643,6 +643,22 @@ export default function NewIntake() {
                                       <div className="text-xs text-gray-400">
                                         PDF, DOC, TXT, images, videos
                                       </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="space-y-2">
+                                    <div className="text-xs text-gray-600 font-medium">
+                                      YouTube Video URL
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <input
+                                        type="url"
+                                        placeholder="Paste YouTube URL here..."
+                                        className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                      />
+                                      <button className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                        Extract
+                                      </button>
                                     </div>
                                   </div>
                                 </div>
