@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 22, 2025. Fixed critical UI issues in intake interface and improved user experience
+  - Fixed bot messages disappearing bug by properly converting streaming message IDs to permanent IDs
+  - Improved chat interface to use fixed-height scrollable container matching successful Reggie bot structure
+  - Replaced "U" letter avatar with person outline icon (User from lucide-react) for better visual consistency
+  - Applied same CSS structure as AssessmentBotScreen: h-screen with flex-col, proper min-h-0 for scrollable areas
+  - Enhanced chat bubble styling with proper minimum width for short responses like "Yep"
+  - Maintained all animated checkmark functionality while fixing layout issues
+  - Interface now extends to full page height without gaps at bottom
 - July 22, 2025. Redesigned Stage 1 and Stage 2 requirements based on explicit user feedback
   - Stage 1 "The Basics": Now collects school district (with N/A option), subject, topic, grade level, and learning objectives - all explicit data collection
   - Stage 2 "Context Collection": Focuses on course context and file processing for content mining

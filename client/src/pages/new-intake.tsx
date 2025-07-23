@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, Check, Circle } from "lucide-react";
+import { Bot, Check, Circle, Send, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ interface Component {
 interface IntakeChatProps {
   stage: Stage;
   onComponentComplete: (componentId: string) => void;
-  onCriteriaUpdate: (criteria: CriteriaState) => void;
+  onCriteriaUpdate: (updater: (prev: CriteriaState) => CriteriaState) => void;
 }
 
 interface Message {
@@ -219,7 +219,7 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
         
         // Update criteria state with analysis results
         if (analysisResult.criteria) {
-          onCriteriaUpdate(prev => {
+          onCriteriaUpdate((prev: CriteriaState) => {
             const updated = { ...prev };
             Object.keys(analysisResult.criteria).forEach((key) => {
               const criterion = analysisResult.criteria[key];
@@ -267,7 +267,7 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
                 </div>
               ) : (
                 <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
-                  <span className="text-sm font-medium">U</span>
+                  <User className="h-4 w-4" />
                 </div>
               )}
               <span className="text-xs text-gray-500 mt-1">
