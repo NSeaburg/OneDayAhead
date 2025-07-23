@@ -77,7 +77,14 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
     }
   };
 
-  const [messages, setMessages] = useState<Message[]>([getInitialMessage()]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      content: "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
+      isBot: true,
+      timestamp: new Date(),
+    },
+  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [collectedData, setCollectedData] = useState<Record<string, string>>(
@@ -85,9 +92,13 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Handle bot type changes (when switching stages)
+  // Handle bot type changes (when switching stages) - preserve conversation
   useEffect(() => {
-    setMessages([getInitialMessage()]);
+    if (botType === "intake-context" && stageContext) {
+      // Don't reset messages - the Stage 2 bot should continue seamlessly
+      // The stage progression message already indicates the transition
+      console.log("Stage 2 bot activated - preserving conversation continuity");
+    }
   }, [botType]);
 
   // Auto-scroll to bottom when messages change (same as successful bots)
@@ -502,25 +513,44 @@ export default function NewIntake() {
             <div className="space-y-4">
                 {stages.map((stage, index) => {
                   const isActive = stage.id === currentStageId;
-                  const completedCount = stage.components.filter(
-                    (c) => c.completed,
-                  ).length;
-                  const isExpanded = isActive;
+                  
+                  // For completed stages (when we've moved beyond them), show them as fully completed
+                  const shouldShowAsCompleted = currentStageId > stage.id;
+                  
+                  // Calculate completion count differently for Stage 1 (criteria-based) vs other stages
+                  const completedCount = stage.id === 1 
+                    ? Object.values(criteria).filter(criterion => criterion.finalValue !== null && criterion.finalValue !== undefined).length
+                    : stage.components.filter((c) => c.completed).length;
+                  
+                  const isExpanded = isActive || shouldShowAsCompleted;
 
                   return (
                     <div
                       key={stage.id}
-                      className={`border rounded-lg p-3 transition-all duration-300 ${isActive ? "border-blue-200 bg-blue-50" : "border-gray-200"}`}
+                      className={`border rounded-lg p-3 transition-all duration-300 cursor-pointer ${
+                        isActive 
+                          ? "border-blue-200 bg-blue-50" 
+                          : shouldShowAsCompleted 
+                            ? "border-green-200 bg-green-50"
+                            : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => setCurrentStageId(stage.id)}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <span
                           className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
                             isActive
                               ? "bg-blue-600 text-white"
-                              : "bg-gray-200 text-gray-600"
+                              : shouldShowAsCompleted
+                                ? "bg-green-600 text-white"
+                                : "bg-gray-200 text-gray-600"
                           }`}
                         >
-                          {stage.id}
+                          {shouldShowAsCompleted ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            stage.id
+                          )}
                         </span>
                         <div className="flex-1">
                           <h3 className="font-medium text-sm">{stage.title}</h3>
