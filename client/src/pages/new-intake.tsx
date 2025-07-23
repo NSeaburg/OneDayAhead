@@ -5,6 +5,7 @@ import { Bot, Check, Circle, Send, User, Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 interface Stage {
   id: number;
@@ -479,9 +480,24 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
                 ? 'bg-gray-100 border border-gray-200' 
                 : 'bg-blue-600 text-white border border-blue-600'
             } rounded-lg p-3 text-gray-700 ${message.isBot ? '' : 'text-white'} inline-block w-fit min-w-[60px]`}>
-              <div className="whitespace-pre-wrap">
-                {message.content}
-              </div>
+              {message.isBot ? (
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <div className="mb-2 last:mb-0">{children}</div>,
+                      strong: ({ children }) => <strong className="font-bold text-gray-900">{children}</strong>,
+                      em: ({ children }) => <em className="italic">{children}</em>,
+                      br: () => <br />,
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap">
+                  {message.content}
+                </div>
+              )}
             </div>
           </div>
         ))}
