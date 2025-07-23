@@ -148,6 +148,13 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 23, 2025. Implemented two-phase intake criteria collection system to prevent value mismatches
+  - Modified CriteriaState interface to include finalValue property separate from detected/value
+  - Updated intake analysis flow: green checkmarks appear immediately when criteria mentioned
+  - Values only display after intake bot provides summary and program bot analyzes it
+  - Enhanced /api/intake/analyze endpoint with isSummary flag for different analysis modes
+  - Prevents jarring last-second value changes by holding back display until summary confirmation
+  - Program bot (Claude analysis) now handles two distinct phases: detection-only vs summary-extraction
 - July 22, 2025. Fixed critical UI issues in intake interface and improved user experience
   - Fixed bot messages disappearing bug by properly converting streaming message IDs to permanent IDs
   - Improved chat interface to use fixed-height scrollable container matching successful Reggie bot structure

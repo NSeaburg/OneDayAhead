@@ -3362,14 +3362,20 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
   // Intake analysis endpoint for real-time criteria detection
   app.post("/api/intake/analyze", async (req, res) => {
     try {
-      const { botResponse, conversationHistory } = req.body;
+      const { botResponse, conversationHistory, isSummary } = req.body;
 
       if (!botResponse) {
         return res.status(400).json({ error: "Bot response is required" });
       }
 
-      // Create analysis prompt for Claude
-      const analysisPrompt = `Analyze this conversation to extract specific intake criteria. Return a JSON object indicating which pieces of information have been confidently identified.
+      // Create analysis prompt for Claude based on context
+      const analysisPrompt = isSummary ? 
+        `SUMMARY ANALYSIS: Extract FINAL values from the intake bot's summary.` :
+        `DETECTION ONLY: Detect mentions for green checkmarks, don't extract values yet.`;
+      
+      const fullPrompt = `${analysisPrompt}
+      
+Analyze this conversation to extract specific intake criteria. Return a JSON object indicating which pieces of information have been confidently identified.
 
 Criteria to detect:
 1. schoolDistrict - School district or organization name (can be "N/A")
@@ -3407,7 +3413,7 @@ ${JSON.stringify(conversationHistory)}`;
         messages: [
           {
             role: "user",
-            content: analysisPrompt,
+            content: fullPrompt,
           },
         ],
       });

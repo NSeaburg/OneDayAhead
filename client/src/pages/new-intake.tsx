@@ -37,12 +37,12 @@ interface Message {
 }
 
 interface CriteriaState {
-  schoolDistrict: { detected: boolean; value: string | null; confidence: number };
-  school: { detected: boolean; value: string | null; confidence: number };
-  subject: { detected: boolean; value: string | null; confidence: number };
-  topic: { detected: boolean; value: string | null; confidence: number };
-  gradeLevel: { detected: boolean; value: string | null; confidence: number };
-  learningObjectives: { detected: boolean; value: string | null; confidence: number };
+  schoolDistrict: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
+  school: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
+  subject: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
+  topic: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
+  gradeLevel: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
+  learningObjectives: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
 }
 
 const CRITERIA_LABELS = {
@@ -204,6 +204,12 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
         content: msg.content,
       }));
 
+      // Check if this is a summary message from the intake bot
+      const isSummary = botResponse.toLowerCase().includes("let me summarize") || 
+                       botResponse.toLowerCase().includes("here's what i understand") ||
+                       botResponse.toLowerCase().includes("to recap") ||
+                       botResponse.toLowerCase().includes("based on our conversation");
+
       const response = await fetch("/api/intake/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -211,6 +217,7 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
         body: JSON.stringify({
           botResponse,
           conversationHistory,
+          isSummary,
         }),
       });
 
@@ -224,7 +231,15 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
             Object.keys(analysisResult.criteria).forEach((key) => {
               const criterion = analysisResult.criteria[key];
               if (criterion.detected && criterion.confidence > 0.7) {
-                updated[key as keyof CriteriaState] = criterion;
+                // Always update detected status for green checkmarks
+                updated[key as keyof CriteriaState] = {
+                  ...updated[key as keyof CriteriaState],
+                  detected: true,
+                  confidence: criterion.confidence,
+                  value: criterion.value, // Keep this for internal tracking
+                  // Only set finalValue if this is a summary or if we already have finalValue
+                  finalValue: isSummary ? criterion.value : (updated[key as keyof CriteriaState]?.finalValue || null)
+                };
               }
             });
             return updated;
@@ -338,12 +353,12 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
 
 export default function NewIntake() {
   const [criteria, setCriteria] = useState<CriteriaState>({
-    schoolDistrict: { detected: false, value: null, confidence: 0 },
-    school: { detected: false, value: null, confidence: 0 },
-    subject: { detected: false, value: null, confidence: 0 },
-    topic: { detected: false, value: null, confidence: 0 },
-    gradeLevel: { detected: false, value: null, confidence: 0 },
-    learningObjectives: { detected: false, value: null, confidence: 0 },
+    schoolDistrict: { detected: false, value: null, confidence: 0, finalValue: null },
+    school: { detected: false, value: null, confidence: 0, finalValue: null },
+    subject: { detected: false, value: null, confidence: 0, finalValue: null },
+    topic: { detected: false, value: null, confidence: 0, finalValue: null },
+    gradeLevel: { detected: false, value: null, confidence: 0, finalValue: null },
+    learningObjectives: { detected: false, value: null, confidence: 0, finalValue: null },
   });
   
   const [stages, setStages] = useState<Stage[]>([
@@ -499,9 +514,9 @@ export default function NewIntake() {
                                   )}>
                                     {label}
                                   </span>
-                                  {criterion.detected && criterion.value && (
+                                  {criterion.detected && criterion.finalValue && (
                                     <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
-                                      {criterion.value}
+                                      {criterion.finalValue}
                                     </div>
                                   )}
                                 </div>
