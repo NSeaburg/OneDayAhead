@@ -158,22 +158,39 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate }: IntakeChat
         }
       }
 
-      // Trigger background analysis after bot response is complete
+      // Replace streaming message with final message with permanent ID
       if (botResponse) {
+        setMessages((prev) => {
+          const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
+          return [
+            ...withoutStreaming,
+            {
+              id: Date.now().toString(),
+              content: botResponse,
+              isBot: true,
+              timestamp: new Date(),
+            },
+          ];
+        });
+
+        // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
       }
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 2).toString(),
-          content:
-            "I'm sorry, I'm having trouble processing your response. Could you try again?",
-          isBot: true,
-          timestamp: new Date(),
-        },
-      ]);
+      setMessages((prev) => {
+        const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
+        return [
+          ...withoutStreaming,
+          {
+            id: Date.now().toString(),
+            content:
+              "I'm sorry, I'm having trouble processing your response. Could you try again?",
+            isBot: true,
+            timestamp: new Date(),
+          },
+        ];
+      });
     }
 
     setIsLoading(false);
