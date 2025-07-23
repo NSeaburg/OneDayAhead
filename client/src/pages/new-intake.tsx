@@ -513,7 +513,18 @@ export default function NewIntake() {
                                   </span>
                                   {criterion.detected && criterion.finalValue && (
                                     <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
-                                      {criterion.finalValue}
+                                      {key === 'learningObjectives' ? (
+                                        <div className="space-y-1">
+                                          {criterion.finalValue.split(/\d+\./).filter(Boolean).map((objective: string, index: number) => (
+                                            <div key={index} className="flex">
+                                              <span className="mr-1">{index + 1}.</span>
+                                              <span>{objective.trim()}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        criterion.finalValue
+                                      )}
                                     </div>
                                   )}
                                 </div>
