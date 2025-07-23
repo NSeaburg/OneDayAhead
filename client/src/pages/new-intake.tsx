@@ -419,18 +419,28 @@ export default function NewIntake() {
   const currentStage = stages[0]; // For now, just show Stage 1
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-      <div className="max-w-7xl mx-auto px-4 py-8 flex-1 flex flex-col">
-        <div className="flex gap-8 flex-1">
-          {/* Left Sidebar */}
-          <div className="w-80 space-y-4">
-            <Card className="p-4 bg-white">
-              <h2 className="font-semibold text-lg mb-2">Content Creator</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Uplevel your Course with AI
-              </p>
+    <div className="h-screen p-2 md:p-4 flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="mb-4 text-center flex-shrink-0">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          Build Your AI Learning Experience
+        </h1>
+        <p className="mt-2 text-sm md:text-lg text-gray-600">
+          We'll build this together through conversation - it takes about 10 minutes
+        </p>
+      </div>
 
-              <div className="space-y-4">
+      {/* Main content area with sidebar and chat */}
+      <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 min-h-0">
+        {/* Left Sidebar */}
+        <div className="w-full md:w-1/3 bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 overflow-y-auto">
+          <div>
+            <h2 className="font-semibold text-lg mb-2">Content Creator</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Uplevel your Course with AI
+            </p>
+
+            <div className="space-y-4">
                 {stages.map((stage, index) => {
                   const isActive = index === 0; // For now, only first stage is active
                   const completedCount = stage.components.filter(
@@ -482,15 +492,15 @@ export default function NewIntake() {
                                     <Circle className="w-2 h-2" />
                                   )}
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                   <span className={cn(
-                                    "text-xs transition-colors",
+                                    "text-xs transition-colors break-words",
                                     criterion.detected ? "text-green-700 font-medium" : "text-gray-700"
                                   )}>
                                     {label}
                                   </span>
                                   {criterion.detected && criterion.value && (
-                                    <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 truncate">
+                                    <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
                                       {criterion.value}
                                     </div>
                                   )}
@@ -536,27 +546,17 @@ export default function NewIntake() {
                     </div>
                   );
                 })}
-              </div>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col">
-            <Card className="p-6 bg-white mb-6 flex-shrink-0">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Stage {currentStage.id}: {currentStage.title}
-              </h1>
-              <p className="text-gray-600">{currentStage.description}</p>
-            </Card>
-
-            <div className="flex-1 min-h-0">
-              <IntakeChat
-                stage={currentStage}
-                onComponentComplete={handleComponentComplete}
-                onCriteriaUpdate={handleCriteriaUpdate}
-              />
             </div>
           </div>
+        </div>
+
+        {/* Right column - Chat Interface */}
+        <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
+          <IntakeChat
+            stage={currentStage}
+            onComponentComplete={handleComponentComplete}
+            onCriteriaUpdate={handleCriteriaUpdate}
+          />
         </div>
       </div>
     </div>
