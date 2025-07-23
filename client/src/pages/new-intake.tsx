@@ -25,6 +25,8 @@ interface Component {
 
 interface IntakeChatProps {
   stage: Stage;
+  botType: string;
+  stageContext: Record<string, any>;
   onComponentComplete: (componentId: string) => void;
   onCriteriaUpdate: (updater: (prev: CriteriaState) => CriteriaState) => void;
   onStageProgression: (completionMessage: string) => void;
@@ -55,22 +57,38 @@ const CRITERIA_LABELS = {
   learningObjectives: "Learning Objectives"
 } as const;
 
-function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate, onStageProgression }: IntakeChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content:
-        "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
-      isBot: true,
-      timestamp: new Date(),
-    },
-  ]);
+function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression }: IntakeChatProps) {
+  // Generate initial message based on bot type and context
+  const getInitialMessage = (): Message => {
+    if (botType === "intake-context" && stageContext) {
+      return {
+        id: "1",
+        content: "Perfect! Now that we have the basics covered, let's dive into the context of your course and gather some content materials.\n\nI'd love to understand how this topic fits into your broader curriculum. What have your students learned before this unit, and what comes after?",
+        isBot: true,
+        timestamp: new Date(),
+      };
+    } else {
+      return {
+        id: "1",
+        content: "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
+        isBot: true,
+        timestamp: new Date(),
+      };
+    }
+  };
+
+  const [messages, setMessages] = useState<Message[]>([getInitialMessage()]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [collectedData, setCollectedData] = useState<Record<string, string>>(
     {},
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Handle bot type changes (when switching stages)
+  useEffect(() => {
+    setMessages([getInitialMessage()]);
+  }, [botType]);
 
   // Auto-scroll to bottom when messages change (same as successful bots)
   useEffect(() => {
@@ -108,7 +126,8 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate, onStageProgr
             })),
             { role: "user", content: userMessage.content },
           ],
-          assistantType: "intake-basics",
+          assistantType: botType,
+          stageContext: stageContext,
         }),
       });
 
@@ -354,6 +373,8 @@ function IntakeChat({ stage, onComponentComplete, onCriteriaUpdate, onStageProgr
 
 export default function NewIntake() {
   const [currentStageId, setCurrentStageId] = useState<number>(1);
+  const [currentBotType, setCurrentBotType] = useState<string>("intake-basics");
+  const [stageContext, setStageContext] = useState<Record<string, any>>({});
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: { detected: false, value: null, confidence: 0, finalValue: null },
     school: { detected: false, value: null, confidence: 0, finalValue: null },
@@ -436,7 +457,21 @@ export default function NewIntake() {
   const handleStageProgression = (completionMessage: string) => {
     // Check if the bot is moving to the next stage
     if (completionMessage.includes("Great! Let's move on to understanding the content of your course.")) {
+      // Prepare context from Stage 1 for Stage 2
+      const stage1Context = {
+        schoolDistrict: criteria.schoolDistrict.finalValue || "Not specified",
+        school: criteria.school.finalValue || "Not specified", 
+        subject: criteria.subject.finalValue || "Not specified",
+        topic: criteria.topic.finalValue || "Not specified",
+        gradeLevel: criteria.gradeLevel.finalValue || "Not specified",
+        learningObjectives: criteria.learningObjectives.finalValue || "Not specified",
+        completionMessage
+      };
+      
+      // Switch to Stage 2
       setCurrentStageId(2);
+      setCurrentBotType("intake-context");
+      setStageContext(stage1Context);
     }
   };
 
@@ -597,6 +632,8 @@ export default function NewIntake() {
         <div className="w-full md:w-2/3 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col min-h-0">
           <IntakeChat
             stage={currentStage}
+            botType={currentBotType}
+            stageContext={stageContext}
             onComponentComplete={handleComponentComplete}
             onCriteriaUpdate={handleCriteriaUpdate}
             onStageProgression={handleStageProgression}

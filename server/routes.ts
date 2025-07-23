@@ -47,6 +47,7 @@ import {
   TEACHING_ASSISTANT_FALLBACK_PROMPT,
   ASSESSMENT_EVALUATION_PROMPT,
   INTAKE_BASICS_PROMPT,
+  INTAKE_CONTEXT_PROMPT,
 } from "./prompts";
 
 import { contentManager } from "./contentManager";
@@ -3243,7 +3244,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
   // Content creation assistant chat endpoint
   app.post("/api/claude/chat", async (req, res) => {
     try {
-      const { messages, assistantType } = req.body;
+      const { messages, assistantType, stageContext } = req.body;
 
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({
@@ -3274,11 +3275,33 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       
       // Debug logging to see what's happening
       console.log(`🔍 DEBUG Claude Chat - assistantType: "${assistantType}"`);
-      console.log(`🔍 DEBUG Claude Chat - INTAKE_BASICS_PROMPT: "${INTAKE_BASICS_PROMPT}"`);
+      console.log(`🔍 DEBUG Claude Chat - stageContext:`, stageContext);
       
       if (assistantType === "intake-basics") {
         systemPrompt = INTAKE_BASICS_PROMPT;
-        console.log(`✅ DEBUG Claude Chat - Using INTAKE_BASICS_PROMPT: "${systemPrompt}"`);
+        console.log(`✅ DEBUG Claude Chat - Using INTAKE_BASICS_PROMPT`);
+      } else if (assistantType === "intake-context") {
+        // Build context-aware prompt for Stage 2
+        let contextPrompt = INTAKE_CONTEXT_PROMPT;
+        
+        if (stageContext) {
+          const contextInfo = `
+
+## Stage 1 Context From Previous Conversation:
+- School District: ${stageContext.schoolDistrict}
+- School: ${stageContext.school}
+- Subject: ${stageContext.subject}
+- Topic: ${stageContext.topic}
+- Grade Level: ${stageContext.gradeLevel}
+- Learning Objectives: ${stageContext.learningObjectives}
+
+Continue seamlessly from where Stage 1 left off. The teacher is now ready to provide course context and content materials.`;
+          
+          contextPrompt = INTAKE_CONTEXT_PROMPT + contextInfo;
+        }
+        
+        systemPrompt = contextPrompt;
+        console.log(`✅ DEBUG Claude Chat - Using INTAKE_CONTEXT_PROMPT with context`);
       }
       
       // Final debug log to see what system prompt is actually being sent to Claude
