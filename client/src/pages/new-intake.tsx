@@ -572,6 +572,81 @@ export default function NewIntake() {
     });
   };
 
+  // Handle native file uploads from input/drag-drop
+  const handleNativeFileUpload = async (files: FileList) => {
+    for (const file of Array.from(files)) {
+      const uploadedFile: UploadedFile = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        processingStatus: 'processing'
+      };
+
+      handleFileUpload(uploadedFile);
+
+      // Process the file based on type
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        let endpoint = '';
+        if (file.type.includes('pdf')) {
+          endpoint = '/api/intake/extract-pdf';
+        } else if (file.type.includes('text')) {
+          endpoint = '/api/intake/extract-text';
+        } else {
+          // For other file types, just store basic info
+          handleFileUpload({
+            ...uploadedFile,
+            processingStatus: 'completed',
+            extractedContent: `File uploaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
+            interpretation: '✅ File uploaded successfully. Content will be available for the teaching bot to reference.'
+          });
+          continue;
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.status === 429) {
+          // Rate limited
+          handleFileUpload({
+            ...uploadedFile,
+            processingStatus: 'error',
+            interpretation: '⏱️ Too many requests - please wait a moment and try again.'
+          });
+          continue;
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          handleFileUpload({
+            ...uploadedFile,
+            processingStatus: 'completed',
+            extractedContent: result.text,
+            interpretation: `✅ Extracted text from ${file.name}. This content is now available for the AI assistant to reference.`
+          });
+        } else {
+          handleFileUpload({
+            ...uploadedFile,
+            processingStatus: 'error',
+            interpretation: '❌ Failed to process file content.'
+          });
+        }
+      } catch (error) {
+        handleFileUpload({
+          ...uploadedFile,
+          processingStatus: 'error',
+          interpretation: '🌐 Error processing file.'
+        });
+      }
+    }
+  };
+
   const handleFileRemove = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
@@ -591,6 +666,21 @@ export default function NewIntake() {
         body: JSON.stringify({ url: youtubeUrl }),
       });
 
+      if (response.status === 429) {
+        // Rate limited - show user-friendly message
+        const rateLimitFile: UploadedFile = {
+          id: Date.now().toString(),
+          name: 'Rate Limit Error',
+          type: 'error',
+          size: 0,
+          processingStatus: 'error',
+          extractedContent: '',
+          interpretation: '⏱️ Too many requests - please wait a moment and try again. The system is temporarily rate limited.'
+        };
+        handleFileUpload(rateLimitFile);
+        return;
+      }
+
       const result = await response.json();
       
       if (result.success) {
@@ -601,16 +691,35 @@ export default function NewIntake() {
           size: 0,
           processingStatus: 'completed',
           extractedContent: result.transcript,
-          interpretation: `Extracted transcript from YouTube video: "${result.title}". This appears to be educational content that students will reference in their learning.`
+          interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". This content is now available for the AI assistant to reference.`
         };
 
         handleFileUpload(youtubeFile);
         setYoutubeUrl("");
       } else {
-        console.error('YouTube extraction failed:', result.error);
+        const errorFile: UploadedFile = {
+          id: Date.now().toString(),
+          name: 'YouTube Error',
+          type: 'error',
+          size: 0,
+          processingStatus: 'error',
+          extractedContent: '',
+          interpretation: `❌ Could not extract transcript from YouTube video. Please check the URL and try again.`
+        };
+        handleFileUpload(errorFile);
       }
     } catch (error) {
       console.error('YouTube extraction error:', error);
+      const errorFile: UploadedFile = {
+        id: Date.now().toString(),
+        name: 'Connection Error',
+        type: 'error',
+        size: 0,
+        processingStatus: 'error',
+        extractedContent: '',
+        interpretation: '🌐 Connection error occurred. Please check your internet connection and try again.'
+      };
+      handleFileUpload(errorFile);
     }
 
     setProcessingYoutube(false);
@@ -797,7 +906,7 @@ export default function NewIntake() {
                                     id="file-upload"
                                     multiple
                                     className="hidden"
-                                    onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                                    onChange={(e) => e.target.files && handleNativeFileUpload(e.target.files)}
                                     accept=".pdf,.txt,.doc,.docx,.png,.jpg,.jpeg"
                                   />
                                   <label
@@ -807,7 +916,7 @@ export default function NewIntake() {
                                       e.preventDefault();
                                       const files = e.dataTransfer.files;
                                       if (files.length > 0) {
-                                        handleFileUpload(files);
+                                        handleNativeFileUpload(files);
                                       }
                                     }}
                                     onDragOver={(e) => e.preventDefault()}

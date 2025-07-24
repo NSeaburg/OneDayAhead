@@ -39,7 +39,10 @@ export function useStreamingChat(assistantType?: string) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        if (response.status === 429) {
+          throw new Error('Rate limited - please wait a moment and try again. The system is temporarily busy.');
+        }
+        throw new Error(`Failed to get response: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
@@ -84,7 +87,15 @@ export function useStreamingChat(assistantType?: string) {
       }
     } catch (err: any) {
       console.error('Error in streaming chat:', err);
-      setError(err.message || 'Something went wrong');
+      const errorMessage = err.message || 'Something went wrong';
+      setError(errorMessage);
+      
+      // Add error message to chat for user visibility
+      const errorChatMessage: Message = { 
+        role: 'assistant', 
+        content: `I'm sorry, I'm having trouble processing your response right now. ${errorMessage} Could you try again in a moment?`
+      };
+      setMessages(prev => [...prev, errorChatMessage]);
     } finally {
       setIsStreaming(false);
     }
