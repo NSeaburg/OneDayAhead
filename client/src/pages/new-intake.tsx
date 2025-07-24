@@ -34,6 +34,10 @@ interface IntakeChatProps {
   uploadedFiles: UploadedFile[];
   onFileUpload: (file: UploadedFile) => void;
   onFileRemove: (fileId: string) => void;
+  youtubeUrl: string;
+  setYoutubeUrl: (url: string) => void;
+  processingYoutube: boolean;
+  onYoutubeExtract: () => void;
 }
 
 interface UploadedFile {
@@ -69,7 +73,7 @@ const CRITERIA_LABELS = {
   gradeLevel: "Grade Level"
 } as const;
 
-function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression, uploadedFiles, onFileUpload, onFileRemove }: IntakeChatProps) {
+function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression, uploadedFiles, onFileUpload, onFileRemove, youtubeUrl, setYoutubeUrl, processingYoutube, onYoutubeExtract }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
     if (botType === "intake-context" && stageContext) {
@@ -102,8 +106,6 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
   const [collectedData, setCollectedData] = useState<Record<string, string>>(
     {},
   );
-  const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [processingYoutube, setProcessingYoutube] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Handle bot type changes (when switching stages) - preserve conversation
@@ -115,7 +117,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
     }
   }, [botType]);
 
-  // Handle file uploads and processing
+  // Handle file uploads - delegate to parent component's file handler
   const handleFileUpload = async (files: FileList) => {
     for (const file of Array.from(files)) {
       const uploadedFile: UploadedFile = {
@@ -189,71 +191,6 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
         });
       }
     }
-  };
-
-  // Handle YouTube URL extraction
-  const handleYoutubeExtract = async () => {
-    if (!youtubeUrl.trim() || processingYoutube) return;
-
-    setProcessingYoutube(true);
-    
-    try {
-      const response = await fetch('/api/intake/extract-youtube', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: youtubeUrl }),
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        const youtubeFile: UploadedFile = {
-          id: Date.now().toString(),
-          name: result.title || 'YouTube Video',
-          type: 'video/youtube',
-          size: 0,
-          processingStatus: 'completed',
-          extractedContent: result.transcript,
-          interpretation: `Extracted transcript from YouTube video: "${result.title}". This appears to be educational content that students will reference in their learning.`
-        };
-
-        onFileUpload(youtubeFile);
-
-        // Send interpretation to bot
-        if (botType === "intake-context") {
-          const interpretationMessage: Message = {
-            id: Date.now().toString(),
-            content: `I've extracted the transcript from your YouTube video "${result.title}".\n\n**Video Content:** This appears to be educational material about your topic.\n**Transcript Length:** ${result.transcript.length} characters\n\nIs this the video content your students will be learning from? Should I include this in the AI learning experience?`,
-            isBot: true,
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, interpretationMessage]);
-        }
-
-        setYoutubeUrl("");
-      } else {
-        // Handle extraction error
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          content: `I had trouble extracting the transcript from that YouTube URL. Could you check the URL or try a different video? The URL should be in the format: https://www.youtube.com/watch?v=...`,
-          isBot: true,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      }
-    } catch (error) {
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        content: `I encountered an error processing that YouTube URL. Please try again or check if the URL is correct.`,
-        isBot: true,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    }
-
-    setProcessingYoutube(false);
   };
 
   // Auto-scroll to bottom when messages change (same as successful bots)
@@ -557,6 +494,8 @@ export default function NewIntake() {
   const [currentBotType, setCurrentBotType] = useState<string>("intake-basics");
   const [stageContext, setStageContext] = useState<Record<string, any>>({});
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [processingYoutube, setProcessingYoutube] = useState(false);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: { detected: false, value: null, confidence: 0, finalValue: null },
     school: { detected: false, value: null, confidence: 0, finalValue: null },
@@ -639,6 +578,46 @@ export default function NewIntake() {
 
   const handleFileRemove = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  // Handle YouTube URL extraction
+  const handleYoutubeExtract = async () => {
+    if (!youtubeUrl.trim() || processingYoutube) return;
+
+    setProcessingYoutube(true);
+    
+    try {
+      const response = await fetch('/api/intake/extract-youtube', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: youtubeUrl }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        const youtubeFile: UploadedFile = {
+          id: Date.now().toString(),
+          name: result.title || 'YouTube Video',
+          type: 'video/youtube',
+          size: 0,
+          processingStatus: 'completed',
+          extractedContent: result.transcript,
+          interpretation: `Extracted transcript from YouTube video: "${result.title}". This appears to be educational content that students will reference in their learning.`
+        };
+
+        handleFileUpload(youtubeFile);
+        setYoutubeUrl("");
+      } else {
+        console.error('YouTube extraction failed:', result.error);
+      }
+    } catch (error) {
+      console.error('YouTube extraction error:', error);
+    }
+
+    setProcessingYoutube(false);
   };
 
   const handleStageProgression = (completionMessage: string) => {
@@ -885,7 +864,7 @@ export default function NewIntake() {
                                         className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                       />
                                       <button
-                                        onClick={handleYoutubeExtract}
+                                        onClick={onYoutubeExtract}
                                         disabled={!youtubeUrl.trim() || processingYoutube}
                                         className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
@@ -926,6 +905,10 @@ export default function NewIntake() {
             uploadedFiles={uploadedFiles}
             onFileUpload={handleFileUpload}
             onFileRemove={handleFileRemove}
+            youtubeUrl={youtubeUrl}
+            setYoutubeUrl={setYoutubeUrl}
+            processingYoutube={processingYoutube}
+            onYoutubeExtract={handleYoutubeExtract}
           />
         </div>
       </div>
