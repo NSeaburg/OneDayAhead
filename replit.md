@@ -148,6 +148,15 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 24, 2025. Fixed critical YouTube URL extraction error in Stage 2 transition
+  - Resolved TypeScript errors where YouTube processing functions were defined in wrong component scope
+  - Moved YouTube URL state management (youtubeUrl, setYoutubeUrl, processingYoutube) from IntakeChat to main NewIntake component
+  - Fixed function references in file upload UI to use correct component scope (handleYoutubeExtract, handleFileRemove)
+  - Cleaned up IntakeChatProps interface by removing unused YouTube-related props
+  - Enhanced markdown formatting support (**bold**) working properly in all intake bot system prompts using ReactMarkdown
+  - Stage 2 file upload system with intelligent bot interpretation now fully functional
+  - YouTube transcript extraction, PDF processing, and text file analysis working without errors
+  - Conversation continuity preserved when switching between Stage 1 and Stage 2 bots
 - July 23, 2025. Completed dedicated Stage 2 intake bot implementation with seamless conversation continuity
   - Built separate Stage 2 bot ("intake-context") with specialized prompt for content collection
   - Enhanced stage progression to pass all Stage 1 criteria values and context to Stage 2 bot

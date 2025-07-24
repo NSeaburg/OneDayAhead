@@ -34,10 +34,6 @@ interface IntakeChatProps {
   uploadedFiles: UploadedFile[];
   onFileUpload: (file: UploadedFile) => void;
   onFileRemove: (fileId: string) => void;
-  youtubeUrl: string;
-  setYoutubeUrl: (url: string) => void;
-  processingYoutube: boolean;
-  onYoutubeExtract: () => void;
 }
 
 interface UploadedFile {
@@ -73,7 +69,7 @@ const CRITERIA_LABELS = {
   gradeLevel: "Grade Level"
 } as const;
 
-function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression, uploadedFiles, onFileUpload, onFileRemove, youtubeUrl, setYoutubeUrl, processingYoutube, onYoutubeExtract }: IntakeChatProps) {
+function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression, uploadedFiles, onFileUpload, onFileRemove }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
     if (botType === "intake-context" && stageContext) {
@@ -841,7 +837,7 @@ export default function NewIntake() {
                                             </div>
                                           </div>
                                           <button
-                                            onClick={() => onFileRemove(file.id)}
+                                            onClick={() => handleFileRemove(file.id)}
                                             className="text-gray-400 hover:text-red-500"
                                           >
                                             <X className="w-3 h-3" />
@@ -864,7 +860,7 @@ export default function NewIntake() {
                                         className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                       />
                                       <button
-                                        onClick={onYoutubeExtract}
+                                        onClick={handleYoutubeExtract}
                                         disabled={!youtubeUrl.trim() || processingYoutube}
                                         className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
@@ -905,10 +901,6 @@ export default function NewIntake() {
             uploadedFiles={uploadedFiles}
             onFileUpload={handleFileUpload}
             onFileRemove={handleFileRemove}
-            youtubeUrl={youtubeUrl}
-            setYoutubeUrl={setYoutubeUrl}
-            processingYoutube={processingYoutube}
-            onYoutubeExtract={handleYoutubeExtract}
           />
         </div>
       </div>
