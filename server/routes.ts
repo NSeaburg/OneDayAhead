@@ -3277,6 +3277,29 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       console.log(`🔍 DEBUG Claude Chat - assistantType: "${assistantType}"`);
       console.log(`🔍 DEBUG Claude Chat - stageContext:`, stageContext);
       
+      // 🔍 DEBUG: Log what uploadedFiles we received from frontend
+      console.log("🔍 BACKEND DEBUG - Received uploadedFiles:", uploadedFiles);
+      console.log("🔍 BACKEND DEBUG - uploadedFiles type:", typeof uploadedFiles);
+      console.log("🔍 BACKEND DEBUG - uploadedFiles is array:", Array.isArray(uploadedFiles));
+      console.log("🔍 BACKEND DEBUG - uploadedFiles length:", uploadedFiles?.length || 0);
+      
+      if (uploadedFiles && Array.isArray(uploadedFiles)) {
+        uploadedFiles.forEach((file, index) => {
+          console.log(`🔍 BACKEND DEBUG - File ${index + 1} received:`, {
+            id: file.id,
+            name: file.name,
+            type: file.type,
+            processingStatus: file.processingStatus,
+            hasExtractedContent: !!file.extractedContent,
+            contentLength: file.extractedContent?.length || 0,
+            contentPreview: file.extractedContent?.substring(0, 100) || 'No content',
+            interpretation: file.interpretation
+          });
+        });
+      } else {
+        console.log("🔍 BACKEND DEBUG - No uploaded files or not an array");
+      }
+      
       if (assistantType === "intake-basics") {
         systemPrompt = INTAKE_BASICS_PROMPT;
         console.log(`✅ DEBUG Claude Chat - Using INTAKE_BASICS_PROMPT`);
@@ -3302,10 +3325,16 @@ Continue seamlessly from where Stage 1 left off. The teacher is now ready to pro
         
         // Add uploaded file content to the Stage 2 bot's context
         if (uploadedFiles && uploadedFiles.length > 0) {
-          const fileContent = uploadedFiles
-            .filter((file: any) => file.extractedContent && file.processingStatus === 'completed')
+          console.log(`📁 DEBUG Claude Chat - Processing ${uploadedFiles.length} uploaded files for context`);
+          
+          const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
+          console.log(`📁 DEBUG Claude Chat - Found ${completedFiles.length} completed files with content`);
+          
+          const fileContent = completedFiles
             .map((file: any) => `## ${file.name}:\n${file.extractedContent}`)
             .join('\n\n');
+          
+          console.log(`📁 DEBUG Claude Chat - Generated file content length: ${fileContent.length} characters`);
           
           if (fileContent) {
             contextPrompt += `
@@ -3317,7 +3346,12 @@ ${fileContent}
 
 Use this content to help the teacher understand how their materials align with their teaching goals and to provide specific suggestions for their assessment bot design.`;
             console.log(`📁 DEBUG Claude Chat - Added ${uploadedFiles.length} uploaded files to context`);
+            console.log(`📁 DEBUG Claude Chat - Final contextPrompt includes file content: ${contextPrompt.includes('Uploaded Content for Analysis')}`);
+          } else {
+            console.log(`📁 DEBUG Claude Chat - No file content to add (fileContent is empty)`);
           }
+        } else {
+          console.log(`📁 DEBUG Claude Chat - No uploaded files to process`);
         }
         
         systemPrompt = contextPrompt;

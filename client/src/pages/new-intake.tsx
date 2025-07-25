@@ -338,6 +338,21 @@ function IntakeChat({
     setInput("");
     setIsLoading(true);
 
+    // 🔍 DEBUG: Log what files we're sending to the bot
+    console.log("🔍 FRONTEND DEBUG - Sending uploadedFiles to Stage 2 bot:", uploadedFiles);
+    console.log("🔍 FRONTEND DEBUG - Number of uploaded files:", uploadedFiles.length);
+    uploadedFiles.forEach((file, index) => {
+      console.log(`🔍 FRONTEND DEBUG - File ${index + 1}:`, {
+        id: file.id,
+        name: file.name,
+        type: file.type,
+        processingStatus: file.processingStatus,
+        hasExtractedContent: !!file.extractedContent,
+        contentLength: file.extractedContent?.length || 0,
+        interpretation: file.interpretation
+      });
+    });
+
     try {
       // Send to chat endpoint for processing
       const response = await fetch("/api/claude/chat", {
