@@ -3262,12 +3262,13 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       // Generate a thread ID
       const messageId = `claude-${assistantType || "general"}-${Date.now()}`;
 
-      // Convert messages to Anthropic format
+      // Convert messages to Anthropic format and filter out empty content
       const anthropicMessages = messages
         .filter((msg: any) => msg.role !== "system")
+        .filter((msg: any) => msg.content && msg.content.trim().length > 0) // Remove empty messages
         .map((msg: any) => ({
           role: msg.role as "user" | "assistant",
-          content: msg.content,
+          content: msg.content.trim(), // Ensure no whitespace-only content
         }));
 
       // Choose system prompt based on assistant type
@@ -3355,8 +3356,10 @@ Use this content to help the teacher understand how their materials align with t
             console.log(`🔍 Stream error details:`, streamError);
             
             const errorString = streamError.toString();
+            const errorJSON = JSON.stringify(streamError);
             const isOverloadError = errorString.includes("Overloaded") || 
                                   errorString.includes("overloaded_error") ||
+                                  errorJSON.includes("overloaded_error") ||
                                   streamError.message?.includes("Overloaded") || 
                                   streamError.message?.includes("overloaded_error");
             
@@ -3422,10 +3425,28 @@ Use this content to help the teacher understand how their materials align with t
         res.end();
       } catch (error: any) {
         console.error("Error in Claude chat streaming:", error);
-        res.write(
-          `data: ${JSON.stringify({ error: "chat_error", message: error.message || "Streaming error occurred" })}\n\n`,
-        );
-        res.end();
+        
+        // Check if it's an overload error and provide fallback response
+        const isOverloadError = error.toString().includes("Overloaded") || 
+                               error.toString().includes("overloaded_error");
+        
+        if (isOverloadError && assistantType === "intake-basics") {
+          // Provide a helpful fallback response for Stage 1
+          const fallbackResponse = `Tell me a little about your teaching situation and the course you'd like to improve! 
+
+What subject do you teach, and what's one topic or unit that could use some more student engagement?
+
+*Note: Our AI service is experiencing high traffic, but I'm here to help you get started on building your learning experience.*`;
+          
+          res.write(`data: ${JSON.stringify({ content: fallbackResponse })}\n\n`);
+          res.write("data: [DONE]\n\n");
+          res.end();
+        } else {
+          res.write(
+            `data: ${JSON.stringify({ error: "chat_error", message: error.message || "Streaming error occurred" })}\n\n`,
+          );
+          res.end();
+        }
       }
     } catch (error: any) {
       console.error("Claude chat endpoint error:", error);

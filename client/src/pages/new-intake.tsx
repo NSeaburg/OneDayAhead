@@ -338,6 +338,9 @@ function IntakeChat({
     setInput("");
     setIsLoading(true);
 
+    // Create unique streaming ID outside try block so it's available in catch
+    const streamingId = `streaming-${Date.now()}`;
+    
     try {
       // Send to chat endpoint for processing
       const response = await fetch("/api/claude/chat", {
@@ -367,7 +370,7 @@ function IntakeChat({
       
       // Add empty streaming message for bot response
       setMessages(prev => [...prev, {
-        id: "streaming",
+        id: streamingId,
         content: "",
         isBot: true,
         timestamp: new Date(),
@@ -393,7 +396,7 @@ function IntakeChat({
                 // Update streaming message in place
                 setMessages((prev) =>
                   prev.map((msg) =>
-                    msg.id === "streaming"
+                    msg.id === streamingId
                       ? { ...msg, content: botResponse }
                       : msg,
                   ),
@@ -402,7 +405,7 @@ function IntakeChat({
                 // Handle retry status updates
                 setMessages((prev) =>
                   prev.map((msg) =>
-                    msg.id === "streaming"
+                    msg.id === streamingId
                       ? { ...msg, content: `⏱️ ${parsed.status}` }
                       : msg,
                   ),
@@ -418,7 +421,7 @@ function IntakeChat({
       // Replace streaming message with final message with permanent ID
       if (botResponse) {
         setMessages((prev) => {
-          const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
+          const withoutStreaming = prev.filter((msg) => msg.id !== streamingId);
           return [
             ...withoutStreaming,
             {
@@ -439,25 +442,25 @@ function IntakeChat({
     } catch (error) {
       console.error("Chat error:", error);
       
+      // Remove any streaming messages first
+      setMessages((prev) => prev.filter((msg) => !msg.id.includes("streaming")));
+      
       // Check if it's an API overload error
       const errorMessage = error instanceof Error ? error.message : String(error);
       const isOverloadError = errorMessage.includes("Overloaded") || errorMessage.includes("overloaded_error");
       
-      setMessages((prev) => {
-        const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
-        return [
-          ...withoutStreaming,
-          {
-            id: Date.now().toString(),
-            content: isOverloadError 
-              ? "⏱️ The AI service is currently busy. Please wait a moment and try again."
-              :
-              "I'm sorry, I'm having trouble processing your response. Could you try again?",
-            isBot: true,
-            timestamp: new Date(),
-          },
-        ];
-      });
+      // Add error message with unique ID
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          content: isOverloadError 
+            ? "⏱️ The AI service is currently busy with high traffic. This happens sometimes - please wait a moment and try your message again."
+            : "I'm having trouble processing your message. Please try again in a moment.",
+          isBot: true,
+          timestamp: new Date(),
+        },
+      ]);
     }
 
     setIsLoading(false);
