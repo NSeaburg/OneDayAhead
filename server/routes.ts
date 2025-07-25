@@ -3668,9 +3668,6 @@ ${JSON.stringify(conversationHistory)}`;
         return res.status(400).json({ error: "Invalid YouTube URL" });
       }
       
-      // Use youtube-transcript package to get transcript
-      const { YoutubeTranscript } = await import('youtube-transcript');
-      
       let transcript = [];
       let fullText = "";
       let transcriptError = null;
@@ -3678,34 +3675,52 @@ ${JSON.stringify(conversationHistory)}`;
       try {
         console.log(`🔍 YOUTUBE DEBUG - Attempting to fetch transcript for video ID: ${videoId}`);
         
-        // Try with different language options in case default doesn't work
-        let transcriptOptions = [
-          undefined, // Default language
-          'en',      // English explicitly
-          'en-US',   // US English
-          'auto'     // Auto-generated
-        ];
-        
-        for (const lang of transcriptOptions) {
+        // Method 1: Try new youtube-caption-extractor package
+        try {
+          const { getSubtitles } = await import('youtube-caption-extractor');
+          console.log(`🔍 YOUTUBE DEBUG - Using youtube-caption-extractor`);
+          
+          // Try different language configurations
+          const languageConfigs = [
+            { lang: 'en' },
+            { lang: 'en-US' },
+            { lang: 'auto' },
+            {} // No language specified (will try to get default)
+          ];
+          
+          for (const config of languageConfigs) {
+            try {
+              console.log(`🔍 YOUTUBE DEBUG - Trying config:`, config);
+              const subtitles = await getSubtitles({ videoId, ...config });
+              
+              if (subtitles && subtitles.length > 0) {
+                console.log(`🔍 YOUTUBE DEBUG - Success! Got ${subtitles.length} subtitle entries`);
+                transcript = subtitles;
+                // Convert to text format
+                fullText = subtitles.map((item: any) => item.text || '').join(' ');
+                break;
+              }
+            } catch (configErr: any) {
+              console.log(`🔍 YOUTUBE DEBUG - Config failed:`, configErr.message);
+            }
+          }
+        } catch (err1: any) {
+          console.log(`🔍 YOUTUBE DEBUG - youtube-caption-extractor failed:`, err1.message);
+          
+          // Method 2: Fallback to old youtube-transcript package
           try {
-            console.log(`🔍 YOUTUBE DEBUG - Trying language: ${lang || 'default'}`);
-            if (lang) {
-              transcript = await YoutubeTranscript.fetchTranscript(videoId, { lang });
-            } else {
-              transcript = await YoutubeTranscript.fetchTranscript(videoId);
-            }
+            const { YoutubeTranscript } = await import('youtube-transcript');
+            console.log(`🔍 YOUTUBE DEBUG - Falling back to youtube-transcript`);
             
+            transcript = await YoutubeTranscript.fetchTranscript(videoId);
             if (transcript && transcript.length > 0) {
-              console.log(`🔍 YOUTUBE DEBUG - Success with language: ${lang || 'default'}`);
-              break;
+              fullText = transcript.map((item: any) => item.text).join(' ');
+              console.log(`🔍 YOUTUBE DEBUG - Fallback success with ${transcript.length} chunks`);
             }
-          } catch (langErr) {
-            console.log(`🔍 YOUTUBE DEBUG - Language ${lang || 'default'} failed:`, langErr.message);
-            continue;
+          } catch (err2: any) {
+            console.log(`🔍 YOUTUBE DEBUG - Fallback also failed:`, err2.message);
           }
         }
-        
-        fullText = transcript.map(item => item.text).join(' ');
         
         // 🔍 DEBUG: Log transcript extraction details
         console.log(`🔍 YOUTUBE DEBUG - Video ID: ${videoId}`);
