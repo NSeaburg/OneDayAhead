@@ -401,6 +401,14 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
     }
 
     setIsLoading(false);
+    
+    // Re-focus the input field after sending message (UX improvement)
+    setTimeout(() => {
+      const inputElement = document.querySelector('input[placeholder*="Type your response"]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    }, 100);
   };
 
   // Background analysis function
@@ -811,8 +819,14 @@ export default function NewIntake() {
   };
 
   const handleStageProgression = (completionMessage: string) => {
-    // Check if the bot is moving to the next stage using the new transition phrase
-    if (completionMessage.includes("Perfect. Now let's figure out where this AI experience should go in your course")) {
+    console.log("🔍 Checking stage progression for message:", completionMessage.substring(0, 100) + "...");
+    
+    // Check if the bot is moving to the next stage using the complete transition phrase
+    const transitionPhrase = "Perfect. Now let's figure out where this AI experience should go in your course. What we're building starts with an assessment — a smart bot that checks what students understand, where they're confused, and what they need next.";
+    
+    if (completionMessage.includes(transitionPhrase)) {
+      console.log("✅ Stage transition detected! Moving to Stage 2");
+      
       // Mark Stage 1 as complete by updating all its components
       setStages((prev) =>
         prev.map((stage) => 
