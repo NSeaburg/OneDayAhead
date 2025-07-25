@@ -3777,6 +3777,84 @@ ${JSON.stringify(conversationHistory)}`;
       });
     }
   });
+
+  // Canvas .imscc file upload and parsing endpoint
+  app.post("/api/intake/upload-imscc", upload.single('imscc'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "IMSCC file is required" });
+      }
+
+      // Validate file type (should be .imscc or .zip)
+      const fileName = req.file.originalname.toLowerCase();
+      if (!fileName.endsWith('.imscc') && !fileName.endsWith('.zip')) {
+        return res.status(400).json({ 
+          error: "File must be a Canvas .imscc export file" 
+        });
+      }
+
+      // Import the IMSCC parser
+      const IMSCCParser = require('./imscc-parser');
+      const parser = new IMSCCParser();
+
+      // Save uploaded file temporarily
+      const fs = require('fs');
+      const path = require('path');
+      const tempDir = path.join(__dirname, 'temp');
+      
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const tempFilePath = path.join(tempDir, `${Date.now()}-${req.file.originalname}`);
+      fs.writeFileSync(tempFilePath, req.file.buffer);
+
+      try {
+        // Parse the .imscc file
+        const courseData = await parser.parseIMSCC(tempFilePath);
+        
+        // Generate course summary for AI assistant
+        const courseSummary = parser.generateCourseSummary(courseData);
+        
+        // Clean up temp file
+        fs.unlinkSync(tempFilePath);
+
+        res.json({
+          success: true,
+          filename: req.file.originalname,
+          courseName: courseData.title,
+          summary: courseSummary,
+          // Include detailed data for debugging (can be removed in production)
+          fullData: {
+            moduleCount: courseData.modules.length,
+            pagesCount: courseData.pages.length,
+            quizzesCount: courseData.quizzes.length,
+            filesCount: courseData.files.length,
+            totalWords: courseSummary.content.totalWords
+          }
+        });
+        
+      } catch (parseError: any) {
+        // Clean up temp file on error
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        
+        console.error('IMSCC parsing error:', parseError);
+        res.status(500).json({
+          error: "Failed to parse Canvas course file",
+          details: parseError.message
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('IMSCC upload error:', error);
+      res.status(500).json({
+        error: "Failed to process Canvas course upload",
+        details: error.message
+      });
+    }
+  });
   
   // PDF text extraction endpoint
   app.post("/api/intake/extract-pdf", upload.single('pdf'), async (req, res) => {

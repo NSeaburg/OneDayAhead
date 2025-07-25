@@ -677,14 +677,18 @@ export default function NewIntake() {
 
       // Process the file based on type
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-
         let endpoint = "";
+        let formDataKey = "file";
+        
         if (file.type.includes("pdf")) {
           endpoint = "/api/intake/extract-pdf";
+          formDataKey = "pdf";
         } else if (file.type.includes("text")) {
           endpoint = "/api/intake/extract-text";
+          formDataKey = "textfile";
+        } else if (file.name.toLowerCase().endsWith('.imscc') || file.name.toLowerCase().endsWith('.zip')) {
+          endpoint = "/api/intake/upload-imscc";
+          formDataKey = "imscc";
         } else {
           // For other file types, just store basic info
           handleFileUpload({
@@ -696,6 +700,9 @@ export default function NewIntake() {
           });
           continue;
         }
+
+        const formData = new FormData();
+        formData.append(formDataKey, file);
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -716,17 +723,30 @@ export default function NewIntake() {
         const result = await response.json();
 
         if (result.success) {
+          let extractedContent = "";
+          let interpretation = "";
+          
+          if (endpoint === "/api/intake/upload-imscc") {
+            // Handle Canvas .imscc files
+            extractedContent = result.summary;
+            interpretation = `✅ Parsed Canvas course "${result.courseName}". Found ${result.fullData.moduleCount} modules, ${result.fullData.pagesCount} pages, and ${result.fullData.quizzesCount} quizzes. This course structure is now available for the AI assistant to reference.`;
+          } else {
+            // Handle PDF and text files
+            extractedContent = result.text;
+            interpretation = `✅ Extracted text from ${file.name}. This content is now available for the AI assistant to reference.`;
+          }
+          
           handleFileUpload({
             ...uploadedFile,
             processingStatus: "completed",
-            extractedContent: result.text,
-            interpretation: `✅ Extracted text from ${file.name}. This content is now available for the AI assistant to reference.`,
+            extractedContent,
+            interpretation,
           });
         } else {
           handleFileUpload({
             ...uploadedFile,
             processingStatus: "error",
-            interpretation: "❌ Failed to process file content.",
+            interpretation: `❌ Failed to process file: ${result.error || "Unknown error"}`,
           });
         }
       } catch (error) {

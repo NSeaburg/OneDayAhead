@@ -148,6 +148,15 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 25, 2025. Integrated Canvas .imscc file parser for comprehensive course export handling
+  - Added complete .imscc file parsing capability using unzipper, xml2js, and cheerio packages
+  - Created server/imscc-parser.js module for extracting course structure, modules, assignments, and content
+  - Added backend API endpoint /api/intake/upload-imscc for processing Canvas course exports
+  - Enhanced frontend file upload system to support .imscc files with proper content extraction and display
+  - Parser extracts course metadata, module hierarchy, page content, quiz details, and file references
+  - Generated course summaries provide structured data for Stage 2 bot intelligent interpretation
+  - System now handles three major file types: YouTube transcripts (.json), PDF documents (.pdf), and Canvas courses (.imscc)
+  - .imscc files processed as ZIP archives with XML manifest parsing for complete course structure analysis
 - July 25, 2025. Fixed duplicate "Intake Assistant" chat bubbles and persistent loading indicator
   - Root cause 1: Empty streaming messages were rendered as visible chat bubbles alongside the loading indicator
   - Solution 1: Added filter to only render messages with non-empty content in the UI
