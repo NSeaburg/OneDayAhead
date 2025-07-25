@@ -3707,18 +3707,37 @@ ${JSON.stringify(conversationHistory)}`;
         } catch (err1: any) {
           console.log(`🔍 YOUTUBE DEBUG - youtube-caption-extractor failed:`, err1.message);
           
-          // Method 2: Fallback to old youtube-transcript package
-          try {
-            const { YoutubeTranscript } = await import('youtube-transcript');
-            console.log(`🔍 YOUTUBE DEBUG - Falling back to youtube-transcript`);
-            
-            transcript = await YoutubeTranscript.fetchTranscript(videoId);
-            if (transcript && transcript.length > 0) {
-              fullText = transcript.map((item: any) => item.text).join(' ');
-              console.log(`🔍 YOUTUBE DEBUG - Fallback success with ${transcript.length} chunks`);
+          // Method 2: Try youtube-transcript-api package
+          if (!transcript || transcript.length === 0) {
+            try {
+              const { YoutubeTranscriptAPI } = await import('youtube-transcript-api');
+              console.log(`🔍 YOUTUBE DEBUG - Trying youtube-transcript-api`);
+              
+              const transcriptData = await YoutubeTranscriptAPI.getTranscript(videoId);
+              if (transcriptData && transcriptData.length > 0) {
+                transcript = transcriptData;
+                fullText = transcriptData.map((item: any) => item.text || '').join(' ');
+                console.log(`🔍 YOUTUBE DEBUG - youtube-transcript-api success with ${transcriptData.length} entries`);
+              }
+            } catch (err2: any) {
+              console.log(`🔍 YOUTUBE DEBUG - youtube-transcript-api failed:`, err2.message);
             }
-          } catch (err2: any) {
-            console.log(`🔍 YOUTUBE DEBUG - Fallback also failed:`, err2.message);
+          }
+          
+          // Method 3: Fallback to original youtube-transcript package
+          if (!transcript || transcript.length === 0) {
+            try {
+              const { YoutubeTranscript } = await import('youtube-transcript');
+              console.log(`🔍 YOUTUBE DEBUG - Final fallback to youtube-transcript`);
+              
+              transcript = await YoutubeTranscript.fetchTranscript(videoId);
+              if (transcript && transcript.length > 0) {
+                fullText = transcript.map((item: any) => item.text).join(' ');
+                console.log(`🔍 YOUTUBE DEBUG - Final fallback success with ${transcript.length} chunks`);
+              }
+            } catch (err3: any) {
+              console.log(`🔍 YOUTUBE DEBUG - All methods failed. Final error:`, err3.message);
+            }
           }
         }
         
