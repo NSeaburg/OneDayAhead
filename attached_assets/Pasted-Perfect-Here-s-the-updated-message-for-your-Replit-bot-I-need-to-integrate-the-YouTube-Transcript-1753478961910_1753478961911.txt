@@ -1,0 +1,148 @@
+Perfect! Here's the updated message for your Replit bot:
+
+I need to integrate the YouTube Transcript API from RapidAPI into my app. I've subscribed to the free tier and have my API key.
+Please create these files:
+
+Install axios first: Run npm install axios in the Shell
+Create youtube-transcript.js:
+
+javascriptconst axios = require('axios');
+
+// Function to extract video ID from YouTube URL
+function extractVideoId(url) {
+  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+// Function to get YouTube transcript
+async function getYouTubeTranscript(videoUrl) {
+  const videoId = extractVideoId(videoUrl);
+  
+  if (!videoId) {
+    return {
+      success: false,
+      transcript: null,
+      error: 'Invalid YouTube URL'
+    };
+  }
+
+  const options = {
+    method: 'GET',
+    url: 'https://youtube-transcriptor.p.rapidapi.com/transcript',
+    params: {
+      video_id: videoId,
+      lang: 'en'
+    },
+    headers: {
+      'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+      'X-RapidAPI-Host': 'youtube-transcriptor.p.rapidapi.com'
+    }
+  };
+
+  try {
+    const response = await axios.request(options);
+    
+    // Format the response
+    if (response.data && Array.isArray(response.data)) {
+      return {
+        success: true,
+        transcript: response.data,
+        error: null
+      };
+    } else {
+      throw new Error('Unexpected response format');
+    }
+  } catch (error) {
+    console.error('Error fetching transcript:', error.response?.data || error.message);
+    return {
+      success: false,
+      transcript: null,
+      error: error.response?.data?.message || error.message || 'Failed to fetch transcript'
+    };
+  }
+}
+
+module.exports = { getYouTubeTranscript };
+
+Set up the API key in Replit Secrets:
+
+Click the "Secrets" tab (lock icon) in Replit
+Add a new secret:
+
+Key: RAPIDAPI_KEY
+Value: [paste your new API key here]
+
+
+
+
+Create test-transcript.js to test it:
+
+javascriptconst { getYouTubeTranscript } = require('./youtube-transcript');
+
+async function test() {
+  // Test with a short video
+  const testUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
+  
+  console.log('🎥 Fetching transcript for:', testUrl);
+  console.log('⏳ Please wait...\n');
+  
+  const result = await getYouTubeTranscript(testUrl);
+  
+  if (result.success) {
+    console.log('✅ Success! Transcript fetched.');
+    console.log(`📝 Total segments: ${result.transcript.length}\n`);
+    
+    console.log('First 3 segments:');
+    console.log('----------------');
+    result.transcript.slice(0, 3).forEach((segment, i) => {
+      console.log(`[${segment.start}s] ${segment.text}`);
+    });
+  } else {
+    console.log('❌ Error:', result.error);
+    console.log('\nPossible issues:');
+    console.log('- Video might not have captions');
+    console.log('- Video might be private or restricted');
+    console.log('- API key might be incorrect');
+  }
+}
+
+test();
+
+Run the test: Execute node test-transcript.js in the Shell
+Create app-integration.js to show how to use it in your app:
+
+javascriptconst { getYouTubeTranscript } = require('./youtube-transcript');
+
+// Example function that your app can call
+async function processYouTubeVideo(url) {
+  console.log('Processing:', url);
+  
+  const result = await getYouTubeTranscript(url);
+  
+  if (result.success) {
+    // Combine all transcript segments into one text
+    const fullText = result.transcript
+      .map(segment => segment.text)
+      .join(' ');
+    
+    console.log('Full transcript length:', fullText.length, 'characters');
+    
+    // You can now do whatever you need with the transcript
+    // For example: save to database, analyze, summarize, etc.
+    
+    return {
+      success: true,
+      videoUrl: url,
+      transcriptSegments: result.transcript,
+      fullText: fullText
+    };
+  } else {
+    return result;
+  }
+}
+
+// Test it
+processYouTubeVideo('https://www.youtube.com/watch?v=jNQXAC9IVRw')
+  .then(result => console.log('Result:', result.success ? 'Got transcript!' : result.error));
+Important No

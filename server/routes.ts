@@ -3640,7 +3640,7 @@ ${JSON.stringify(conversationHistory)}`;
 
   // File processing endpoints for Stage 2 content collection
   
-  // YouTube transcript extraction endpoint
+  // YouTube transcript extraction endpoint using RapidAPI
   app.post("/api/intake/extract-youtube", async (req, res) => {
     try {
       const { url } = req.body;
@@ -3648,213 +3648,129 @@ ${JSON.stringify(conversationHistory)}`;
       if (!url) {
         return res.status(400).json({ error: "YouTube URL is required" });
       }
-      
+
+      console.log(`🎥 RAPIDAPI YOUTUBE - Processing URL: ${url}`);
+
       // Extract video ID from YouTube URL
-      let videoId = '';
-      const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-        /youtube\.com\/v\/([^&\n?#]+)/
-      ];
-      
-      for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) {
-          videoId = match[1];
-          break;
-        }
-      }
-      
+      const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+      const videoId = videoIdMatch ? videoIdMatch[1] : null;
+
       if (!videoId) {
         return res.status(400).json({ error: "Invalid YouTube URL" });
       }
-      
-      let transcript = [];
-      let fullText = "";
-      let transcriptError = null;
-      
-      try {
-        console.log(`🔍 YOUTUBE DEBUG - Attempting to fetch transcript for video ID: ${videoId}`);
-        
-        // Method 1: Try new youtube-caption-extractor package
-        try {
-          const { getSubtitles } = await import('youtube-caption-extractor');
-          console.log(`🔍 YOUTUBE DEBUG - Using youtube-caption-extractor`);
-          
-          // Try different language configurations
-          const languageConfigs = [
-            { lang: 'en' },
-            { lang: 'en-US' },
-            { lang: 'auto' },
-            {} // No language specified (will try to get default)
-          ];
-          
-          for (const config of languageConfigs) {
-            try {
-              console.log(`🔍 YOUTUBE DEBUG - Trying config:`, config);
-              const subtitles = await getSubtitles({ videoId, ...config });
-              
-              if (subtitles && subtitles.length > 0) {
-                console.log(`🔍 YOUTUBE DEBUG - Success! Got ${subtitles.length} subtitle entries`);
-                transcript = subtitles;
-                // Convert to text format
-                fullText = subtitles.map((item: any) => item.text || '').join(' ');
-                break;
-              }
-            } catch (configErr: any) {
-              console.log(`🔍 YOUTUBE DEBUG - Config failed:`, configErr.message);
-            }
-          }
-        } catch (err1: any) {
-          console.log(`🔍 YOUTUBE DEBUG - youtube-caption-extractor failed:`, err1.message);
-          
-          // Method 2: Try youtube-transcript-api package
-          if (!transcript || transcript.length === 0) {
-            try {
-              const { YoutubeTranscriptAPI } = await import('youtube-transcript-api');
-              console.log(`🔍 YOUTUBE DEBUG - Trying youtube-transcript-api`);
-              
-              const transcriptData = await YoutubeTranscriptAPI.getTranscript(videoId);
-              if (transcriptData && transcriptData.length > 0) {
-                transcript = transcriptData;
-                fullText = transcriptData.map((item: any) => item.text || '').join(' ');
-                console.log(`🔍 YOUTUBE DEBUG - youtube-transcript-api success with ${transcriptData.length} entries`);
-              }
-            } catch (err2: any) {
-              console.log(`🔍 YOUTUBE DEBUG - youtube-transcript-api failed:`, err2.message);
-            }
-          }
-          
-          // Method 3: Fallback to original youtube-transcript package
-          if (!transcript || transcript.length === 0) {
-            try {
-              const { YoutubeTranscript } = await import('youtube-transcript');
-              console.log(`🔍 YOUTUBE DEBUG - Final fallback to youtube-transcript`);
-              
-              transcript = await YoutubeTranscript.fetchTranscript(videoId);
-              if (transcript && transcript.length > 0) {
-                fullText = transcript.map((item: any) => item.text).join(' ');
-                console.log(`🔍 YOUTUBE DEBUG - Final fallback success with ${transcript.length} chunks`);
-              }
-            } catch (err3: any) {
-              console.log(`🔍 YOUTUBE DEBUG - Final fallback failed:`, err3.message);
-            }
-          }
-          
-          // Method 4: Try Python youtube-transcript-api as last resort
-          if (!transcript || transcript.length === 0) {
-            try {
-              console.log(`🔍 YOUTUBE DEBUG - Trying Python youtube-transcript-api as final method`);
-              const { spawn } = require('child_process');
-              
-              const pythonResult = await new Promise((resolve, reject) => {
-                const python = spawn('python3', ['get_transcript.py', videoId]);
-                let output = '';
-                let errorOutput = '';
-                
-                python.stdout.on('data', (data: any) => {
-                  output += data.toString();
-                });
-                
-                python.stderr.on('data', (data: any) => {
-                  errorOutput += data.toString();
-                });
-                
-                python.on('close', (code: number) => {
-                  if (code === 0) {
-                    try {
-                      const result = JSON.parse(output);
-                      resolve(result);
-                    } catch (parseError) {
-                      reject(new Error(`Failed to parse Python output: ${output}`));
-                    }
-                  } else {
-                    reject(new Error(`Python script failed with code ${code}: ${errorOutput}`));
-                  }
-                });
-                
-                // Add timeout
-                setTimeout(() => {
-                  python.kill();
-                  reject(new Error('Python script timeout'));
-                }, 30000); // 30 second timeout
-              });
-              
-              if (pythonResult && (pythonResult as any).success && (pythonResult as any).transcript) {
-                transcript = (pythonResult as any).transcript;
-                fullText = transcript.map((item: any) => item.text).join(' ');
-                console.log(`🔍 YOUTUBE DEBUG - Python method success with ${transcript.length} entries`);
-              } else {
-                console.log(`🔍 YOUTUBE DEBUG - Python method also failed:`, (pythonResult as any)?.error || 'Unknown error');
-              }
-            } catch (err4: any) {
-              console.log(`🔍 YOUTUBE DEBUG - Python method error:`, err4.message);
-            }
-          }
-        }
-        
-        // 🔍 DEBUG: Log transcript extraction details
-        console.log(`🔍 YOUTUBE DEBUG - Video ID: ${videoId}`);
-        console.log(`🔍 YOUTUBE DEBUG - Transcript chunks: ${transcript.length}`);
-        console.log(`🔍 YOUTUBE DEBUG - Full text length: ${fullText.length} characters`);
-        console.log(`🔍 YOUTUBE DEBUG - Full text preview: ${fullText.substring(0, 200)}...`);
-        
-        if (transcript.length === 0 || fullText.trim().length === 0) {
-          transcriptError = "No transcript/captions available for this video (tried 4 extraction methods: youtube-caption-extractor, youtube-transcript-api, youtube-transcript, and Python youtube-transcript-api)";
-        }
-      } catch (transcriptErr: any) {
-        console.log(`🔍 YOUTUBE DEBUG - Transcript extraction failed:`, transcriptErr);
-        console.log(`🔍 YOUTUBE DEBUG - Error message:`, transcriptErr.message);
-        console.log(`🔍 YOUTUBE DEBUG - Error stack:`, transcriptErr.stack);
-        transcriptError = transcriptErr.message || "Failed to extract transcript";
-        
-        // Try to provide more specific error context
-        if (transcriptErr.message?.includes('Transcript is disabled')) {
-          transcriptError = "Video owner has disabled transcript access";
-        } else if (transcriptErr.message?.includes('No transcript found')) {
-          transcriptError = "No transcript/captions found (may require manual captions)";
-        } else if (transcriptErr.message?.includes('private')) {
-          transcriptError = "Video transcript access is restricted";
-        } else if (transcriptErr.message?.includes('not available')) {
-          transcriptError = "YouTube transcript service temporarily unavailable";
-        }
-      }
-      
-      // Try to fetch video title using a simple API call
+
+      // Get video title using oEmbed API
       let title = "YouTube Video";
       try {
         const titleResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
         if (titleResponse.ok) {
           const titleData = await titleResponse.json();
           title = titleData.title || "YouTube Video";
+          console.log(`🎥 RAPIDAPI YOUTUBE - Retrieved title: ${title}`);
         }
       } catch (titleError) {
-        console.log("Could not fetch video title:", titleError);
+        console.log(`🎥 RAPIDAPI YOUTUBE - Could not retrieve title: ${titleError.message}`);
+      }
+
+      // Get transcript using RapidAPI directly
+      console.log(`🎥 RAPIDAPI YOUTUBE - Fetching transcript via RapidAPI...`);
+      
+      const options = {
+        method: 'GET',
+        url: 'https://youtube-transcriptor.p.rapidapi.com/transcript',
+        params: {
+          video_id: videoId,
+          lang: 'en'
+        },
+        headers: {
+          'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+          'X-RapidAPI-Host': 'youtube-transcriptor.p.rapidapi.com'
+        }
+      };
+
+      try {
+        const response = await axios.request(options);
+        
+        console.log(`🎥 RAPIDAPI - Response status: ${response.status}`);
+        
+        // Check if we got a valid response with video data
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const videoData = response.data[0];
+          
+          // Check if transcription exists
+          if (videoData.transcription && Array.isArray(videoData.transcription)) {
+            // Convert RapidAPI format to our expected format and create full text
+            const fullText = videoData.transcription
+              .map(segment => segment.subtitle)
+              .join(' ');
+            
+            console.log(`🎥 RAPIDAPI YOUTUBE - Success! Retrieved ${videoData.transcription.length} segments, ${fullText.length} characters`);
+            
+            const responseData = {
+              success: true,
+              videoId,
+              title,
+              transcript: fullText,
+              transcriptError: null,
+              chunks: videoData.transcription.length,
+              duration: 0
+            };
+
+            res.json(responseData);
+          } else if (videoData.transcriptionAsText) {
+            // If no segment data but we have full text, use that
+            console.log(`🎥 RAPIDAPI YOUTUBE - Using transcriptionAsText fallback`);
+            
+            const responseData = {
+              success: true,
+              videoId,
+              title,
+              transcript: videoData.transcriptionAsText,
+              transcriptError: null,
+              chunks: 1,
+              duration: 0
+            };
+
+            res.json(responseData);
+          } else {
+            throw new Error('No transcript data found in response');
+          }
+        } else {
+          throw new Error('Empty or invalid response from API');
+        }
+      } catch (apiError: any) {
+        console.error('🎥 RAPIDAPI YOUTUBE - API Error:', apiError.response?.data || apiError.message);
+        
+        // Provide user-friendly error messages
+        let errorMessage = 'Failed to extract transcript';
+        
+        if (apiError.response?.status === 401) {
+          errorMessage = 'Invalid API key - please check RAPIDAPI_KEY configuration';
+        } else if (apiError.response?.status === 403) {
+          errorMessage = 'API access forbidden - check subscription and quotas';
+        } else if (apiError.response?.status === 429) {
+          errorMessage = 'Rate limit exceeded - too many requests';
+        } else if (apiError.response?.data?.message) {
+          errorMessage = apiError.response.data.message;
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
+        }
+        
+        const responseData = {
+          success: true,
+          videoId,
+          title,
+          transcript: "",
+          transcriptError: errorMessage,
+          chunks: 0,
+          duration: 0
+        };
+
+        res.json(responseData);
       }
       
-      const responseData = {
-        success: true,
-        videoId,
-        title,
-        transcript: fullText,
-        transcriptError,
-        chunks: transcript.length,
-        duration: transcript.length > 0 ? (transcript[transcript.length - 1]?.offset || 0) : 0
-      };
-      
-      console.log(`🔍 YOUTUBE DEBUG - Response data:`, {
-        success: responseData.success,
-        videoId: responseData.videoId,
-        title: responseData.title,
-        transcriptLength: responseData.transcript.length,
-        chunks: responseData.chunks,
-        hasTranscriptError: !!transcriptError,
-        transcriptError: transcriptError
-      });
-      
-      res.json(responseData);
-      
     } catch (error: any) {
-      console.error('YouTube transcript extraction error:', error);
+      console.error('🎥 RAPIDAPI YOUTUBE - Error:', error);
       res.status(500).json({
         error: "Failed to extract YouTube transcript",
         details: error.message
