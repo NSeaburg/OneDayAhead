@@ -297,6 +297,8 @@ function IntakeChat({
         timestamp: new Date(),
       }]);
 
+      let hasStartedStreaming = false;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -312,6 +314,12 @@ function IntakeChat({
             try {
               const parsed = JSON.parse(data);
               if (parsed.content) {
+                // Set loading to false when we start receiving content
+                if (!hasStartedStreaming) {
+                  setIsLoading(false);
+                  hasStartedStreaming = true;
+                }
+                
                 botResponse += parsed.content;
 
                 // Update the specific streaming message in real time
@@ -364,9 +372,10 @@ function IntakeChat({
           },
         ];
       });
+    } finally {
+      // Ensure loading is false even if there's an error
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
 
     // Re-focus the input field after sending message (UX improvement)
     setTimeout(() => {
