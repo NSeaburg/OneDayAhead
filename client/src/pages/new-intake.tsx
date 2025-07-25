@@ -287,7 +287,7 @@ function IntakeChat({
       if (!reader) throw new Error("No response body");
 
       let botResponse = "";
-      let streamingMessageId = `streaming-${Date.now()}`;
+      let streamingMessageId = `streaming-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
       // Add initial streaming message 
       setMessages(prev => [...prev, {
@@ -332,10 +332,11 @@ function IntakeChat({
 
       // Replace streaming message with final message with permanent ID
       if (botResponse) {
+        const finalMessageId = `final-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         setMessages((prev) => 
           prev.map((msg) => 
             msg.id === streamingMessageId 
-              ? { ...msg, id: Date.now().toString() }
+              ? { ...msg, id: finalMessageId }
               : msg
           )
         );
@@ -351,10 +352,11 @@ function IntakeChat({
       // Remove any streaming messages and add error message
       setMessages((prev) => {
         const withoutStreaming = prev.filter((msg) => !msg.id.startsWith("streaming"));
+        const errorMessageId = `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         return [
           ...withoutStreaming,
           {
-            id: Date.now().toString(),
+            id: errorMessageId,
             content:
               "I'm sorry, I'm having trouble processing your response. Could you try again?",
             isBot: true,
