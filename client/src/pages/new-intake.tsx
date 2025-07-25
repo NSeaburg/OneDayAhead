@@ -184,7 +184,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
           console.error("Error sending Stage 2 welcome:", error);
           setMessages(prev => [...prev, {
             id: Date.now().toString(),
-            content: "Perfect. Now let's figure out where this AI experience should go in your course. What we're building starts with an assessment — a smart bot that checks what students understand, where they're confused, and what they need next.\n\nTo work well, it needs to come right after students have learned something important — and for now, we just need you to pick one moment like that. Think about a spot in your course where catching misunderstandings early would really make a difference.\n\nTell me when you have it.",
+            content: "Think about a spot in your course where catching misunderstandings early would really make a difference.",
             isBot: true,
             timestamp: new Date(),
           }]);
