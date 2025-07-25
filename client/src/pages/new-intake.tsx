@@ -874,24 +874,38 @@ export default function NewIntake() {
       console.log("🔍 FRONTEND YOUTUBE DEBUG - result.title:", result.title);
 
       if (result.success) {
-        const youtubeFile: UploadedFile = {
-          id: Date.now().toString(),
-          name: result.title || "YouTube Video",
-          type: "video/youtube",
-          size: 0,
-          processingStatus: "completed",
-          extractedContent: result.transcript,
-          interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". This content is now available for the AI assistant to reference.`,
-        };
+        // Check if transcript extraction failed or is empty
+        if (result.transcriptError || !result.transcript || result.transcript.trim().length === 0) {
+          const errorFile: UploadedFile = {
+            id: Date.now().toString(),
+            name: result.title || "YouTube Video",
+            type: "error",
+            size: 0,
+            processingStatus: "error",
+            extractedContent: "",
+            interpretation: `⚠️ Video found but no transcript available: "${result.title}". ${result.transcriptError || "This video doesn't have captions or transcript access is restricted"}. Try a different video with captions enabled.`,
+          };
+          handleFileUpload(errorFile);
+        } else {
+          const youtubeFile: UploadedFile = {
+            id: Date.now().toString(),
+            name: result.title || "YouTube Video",
+            type: "video/youtube",
+            size: 0,
+            processingStatus: "completed",
+            extractedContent: result.transcript,
+            interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". This content is now available for the AI assistant to reference.`,
+          };
 
-        console.log("🔍 FRONTEND YOUTUBE DEBUG - Created file object:", {
-          id: youtubeFile.id,
-          name: youtubeFile.name,
-          extractedContent: youtubeFile.extractedContent,
-          contentLength: youtubeFile.extractedContent?.length || 0
-        });
+          console.log("🔍 FRONTEND YOUTUBE DEBUG - Created file object:", {
+            id: youtubeFile.id,
+            name: youtubeFile.name,
+            extractedContent: youtubeFile.extractedContent,
+            contentLength: youtubeFile.extractedContent?.length || 0
+          });
 
-        handleFileUpload(youtubeFile);
+          handleFileUpload(youtubeFile);
+        }
         setYoutubeUrl("");
       } else {
         const errorFile: UploadedFile = {

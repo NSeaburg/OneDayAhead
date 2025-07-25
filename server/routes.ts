@@ -3670,16 +3670,28 @@ ${JSON.stringify(conversationHistory)}`;
       
       // Use youtube-transcript package to get transcript
       const { YoutubeTranscript } = await import('youtube-transcript');
-      const transcript = await YoutubeTranscript.fetchTranscript(videoId);
       
-      // Combine transcript chunks into a single text
-      const fullText = transcript.map(item => item.text).join(' ');
+      let transcript = [];
+      let fullText = "";
+      let transcriptError = null;
       
-      // 🔍 DEBUG: Log transcript extraction details
-      console.log(`🔍 YOUTUBE DEBUG - Video ID: ${videoId}`);
-      console.log(`🔍 YOUTUBE DEBUG - Transcript chunks: ${transcript.length}`);
-      console.log(`🔍 YOUTUBE DEBUG - Full text length: ${fullText.length} characters`);
-      console.log(`🔍 YOUTUBE DEBUG - Full text preview: ${fullText.substring(0, 200)}...`);
+      try {
+        transcript = await YoutubeTranscript.fetchTranscript(videoId);
+        fullText = transcript.map(item => item.text).join(' ');
+        
+        // 🔍 DEBUG: Log transcript extraction details
+        console.log(`🔍 YOUTUBE DEBUG - Video ID: ${videoId}`);
+        console.log(`🔍 YOUTUBE DEBUG - Transcript chunks: ${transcript.length}`);
+        console.log(`🔍 YOUTUBE DEBUG - Full text length: ${fullText.length} characters`);
+        console.log(`🔍 YOUTUBE DEBUG - Full text preview: ${fullText.substring(0, 200)}...`);
+        
+        if (transcript.length === 0 || fullText.trim().length === 0) {
+          transcriptError = "No transcript/captions available for this video";
+        }
+      } catch (transcriptErr: any) {
+        console.log(`🔍 YOUTUBE DEBUG - Transcript extraction failed:`, transcriptErr.message);
+        transcriptError = transcriptErr.message || "Failed to extract transcript";
+      }
       
       // Try to fetch video title using a simple API call
       let title = "YouTube Video";
@@ -3698,8 +3710,9 @@ ${JSON.stringify(conversationHistory)}`;
         videoId,
         title,
         transcript: fullText,
+        transcriptError,
         chunks: transcript.length,
-        duration: transcript[transcript.length - 1]?.offset || 0
+        duration: transcript.length > 0 ? (transcript[transcript.length - 1]?.offset || 0) : 0
       };
       
       console.log(`🔍 YOUTUBE DEBUG - Response data:`, {
@@ -3707,7 +3720,9 @@ ${JSON.stringify(conversationHistory)}`;
         videoId: responseData.videoId,
         title: responseData.title,
         transcriptLength: responseData.transcript.length,
-        chunks: responseData.chunks
+        chunks: responseData.chunks,
+        hasTranscriptError: !!transcriptError,
+        transcriptError: transcriptError
       });
       
       res.json(responseData);
