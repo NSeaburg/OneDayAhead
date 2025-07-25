@@ -137,104 +137,12 @@ function IntakeChat({
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Handle bot type changes (when switching stages) - trigger Stage 2 bot welcome
+  // Handle bot type changes (when switching stages) - Stage 2 waits for user input
   useEffect(() => {
     if (botType === "intake-context" && stageContext) {
-      // Trigger the Stage 2 bot to send its welcome message automatically
-      console.log("Stage 2 bot activated - sending proactive welcome message");
-
-      const sendStage2Welcome = async () => {
-        setIsLoading(true);
-
-        try {
-          const response = await fetch("/api/claude/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              messages: [{
-                role: "user",
-                content: "I'm ready to proceed to Stage 2!"
-              }], // Claude needs at least one message
-              assistantType: "intake-context",
-              stageContext: stageContext,
-              uploadedFiles: uploadedFiles,
-            }),
-          });
-
-          if (!response.ok) throw new Error("Failed to get Stage 2 welcome");
-
-          const reader = response.body?.getReader();
-          if (!reader) throw new Error("No response body");
-
-          let botResponse = "";
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: "streaming",
-              content: "",
-              isBot: true,
-              timestamp: new Date(),
-            },
-          ]);
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split("\n").filter((line) => line.trim());
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6);
-                if (data === "[DONE]") continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.content) {
-                    botResponse += parsed.content;
-                    setMessages((prev) =>
-                      prev.map((msg) =>
-                        msg.id === "streaming"
-                          ? { ...msg, content: botResponse }
-                          : msg,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  // Skip malformed JSON
-                }
-              }
-            }
-          }
-
-          // Replace streaming message with final message
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === "streaming"
-                ? { ...msg, id: Date.now().toString() }
-                : msg,
-            ),
-          );
-        } catch (error) {
-          console.error("Error sending Stage 2 welcome:", error);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now().toString(),
-              content:
-                "Think about a spot in your course where catching misunderstandings early would really make a difference.",
-              isBot: true,
-              timestamp: new Date(),
-            },
-          ]);
-        }
-
-        setIsLoading(false);
-      };
-
-      sendStage2Welcome();
+      console.log("Stage 2 bot activated - waiting for user message before responding");
+      // Stage 2 bot will respond naturally when user sends their next message
+      // No proactive welcome message to avoid back-to-back bot messages
     }
   }, [botType, stageContext]);
 
@@ -379,10 +287,11 @@ function IntakeChat({
       if (!reader) throw new Error("No response body");
 
       let botResponse = "";
+      let streamingMessageId = `streaming-${Date.now()}`;
       
-      // Add empty streaming message for bot response
+      // Add initial streaming message 
       setMessages(prev => [...prev, {
-        id: "streaming",
+        id: streamingMessageId,
         content: "",
         isBot: true,
         timestamp: new Date(),
@@ -405,21 +314,14 @@ function IntakeChat({
               if (parsed.content) {
                 botResponse += parsed.content;
 
-                // Update bot message in real time
-                setMessages((prev) => {
-                  const withoutLastBot = prev.filter(
-                    (msg) => !(msg.isBot && msg.id === "streaming"),
-                  );
-                  return [
-                    ...withoutLastBot,
-                    {
-                      id: "streaming",
-                      content: botResponse,
-                      isBot: true,
-                      timestamp: new Date(),
-                    },
-                  ];
-                });
+                // Update the specific streaming message in real time
+                setMessages((prev) => 
+                  prev.map((msg) => 
+                    msg.id === streamingMessageId 
+                      ? { ...msg, content: botResponse }
+                      : msg
+                  )
+                );
               }
             } catch (e) {
               // Ignore JSON parsing errors for streaming
@@ -430,18 +332,13 @@ function IntakeChat({
 
       // Replace streaming message with final message with permanent ID
       if (botResponse) {
-        setMessages((prev) => {
-          const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
-          return [
-            ...withoutStreaming,
-            {
-              id: Date.now().toString(),
-              content: botResponse,
-              isBot: true,
-              timestamp: new Date(),
-            },
-          ];
-        });
+        setMessages((prev) => 
+          prev.map((msg) => 
+            msg.id === streamingMessageId 
+              ? { ...msg, id: Date.now().toString() }
+              : msg
+          )
+        );
 
         // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
@@ -451,8 +348,9 @@ function IntakeChat({
       }
     } catch (error) {
       console.error("Chat error:", error);
+      // Remove any streaming messages and add error message
       setMessages((prev) => {
-        const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
+        const withoutStreaming = prev.filter((msg) => !msg.id.startsWith("streaming"));
         return [
           ...withoutStreaming,
           {

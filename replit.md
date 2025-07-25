@@ -148,6 +148,15 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 25, 2025. Fixed critical UX issues: eliminated double "thinking" messages and back-to-back bot responses during stage transitions
+  - CRITICAL UX FIX: Eliminated double "thinking" messages by improving streaming message ID management
+  - Used unique streaming message IDs (streaming-${timestamp}) instead of generic "streaming" to prevent conflicts
+  - Fixed streaming message replacement logic to properly map and update specific messages
+  - CRITICAL UX FIX: Removed proactive Stage 2 bot welcome message to prevent back-to-back bot responses
+  - Stage 2 bot now waits for user input before responding, creating natural conversation flow
+  - Stage transition now shows: Stage 1 completion message → user response → Stage 2 bot response (proper turn-taking)
+  - Enhanced error handling to properly clean up streaming messages with startsWith("streaming") filter
+  - UX now matches expected pattern: bot says something, user responds, then bot responds (no double bot messages)
 - July 25, 2025. Fixed stage transition detection and YouTube title display
   - CRITICAL FIX: Stage transition from Stage 1 to Stage 2 now works reliably using shorter phrase detection
   - Transition phrase shortened to "Perfect. Now let's figure out where this AI experience should go in your course" to avoid markdown formatting conflicts
