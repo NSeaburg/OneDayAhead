@@ -157,8 +157,10 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
   - Fixed streaming message display to ensure consistent UI behavior across all bot interactions
   - Stage progression UI correctly shows green checkmarks when Stage 1 completes and Stage 2 activates
   - CRITICAL FIX: Fixed "blank box" issue by filtering empty messages that Claude API rejects
-  - Fixed React duplicate key warnings by using unique streaming IDs instead of hardcoded "streaming"
-  - Added fallback responses when AI service is overloaded to keep intake flow working
+  - Fixed React duplicate key warnings by using unique streaming IDs instead of hardcoded "streaming" 
+  - CRITICAL FIX: Resolved intake bot API reliability issues by switching from `/api/claude/chat` to `/api/claude-chat` endpoint
+  - Intake bots now use the same reliable streaming endpoint as Reggie (assessment bot) for consistent performance
+  - Updated system prompt delivery to pass prompts directly to endpoint rather than relying on server-side selection
   - Enhanced error handling with clear user-friendly messages explaining temporary service issues
   - Bot interface now handles API overload gracefully with helpful fallback messages
 - July 24, 2025. Fixed critical data flow gap and enhanced Stage 2 bot functionality
