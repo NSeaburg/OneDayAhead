@@ -148,6 +148,12 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 24, 2025. Enhanced user feedback for YouTube extraction and rate limiting
+  - Updated YouTube video processing to display actual video title when successfully processed
+  - Improved error handling for rate limiting (HTTP 429) across all API endpoints
+  - Added user-friendly error messages in Stage 2 bot when rate limited
+  - Enhanced file upload feedback with clear success/error indicators and emoji status
+  - Updated Stage 2 bot welcome message to better explain the assessment bot purpose
 - July 24, 2025. Fixed critical YouTube URL extraction error in Stage 2 transition
   - Resolved TypeScript errors where YouTube processing functions were defined in wrong component scope
   - Moved YouTube URL state management (youtubeUrl, setYoutubeUrl, processingYoutube) from IntakeChat to main NewIntake component
