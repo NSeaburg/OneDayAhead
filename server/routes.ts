@@ -3244,7 +3244,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
   // Content creation assistant chat endpoint
   app.post("/api/claude/chat", async (req, res) => {
     try {
-      const { messages, assistantType, stageContext } = req.body;
+      const { messages, assistantType, stageContext, uploadedFiles } = req.body;
 
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({
@@ -3298,6 +3298,26 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
 Continue seamlessly from where Stage 1 left off. The teacher is now ready to provide course context and content materials.`;
           
           contextPrompt = INTAKE_CONTEXT_PROMPT + contextInfo;
+        }
+        
+        // Add uploaded file content to the Stage 2 bot's context
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          const fileContent = uploadedFiles
+            .filter((file: any) => file.extractedContent && file.processingStatus === 'completed')
+            .map((file: any) => `## ${file.name}:\n${file.extractedContent}`)
+            .join('\n\n');
+          
+          if (fileContent) {
+            contextPrompt += `
+
+## Uploaded Content for Analysis:
+The teacher has uploaded the following materials for you to analyze and interpret:
+
+${fileContent}
+
+Use this content to help the teacher understand how their materials align with their teaching goals and to provide specific suggestions for their assessment bot design.`;
+            console.log(`📁 DEBUG Claude Chat - Added ${uploadedFiles.length} uploaded files to context`);
+          }
         }
         
         systemPrompt = contextPrompt;

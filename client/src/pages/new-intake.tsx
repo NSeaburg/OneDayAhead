@@ -227,6 +227,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
           ],
           assistantType: botType,
           stageContext: stageContext,
+          uploadedFiles: uploadedFiles, // Include uploaded files for Stage 2 bot
         }),
       });
 
