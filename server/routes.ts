@@ -3736,7 +3736,58 @@ ${JSON.stringify(conversationHistory)}`;
                 console.log(`🔍 YOUTUBE DEBUG - Final fallback success with ${transcript.length} chunks`);
               }
             } catch (err3: any) {
-              console.log(`🔍 YOUTUBE DEBUG - All methods failed. Final error:`, err3.message);
+              console.log(`🔍 YOUTUBE DEBUG - Final fallback failed:`, err3.message);
+            }
+          }
+          
+          // Method 4: Try Python youtube-transcript-api as last resort
+          if (!transcript || transcript.length === 0) {
+            try {
+              console.log(`🔍 YOUTUBE DEBUG - Trying Python youtube-transcript-api as final method`);
+              const { spawn } = require('child_process');
+              
+              const pythonResult = await new Promise((resolve, reject) => {
+                const python = spawn('python3', ['get_transcript.py', videoId]);
+                let output = '';
+                let errorOutput = '';
+                
+                python.stdout.on('data', (data: any) => {
+                  output += data.toString();
+                });
+                
+                python.stderr.on('data', (data: any) => {
+                  errorOutput += data.toString();
+                });
+                
+                python.on('close', (code: number) => {
+                  if (code === 0) {
+                    try {
+                      const result = JSON.parse(output);
+                      resolve(result);
+                    } catch (parseError) {
+                      reject(new Error(`Failed to parse Python output: ${output}`));
+                    }
+                  } else {
+                    reject(new Error(`Python script failed with code ${code}: ${errorOutput}`));
+                  }
+                });
+                
+                // Add timeout
+                setTimeout(() => {
+                  python.kill();
+                  reject(new Error('Python script timeout'));
+                }, 30000); // 30 second timeout
+              });
+              
+              if (pythonResult && (pythonResult as any).success && (pythonResult as any).transcript) {
+                transcript = (pythonResult as any).transcript;
+                fullText = transcript.map((item: any) => item.text).join(' ');
+                console.log(`🔍 YOUTUBE DEBUG - Python method success with ${transcript.length} entries`);
+              } else {
+                console.log(`🔍 YOUTUBE DEBUG - Python method also failed:`, (pythonResult as any)?.error || 'Unknown error');
+              }
+            } catch (err4: any) {
+              console.log(`🔍 YOUTUBE DEBUG - Python method error:`, err4.message);
             }
           }
         }
@@ -3748,7 +3799,7 @@ ${JSON.stringify(conversationHistory)}`;
         console.log(`🔍 YOUTUBE DEBUG - Full text preview: ${fullText.substring(0, 200)}...`);
         
         if (transcript.length === 0 || fullText.trim().length === 0) {
-          transcriptError = "No transcript/captions available for this video (tried multiple language options)";
+          transcriptError = "No transcript/captions available for this video (tried 4 extraction methods: youtube-caption-extractor, youtube-transcript-api, youtube-transcript, and Python youtube-transcript-api)";
         }
       } catch (transcriptErr: any) {
         console.log(`🔍 YOUTUBE DEBUG - Transcript extraction failed:`, transcriptErr);
