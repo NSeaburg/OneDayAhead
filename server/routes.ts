@@ -3676,6 +3676,7 @@ ${JSON.stringify(conversationHistory)}`;
       let transcriptError = null;
       
       try {
+        console.log(`🔍 YOUTUBE DEBUG - Attempting to fetch transcript for video ID: ${videoId}`);
         transcript = await YoutubeTranscript.fetchTranscript(videoId);
         fullText = transcript.map(item => item.text).join(' ');
         
@@ -3689,8 +3690,19 @@ ${JSON.stringify(conversationHistory)}`;
           transcriptError = "No transcript/captions available for this video";
         }
       } catch (transcriptErr: any) {
-        console.log(`🔍 YOUTUBE DEBUG - Transcript extraction failed:`, transcriptErr.message);
+        console.log(`🔍 YOUTUBE DEBUG - Transcript extraction failed:`, transcriptErr);
+        console.log(`🔍 YOUTUBE DEBUG - Error message:`, transcriptErr.message);
+        console.log(`🔍 YOUTUBE DEBUG - Error stack:`, transcriptErr.stack);
         transcriptError = transcriptErr.message || "Failed to extract transcript";
+        
+        // Try to provide more specific error context
+        if (transcriptErr.message?.includes('Transcript is disabled')) {
+          transcriptError = "Video owner has disabled transcript access";
+        } else if (transcriptErr.message?.includes('No transcript found')) {
+          transcriptError = "No transcript/captions found (may require manual captions)";
+        } else if (transcriptErr.message?.includes('private')) {
+          transcriptError = "Video transcript access is restricted";
+        }
       }
       
       // Try to fetch video title using a simple API call
