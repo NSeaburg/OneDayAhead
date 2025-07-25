@@ -156,6 +156,9 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
   - Added YouTube oEmbed API call to retrieve video metadata including title
   - Fixed streaming message display to ensure consistent UI behavior across all bot interactions
   - Stage progression UI correctly shows green checkmarks when Stage 1 completes and Stage 2 activates
+  - Added retry logic with exponential backoff for Anthropic API overload situations
+  - Enhanced error handling to show user-friendly messages when AI service is temporarily busy
+  - Fixed React duplicate key warnings in streaming message display
 - July 24, 2025. Fixed critical data flow gap and enhanced Stage 2 bot functionality
   - CRITICAL FIX: YouTube transcripts and uploaded files now properly passed to Stage 2 bot for interpretation
   - Modified frontend to include uploadedFiles in chat requests to Stage 2 bot

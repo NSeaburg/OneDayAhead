@@ -3336,14 +3336,47 @@ Use this content to help the teacher understand how their materials align with t
         // Send the initial thread ID
         res.write(`data: ${JSON.stringify({ threadId: messageId })}\n\n`);
 
-        // Create streaming response from Anthropic
-        const stream = await anthropic.messages.stream({
-          messages: anthropicMessages,
-          system: systemPrompt,
-          model: "claude-3-7-sonnet-20250219",
-          max_tokens: 4096,
-          temperature: 0.7,
-        });
+        // Create streaming response from Anthropic with retry logic
+        let stream;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount <= maxRetries) {
+          try {
+            stream = await anthropic.messages.stream({
+              messages: anthropicMessages,
+              system: systemPrompt,
+              model: "claude-3-7-sonnet-20250219",
+              max_tokens: 4096,
+              temperature: 0.7,
+            });
+            break; // Success, exit retry loop
+          } catch (streamError: any) {
+            console.log(`🔍 Stream error details:`, streamError);
+            
+            const errorString = streamError.toString();
+            const isOverloadError = errorString.includes("Overloaded") || 
+                                  errorString.includes("overloaded_error") ||
+                                  streamError.message?.includes("Overloaded") || 
+                                  streamError.message?.includes("overloaded_error");
+            
+            if (isOverloadError && retryCount < maxRetries) {
+              retryCount++;
+              const backoffTime = Math.pow(2, retryCount) * 1000; // 2s, 4s, 8s
+              console.log(`⏱️ API overloaded, retry ${retryCount}/${maxRetries} in ${backoffTime}ms`);
+              
+              // Send status update to client
+              res.write(`data: ${JSON.stringify({ 
+                status: `AI is busy, retrying in ${backoffTime/1000}s... (${retryCount}/${maxRetries})` 
+              })}\n\n`);
+              
+              await new Promise(resolve => setTimeout(resolve, backoffTime));
+              continue;
+            } else {
+              throw streamError; // Re-throw if not overload or max retries reached
+            }
+          }
+        }
 
         let fullContent = "";
 

@@ -390,21 +390,23 @@ function IntakeChat({
               if (parsed.content) {
                 botResponse += parsed.content;
 
-                // Update bot message in real time
-                setMessages((prev) => {
-                  const withoutLastBot = prev.filter(
-                    (msg) => !(msg.isBot && msg.id === "streaming"),
-                  );
-                  return [
-                    ...withoutLastBot,
-                    {
-                      id: "streaming",
-                      content: botResponse,
-                      isBot: true,
-                      timestamp: new Date(),
-                    },
-                  ];
-                });
+                // Update streaming message in place
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === "streaming"
+                      ? { ...msg, content: botResponse }
+                      : msg,
+                  ),
+                );
+              } else if (parsed.status) {
+                // Handle retry status updates
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === "streaming"
+                      ? { ...msg, content: `⏱️ ${parsed.status}` }
+                      : msg,
+                  ),
+                );
               }
             } catch (e) {
               // Ignore JSON parsing errors for streaming
@@ -436,13 +438,20 @@ function IntakeChat({
       }
     } catch (error) {
       console.error("Chat error:", error);
+      
+      // Check if it's an API overload error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isOverloadError = errorMessage.includes("Overloaded") || errorMessage.includes("overloaded_error");
+      
       setMessages((prev) => {
         const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
         return [
           ...withoutStreaming,
           {
             id: Date.now().toString(),
-            content:
+            content: isOverloadError 
+              ? "⏱️ The AI service is currently busy. Please wait a moment and try again."
+              :
               "I'm sorry, I'm having trouble processing your response. Could you try again?",
             isBot: true,
             timestamp: new Date(),
