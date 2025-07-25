@@ -73,9 +73,10 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
     if (botType === "intake-context" && stageContext) {
+      // For Stage 2 bot, don't provide a static message - let the bot send its proactive welcome
       return {
-        id: "1",
-        content: "Perfect! Now that we have the basics covered, let's dive into the context of your course and gather some content materials.\n\nI'd love to understand how this topic fits into your broader curriculum. What have your students learned before this unit, and what comes after?",
+        id: "initial-stage2",
+        content: "",
         isBot: true,
         timestamp: new Date(),
       };
@@ -104,14 +105,97 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Handle bot type changes (when switching stages) - preserve conversation
+  // Handle bot type changes (when switching stages) - trigger Stage 2 bot welcome
   useEffect(() => {
     if (botType === "intake-context" && stageContext) {
-      // Don't reset messages - the Stage 2 bot should continue seamlessly
-      // The stage progression message already indicates the transition
-      console.log("Stage 2 bot activated - preserving conversation continuity");
+      // Trigger the Stage 2 bot to send its welcome message automatically
+      console.log("Stage 2 bot activated - sending proactive welcome message");
+      
+      const sendStage2Welcome = async () => {
+        setIsLoading(true);
+        
+        try {
+          const response = await fetch("/api/claude/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              messages: [], // Empty - this is the first Stage 2 message
+              assistantType: "intake-context",
+              stageContext: stageContext,
+              uploadedFiles: uploadedFiles,
+            }),
+          });
+
+          if (!response.ok) throw new Error("Failed to get Stage 2 welcome");
+
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error("No response body");
+
+          let botResponse = "";
+          setMessages(prev => [...prev, {
+            id: "streaming",
+            content: "",
+            isBot: true,
+            timestamp: new Date(),
+          }]);
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = new TextDecoder().decode(value);
+            const lines = chunk.split("\n").filter((line) => line.trim());
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                if (data === "[DONE]") continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.content) {
+                    botResponse += parsed.content;
+                    setMessages(prev => 
+                      prev.map(msg => 
+                        msg.id === "streaming" 
+                          ? { ...msg, content: botResponse }
+                          : msg
+                      )
+                    );
+                  }
+                } catch (e) {
+                  // Skip malformed JSON
+                }
+              }
+            }
+          }
+
+          // Replace streaming message with final message
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === "streaming" 
+                ? { ...msg, id: Date.now().toString() }
+                : msg
+            )
+          );
+
+        } catch (error) {
+          console.error("Error sending Stage 2 welcome:", error);
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            content: "Perfect. Now let's figure out where this AI experience should go in your course. What we're building starts with an assessment — a smart bot that checks what students understand, where they're confused, and what they need next.\n\nTo work well, it needs to come right after students have learned something important — and for now, we just need you to pick one moment like that. Think about a spot in your course where catching misunderstandings early would really make a difference.\n\nTell me when you have it.",
+            isBot: true,
+            timestamp: new Date(),
+          }]);
+        }
+        
+        setIsLoading(false);
+      };
+      
+      sendStage2Welcome();
     }
-  }, [botType]);
+  }, [botType, stageContext]);
 
   // Handle file uploads - delegate to parent component's file handler
   const handleFileUpload = async (files: FileList) => {
@@ -729,6 +813,18 @@ export default function NewIntake() {
   const handleStageProgression = (completionMessage: string) => {
     // Check if the bot is moving to the next stage using the new transition phrase
     if (completionMessage.includes("Perfect. Now let's figure out where this AI experience should go in your course")) {
+      // Mark Stage 1 as complete by updating all its components
+      setStages((prev) =>
+        prev.map((stage) => 
+          stage.id === 1 
+            ? {
+                ...stage,
+                components: stage.components.map((comp) => ({ ...comp, completed: true }))
+              }
+            : stage
+        )
+      );
+      
       // Prepare context from Stage 1 for Stage 2
       const stage1Context = {
         schoolDistrict: criteria.schoolDistrict.finalValue || "Not specified",
