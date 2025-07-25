@@ -1,0 +1,299 @@
+I need to build a parser for Canvas .imscc export files in my app. These are ZIP files containing course content in XML/HTML format.
+Please create an .imscc file parser with these components:
+
+Install required packages:
+
+bashnpm install unzipper xml2js cheerio
+
+Create imscc-parser.js:
+
+javascriptconst fs = require('fs');
+const path = require('path');
+const unzipper = require('unzipper');
+const xml2js = require('xml2js');
+const cheerio = require('cheerio');
+
+class IMSCCParser {
+  constructor() {
+    this.parser = new xml2js.Parser();
+  }
+
+  // Main parsing function
+  async parseIMSCC(filePath) {
+    const tempDir = path.join(__dirname, 'temp', Date.now().toString());
+    
+    try {
+      // Extract the .imscc file
+      await this.extractZip(filePath, tempDir);
+      
+      // Parse the manifest
+      const manifestPath = path.join(tempDir, 'imsmanifest.xml');
+      const manifest = await this.parseXMLFile(manifestPath);
+      
+      // Extract course structure
+      const courseData = {
+        title: this.getCourseTitle(manifest),
+        modules: await this.parseModules(tempDir, manifest),
+        assignments: await this.parseAssignments(tempDir),
+        quizzes: await this.parseQuizzes(tempDir),
+        pages: await this.parsePages(tempDir),
+        files: await this.parseFiles(tempDir)
+      };
+      
+      // Clean up temp directory
+      this.cleanupTemp(tempDir);
+      
+      return courseData;
+    } catch (error) {
+      this.cleanupTemp(tempDir);
+      throw error;
+    }
+  }
+
+  // Extract ZIP file
+  extractZip(filePath, outputDir) {
+    return new Promise((resolve, reject) => {
+      fs.createReadStream(filePath)
+        .pipe(unzipper.Extract({ path: outputDir }))
+        .on('close', resolve)
+        .on('error', reject);
+    });
+  }
+
+  // Parse XML file
+  async parseXMLFile(filePath) {
+    const xml = fs.readFileSync(filePath, 'utf8');
+    return await this.parser.parseStringPromise(xml);
+  }
+
+  // Get course title from manifest
+  getCourseTitle(manifest) {
+    try {
+      return manifest.manifest.metadata[0].lom[0].general[0].title[0].string[0]._;
+    } catch (e) {
+      return 'Untitled Course';
+    }
+  }
+
+  // Parse modules
+  async parseModules(tempDir, manifest) {
+    const modules = [];
+    const organizations = manifest.manifest.organizations[0].organization[0];
+    
+    if (organizations.item) {
+      for (const item of organizations.item) {
+        modules.push({
+          title: item.title[0],
+          identifier: item.$.identifier,
+          items: await this.parseModuleItems(item)
+        });
+      }
+    }
+    
+    return modules;
+  }
+
+  // Parse individual module items
+  async parseModuleItems(moduleItem) {
+    const items = [];
+    
+    if (moduleItem.item) {
+      for (const item of moduleItem.item) {
+        items.push({
+          title: item.title ? item.title[0] : 'Untitled',
+          type: item.$.identifierref ? 'content' : 'folder',
+          identifier: item.$.identifier
+        });
+      }
+    }
+    
+    return items;
+  }
+
+  // Parse assignments
+  async parseAssignments(tempDir) {
+    const assignments = [];
+    const assignmentsDir = path.join(tempDir, 'course_settings', 'assignment_groups.xml');
+    
+    if (fs.existsSync(assignmentsDir)) {
+      const data = await this.parseXMLFile(assignmentsDir);
+      // Parse assignment structure
+      // This varies by Canvas version
+    }
+    
+    return assignments;
+  }
+
+  // Parse quiz data
+  async parseQuizzes(tempDir) {
+    const quizzes = [];
+    const quizDir = path.join(tempDir, 'quizzes');
+    
+    if (fs.existsSync(quizDir)) {
+      const quizFiles = fs.readdirSync(quizDir);
+      for (const file of quizFiles) {
+        if (file.endsWith('.xml')) {
+          const quizData = await this.parseXMLFile(path.join(quizDir, file));
+          quizzes.push({
+            title: this.extractQuizTitle(quizData),
+            questions: this.extractQuizQuestions(quizData)
+          });
+        }
+      }
+    }
+    
+    return quizzes;
+  }
+
+  // Parse HTML pages
+  async parsePages(tempDir) {
+    const pages = [];
+    const wikiDir = path.join(tempDir, 'wiki_content');
+    
+    if (fs.existsSync(wikiDir)) {
+      const pageFiles = fs.readdirSync(wikiDir);
+      for (const file of pageFiles) {
+        if (file.endsWith('.html')) {
+          const content = fs.readFileSync(path.join(wikiDir, file), 'utf8');
+          const $ = cheerio.load(content);
+          
+          pages.push({
+            filename: file,
+            title: $('title').text() || file,
+            textContent: $('body').text().trim(),
+            html: content
+          });
+        }
+      }
+    }
+    
+    return pages;
+  }
+
+  // List all files
+  async parseFiles(tempDir) {
+    const files = [];
+    const webDir = path.join(tempDir, 'web_resources');
+    
+    if (fs.existsSync(webDir)) {
+      this.walkDir(webDir, (filePath) => {
+        files.push({
+          path: path.relative(webDir, filePath),
+          name: path.basename(filePath),
+          type: path.extname(filePath)
+        });
+      });
+    }
+    
+    return files;
+  }
+
+  // Helper functions
+  extractQuizTitle(quizData) {
+    // Implementation depends on Canvas quiz XML structure
+    return 'Quiz';
+  }
+
+  extractQuizQuestions(quizData) {
+    // Implementation depends on Canvas quiz XML structure
+    return [];
+  }
+
+  walkDir(dir, callback) {
+    fs.readdirSync(dir).forEach(f => {
+      const dirPath = path.join(dir, f);
+      const isDirectory = fs.statSync(dirPath).isDirectory();
+      isDirectory ? this.walkDir(dirPath, callback) : callback(dirPath);
+    });
+  }
+
+  cleanupTemp(dir) {
+    if (fs.existsSync(dir)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+}
+
+module.exports = IMSCCParser;
+
+Create test-imscc.js to test the parser:
+
+javascriptconst IMSCCParser = require('./imscc-parser');
+
+async function testParser() {
+  const parser = new IMSCCParser();
+  
+  try {
+    // Test with a sample .imscc file
+    const courseData = await parser.parseIMSCC('./sample-course.imscc');
+    
+    console.log('Course Title:', courseData.title);
+    console.log('\nModules:', courseData.modules.length);
+    courseData.modules.forEach(module => {
+      console.log(`  - ${module.title} (${module.items.length} items)`);
+    });
+    
+    console.log('\nPages:', courseData.pages.length);
+    console.log('Files:', courseData.files.length);
+    
+    // Save parsed data
+    require('fs').writeFileSync(
+      'parsed-course.json', 
+      JSON.stringify(courseData, null, 2)
+    );
+    
+  } catch (error) {
+    console.error('Error parsing .imscc file:', error);
+  }
+}
+
+testParser();
+
+Create an Express endpoint to handle file uploads:
+
+javascriptconst multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+const IMSCCParser = require('./imscc-parser');
+
+app.post('/upload-course', upload.single('imscc'), async (req, res) => {
+  try {
+    const parser = new IMSCCParser();
+    const courseData = await parser.parseIMSCC(req.file.path);
+    
+    // Process the course data for your assessment bot
+    const analysis = {
+      moduleCount: courseData.modules.length,
+      hasQuizzes: courseData.quizzes.length > 0,
+      contentPages: courseData.pages.length,
+      // Add more analysis
+    };
+    
+    res.json({
+      success: true,
+      courseName: courseData.title,
+      analysis: analysis
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to parse course file'
+    });
+  }
+});
+
+Install multer for file uploads: npm install multer
+
+This parser will extract:
+
+Course title and structure
+All modules and their items
+HTML content from pages
+Quiz information
+All uploaded files
+
+The teacher just needs to:
+
+Export their Canvas course (Settings → Export Course Content)
+Upload the .imscc file to your app
+Your app automatically understands their course structure
