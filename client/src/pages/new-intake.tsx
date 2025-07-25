@@ -43,7 +43,7 @@ interface UploadedFile {
   size: number;
   extractedContent?: string;
   interpretation?: string;
-  processingStatus: 'processing' | 'completed' | 'error';
+  processingStatus: "processing" | "completed" | "error";
 }
 
 interface Message {
@@ -54,22 +54,57 @@ interface Message {
 }
 
 interface CriteriaState {
-  schoolDistrict: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
-  school: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
-  subject: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
-  topic: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
-  gradeLevel: { detected: boolean; value: string | null; confidence: number; finalValue?: string | null };
+  schoolDistrict: {
+    detected: boolean;
+    value: string | null;
+    confidence: number;
+    finalValue?: string | null;
+  };
+  school: {
+    detected: boolean;
+    value: string | null;
+    confidence: number;
+    finalValue?: string | null;
+  };
+  subject: {
+    detected: boolean;
+    value: string | null;
+    confidence: number;
+    finalValue?: string | null;
+  };
+  topic: {
+    detected: boolean;
+    value: string | null;
+    confidence: number;
+    finalValue?: string | null;
+  };
+  gradeLevel: {
+    detected: boolean;
+    value: string | null;
+    confidence: number;
+    finalValue?: string | null;
+  };
 }
 
 const CRITERIA_LABELS = {
   schoolDistrict: "School District",
-  school: "School Name", 
+  school: "School Name",
   subject: "Subject Area",
   topic: "Topic/Unit",
-  gradeLevel: "Grade Level"
+  gradeLevel: "Grade Level",
 } as const;
 
-function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCriteriaUpdate, onStageProgression, uploadedFiles, onFileUpload, onFileRemove }: IntakeChatProps) {
+function IntakeChat({
+  stage,
+  botType,
+  stageContext,
+  onComponentComplete,
+  onCriteriaUpdate,
+  onStageProgression,
+  uploadedFiles,
+  onFileUpload,
+  onFileRemove,
+}: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
     if (botType === "intake-context" && stageContext) {
@@ -83,7 +118,8 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
     } else {
       return {
         id: "1",
-        content: "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
+        content:
+          "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
         isBot: true,
         timestamp: new Date(),
       };
@@ -93,7 +129,8 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
+      content:
+        "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
       isBot: true,
       timestamp: new Date(),
     },
@@ -110,10 +147,10 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
     if (botType === "intake-context" && stageContext) {
       // Trigger the Stage 2 bot to send its welcome message automatically
       console.log("Stage 2 bot activated - sending proactive welcome message");
-      
+
       const sendStage2Welcome = async () => {
         setIsLoading(true);
-        
+
         try {
           const response = await fetch("/api/claude/chat", {
             method: "POST",
@@ -133,12 +170,15 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
           if (!reader) throw new Error("No response body");
 
           let botResponse = "";
-          setMessages(prev => [...prev, {
-            id: "streaming",
-            content: "",
-            isBot: true,
-            timestamp: new Date(),
-          }]);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: "streaming",
+              content: "",
+              isBot: true,
+              timestamp: new Date(),
+            },
+          ]);
 
           while (true) {
             const { done, value } = await reader.read();
@@ -156,12 +196,12 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
                   const parsed = JSON.parse(data);
                   if (parsed.content) {
                     botResponse += parsed.content;
-                    setMessages(prev => 
-                      prev.map(msg => 
-                        msg.id === "streaming" 
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === "streaming"
                           ? { ...msg, content: botResponse }
-                          : msg
-                      )
+                          : msg,
+                      ),
                     );
                   }
                 } catch (e) {
@@ -172,27 +212,30 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
           }
 
           // Replace streaming message with final message
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === "streaming" 
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === "streaming"
                 ? { ...msg, id: Date.now().toString() }
-                : msg
-            )
+                : msg,
+            ),
           );
-
         } catch (error) {
           console.error("Error sending Stage 2 welcome:", error);
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            content: "Think about a spot in your course where catching misunderstandings early would really make a difference.",
-            isBot: true,
-            timestamp: new Date(),
-          }]);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              content:
+                "Think about a spot in your course where catching misunderstandings early would really make a difference.",
+              isBot: true,
+              timestamp: new Date(),
+            },
+          ]);
         }
-        
+
         setIsLoading(false);
       };
-      
+
       sendStage2Welcome();
     }
   }, [botType, stageContext]);
@@ -205,7 +248,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
         name: file.name,
         type: file.type,
         size: file.size,
-        processingStatus: 'processing'
+        processingStatus: "processing",
       };
 
       onFileUpload(uploadedFile);
@@ -213,37 +256,38 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
       // Process the file based on type
       try {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
 
-        let endpoint = '';
-        if (file.type.includes('pdf')) {
-          endpoint = '/api/intake/extract-pdf';
-        } else if (file.type.includes('text')) {
-          endpoint = '/api/intake/extract-text';
+        let endpoint = "";
+        if (file.type.includes("pdf")) {
+          endpoint = "/api/intake/extract-pdf";
+        } else if (file.type.includes("text")) {
+          endpoint = "/api/intake/extract-text";
         } else {
           // For other file types, we'll just store basic info
           onFileUpload({
             ...uploadedFile,
-            processingStatus: 'completed',
+            processingStatus: "completed",
             extractedContent: `File uploaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
-            interpretation: 'File uploaded successfully. Content will be available for the teaching bot to reference.'
+            interpretation:
+              "File uploaded successfully. Content will be available for the teaching bot to reference.",
           });
           continue;
         }
 
         const response = await fetch(endpoint, {
-          method: 'POST',
+          method: "POST",
           body: formData,
         });
 
         const result = await response.json();
-        
+
         if (result.success) {
           onFileUpload({
             ...uploadedFile,
-            processingStatus: 'completed',
+            processingStatus: "completed",
             extractedContent: result.text,
-            interpretation: `Extracted text from ${file.name}. This content appears to be educational material that can be referenced by the AI assistant.`
+            interpretation: `Extracted text from ${file.name}. This content appears to be educational material that can be referenced by the AI assistant.`,
           });
 
           // Send file interpretation to the bot
@@ -254,20 +298,20 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
               isBot: true,
               timestamp: new Date(),
             };
-            setMessages(prev => [...prev, interpretationMessage]);
+            setMessages((prev) => [...prev, interpretationMessage]);
           }
         } else {
           onFileUpload({
             ...uploadedFile,
-            processingStatus: 'error',
-            interpretation: 'Failed to process file content.'
+            processingStatus: "error",
+            interpretation: "Failed to process file content.",
           });
         }
       } catch (error) {
         onFileUpload({
           ...uploadedFile,
-          processingStatus: 'error',
-          interpretation: 'Error processing file.'
+          processingStatus: "error",
+          interpretation: "Error processing file.",
         });
       }
     }
@@ -275,7 +319,8 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
 
   // Auto-scroll to bottom when messages change (same as successful bots)
   useEffect(() => {
-    const messageContainer = messagesEndRef.current?.closest('.overflow-y-auto');
+    const messageContainer =
+      messagesEndRef.current?.closest(".overflow-y-auto");
     if (messageContainer) {
       messageContainer.scrollTop = messageContainer.scrollHeight;
     }
@@ -379,7 +424,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
 
         // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
-        
+
         // Check for stage progression
         onStageProgression(botResponse);
       }
@@ -401,10 +446,12 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
     }
 
     setIsLoading(false);
-    
+
     // Re-focus the input field after sending message (UX improvement)
     setTimeout(() => {
-      const inputElement = document.querySelector('input[placeholder*="Type your response"]') as HTMLInputElement;
+      const inputElement = document.querySelector(
+        'input[placeholder*="Type your response"]',
+      ) as HTMLInputElement;
       if (inputElement) {
         inputElement.focus();
       }
@@ -435,7 +482,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
 
       if (response.ok) {
         const analysisResult = await response.json();
-        
+
         // Update criteria state with analysis results
         if (analysisResult.criteria) {
           onCriteriaUpdate((prev: CriteriaState) => {
@@ -450,7 +497,9 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
                   confidence: criterion.confidence,
                   value: criterion.value, // Keep this for internal tracking
                   // Only set finalValue if this is a summary or if we already have finalValue
-                  finalValue: isSummary ? criterion.value : (updated[key as keyof CriteriaState]?.finalValue || null)
+                  finalValue: isSummary
+                    ? criterion.value
+                    : updated[key as keyof CriteriaState]?.finalValue || null,
                 };
               }
             });
@@ -473,9 +522,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
             <Bot className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="font-medium text-gray-900">
-              Intake Assistant
-            </h3>
+            <h3 className="font-medium text-gray-900">Intake Assistant</h3>
             <p className="text-sm text-gray-500">
               Let's gather your course information
             </p>
@@ -498,21 +545,31 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
                 </div>
               )}
               <span className="text-xs text-gray-500 mt-1">
-                {message.isBot ? 'Intake Assistant' : 'You'}
+                {message.isBot ? "Intake Assistant" : "You"}
               </span>
             </div>
-            <div className={`ml-10 ${
-              message.isBot 
-                ? 'bg-gray-100 border border-gray-200' 
-                : 'bg-blue-600 text-white border border-blue-600'
-            } rounded-lg p-3 text-gray-700 ${message.isBot ? '' : 'text-white'} inline-block w-fit min-w-[60px]`}>
+            <div
+              className={`ml-10 ${
+                message.isBot
+                  ? "bg-gray-100 border border-gray-200"
+                  : "bg-blue-600 text-white border border-blue-600"
+              } rounded-lg p-3 text-gray-700 ${message.isBot ? "" : "text-white"} inline-block w-fit min-w-[60px]`}
+            >
               {message.isBot ? (
                 <div className="prose prose-sm max-w-none">
                   <ReactMarkdown
                     components={{
-                      p: ({ children }) => <div className="mb-2 last:mb-0">{children}</div>,
-                      strong: ({ children }) => <strong className="font-bold text-gray-900">{children}</strong>,
-                      em: ({ children }) => <em className="italic">{children}</em>,
+                      p: ({ children }) => (
+                        <div className="mb-2 last:mb-0">{children}</div>
+                      ),
+                      strong: ({ children }) => (
+                        <strong className="font-bold text-gray-900">
+                          {children}
+                        </strong>
+                      ),
+                      em: ({ children }) => (
+                        <em className="italic">{children}</em>
+                      ),
                       br: () => <br />,
                     }}
                   >
@@ -520,14 +577,12 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
                   </ReactMarkdown>
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap">
-                  {message.content}
-                </div>
+                <div className="whitespace-pre-wrap">{message.content}</div>
               )}
             </div>
           </div>
         ))}
-        
+
         {isLoading && (
           <div className="flex flex-col">
             <div className="flex items-start mb-1">
@@ -553,7 +608,7 @@ function IntakeChat({ stage, botType, stageContext, onComponentComplete, onCrite
             </div>
           </div>
         )}
-        
+
         {/* Reference for scrolling to bottom */}
         <div ref={messagesEndRef} />
       </div>
@@ -586,13 +641,23 @@ export default function NewIntake() {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [processingYoutube, setProcessingYoutube] = useState(false);
   const [criteria, setCriteria] = useState<CriteriaState>({
-    schoolDistrict: { detected: false, value: null, confidence: 0, finalValue: null },
+    schoolDistrict: {
+      detected: false,
+      value: null,
+      confidence: 0,
+      finalValue: null,
+    },
     school: { detected: false, value: null, confidence: 0, finalValue: null },
     subject: { detected: false, value: null, confidence: 0, finalValue: null },
     topic: { detected: false, value: null, confidence: 0, finalValue: null },
-    gradeLevel: { detected: false, value: null, confidence: 0, finalValue: null },
+    gradeLevel: {
+      detected: false,
+      value: null,
+      confidence: 0,
+      finalValue: null,
+    },
   });
-  
+
   const [stages, setStages] = useState<Stage[]>([
     {
       id: 1,
@@ -646,13 +711,15 @@ export default function NewIntake() {
     );
   };
 
-  const handleCriteriaUpdate = (updater: (prev: CriteriaState) => CriteriaState) => {
+  const handleCriteriaUpdate = (
+    updater: (prev: CriteriaState) => CriteriaState,
+  ) => {
     setCriteria(updater);
   };
 
   const handleFileUpload = (file: UploadedFile) => {
-    setUploadedFiles(prev => {
-      const existingIndex = prev.findIndex(f => f.id === file.id);
+    setUploadedFiles((prev) => {
+      const existingIndex = prev.findIndex((f) => f.id === file.id);
       if (existingIndex >= 0) {
         // Update existing file
         const updated = [...prev];
@@ -673,7 +740,7 @@ export default function NewIntake() {
         name: file.name,
         type: file.type,
         size: file.size,
-        processingStatus: 'processing'
+        processingStatus: "processing",
       };
 
       handleFileUpload(uploadedFile);
@@ -681,26 +748,27 @@ export default function NewIntake() {
       // Process the file based on type
       try {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
 
-        let endpoint = '';
-        if (file.type.includes('pdf')) {
-          endpoint = '/api/intake/extract-pdf';
-        } else if (file.type.includes('text')) {
-          endpoint = '/api/intake/extract-text';
+        let endpoint = "";
+        if (file.type.includes("pdf")) {
+          endpoint = "/api/intake/extract-pdf";
+        } else if (file.type.includes("text")) {
+          endpoint = "/api/intake/extract-text";
         } else {
           // For other file types, just store basic info
           handleFileUpload({
             ...uploadedFile,
-            processingStatus: 'completed',
+            processingStatus: "completed",
             extractedContent: `File uploaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
-            interpretation: '✅ File uploaded successfully. Content will be available for the teaching bot to reference.'
+            interpretation:
+              "✅ File uploaded successfully. Content will be available for the teaching bot to reference.",
           });
           continue;
         }
 
         const response = await fetch(endpoint, {
-          method: 'POST',
+          method: "POST",
           body: formData,
         });
 
@@ -708,40 +776,41 @@ export default function NewIntake() {
           // Rate limited
           handleFileUpload({
             ...uploadedFile,
-            processingStatus: 'error',
-            interpretation: '⏱️ Too many requests - please wait a moment and try again.'
+            processingStatus: "error",
+            interpretation:
+              "⏱️ Too many requests - please wait a moment and try again.",
           });
           continue;
         }
 
         const result = await response.json();
-        
+
         if (result.success) {
           handleFileUpload({
             ...uploadedFile,
-            processingStatus: 'completed',
+            processingStatus: "completed",
             extractedContent: result.text,
-            interpretation: `✅ Extracted text from ${file.name}. This content is now available for the AI assistant to reference.`
+            interpretation: `✅ Extracted text from ${file.name}. This content is now available for the AI assistant to reference.`,
           });
         } else {
           handleFileUpload({
             ...uploadedFile,
-            processingStatus: 'error',
-            interpretation: '❌ Failed to process file content.'
+            processingStatus: "error",
+            interpretation: "❌ Failed to process file content.",
           });
         }
       } catch (error) {
         handleFileUpload({
           ...uploadedFile,
-          processingStatus: 'error',
-          interpretation: '🌐 Error processing file.'
+          processingStatus: "error",
+          interpretation: "🌐 Error processing file.",
         });
       }
     }
   };
 
   const handleFileRemove = (fileId: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+    setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
   // Handle YouTube URL extraction
@@ -749,12 +818,12 @@ export default function NewIntake() {
     if (!youtubeUrl.trim() || processingYoutube) return;
 
     setProcessingYoutube(true);
-    
+
     try {
-      const response = await fetch('/api/intake/extract-youtube', {
-        method: 'POST',
+      const response = await fetch("/api/intake/extract-youtube", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ url: youtubeUrl }),
       });
@@ -763,28 +832,29 @@ export default function NewIntake() {
         // Rate limited - show user-friendly message
         const rateLimitFile: UploadedFile = {
           id: Date.now().toString(),
-          name: 'Rate Limit Error',
-          type: 'error',
+          name: "Rate Limit Error",
+          type: "error",
           size: 0,
-          processingStatus: 'error',
-          extractedContent: '',
-          interpretation: '⏱️ Too many requests - please wait a moment and try again. The system is temporarily rate limited.'
+          processingStatus: "error",
+          extractedContent: "",
+          interpretation:
+            "⏱️ Too many requests - please wait a moment and try again. The system is temporarily rate limited.",
         };
         handleFileUpload(rateLimitFile);
         return;
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         const youtubeFile: UploadedFile = {
           id: Date.now().toString(),
-          name: result.title || 'YouTube Video',
-          type: 'video/youtube',
+          name: result.title || "YouTube Video",
+          type: "video/youtube",
           size: 0,
-          processingStatus: 'completed',
+          processingStatus: "completed",
           extractedContent: result.transcript,
-          interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". This content is now available for the AI assistant to reference.`
+          interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". This content is now available for the AI assistant to reference.`,
         };
 
         handleFileUpload(youtubeFile);
@@ -792,25 +862,26 @@ export default function NewIntake() {
       } else {
         const errorFile: UploadedFile = {
           id: Date.now().toString(),
-          name: 'YouTube Error',
-          type: 'error',
+          name: "YouTube Error",
+          type: "error",
           size: 0,
-          processingStatus: 'error',
-          extractedContent: '',
-          interpretation: `❌ Could not extract transcript from YouTube video. Please check the URL and try again.`
+          processingStatus: "error",
+          extractedContent: "",
+          interpretation: `❌ Could not extract transcript from YouTube video. Please check the URL and try again.`,
         };
         handleFileUpload(errorFile);
       }
     } catch (error) {
-      console.error('YouTube extraction error:', error);
+      console.error("YouTube extraction error:", error);
       const errorFile: UploadedFile = {
         id: Date.now().toString(),
-        name: 'Connection Error',
-        type: 'error',
+        name: "Connection Error",
+        type: "error",
         size: 0,
-        processingStatus: 'error',
-        extractedContent: '',
-        interpretation: '🌐 Connection error occurred. Please check your internet connection and try again.'
+        processingStatus: "error",
+        extractedContent: "",
+        interpretation:
+          "🌐 Connection error occurred. Please check your internet connection and try again.",
       };
       handleFileUpload(errorFile);
     }
@@ -819,36 +890,42 @@ export default function NewIntake() {
   };
 
   const handleStageProgression = (completionMessage: string) => {
-    console.log("🔍 Checking stage progression for message:", completionMessage.substring(0, 100) + "...");
-    
-    // Check if the bot is moving to the next stage using the complete transition phrase
-    const transitionPhrase = "Perfect. Now let's figure out where this AI experience should go in your course. What we're building starts with an assessment — a smart bot that checks what students understand, where they're confused, and what they need next.";
-    
+    console.log(
+      "🔍 Checking stage progression for message:",
+      completionMessage.substring(0, 100) + "...",
+    );
+
+    // Check if the bot is moving to the next stage using a shorter, unique phrase
+    const transitionPhrase = "Perfect. Now let's figure out where this AI experience should go in your course";
+
     if (completionMessage.includes(transitionPhrase)) {
       console.log("✅ Stage transition detected! Moving to Stage 2");
-      
+
       // Mark Stage 1 as complete by updating all its components
       setStages((prev) =>
-        prev.map((stage) => 
-          stage.id === 1 
+        prev.map((stage) =>
+          stage.id === 1
             ? {
                 ...stage,
-                components: stage.components.map((comp) => ({ ...comp, completed: true }))
+                components: stage.components.map((comp) => ({
+                  ...comp,
+                  completed: true,
+                })),
               }
-            : stage
-        )
+            : stage,
+        ),
       );
-      
+
       // Prepare context from Stage 1 for Stage 2
       const stage1Context = {
         schoolDistrict: criteria.schoolDistrict.finalValue || "Not specified",
-        school: criteria.school.finalValue || "Not specified", 
+        school: criteria.school.finalValue || "Not specified",
         subject: criteria.subject.finalValue || "Not specified",
         topic: criteria.topic.finalValue || "Not specified",
         gradeLevel: criteria.gradeLevel.finalValue || "Not specified",
-        completionMessage
+        completionMessage,
       };
-      
+
       // Switch to Stage 2
       setCurrentStageId(2);
       setCurrentBotType("intake-context");
@@ -856,7 +933,8 @@ export default function NewIntake() {
     }
   };
 
-  const currentStage = stages.find(stage => stage.id === currentStageId) || stages[0];
+  const currentStage =
+    stages.find((stage) => stage.id === currentStageId) || stages[0];
 
   return (
     <div className="h-screen p-2 md:p-4 flex flex-col bg-gray-50">
@@ -866,7 +944,8 @@ export default function NewIntake() {
           Build Your AI Learning Experience
         </h1>
         <p className="mt-2 text-sm md:text-lg text-gray-600">
-          We'll build this together through conversation - it takes about 10 minutes
+          We'll build this together through conversation - it takes about 10
+          minutes
         </p>
       </div>
 
@@ -881,230 +960,286 @@ export default function NewIntake() {
             </p>
 
             <div className="space-y-4">
-                {stages.map((stage, index) => {
-                  const isActive = stage.id === currentStageId;
-                  
-                  // For completed stages (when we've moved beyond them), show them as fully completed
-                  const shouldShowAsCompleted = currentStageId > stage.id;
-                  
-                  // Calculate completion count differently for Stage 1 (criteria-based) vs other stages
-                  const completedCount = stage.id === 1 
-                    ? Object.values(criteria).filter(criterion => criterion.finalValue !== null && criterion.finalValue !== undefined).length
+              {stages.map((stage, index) => {
+                const isActive = stage.id === currentStageId;
+
+                // For completed stages (when we've moved beyond them), show them as fully completed
+                const shouldShowAsCompleted = currentStageId > stage.id;
+
+                // Calculate completion count differently for Stage 1 (criteria-based) vs other stages
+                const completedCount =
+                  stage.id === 1
+                    ? Object.values(criteria).filter(
+                        (criterion) =>
+                          criterion.finalValue !== null &&
+                          criterion.finalValue !== undefined,
+                      ).length
                     : stage.components.filter((c) => c.completed).length;
-                  
-                  const isExpanded = isActive;
 
-                  return (
-                    <div
-                      key={stage.id}
-                      className={`border rounded-lg p-3 transition-all duration-300 cursor-pointer ${
-                        isActive 
-                          ? "border-blue-200 bg-blue-50" 
-                          : shouldShowAsCompleted 
-                            ? "border-green-200 bg-green-50"
-                            : "border-gray-200 hover:border-gray-300"
-                      }`}
-                      onClick={() => setCurrentStageId(stage.id)}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
-                            isActive
-                              ? "bg-blue-600 text-white"
-                              : shouldShowAsCompleted
-                                ? "bg-green-600 text-white"
-                                : "bg-gray-200 text-gray-600"
-                          }`}
-                        >
-                          {shouldShowAsCompleted ? (
-                            <Check className="w-4 h-4" />
-                          ) : (
-                            stage.id
-                          )}
-                        </span>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-sm">{stage.title}</h3>
-                          <p className="text-xs text-gray-500">
-                            {completedCount}/{stage.components.length}
-                          </p>
-                        </div>
-                      </div>
-                      {isExpanded && (
-                        <p className="text-xs text-gray-600 mb-3">
-                          {stage.description}
+                const isExpanded = isActive;
+
+                return (
+                  <div
+                    key={stage.id}
+                    className={`border rounded-lg p-3 transition-all duration-300 cursor-pointer ${
+                      isActive
+                        ? "border-blue-200 bg-blue-50"
+                        : shouldShowAsCompleted
+                          ? "border-green-200 bg-green-50"
+                          : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => setCurrentStageId(stage.id)}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
+                          isActive
+                            ? "bg-blue-600 text-white"
+                            : shouldShowAsCompleted
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-200 text-gray-600"
+                        }`}
+                      >
+                        {shouldShowAsCompleted ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          stage.id
+                        )}
+                      </span>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-sm">{stage.title}</h3>
+                        <p className="text-xs text-gray-500">
+                          {completedCount}/{stage.components.length}
                         </p>
-                      )}
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <p className="text-xs text-gray-600 mb-3">
+                        {stage.description}
+                      </p>
+                    )}
 
-                      {/* Expanded content - only show if stage is active */}
-                      {isExpanded && (
-                        <>
-                          {/* For Stage 1, show dynamic progress criteria */}
-                          {stage.id === 1 ? (
-                        <div className="space-y-2">
-                          {Object.entries(CRITERIA_LABELS).map(([key, label]) => {
-                            const criterion = criteria[key as keyof CriteriaState];
-                            return (
-                              <div key={key} className="flex items-center gap-2">
-                                <div className={cn(
-                                  "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300",
-                                  criterion.detected 
-                                    ? "bg-green-500 text-white" 
-                                    : "bg-gray-300 text-gray-500"
-                                )}>
-                                  {criterion.detected ? (
-                                    <Check className="w-3 h-3 animate-in zoom-in duration-300" />
-                                  ) : (
-                                    <Circle className="w-2 h-2" />
-                                  )}
+                    {/* Expanded content - only show if stage is active */}
+                    {isExpanded && (
+                      <>
+                        {/* For Stage 1, show dynamic progress criteria */}
+                        {stage.id === 1 ? (
+                          <div className="space-y-2">
+                            {Object.entries(CRITERIA_LABELS).map(
+                              ([key, label]) => {
+                                const criterion =
+                                  criteria[key as keyof CriteriaState];
+                                return (
+                                  <div
+                                    key={key}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <div
+                                      className={cn(
+                                        "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300",
+                                        criterion.detected
+                                          ? "bg-green-500 text-white"
+                                          : "bg-gray-300 text-gray-500",
+                                      )}
+                                    >
+                                      {criterion.detected ? (
+                                        <Check className="w-3 h-3 animate-in zoom-in duration-300" />
+                                      ) : (
+                                        <Circle className="w-2 h-2" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span
+                                        className={cn(
+                                          "text-xs transition-colors break-words",
+                                          criterion.detected
+                                            ? "text-green-700 font-medium"
+                                            : "text-gray-700",
+                                        )}
+                                      >
+                                        {label}
+                                      </span>
+                                      {criterion.detected &&
+                                        criterion.finalValue && (
+                                          <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
+                                            {key === "learningObjectives" ? (
+                                              <div className="space-y-1">
+                                                {criterion.finalValue
+                                                  .split(/\d+\./)
+                                                  .filter(Boolean)
+                                                  .map(
+                                                    (
+                                                      objective: string,
+                                                      index: number,
+                                                    ) => (
+                                                      <div
+                                                        key={index}
+                                                        className="flex"
+                                                      >
+                                                        <span className="mr-1">
+                                                          {index + 1}.
+                                                        </span>
+                                                        <span>
+                                                          {objective.trim()}
+                                                        </span>
+                                                      </div>
+                                                    ),
+                                                  )}
+                                              </div>
+                                            ) : (
+                                              criterion.finalValue
+                                            )}
+                                          </div>
+                                        )}
+                                    </div>
+                                  </div>
+                                );
+                              },
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {stage.components.map((component) => (
+                              <div key={component.id} className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`w-3 h-3 rounded-full ${
+                                      component.completed
+                                        ? "bg-green-500"
+                                        : "bg-gray-300"
+                                    }`}
+                                  />
+                                  <div className="flex-1">
+                                    <span className="text-xs text-gray-700">
+                                      {component.title}
+                                    </span>
+                                    {component.note && (
+                                      <span className="text-xs text-gray-500 ml-1">
+                                        ({component.note})
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <span className={cn(
-                                    "text-xs transition-colors break-words",
-                                    criterion.detected ? "text-green-700 font-medium" : "text-gray-700"
-                                  )}>
-                                    {label}
-                                  </span>
-                                  {criterion.detected && criterion.finalValue && (
-                                    <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
-                                      {key === 'learningObjectives' ? (
+
+                                {/* Add file drop zone and YouTube URL input for Stage 2 file upload component */}
+                                {stage.id === 2 &&
+                                  component.type === "file-upload" && (
+                                    <div className="ml-5 mt-2 space-y-3">
+                                      <input
+                                        type="file"
+                                        id="file-upload"
+                                        multiple
+                                        className="hidden"
+                                        onChange={(e) =>
+                                          e.target.files &&
+                                          handleNativeFileUpload(e.target.files)
+                                        }
+                                        accept=".pdf,.txt,.doc,.docx,.png,.jpg,.jpeg"
+                                      />
+                                      <label
+                                        htmlFor="file-upload"
+                                        className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer block"
+                                        onDrop={(e) => {
+                                          e.preventDefault();
+                                          const files = e.dataTransfer.files;
+                                          if (files.length > 0) {
+                                            handleNativeFileUpload(files);
+                                          }
+                                        }}
+                                        onDragOver={(e) => e.preventDefault()}
+                                      >
+                                        <div className="text-center">
+                                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
+                                          <div className="text-xs text-gray-500 mb-1">
+                                            Drop files here or click to browse
+                                          </div>
+                                          <div className="text-xs text-gray-400">
+                                            PDF, DOC, TXT, images
+                                          </div>
+                                        </div>
+                                      </label>
+
+                                      {/* Show uploaded files */}
+                                      {uploadedFiles.length > 0 && (
                                         <div className="space-y-1">
-                                          {criterion.finalValue.split(/\d+\./).filter(Boolean).map((objective: string, index: number) => (
-                                            <div key={index} className="flex">
-                                              <span className="mr-1">{index + 1}.</span>
-                                              <span>{objective.trim()}</span>
+                                          {uploadedFiles.map((file) => (
+                                            <div
+                                              key={file.id}
+                                              className="flex items-center gap-2 text-xs bg-gray-100 p-2 rounded"
+                                            >
+                                              <div className="flex-1">
+                                                <div className="font-medium">
+                                                  {file.name}
+                                                </div>
+                                                <div className="text-gray-500">
+                                                  {file.processingStatus ===
+                                                    "processing" &&
+                                                    "Processing..."}
+                                                  {file.processingStatus ===
+                                                    "completed" &&
+                                                    "✓ Processed"}
+                                                  {file.processingStatus ===
+                                                    "error" && "⚠ Error"}
+                                                </div>
+                                              </div>
+                                              <button
+                                                onClick={() =>
+                                                  handleFileRemove(file.id)
+                                                }
+                                                className="text-gray-400 hover:text-red-500"
+                                              >
+                                                <X className="w-3 h-3" />
+                                              </button>
                                             </div>
                                           ))}
                                         </div>
-                                      ) : (
-                                        criterion.finalValue
                                       )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {stage.components.map((component) => (
-                            <div key={component.id} className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className={`w-3 h-3 rounded-full ${
-                                    component.completed
-                                      ? "bg-green-500"
-                                      : "bg-gray-300"
-                                  }`}
-                                />
-                                <div className="flex-1">
-                                  <span className="text-xs text-gray-700">
-                                    {component.title}
-                                  </span>
-                                  {component.note && (
-                                    <span className="text-xs text-gray-500 ml-1">
-                                      ({component.note})
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {/* Add file drop zone and YouTube URL input for Stage 2 file upload component */}
-                              {stage.id === 2 && component.type === "file-upload" && (
-                                <div className="ml-5 mt-2 space-y-3">
-                                  <input
-                                    type="file"
-                                    id="file-upload"
-                                    multiple
-                                    className="hidden"
-                                    onChange={(e) => e.target.files && handleNativeFileUpload(e.target.files)}
-                                    accept=".pdf,.txt,.doc,.docx,.png,.jpg,.jpeg"
-                                  />
-                                  <label
-                                    htmlFor="file-upload"
-                                    className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer block"
-                                    onDrop={(e) => {
-                                      e.preventDefault();
-                                      const files = e.dataTransfer.files;
-                                      if (files.length > 0) {
-                                        handleNativeFileUpload(files);
-                                      }
-                                    }}
-                                    onDragOver={(e) => e.preventDefault()}
-                                  >
-                                    <div className="text-center">
-                                      <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
-                                      <div className="text-xs text-gray-500 mb-1">
-                                        Drop files here or click to browse
-                                      </div>
-                                      <div className="text-xs text-gray-400">
-                                        PDF, DOC, TXT, images
-                                      </div>
-                                    </div>
-                                  </label>
-                                  
-                                  {/* Show uploaded files */}
-                                  {uploadedFiles.length > 0 && (
-                                    <div className="space-y-1">
-                                      {uploadedFiles.map((file) => (
-                                        <div key={file.id} className="flex items-center gap-2 text-xs bg-gray-100 p-2 rounded">
-                                          <div className="flex-1">
-                                            <div className="font-medium">{file.name}</div>
-                                            <div className="text-gray-500">
-                                              {file.processingStatus === 'processing' && 'Processing...'}
-                                              {file.processingStatus === 'completed' && '✓ Processed'}
-                                              {file.processingStatus === 'error' && '⚠ Error'}
-                                            </div>
-                                          </div>
+
+                                      <div className="space-y-2">
+                                        <div className="text-xs text-gray-600 font-medium">
+                                          YouTube Video URL
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <input
+                                            type="url"
+                                            value={youtubeUrl}
+                                            onChange={(e) =>
+                                              setYoutubeUrl(e.target.value)
+                                            }
+                                            placeholder="Paste YouTube URL here..."
+                                            className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                          />
                                           <button
-                                            onClick={() => handleFileRemove(file.id)}
-                                            className="text-gray-400 hover:text-red-500"
+                                            onClick={handleYoutubeExtract}
+                                            disabled={
+                                              !youtubeUrl.trim() ||
+                                              processingYoutube
+                                            }
+                                            className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                           >
-                                            <X className="w-3 h-3" />
+                                            {processingYoutube
+                                              ? "Processing..."
+                                              : "Extract"}
                                           </button>
                                         </div>
-                                      ))}
+                                      </div>
                                     </div>
                                   )}
-                                  
-                                  <div className="space-y-2">
-                                    <div className="text-xs text-gray-600 font-medium">
-                                      YouTube Video URL
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <input
-                                        type="url"
-                                        value={youtubeUrl}
-                                        onChange={(e) => setYoutubeUrl(e.target.value)}
-                                        placeholder="Paste YouTube URL here..."
-                                        className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                      />
-                                      <button
-                                        onClick={handleYoutubeExtract}
-                                        disabled={!youtubeUrl.trim() || processingYoutube}
-                                        className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        {processingYoutube ? 'Processing...' : 'Extract'}
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
-                          {stage.hasTestButton && (
-                            <Button size="sm" className="w-full mt-3">
-                              {stage.testButtonText || "Test"}
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
+                        {stage.hasTestButton && (
+                          <Button size="sm" className="w-full mt-3">
+                            {stage.testButtonText || "Test"}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
