@@ -883,7 +883,9 @@ export default function NewIntake() {
             size: 0,
             processingStatus: "error",
             extractedContent: "",
-            interpretation: `⚠️ Video found but no transcript available: "${result.title}". ${result.transcriptError || "This video doesn't have captions or transcript access is restricted"}. Try a different video with captions enabled.`,
+            interpretation: `⚠️ YouTube transcript extraction unavailable: "${result.title}". ${result.transcriptError || "Transcript access is currently limited"}. 
+
+**Alternative:** Try uploading a PDF or text file with the content instead. Many YouTube videos provide transcripts or lesson materials as downloadable files.`,
           };
           handleFileUpload(errorFile);
         } else {

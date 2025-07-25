@@ -3677,7 +3677,34 @@ ${JSON.stringify(conversationHistory)}`;
       
       try {
         console.log(`🔍 YOUTUBE DEBUG - Attempting to fetch transcript for video ID: ${videoId}`);
-        transcript = await YoutubeTranscript.fetchTranscript(videoId);
+        
+        // Try with different language options in case default doesn't work
+        let transcriptOptions = [
+          undefined, // Default language
+          'en',      // English explicitly
+          'en-US',   // US English
+          'auto'     // Auto-generated
+        ];
+        
+        for (const lang of transcriptOptions) {
+          try {
+            console.log(`🔍 YOUTUBE DEBUG - Trying language: ${lang || 'default'}`);
+            if (lang) {
+              transcript = await YoutubeTranscript.fetchTranscript(videoId, { lang });
+            } else {
+              transcript = await YoutubeTranscript.fetchTranscript(videoId);
+            }
+            
+            if (transcript && transcript.length > 0) {
+              console.log(`🔍 YOUTUBE DEBUG - Success with language: ${lang || 'default'}`);
+              break;
+            }
+          } catch (langErr) {
+            console.log(`🔍 YOUTUBE DEBUG - Language ${lang || 'default'} failed:`, langErr.message);
+            continue;
+          }
+        }
+        
         fullText = transcript.map(item => item.text).join(' ');
         
         // 🔍 DEBUG: Log transcript extraction details
@@ -3687,7 +3714,7 @@ ${JSON.stringify(conversationHistory)}`;
         console.log(`🔍 YOUTUBE DEBUG - Full text preview: ${fullText.substring(0, 200)}...`);
         
         if (transcript.length === 0 || fullText.trim().length === 0) {
-          transcriptError = "No transcript/captions available for this video";
+          transcriptError = "No transcript/captions available for this video (tried multiple language options)";
         }
       } catch (transcriptErr: any) {
         console.log(`🔍 YOUTUBE DEBUG - Transcript extraction failed:`, transcriptErr);
@@ -3702,6 +3729,8 @@ ${JSON.stringify(conversationHistory)}`;
           transcriptError = "No transcript/captions found (may require manual captions)";
         } else if (transcriptErr.message?.includes('private')) {
           transcriptError = "Video transcript access is restricted";
+        } else if (transcriptErr.message?.includes('not available')) {
+          transcriptError = "YouTube transcript service temporarily unavailable";
         }
       }
       
