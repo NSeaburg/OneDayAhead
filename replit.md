@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 25, 2025. Fixed stage transition detection and YouTube title display
+  - CRITICAL FIX: Stage transition from Stage 1 to Stage 2 now works reliably using shorter phrase detection
+  - Transition phrase shortened to "Perfect. Now let's figure out where this AI experience should go in your course" to avoid markdown formatting conflicts
+  - Stage 2 bot no longer sends blank initial message - uses proper Claude message format with at least one user message
+  - YouTube video extraction now fetches and displays actual video titles instead of generic "YouTube Video"
+  - Added YouTube oEmbed API call to retrieve video metadata including title
+  - Fixed streaming message display to ensure consistent UI behavior across all bot interactions
+  - Stage progression UI correctly shows green checkmarks when Stage 1 completes and Stage 2 activates
 - July 24, 2025. Fixed critical data flow gap and enhanced Stage 2 bot functionality
   - CRITICAL FIX: YouTube transcripts and uploaded files now properly passed to Stage 2 bot for interpretation
   - Modified frontend to include uploadedFiles in chat requests to Stage 2 bot

@@ -3641,9 +3641,22 @@ ${JSON.stringify(conversationHistory)}`;
       // Combine transcript chunks into a single text
       const fullText = transcript.map(item => item.text).join(' ');
       
+      // Try to fetch video title using a simple API call
+      let title = "YouTube Video";
+      try {
+        const titleResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+        if (titleResponse.ok) {
+          const titleData = await titleResponse.json();
+          title = titleData.title || "YouTube Video";
+        }
+      } catch (titleError) {
+        console.log("Could not fetch video title:", titleError);
+      }
+      
       res.json({
         success: true,
         videoId,
+        title,
         transcript: fullText,
         chunks: transcript.length,
         duration: transcript[transcript.length - 1]?.offset || 0

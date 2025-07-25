@@ -126,15 +126,10 @@ function IntakeChat({
     }
   };
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content:
-        "Hi! I'm here to help you build an AI-powered learning experience that drops right into your existing course. It will take about 10 minutes, and we'll build the whole thing together by chatting.\n\n If you haven't watched the 30 second video above, I really recommend it.\n\n Ready to begin?",
-      isBot: true,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const initial = getInitialMessage();
+    return initial ? [initial] : [];
+  });
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [collectedData, setCollectedData] = useState<Record<string, string>>(
@@ -157,7 +152,10 @@ function IntakeChat({
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
-              messages: [], // Empty - this is the first Stage 2 message
+              messages: [{
+                role: "user",
+                content: "I'm ready to proceed to Stage 2!"
+              }], // Claude needs at least one message
               assistantType: "intake-context",
               stageContext: stageContext,
               uploadedFiles: uploadedFiles,
@@ -366,6 +364,14 @@ function IntakeChat({
       if (!reader) throw new Error("No response body");
 
       let botResponse = "";
+      
+      // Add empty streaming message for bot response
+      setMessages(prev => [...prev, {
+        id: "streaming",
+        content: "",
+        isBot: true,
+        timestamp: new Date(),
+      }]);
 
       while (true) {
         const { done, value } = await reader.read();
