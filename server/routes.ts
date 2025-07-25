@@ -3675,6 +3675,12 @@ ${JSON.stringify(conversationHistory)}`;
       // Combine transcript chunks into a single text
       const fullText = transcript.map(item => item.text).join(' ');
       
+      // 🔍 DEBUG: Log transcript extraction details
+      console.log(`🔍 YOUTUBE DEBUG - Video ID: ${videoId}`);
+      console.log(`🔍 YOUTUBE DEBUG - Transcript chunks: ${transcript.length}`);
+      console.log(`🔍 YOUTUBE DEBUG - Full text length: ${fullText.length} characters`);
+      console.log(`🔍 YOUTUBE DEBUG - Full text preview: ${fullText.substring(0, 200)}...`);
+      
       // Try to fetch video title using a simple API call
       let title = "YouTube Video";
       try {
@@ -3687,14 +3693,24 @@ ${JSON.stringify(conversationHistory)}`;
         console.log("Could not fetch video title:", titleError);
       }
       
-      res.json({
+      const responseData = {
         success: true,
         videoId,
         title,
         transcript: fullText,
         chunks: transcript.length,
         duration: transcript[transcript.length - 1]?.offset || 0
+      };
+      
+      console.log(`🔍 YOUTUBE DEBUG - Response data:`, {
+        success: responseData.success,
+        videoId: responseData.videoId,
+        title: responseData.title,
+        transcriptLength: responseData.transcript.length,
+        chunks: responseData.chunks
       });
+      
+      res.json(responseData);
       
     } catch (error: any) {
       console.error('YouTube transcript extraction error:', error);

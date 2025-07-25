@@ -867,6 +867,12 @@ export default function NewIntake() {
 
       const result = await response.json();
 
+      console.log("🔍 FRONTEND YOUTUBE DEBUG - Received result:", result);
+      console.log("🔍 FRONTEND YOUTUBE DEBUG - result.success:", result.success);
+      console.log("🔍 FRONTEND YOUTUBE DEBUG - result.transcript:", result.transcript);
+      console.log("🔍 FRONTEND YOUTUBE DEBUG - result.transcript length:", result.transcript?.length || 0);
+      console.log("🔍 FRONTEND YOUTUBE DEBUG - result.title:", result.title);
+
       if (result.success) {
         const youtubeFile: UploadedFile = {
           id: Date.now().toString(),
@@ -877,6 +883,13 @@ export default function NewIntake() {
           extractedContent: result.transcript,
           interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". This content is now available for the AI assistant to reference.`,
         };
+
+        console.log("🔍 FRONTEND YOUTUBE DEBUG - Created file object:", {
+          id: youtubeFile.id,
+          name: youtubeFile.name,
+          extractedContent: youtubeFile.extractedContent,
+          contentLength: youtubeFile.extractedContent?.length || 0
+        });
 
         handleFileUpload(youtubeFile);
         setYoutubeUrl("");
