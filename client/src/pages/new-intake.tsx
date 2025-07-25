@@ -727,8 +727,8 @@ export default function NewIntake() {
   };
 
   const handleStageProgression = (completionMessage: string) => {
-    // Check if the bot is moving to the next stage
-    if (completionMessage.includes("Great! Let's move on to understanding the content of your course.")) {
+    // Check if the bot is moving to the next stage using the new transition phrase
+    if (completionMessage.includes("Perfect. Now let's figure out where this AI experience should go in your course")) {
       // Prepare context from Stage 1 for Stage 2
       const stage1Context = {
         schoolDistrict: criteria.schoolDistrict.finalValue || "Not specified",
