@@ -453,7 +453,7 @@ function IntakeChat({
 
       {/* Messages Area - Uses same structure as successful Reggie bot */}
       <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
-        {messages.map((message) => (
+        {messages.filter(message => message.content.trim() !== "").map((message) => (
           <div key={message.id} className="flex flex-col">
             <div className="flex items-start mb-1">
               {message.isBot ? (

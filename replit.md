@@ -148,6 +148,11 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 25, 2025. Fixed duplicate "Intake Assistant" chat bubbles during bot thinking states
+  - Root cause: Empty streaming messages were rendered as visible chat bubbles alongside the loading indicator
+  - Solution: Added filter to only render messages with non-empty content in the UI
+  - Maintained unique streaming message IDs for proper state management
+  - The duplicate chat bubble issue is now fully resolved - only shows loading indicator during thinking
 - July 25, 2025. Successfully integrated RapidAPI YouTube Transcript service to replace failing 4-method extraction system
   - Replaced complex multi-method YouTube extraction with reliable RapidAPI service using RAPIDAPI_KEY
   - RapidAPI service provides comprehensive video metadata including title, transcript segments, and full text
