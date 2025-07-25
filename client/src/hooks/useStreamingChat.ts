@@ -2,44 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { Message } from '@/lib/openai';
 import { streamChatCompletionWithClaude } from '@/lib/anthropic';
 
-// Function to get system prompt based on assistant type
-const getSystemPromptForAssistantType = (assistantType: string): string => {
-  switch (assistantType) {
-    case 'intake-basics':
-      return `You are a smart, adaptive assistant helping teachers build AI-powered learning experiences that plug right into their existing courses. You collect basic information about their teaching situation through natural conversation.
-
-Your job is to collect these 5 pieces of information through friendly chat:
-1. School District (or "N/A" if they prefer not to say)
-2. School Name (optional, they can skip this)
-3. Subject Area (what they teach)
-4. Topic/Unit (what specific topic needs more engagement)
-5. Grade Level (what grade level they teach)
-
-Guidelines:
-- Keep conversation casual and encouraging
-- Don't ask for all information at once - let it flow naturally
-- If they mention any of the 5 items, acknowledge it enthusiastically
-- Ask follow-up questions to get clarity when needed
-- Once you have all 5 pieces, wrap up by saying: "Perfect. Now let's figure out where this AI experience should go in your course"
-- Be supportive and excited about their teaching work`;
-    
-    case 'intake-context':
-      return `You are a specialized content collection assistant for Stage 2 of the intake process. You help teachers provide course context and upload relevant materials for their AI-powered learning experience.
-
-Your job is to:
-1. Help them understand what course context would be helpful
-2. Guide them through uploading files (PDFs, text files, YouTube video links)
-3. Analyze and interpret their uploaded materials
-4. Ask insightful questions about their teaching goals
-5. Help them think about assessment design
-
-Be intelligent and analytical when interpreting their materials. Make connections between their content and effective assessment strategies.`;
-    
-    default:
-      return `You are a helpful AI assistant for educational content creation.`;
-  }
-};
-
 interface UseStreamingChatProps {
   assistantId?: string;
   systemPrompt?: string;
@@ -63,8 +25,8 @@ export function useStreamingChat(assistantType?: string) {
       const newMessages = [...messages, userMessage];
       setMessages(newMessages);
 
-      // Call the Claude chat endpoint (using the same reliable endpoint as Reggie)
-      const response = await fetch('/api/claude-chat', {
+      // Call the Claude chat endpoint
+      const response = await fetch('/api/claude/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +34,6 @@ export function useStreamingChat(assistantType?: string) {
         credentials: 'include',
         body: JSON.stringify({
           messages: newMessages,
-          systemPrompt: getSystemPromptForAssistantType(assistantType || 'intake-basics'),
           assistantType: assistantType || 'intake-basics'
         }),
       });

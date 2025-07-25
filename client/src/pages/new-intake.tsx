@@ -94,53 +94,6 @@ const CRITERIA_LABELS = {
   gradeLevel: "Grade Level",
 } as const;
 
-// Function to build Stage 2 system prompt with context
-const getStage2SystemPrompt = (stageContext: any, uploadedFiles: any[]) => {
-  let prompt = `You are a specialized content collection assistant for Stage 2 of the intake process. You help teachers provide course context and upload relevant materials for their AI-powered learning experience.
-
-Your job is to:
-1. Help them understand what course context would be helpful
-2. Guide them through uploading files (PDFs, text files, YouTube video links)
-3. Analyze and interpret their uploaded materials
-4. Ask insightful questions about their teaching goals
-5. Help them think about assessment design
-
-Be intelligent and analytical when interpreting their materials. Make connections between their content and effective assessment strategies.`;
-
-  if (stageContext) {
-    prompt += `
-
-## Stage 1 Context From Previous Conversation:
-- School District: ${stageContext.schoolDistrict}
-- School: ${stageContext.school}
-- Subject: ${stageContext.subject}
-- Topic: ${stageContext.topic}
-- Grade Level: ${stageContext.gradeLevel}
-
-Continue seamlessly from where Stage 1 left off. The teacher is now ready to provide course context and content materials.`;
-  }
-
-  if (uploadedFiles && uploadedFiles.length > 0) {
-    const fileContent = uploadedFiles
-      .filter((file: any) => file.extractedContent && file.processingStatus === 'completed')
-      .map((file: any) => `## ${file.name}:\n${file.extractedContent}`)
-      .join('\n\n');
-    
-    if (fileContent) {
-      prompt += `
-
-## Uploaded Content for Analysis:
-The teacher has uploaded the following materials for you to analyze and interpret:
-
-${fileContent}
-
-Use this content to help the teacher understand how their materials align with their teaching goals and to provide specific suggestions for their assessment bot design.`;
-    }
-  }
-
-  return prompt;
-};
-
 function IntakeChat({
   stage,
   botType,
@@ -194,7 +147,7 @@ function IntakeChat({
         setIsLoading(true);
 
         try {
-          const response = await fetch("/api/claude-chat", {
+          const response = await fetch("/api/claude/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -203,8 +156,9 @@ function IntakeChat({
                 role: "user",
                 content: "I'm ready to proceed to Stage 2!"
               }], // Claude needs at least one message
-              systemPrompt: getStage2SystemPrompt(stageContext, uploadedFiles),
               assistantType: "intake-context",
+              stageContext: stageContext,
+              uploadedFiles: uploadedFiles,
             }),
           });
 
@@ -384,31 +338,9 @@ function IntakeChat({
     setInput("");
     setIsLoading(true);
 
-    // Create unique streaming ID outside try block so it's available in catch
-    const streamingId = `streaming-${Date.now()}`;
-    
     try {
-      // Send to reliable chat endpoint for processing (same as Reggie)
-      const systemPrompt = botType === "intake-context" 
-        ? getStage2SystemPrompt(stageContext, uploadedFiles)
-        : `You are a smart, adaptive assistant helping teachers build AI-powered learning experiences that plug right into their existing courses. You collect basic information about their teaching situation through natural conversation.
-
-Your job is to collect these 5 pieces of information through friendly chat:
-1. School District (or "N/A" if they prefer not to say)
-2. School Name (optional, they can skip this)
-3. Subject Area (what they teach)
-4. Topic/Unit (what specific topic needs more engagement)
-5. Grade Level (what grade level they teach)
-
-Guidelines:
-- Keep conversation casual and encouraging
-- Don't ask for all information at once - let it flow naturally
-- If they mention any of the 5 items, acknowledge it enthusiastically
-- Ask follow-up questions to get clarity when needed
-- Once you have all 5 pieces, wrap up by saying: "Perfect. Now let's figure out where this AI experience should go in your course"
-- Be supportive and excited about their teaching work`;
-
-      const response = await fetch("/api/claude-chat", {
+      // Send to chat endpoint for processing
+      const response = await fetch("/api/claude/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -420,8 +352,9 @@ Guidelines:
             })),
             { role: "user", content: userMessage.content },
           ],
-          systemPrompt: systemPrompt,
           assistantType: botType,
+          stageContext: stageContext,
+          uploadedFiles: uploadedFiles, // Include uploaded files for Stage 2 bot
         }),
       });
 
@@ -434,7 +367,7 @@ Guidelines:
       
       // Add empty streaming message for bot response
       setMessages(prev => [...prev, {
-        id: streamingId,
+        id: "streaming",
         content: "",
         isBot: true,
         timestamp: new Date(),
@@ -457,23 +390,21 @@ Guidelines:
               if (parsed.content) {
                 botResponse += parsed.content;
 
-                // Update streaming message in place
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === streamingId
-                      ? { ...msg, content: botResponse }
-                      : msg,
-                  ),
-                );
-              } else if (parsed.status) {
-                // Handle retry status updates
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === streamingId
-                      ? { ...msg, content: `⏱️ ${parsed.status}` }
-                      : msg,
-                  ),
-                );
+                // Update bot message in real time
+                setMessages((prev) => {
+                  const withoutLastBot = prev.filter(
+                    (msg) => !(msg.isBot && msg.id === "streaming"),
+                  );
+                  return [
+                    ...withoutLastBot,
+                    {
+                      id: "streaming",
+                      content: botResponse,
+                      isBot: true,
+                      timestamp: new Date(),
+                    },
+                  ];
+                });
               }
             } catch (e) {
               // Ignore JSON parsing errors for streaming
@@ -485,7 +416,7 @@ Guidelines:
       // Replace streaming message with final message with permanent ID
       if (botResponse) {
         setMessages((prev) => {
-          const withoutStreaming = prev.filter((msg) => msg.id !== streamingId);
+          const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
           return [
             ...withoutStreaming,
             {
@@ -505,26 +436,19 @@ Guidelines:
       }
     } catch (error) {
       console.error("Chat error:", error);
-      
-      // Remove any streaming messages first
-      setMessages((prev) => prev.filter((msg) => !msg.id.includes("streaming")));
-      
-      // Check if it's an API overload error
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const isOverloadError = errorMessage.includes("Overloaded") || errorMessage.includes("overloaded_error");
-      
-      // Add error message with unique ID
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `error-${Date.now()}`,
-          content: isOverloadError 
-            ? "⏱️ The AI service is currently busy with high traffic. This happens sometimes - please wait a moment and try your message again."
-            : "I'm having trouble processing your message. Please try again in a moment.",
-          isBot: true,
-          timestamp: new Date(),
-        },
-      ]);
+      setMessages((prev) => {
+        const withoutStreaming = prev.filter((msg) => msg.id !== "streaming");
+        return [
+          ...withoutStreaming,
+          {
+            id: Date.now().toString(),
+            content:
+              "I'm sorry, I'm having trouble processing your response. Could you try again?",
+            isBot: true,
+            timestamp: new Date(),
+          },
+        ];
+      });
     }
 
     setIsLoading(false);
