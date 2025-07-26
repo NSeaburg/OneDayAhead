@@ -627,7 +627,35 @@ export default function NewIntake() {
       ],
       hasTestButton: false,
     },
-    // ... other stages would go here
+    {
+      id: 3,
+      title: "Assessment Bot",
+      description: "Design the AI that will evaluate your students",
+      components: [
+        {
+          id: "personality",
+          title: "Personality",
+          completed: false,
+          type: "bot-assisted",
+          note: "Character and teaching style",
+        },
+        {
+          id: "avatar",
+          title: "Avatar",
+          completed: false,
+          type: "bot-assisted", 
+          note: "Visual appearance",
+        },
+        {
+          id: "boundaries",
+          title: "Boundaries",
+          completed: false,
+          type: "bot-assisted",
+          note: "Rules and limitations",
+        },
+      ],
+      hasTestButton: false,
+    },
   ]);
 
   const handleComponentComplete = (componentId: string) => {
@@ -874,11 +902,14 @@ export default function NewIntake() {
       completionMessage.substring(0, 100) + "...",
     );
 
-    // Check if the bot is moving to the next stage using a shorter, unique phrase
-    const transitionPhrase = "Perfect. Now let's figure out where this AI experience should go in your course";
+    // Check for Stage 1 to Stage 2 transition
+    const stage2TransitionPhrase = "Perfect. Now let's figure out where this AI experience should go in your course";
+    
+    // Check for Stage 2 to Stage 3 transition  
+    const stage3TransitionPhrase = "Great! Let's talk about the personality of your assessment bot. Do you have a persona in mind or would you like me to suggest some options?";
 
-    if (completionMessage.includes(transitionPhrase)) {
-      console.log("✅ Stage transition detected! Moving to Stage 2");
+    if (completionMessage.includes(stage2TransitionPhrase)) {
+      console.log("✅ Stage 1->2 transition detected! Moving to Stage 2");
 
       // Mark Stage 1 as complete by updating all its components
       setStages((prev) =>
@@ -909,6 +940,39 @@ export default function NewIntake() {
       setCurrentStageId(2);
       setCurrentBotType("intake-context");
       setStageContext(stage1Context);
+    } else if (completionMessage.includes(stage3TransitionPhrase)) {
+      console.log("✅ Stage 2->3 transition detected! Moving to Stage 3");
+
+      // Mark Stage 2 as complete by updating all its components
+      setStages((prev) =>
+        prev.map((stage) =>
+          stage.id === 2
+            ? {
+                ...stage,
+                components: stage.components.map((comp) => ({
+                  ...comp,
+                  completed: true,
+                })),
+              }
+            : stage,
+        ),
+      );
+
+      // Prepare context from previous stages for Stage 3
+      const allStagesContext = {
+        schoolDistrict: criteria.schoolDistrict.finalValue || "Not specified",
+        school: criteria.school.finalValue || "Not specified", 
+        subject: criteria.subject.finalValue || "Not specified",
+        topic: criteria.topic.finalValue || "Not specified",
+        gradeLevel: criteria.gradeLevel.finalValue || "Not specified",
+        completionMessage,
+        uploadedFiles: uploadedFiles, // Include files from Stage 2
+      };
+
+      // Switch to Stage 3
+      setCurrentStageId(3);
+      setCurrentBotType("intake-assessment-bot");
+      setStageContext(allStagesContext);
     }
   };
 

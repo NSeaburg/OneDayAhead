@@ -5,6 +5,7 @@ import { ltiAuthMiddleware } from "./lti/auth";
 import ltiRoutes from "./lti/routes";
 import { ltiServices } from "./lti/services";
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import axios from "axios";
 import path from "path";
 import fs from "fs";
@@ -36,6 +37,22 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Initialize OpenAI client for image generation (optional)
+let openai: OpenAI | null = null;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    console.log("✅ OpenAI client initialized for image generation");
+  } else {
+    console.log("⚠️ OpenAI API key not found - image generation will be unavailable");
+  }
+} catch (error) {
+  console.error("❌ Failed to initialize OpenAI client:", error);
+  openai = null;
+}
+
 // N8N Webhook URLs
 const ASSESSMENT_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 const DYNAMIC_ASSISTANT_WEBHOOK_URL = process.env.N8N_DYNAMIC_WEBHOOK_URL; // New webhook URL for the dynamic assistant
@@ -48,6 +65,7 @@ import {
   ASSESSMENT_EVALUATION_PROMPT,
   INTAKE_BASICS_PROMPT,
   INTAKE_CONTEXT_PROMPT,
+  INTAKE_ASSESSMENT_BOT_PROMPT,
 } from "./prompts";
 
 import { contentManager } from "./contentManager";
@@ -3306,6 +3324,9 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       } else if (assistantType === "intake-context") {
         // Build context-aware prompt for Stage 2
         let contextPrompt = INTAKE_CONTEXT_PROMPT;
+      } else if (assistantType === "intake-assessment-bot") {
+        // Build context-aware prompt for Stage 3 (Assessment Bot Design)
+        let assessmentBotPrompt = INTAKE_ASSESSMENT_BOT_PROMPT;
         
         if (stageContext) {
           const contextInfo = `
@@ -3356,6 +3377,47 @@ Use this content to help the teacher understand how their materials align with t
         
         systemPrompt = contextPrompt;
         console.log(`✅ DEBUG Claude Chat - Using INTAKE_CONTEXT_PROMPT with context`);
+      } else if (assistantType === "intake-assessment-bot") {
+        // Build context-aware prompt for Stage 3 (Assessment Bot Design)
+        let assessmentBotPrompt = INTAKE_ASSESSMENT_BOT_PROMPT;
+        
+        if (stageContext) {
+          const contextInfo = `
+
+## Context From Previous Stages:
+- School District: ${stageContext.schoolDistrict}
+- School: ${stageContext.school}
+- Subject: ${stageContext.subject}
+- Topic: ${stageContext.topic}
+- Grade Level: ${stageContext.gradeLevel}
+- Learning Objectives: ${stageContext.learningObjectives}
+
+## Course Materials Collected:
+The teacher has already provided course context and materials in Stage 2. Use this background to help design an assessment bot that fits perfectly with their course content and student needs.`;
+          
+          assessmentBotPrompt = INTAKE_ASSESSMENT_BOT_PROMPT + contextInfo;
+        }
+        
+        // Add uploaded file content to help inform bot design
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
+          
+          if (completedFiles.length > 0) {
+            const fileContent = completedFiles
+              .map((file: any) => `## ${file.name}:\n${file.extractedContent.substring(0, 1000)}...`)
+              .join('\n\n');
+            
+            assessmentBotPrompt += `
+
+## Course Content Reference:
+Here's a sample of the materials the teacher provided for context (use this to inform personality and assessment approach):
+
+${fileContent}`;
+          }
+        }
+        
+        systemPrompt = assessmentBotPrompt;
+        console.log(`✅ DEBUG Claude Chat - Using INTAKE_ASSESSMENT_BOT_PROMPT with context`);
       }
       
       // Final debug log to see what system prompt is actually being sent to Claude
@@ -3852,6 +3914,66 @@ ${JSON.stringify(conversationHistory)}`;
       res.status(500).json({
         error: "Failed to process Canvas course upload",
         details: error.message
+      });
+    }
+  });
+
+  // Image generation endpoint for Stage 3 Assessment Bot design
+  app.post("/api/intake/generate-image", async (req, res) => {
+    try {
+      const { prompt, style = "digital art" } = req.body;
+
+      if (!prompt) {
+        return res.status(400).json({ error: "Image prompt is required" });
+      }
+
+      if (!openai) {
+        return res.status(500).json({ 
+          error: "OpenAI API key not configured",
+          details: "Image generation is not available - please provide OPENAI_API_KEY" 
+        });
+      }
+
+      // Generate image using OpenAI DALL-E
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style illustration.`,
+        size: "1024x1024",
+        quality: "standard",
+        n: 1,
+      });
+
+      const imageUrl = response.data[0]?.url;
+      
+      if (!imageUrl) {
+        return res.status(500).json({ 
+          error: "Failed to generate image",
+          details: "No image URL returned from OpenAI" 
+        });
+      }
+
+      res.json({
+        success: true,
+        imageUrl,
+        prompt: prompt,
+        style: style
+      });
+
+    } catch (error: any) {
+      console.error('Image generation error:', error);
+      
+      let errorMessage = 'Failed to generate image';
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid OpenAI API key';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded - too many image generation requests';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      res.status(500).json({
+        error: "Image generation failed",
+        details: errorMessage
       });
     }
   });

@@ -148,6 +148,15 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 25, 2025. Implemented Stage 3 "Assessment Bot" design phase with image generation capabilities
+  - Added complete Stage 3 with personality, avatar, and boundaries components for assessment bot design
+  - Created INTAKE_ASSESSMENT_BOT_PROMPT system prompt for character creation assistance  
+  - Added OpenAI integration for AI image generation via /api/intake/generate-image endpoint
+  - Implemented Stage 2 to Stage 3 transition detection using trigger phrase about assessment bot personality
+  - Enhanced frontend stage progression logic to handle three-stage workflow seamlessly
+  - Stage 3 bot can generate custom avatars using DALL-E based on teacher descriptions
+  - Context from all previous stages (criteria + uploaded files) passed to Stage 3 for informed bot design
+  - Teachers can now design complete assessment bot personalities with visual avatars and clear boundaries
 - July 25, 2025. Integrated Canvas .imscc file parser for comprehensive course export handling
   - Added complete .imscc file parsing capability using unzipper, xml2js, and cheerio packages
   - Created server/imscc-parser.js module for extracting course structure, modules, assignments, and content
