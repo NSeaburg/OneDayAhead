@@ -59,7 +59,6 @@ const DYNAMIC_ASSISTANT_WEBHOOK_URL = process.env.N8N_DYNAMIC_WEBHOOK_URL; // Ne
 
 // Import system prompts from configuration file
 import {
-  ARTICLE_ASSISTANT_SYSTEM_PROMPT,
   ASSESSMENT_ASSISTANT_PROMPT,
   TEACHING_ASSISTANT_FALLBACK_PROMPT,
   ASSESSMENT_EVALUATION_PROMPT,
@@ -74,13 +73,7 @@ import { contentManager } from "./contentManager";
 console.log("Assessment Webhook URL:", ASSESSMENT_WEBHOOK_URL);
 console.log("Dynamic Assistant Webhook URL:", DYNAMIC_ASSISTANT_WEBHOOK_URL);
 
-// Log information about the article assistant system prompt
-console.log(
-  `Article Assistant System Prompt Length: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.length} characters`,
-);
-console.log(
-  `Article Assistant System Prompt Preview: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.substring(0, 100)}...`,
-);
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -171,8 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Only require LTI auth if no session exists
     if (
       req.path.includes("/claude-chat") ||
-      req.path.includes("/article-chat") ||
-      req.path.includes("/article-chat-stream") ||
+
       req.path.includes("/send-to-n8n") ||
       req.path.includes("/conversations") ||
       req.path.includes("/feedback")
@@ -518,11 +510,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use content package data if available, otherwise fall back to defaults
       const response = {
-        discussionAssistantId: "claude-discussion",
         assessmentAssistantId: contentPackage?.assessmentBot ? "claude-assessment-dynamic" : "claude-assessment",
         contentPackage: contentPackage,
         systemPrompts: {
-          discussion: ARTICLE_ASSISTANT_SYSTEM_PROMPT,
           assessment: contentPackage?.assessmentBot?.personality || ASSESSMENT_ASSISTANT_PROMPT,
           teachingFallback: TEACHING_ASSISTANT_FALLBACK_PROMPT,
         },
@@ -604,106 +594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Special endpoint for the article assistant chat using Claude 3.7 Sonnet (non-streaming)
-  app.post("/api/article-chat", 
-    requireLtiSession,
-    aiRateLimit,
-    aiRateLimit10Min,
-    validateMessage,
-    checkDailyUsage,
-    async (req, res) => {
-    try {
-      const { messages } = req.body;
 
-      // This endpoint handles only non-streaming requests
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({
-          error: "Invalid message data. Expected an array of messages.",
-        });
-      }
-
-      console.log(
-        "Article chat endpoint using exact Python code configuration",
-      );
-
-      // Convert OpenAI-style messages to Anthropic format
-      const anthropicMessages = messages
-        .filter((msg: any) => msg.role !== "system")
-        .map((msg: any) => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        }));
-
-      // Create completion with Anthropic exactly like the Python code
-      const completion = await anthropic.messages.create({
-        messages: anthropicMessages,
-        system: ARTICLE_ASSISTANT_SYSTEM_PROMPT, // Use our hardcoded prompt
-        model: "claude-3-7-sonnet-20250219",
-        max_tokens: 4096,
-        temperature: 1.0,
-      });
-
-      // Extract the response content
-      const content =
-        completion.content[0]?.type === "text"
-          ? completion.content[0].text
-          : "No response content available";
-
-      // Generate a thread ID
-      const messageId = "claude-article-" + Date.now();
-
-      // Store the conversation and track AI usage
-      const sessionId = req.sessionId;
-      if (sessionId) {
-        try {
-          // Limit conversation length for AI context
-          const limitedMessages = limitConversationLength(anthropicMessages);
-          const allMessages = [
-            ...limitedMessages,
-            { role: "assistant", content },
-          ];
-
-          // Store the conversation
-          await storage.createConversation({
-            sessionId,
-            threadId: messageId,
-            assistantType: "article",
-            messages: allMessages,
-          });
-          
-          // Track AI usage for cost monitoring
-          const inputText = anthropicMessages.map(m => m.content).join(' ');
-          await trackAiUsage(sessionId, "/api/article-chat", inputText, content, req.ip);
-          
-          console.log(
-            `Stored article conversation for session ${sessionId}, thread ${messageId}`,
-          );
-        } catch (err) {
-          console.error("Error storing article conversation:", err);
-          // Continue with response even if storage fails
-        }
-      }
-
-      // Return in OpenAI format for compatibility
-      res.json({
-        choices: [
-          {
-            message: {
-              content,
-              role: "assistant",
-            },
-          },
-        ],
-        threadId: messageId,
-      });
-    } catch (error: any) {
-      console.error("Error in article chat endpoint:", error);
-      res.status(500).json({
-        error: "article_chat_error",
-        message: error.message || "An error occurred with the article chat",
-      });
-    }
-  });
 
   // Streaming endpoint for the article assistant chat
   app.post("/api/article-chat-stream", 
@@ -3289,7 +3180,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
         }));
 
       // Choose system prompt based on assistant type
-      let systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
+      let systemPrompt = "";
       
       // Debug logging to see what's happening
       console.log(`🔍 DEBUG Claude Chat - assistantType: "${assistantType}"`);
@@ -3421,7 +3312,7 @@ ${fileContent}`;
       console.log(`🎯 DEBUG Claude Chat - Final systemPrompt (first 100 chars): "${systemPrompt.substring(0, 100)}..."`);
       console.log(`🎯 DEBUG Claude Chat - systemPrompt length: ${systemPrompt.length}`);
       console.log(`🎯 DEBUG Claude Chat - Is it the joke prompt? ${systemPrompt === INTAKE_BASICS_PROMPT}`);
-      console.log(`🎯 DEBUG Claude Chat - Is it the article prompt? ${systemPrompt === ARTICLE_ASSISTANT_SYSTEM_PROMPT}`);
+      console.log(`🎯 DEBUG Claude Chat - System prompt assigned: ${systemPrompt ? 'Yes' : 'No'}`);
       console.log(`🎯 DEBUG Claude Chat - Messages count: ${anthropicMessages.length}`);
       console.log(`🎯 DEBUG Claude Chat - First user message: "${anthropicMessages.length > 0 ? anthropicMessages[anthropicMessages.length - 1]?.content?.substring(0, 50) + '...' : 'None'}"`);
 

@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 26, 2025. CRITICAL FIX: Removed article assessment bot fallback system completely and fixed Stage 2 bug
+  - Completely removed ARTICLE_ASSISTANT_SYSTEM_PROMPT and all article bot endpoints (/api/article-chat, /api/article-chat-stream)
+  - Fixed critical Stage 2 bug where intake-context bot was not using correct system prompt (was falling back to article discussion)
+  - Stage 2 now properly uses INTAKE_CONTEXT_PROMPT with context and uploaded file interpretation
+  - Eliminated fallback system per user request - system now fails explicitly when something is broken
+  - All 3 stages (Stage 1: basics, Stage 2: context, Stage 3: assessment bot design) now working correctly
+  - Stage 2 → Stage 3 transition ("Great! Let's talk about the personality of your assessment bot") working perfectly
+  - Enhanced error detection by removing safety nets - broken functionality now fails immediately
 - July 25, 2025. Implemented Stage 3 "Assessment Bot" design phase with image generation capabilities
   - Added complete Stage 3 with personality, avatar, and boundaries components for assessment bot design
   - Created INTAKE_ASSESSMENT_BOT_PROMPT system prompt for character creation assistance  
