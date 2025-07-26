@@ -3324,9 +3324,6 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       } else if (assistantType === "intake-context") {
         // Build context-aware prompt for Stage 2
         let contextPrompt = INTAKE_CONTEXT_PROMPT;
-      } else if (assistantType === "intake-assessment-bot") {
-        // Build context-aware prompt for Stage 3 (Assessment Bot Design)
-        let assessmentBotPrompt = INTAKE_ASSESSMENT_BOT_PROMPT;
         
         if (stageContext) {
           const contextInfo = `
