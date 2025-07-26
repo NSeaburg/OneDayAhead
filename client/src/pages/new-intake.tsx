@@ -292,7 +292,7 @@ function IntakeChat({
       await analyzeConversation(botResponse);
 
       // Check for stage progression
-      checkStageProgression(botResponse);
+      onStageProgression(botResponse);
     } catch (error) {
       console.error("Error in card submission:", error);
       setMessages(prev => prev.filter(msg => msg.id !== `streaming-${Date.now()}`));
