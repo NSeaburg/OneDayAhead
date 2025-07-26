@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { IntakeCard } from "@/components/IntakeCard";
 
 interface Stage {
   id: number;
@@ -136,6 +137,167 @@ function IntakeChat({
     {},
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to detect if a message contains an INTAKE_CARD
+  const detectIntakeCard = (content: string): { hasCard: boolean; cardContent: string; beforeCard: string; afterCard: string } => {
+    const cardStartIndex = content.indexOf('INTAKE_CARD');
+    if (cardStartIndex === -1) {
+      return { hasCard: false, cardContent: '', beforeCard: content, afterCard: '' };
+    }
+
+    // Find the end of the card (look for next non-field line)
+    const lines = content.split('\n');
+    let cardLines: string[] = [];
+    let cardStartLine = -1;
+    let cardEndLine = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('INTAKE_CARD')) {
+        cardStartLine = i;
+        continue;
+      }
+      
+      if (cardStartLine !== -1) {
+        const line = lines[i].trim();
+        // Check if this line is a field (contains : and _____)
+        if (line.includes(':') && line.includes('_____')) {
+          cardLines.push(lines[i]);
+        } else if (line === '' || line.startsWith('```')) {
+          // Empty line or code block end - continue
+          if (line.startsWith('```')) {
+            cardEndLine = i;
+            break;
+          }
+        } else if (cardLines.length > 0) {
+          // Non-field line after we've collected fields - end of card
+          cardEndLine = i - 1;
+          break;
+        }
+      }
+    }
+
+    if (cardStartLine === -1 || cardLines.length === 0) {
+      return { hasCard: false, cardContent: '', beforeCard: content, afterCard: '' };
+    }
+
+    if (cardEndLine === -1) cardEndLine = lines.length - 1;
+
+    const beforeCard = lines.slice(0, cardStartLine).join('\n').trim();
+    const afterCard = lines.slice(cardEndLine + 1).join('\n').trim();
+    const cardContent = cardLines.join('\n');
+
+    return { hasCard: true, cardContent, beforeCard, afterCard };
+  };
+
+  // Handle card form submission
+  const handleCardSubmit = async (cardData: Record<string, string>) => {
+    // Format the submission as a user message
+    const formattedResponse = Object.entries(cardData)
+      .map(([label, value]) => `${label}: ${value}`)
+      .join('\n');
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: `Here are the details:\n\n${formattedResponse}`,
+      isBot: false,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    // Continue conversation with the form data
+    try {
+      const response = await fetch("/api/claude/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          messages: [
+            ...messages.map((msg) => ({
+              role: msg.isBot ? "assistant" : "user",
+              content: msg.content,
+            })),
+            { role: "user", content: userMessage.content },
+          ],
+          assistantType: botType,
+          stageContext: stageContext,
+          uploadedFiles: uploadedFiles,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to get response");
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      let botResponse = "";
+      let streamingMessageId = `streaming-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      setMessages(prev => [...prev, {
+        id: streamingMessageId,
+        content: "",
+        isBot: true,
+        timestamp: new Date(),
+      }]);
+
+      let hasStartedStreaming = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split("\n").filter((line) => line.trim());
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                if (!hasStartedStreaming) {
+                  setIsLoading(false);
+                  hasStartedStreaming = true;
+                }
+                
+                botResponse += parsed.content;
+
+                setMessages(prev => prev.map(msg => 
+                  msg.id === streamingMessageId 
+                    ? { ...msg, content: botResponse }
+                    : msg
+                ));
+              }
+            } catch (e) {
+              console.error("Error parsing streaming data:", e);
+            }
+          }
+        }
+      }
+
+      // Replace streaming message with final message
+      const finalMessageId = Date.now().toString();
+      setMessages(prev => prev.map(msg => 
+        msg.id === streamingMessageId 
+          ? { ...msg, id: finalMessageId, content: botResponse }
+          : msg
+      ));
+
+      // Run background analysis
+      await analyzeConversation(botResponse);
+
+      // Check for stage progression
+      checkStageProgression(botResponse);
+    } catch (error) {
+      console.error("Error in card submission:", error);
+      setMessages(prev => prev.filter(msg => msg.id !== `streaming-${Date.now()}`));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle bot type changes (when switching stages) - Stage 2 waits for user input
   useEffect(() => {
@@ -486,26 +648,93 @@ function IntakeChat({
               } rounded-lg p-3 text-gray-700 ${message.isBot ? "" : "text-white"} inline-block w-fit min-w-[60px]`}
             >
               {message.isBot ? (
-                <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => (
-                        <div className="mb-2 last:mb-0">{children}</div>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-bold text-gray-900">
-                          {children}
-                        </strong>
-                      ),
-                      em: ({ children }) => (
-                        <em className="italic">{children}</em>
-                      ),
-                      br: () => <br />,
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
-                </div>
+                (() => {
+                  const cardDetection = detectIntakeCard(message.content);
+                  
+                  if (cardDetection.hasCard) {
+                    return (
+                      <div className="space-y-3">
+                        {/* Render text before card */}
+                        {cardDetection.beforeCard && (
+                          <div className="prose prose-sm max-w-none">
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                              }}
+                            >
+                              {cardDetection.beforeCard}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                        
+                        {/* Render the interactive card */}
+                        <IntakeCard 
+                          cardContent={cardDetection.cardContent}
+                          onSubmit={handleCardSubmit}
+                        />
+                        
+                        {/* Render text after card */}
+                        {cardDetection.afterCard && (
+                          <div className="prose prose-sm max-w-none">
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                              }}
+                            >
+                              {cardDetection.afterCard}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  } else {
+                    // Regular message without card
+                    return (
+                      <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown
+                          components={{
+                            p: ({ children }) => (
+                              <div className="mb-2 last:mb-0">{children}</div>
+                            ),
+                            strong: ({ children }) => (
+                              <strong className="font-bold text-gray-900">
+                                {children}
+                              </strong>
+                            ),
+                            em: ({ children }) => (
+                              <em className="italic">{children}</em>
+                            ),
+                            br: () => <br />,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                    );
+                  }
+                })()
               ) : (
                 <div className="whitespace-pre-wrap">{message.content}</div>
               )}
