@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
-import { IntakeCard } from "@/components/IntakeCard";
+import { IntakeCard, CompletedIntakeCard } from "@/components/IntakeCard";
 
 interface Stage {
   id: number;
@@ -52,6 +52,7 @@ interface Message {
   content: string;
   isBot: boolean;
   timestamp: Date;
+  cardData?: Record<string, string>; // For completed intake cards
 }
 
 interface CriteriaState {
@@ -201,6 +202,7 @@ function IntakeChat({
       content: `Here are the details:\n\n${formattedResponse}`,
       isBot: false,
       timestamp: new Date(),
+      cardData: cardData, // Store the structured data for card rendering
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -736,7 +738,12 @@ function IntakeChat({
                   }
                 })()
               ) : (
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                // Check if this user message has card data to render as completed card
+                message.cardData ? (
+                  <CompletedIntakeCard data={message.cardData} />
+                ) : (
+                  <div className="whitespace-pre-wrap">{message.content}</div>
+                )
               )}
             </div>
           </div>
