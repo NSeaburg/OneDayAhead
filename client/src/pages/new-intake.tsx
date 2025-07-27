@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { IntakeCard, CompletedIntakeCard } from "@/components/IntakeCard";
 import { PersonalityTestingBot } from "@/components/PersonalityTestingBot";
+import { AvatarSelection } from "@/components/AvatarSelection";
 
 interface Stage {
   id: number;
@@ -36,6 +37,8 @@ interface IntakeChatProps {
   uploadedFiles: UploadedFile[];
   onFileUpload: (file: UploadedFile) => void;
   onFileRemove: (fileId: string) => void;
+  currentStageId: number;
+  onAvatarGenerated?: (avatarUrl: string) => void;
 }
 
 interface UploadedFile {
@@ -107,6 +110,8 @@ function IntakeChat({
   uploadedFiles,
   onFileUpload,
   onFileRemove,
+  currentStageId,
+  onAvatarGenerated,
 }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
@@ -139,6 +144,56 @@ function IntakeChat({
     {},
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showAvatarSelection, setShowAvatarSelection] = useState(false);
+  const [avatarPrompt, setAvatarPrompt] = useState("");
+  const [pendingAvatarMessageId, setPendingAvatarMessageId] = useState<string | null>(null);
+
+  // Handle avatar selection
+  const handleAvatarSelect = (selectedImageUrl: string) => {
+    // Update the pending message with the selected avatar
+    if (pendingAvatarMessageId) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === pendingAvatarMessageId
+          ? { 
+              ...msg, 
+              content: msg.content + `\n\n![Generated Avatar](${selectedImageUrl})\n\nThere's your bot! Looking great! 🎨`
+            }
+          : msg
+      ));
+    }
+    
+    // Notify parent component
+    if (onAvatarGenerated) {
+      onAvatarGenerated(selectedImageUrl);
+    }
+    
+    // Close avatar selection
+    setShowAvatarSelection(false);
+    setAvatarPrompt("");
+    setPendingAvatarMessageId(null);
+    
+    // Trigger stage progression to check for avatar completion
+    const updatedMessage = messages.find(m => m.id === pendingAvatarMessageId)?.content || "";
+    onStageProgression(updatedMessage + `\n\n![Generated Avatar](${selectedImageUrl})`);
+  };
+
+  const handleAvatarCancel = () => {
+    // Add a message saying avatar generation was cancelled
+    if (pendingAvatarMessageId) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === pendingAvatarMessageId
+          ? { 
+              ...msg, 
+              content: msg.content + "\n\nNo problem! We can continue without generating an avatar for now."
+            }
+          : msg
+      ));
+    }
+    
+    setShowAvatarSelection(false);
+    setAvatarPrompt("");
+    setPendingAvatarMessageId(null);
+  };
 
   // Helper function to detect if a message contains an INTAKE_CARD
   const detectIntakeCard = (content: string): { hasCard: boolean; cardContent: string; beforeCard: string; afterCard: string } => {
@@ -291,6 +346,38 @@ function IntakeChat({
 
       // Run background analysis
       await analyzeConversation(botResponse);
+
+      // Check for avatar generation triggers in Stage 3
+      if (currentStageId === 3 && botType === "intake-assessment-bot") {
+        // Check if bot wants to generate an avatar
+        if (botResponse.includes("Want me to create an avatar") || 
+            botResponse.includes("Should we see what") || 
+            botResponse.includes("I can generate a visual") ||
+            botResponse.includes("Let me create that avatar") ||
+            botResponse.includes("I'll generate an avatar")) {
+          
+          // Extract the description for avatar generation
+          const descriptionMatch = botResponse.match(/based on (?:that description|your description)[:.]?\s*(.*)$/i);
+          let extractedPrompt = "";
+          
+          if (descriptionMatch) {
+            extractedPrompt = descriptionMatch[1].trim();
+          } else {
+            // Try to extract from the conversation context
+            const allMessages = messages.map(m => m.content).join("\n");
+            const visualMatch = allMessages.match(/(?:should look|appears as|visual(?:ly)?|looks like)[:.]?\s*([^.!?]+[.!?])/i);
+            if (visualMatch) {
+              extractedPrompt = visualMatch[1].trim();
+            }
+          }
+          
+          if (extractedPrompt || botResponse.includes("avatar")) {
+            setAvatarPrompt(extractedPrompt || "A friendly cartoon-style educational bot character");
+            setShowAvatarSelection(true);
+            setPendingAvatarMessageId(finalMessageId);
+          }
+        }
+      }
 
       // Check for stage progression
       onStageProgression(botResponse);
@@ -627,6 +714,15 @@ function IntakeChat({
 
       {/* Messages Area - Uses same structure as successful Reggie bot */}
       <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
+        {/* Show avatar selection if active */}
+        {showAvatarSelection && (
+          <AvatarSelection
+            prompt={avatarPrompt}
+            onSelect={handleAvatarSelect}
+            onCancel={handleAvatarCancel}
+          />
+        )}
+        
         {messages.filter(message => message.content.trim() !== "").map((message) => (
           <div key={message.id} className="flex flex-col">
             <div className="flex items-start mb-1">
@@ -1648,6 +1744,8 @@ export default function NewIntake() {
             uploadedFiles={uploadedFiles}
             onFileUpload={handleFileUpload}
             onFileRemove={handleFileRemove}
+            currentStageId={currentStageId}
+            onAvatarGenerated={setGeneratedAvatar}
           />
         </div>
         
