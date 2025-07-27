@@ -24,18 +24,20 @@ interface CompletedIntakeCardProps {
 
 export function CompletedIntakeCard({ data }: CompletedIntakeCardProps) {
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-green-700 text-sm">
+    <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-md">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-green-700 text-sm font-medium">
           <Check className="w-4 h-4 text-green-600" />
           <span>Details submitted</span>
         </div>
         
-        <div className="space-y-1 text-sm">
+        <div className="space-y-2">
           {Object.entries(data).map(([label, value]) => (
-            <div key={label} className="flex justify-between items-center">
-              <span className="text-green-700">{label}:</span>
-              <span className="text-green-900 font-medium">{value}</span>
+            <div key={label} className="space-y-1">
+              <div className="text-green-700 text-sm font-medium">{label}:</div>
+              <div className="text-green-900 text-sm bg-white rounded px-2 py-1 border border-green-100">
+                {value}
+              </div>
             </div>
           ))}
         </div>
