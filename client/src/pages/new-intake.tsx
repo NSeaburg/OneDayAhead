@@ -354,7 +354,10 @@ function IntakeChat({
             botResponse.includes("Should we see what") || 
             botResponse.includes("I can generate a visual") ||
             botResponse.includes("Let me create that avatar") ||
-            botResponse.includes("I'll generate an avatar")) {
+            botResponse.includes("I'll generate an avatar") ||
+            botResponse.includes("avatar image based on") ||
+            botResponse.includes("looks like as a cartoon") ||
+            botResponse.includes("visual version of your bot")) {
           
           // Extract the description for avatar generation
           const descriptionMatch = botResponse.match(/based on (?:that description|your description)[:.]?\s*(.*)$/i);
