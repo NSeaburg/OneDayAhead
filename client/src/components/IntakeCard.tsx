@@ -47,13 +47,15 @@ export function CompletedIntakeCard({ data }: CompletedIntakeCardProps) {
 export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
   // Parse the card content to extract fields
   const parseCardFields = (content: string): CardField[] => {
+    console.log("🔧 DEBUG: Parsing intake card content:", content);
     const fields: CardField[] = [];
     const lines = content.split('\n');
     
     for (const line of lines) {
       const trimmed = line.trim();
+      console.log("🔧 DEBUG: Processing line:", trimmed);
       
-      // Look for lines like "School District: _____ (or N/A)"
+      // Look for lines like "School District: _____ (or N/A)" or "Subject Area: _____"
       if (trimmed.includes(':') && trimmed.includes('_____')) {
         const parts = trimmed.split(':');
         if (parts.length >= 2) {
@@ -61,7 +63,9 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
           const isOptional = trimmed.includes('(or N/A)') || trimmed.includes('(or NA)');
           
           // Create field ID from label
-          const id = label.toLowerCase().replace(/\s+/g, '');
+          const id = label.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+          
+          console.log("🔧 DEBUG: Found field -", label, "ID:", id, "Optional:", isOptional);
           
           fields.push({
             id,
@@ -73,6 +77,7 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
       }
     }
     
+    console.log("🔧 DEBUG: Parsed fields:", fields);
     return fields;
   };
 
