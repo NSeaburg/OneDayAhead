@@ -678,6 +678,8 @@ function IntakeChat({
                                   <em className="italic">{children}</em>
                                 ),
                                 br: () => <br />,
+                                code: () => null, // Hide inline code completely
+                                pre: () => null, // Hide code blocks completely
                               }}
                             >
                               {cardDetection.beforeCard}
@@ -708,6 +710,8 @@ function IntakeChat({
                                   <em className="italic">{children}</em>
                                 ),
                                 br: () => <br />,
+                                code: () => null, // Hide inline code completely
+                                pre: () => null, // Hide code blocks completely
                               }}
                             >
                               {cardDetection.afterCard}
@@ -734,6 +738,8 @@ function IntakeChat({
                               <em className="italic">{children}</em>
                             ),
                             br: () => <br />,
+                            code: () => null, // Hide inline code completely
+                            pre: () => null, // Hide code blocks completely
                           }}
                         >
                           {message.content}
