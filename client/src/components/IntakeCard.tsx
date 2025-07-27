@@ -114,10 +114,10 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
   }
 
   return (
-    <Card className="bg-blue-50 border border-blue-200 shadow-sm">
+    <Card className="bg-gray-100 border border-gray-300 shadow-sm">
       <CardContent className="p-4">
         <div className="space-y-4">
-          <div className="text-sm text-blue-700 font-medium">
+          <div className="text-sm text-gray-700 font-medium">
             Just need a few more details:
           </div>
           
