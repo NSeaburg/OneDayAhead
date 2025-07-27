@@ -24,18 +24,18 @@ interface CompletedIntakeCardProps {
 
 export function CompletedIntakeCard({ data }: CompletedIntakeCardProps) {
   return (
-    <div className="bg-gray-700 border border-gray-500 rounded-lg p-3">
+    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-gray-300 text-sm">
-          <Check className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center gap-2 text-green-700 text-sm">
+          <Check className="w-4 h-4 text-green-600" />
           <span>Details submitted</span>
         </div>
         
         <div className="space-y-1 text-sm">
           {Object.entries(data).map(([label, value]) => (
             <div key={label} className="flex justify-between items-center">
-              <span className="text-gray-300">{label}:</span>
-              <span className="text-white font-medium">{value}</span>
+              <span className="text-green-700">{label}:</span>
+              <span className="text-green-900 font-medium">{value}</span>
             </div>
           ))}
         </div>
@@ -109,26 +109,26 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
   }
 
   return (
-    <Card className="bg-gray-700 border border-gray-600 shadow-none">
-      <CardContent className="p-3">
-        <div className="space-y-3">
-          <div className="text-sm text-gray-300 font-medium">
+    <Card className="bg-blue-50 border border-blue-200 shadow-sm">
+      <CardContent className="p-4">
+        <div className="space-y-4">
+          <div className="text-sm text-blue-700 font-medium">
             Just need a few more details:
           </div>
           
           <div className="space-y-3">
             {fields.map((field) => (
               <div key={field.id} className="space-y-1">
-                <Label htmlFor={field.id} className="text-sm font-medium text-gray-200">
+                <Label htmlFor={field.id} className="text-sm font-medium text-gray-700">
                   {field.label}
-                  {field.required && <span className="text-red-400 ml-1">*</span>}
+                  {field.required && <span className="text-red-500 ml-1">*</span>}
                 </Label>
                 <Input
                   id={field.id}
                   placeholder={field.placeholder}
                   value={formData[field.id] || ''}
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
-                  className="bg-gray-600 border-gray-500 text-white placeholder-gray-400 focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             ))}
@@ -137,7 +137,7 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
           <Button 
             onClick={handleSubmit}
             disabled={!isFormValid || isSubmitting}
-            className="w-full bg-gray-500 hover:bg-gray-400 text-white border border-gray-400"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
             size="sm"
           >
             {isSubmitting ? (

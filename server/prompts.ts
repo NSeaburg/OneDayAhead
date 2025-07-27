@@ -236,8 +236,6 @@ Once you’ve got a basic visual description, offer to generate an image using n
 
 Once the image is generated, react briefly and move on.
 
----
-
 ## BOUNDARIES (Step 3)
 
 Ask:
