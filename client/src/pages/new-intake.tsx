@@ -826,6 +826,8 @@ export default function NewIntake() {
   // New state for personality testing bot feature
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [personalitySummary, setPersonalitySummary] = useState<string | null>(null);
+  const [fullBotPersonality, setFullBotPersonality] = useState<string | null>(null);
+  const [botName, setBotName] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
   const [criteria, setCriteria] = useState<CriteriaState>({
@@ -1169,11 +1171,20 @@ export default function NewIntake() {
     // Check for Stage 3 component completions
     if (currentStageId === 3) {
       // Personality completion - when bot suggests or confirms a personality
-      if (completionMessage.includes("Fitzgerald") || completionMessage.includes("personality for your assessment bot") || completionMessage.includes("Does this feel like a good fit")) {
+      if (completionMessage.includes("Fitzgerald") || completionMessage.includes("personality for your assessment bot") || completionMessage.includes("Does this feel like a good fit") || completionMessage.includes("Professor Conch")) {
         console.log("🎭 Stage 3 Personality component completed");
         handleComponentComplete("personality");
         
-        // Extract personality summary
+        // Extract bot name
+        const nameMatch = completionMessage.match(/(Professor|Mr\.|Mrs\.|Dr\.)\s+([A-Z][a-z]+)/);
+        if (nameMatch) {
+          setBotName(nameMatch[0]);
+        }
+        
+        // Extract full personality description for testing bot
+        setFullBotPersonality(completionMessage);
+        
+        // Extract shorter summary for display
         const sentences = completionMessage.split('.').filter(s => s.length > 10);
         const personalityDesc = sentences.find(s => 
           s.includes("personality") || s.includes("character") || s.includes("teacher") || s.includes("professor")
@@ -1201,7 +1212,6 @@ export default function NewIntake() {
       if (completionMessage.includes("criteria it will use to route") || completionMessage.includes("boundaries") || completionMessage.includes("avoid talking about")) {
         console.log("🚧 Stage 3 Boundaries component completed");
         handleComponentComplete("boundaries");
-        setShowPersonalityTester(true); // Show test button after boundaries completion
       }
     }
 
@@ -1570,6 +1580,40 @@ export default function NewIntake() {
                           </div>
                         )}
 
+                        {/* Show bot preview and test button for completed Stage 3 */}
+                        {stage.id === 3 && stage.components.every(comp => comp.completed) && (
+                          <div className="mt-4 border-t border-gray-200 pt-3">
+                            <div className="flex items-center gap-3 mb-3">
+                              {generatedAvatar ? (
+                                <img 
+                                  src={generatedAvatar} 
+                                  alt="Bot Avatar" 
+                                  className="w-10 h-10 rounded-full border-2 border-gray-200"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border-2 border-gray-200">
+                                  <Bot className="w-5 h-5 text-blue-600" />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {botName || "Assessment Bot"}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {personalitySummary ? personalitySummary.substring(0, 60) + "..." : "Your newly designed assessment bot"}
+                                </div>
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                              onClick={() => setPersonalityTesterExpanded(true)}
+                            >
+                              Test Your Bot
+                            </Button>
+                          </div>
+                        )}
+
                         {stage.hasTestButton && (
                           <Button size="sm" className="w-full mt-3">
                             {stage.testButtonText || "Test"}
@@ -1599,63 +1643,17 @@ export default function NewIntake() {
           />
         </div>
         
-        {/* Personality Testing Bot - Fixed position at bottom */}
-        {showPersonalityTester && (
-          <div className={cn(
-            "fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg transition-all duration-300 ease-in-out z-50",
-            personalityTesterExpanded ? "h-96" : "h-16"
-          )}>
-            {personalityTesterExpanded ? (
+        {/* Personality Testing Bot Modal - Full screen overlay */}
+        {personalityTesterExpanded && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-96 flex flex-col">
               <PersonalityTestingBot
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
-                botPersonality={personalitySummary || "A helpful and friendly assistant"} // Use personality summary as bot personality
-                onClose={() => {
-                  setShowPersonalityTester(false);
-                  setPersonalityTesterExpanded(false);
-                }}
+                botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
+                onClose={() => setPersonalityTesterExpanded(false)}
               />
-            ) : (
-              <div className="flex items-center px-4 h-full">
-                <div className="flex items-center gap-3 flex-1">
-                  {generatedAvatar ? (
-                    <img 
-                      src={generatedAvatar} 
-                      alt="Bot Avatar" 
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Bot className="w-4 h-4 text-blue-600" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">
-                      Test Your Assessment Bot
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {personalitySummary ? personalitySummary.substring(0, 80) + "..." : "Click to test your newly designed bot"}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => setPersonalityTesterExpanded(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Test Bot
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowPersonalityTester(false)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
       </div>
