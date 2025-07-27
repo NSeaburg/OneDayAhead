@@ -647,7 +647,7 @@ function IntakeChat({
                 message.isBot
                   ? "bg-blue-50 border border-blue-200 text-gray-900"
                   : "bg-gray-100 text-gray-900 border border-gray-300"
-              } rounded-lg p-3 inline-block w-fit min-w-[60px]`}
+              } rounded-lg p-4 max-w-2xl w-fit min-w-[60px]`}
             >
               {message.isBot ? (
                 (() => {
@@ -1147,6 +1147,27 @@ export default function NewIntake() {
     
     // Check for Stage 2 to Stage 3 transition  
     const stage3TransitionPhrase = "Great! Let's talk about the personality of your assessment bot. Do you have a persona in mind or would you like me to suggest some options?";
+
+    // Check for Stage 3 component completions
+    if (currentStageId === 3) {
+      // Personality completion - when bot suggests or confirms a personality
+      if (completionMessage.includes("Fitzgerald") || completionMessage.includes("personality for your assessment bot") || completionMessage.includes("Does this feel like a good fit")) {
+        console.log("🎭 Stage 3 Personality component completed");
+        handleComponentComplete("personality");
+      }
+      
+      // Avatar completion - when image is generated or shown
+      if (completionMessage.includes("![Image") || completionMessage.includes("I'll create that avatar") || completionMessage.includes("avatar for you")) {
+        console.log("🖼️ Stage 3 Avatar component completed");
+        handleComponentComplete("avatar");
+      }
+      
+      // Boundaries completion - when boundaries discussion happens
+      if (completionMessage.includes("criteria it will use to route") || completionMessage.includes("boundaries") || completionMessage.includes("avoid talking about")) {
+        console.log("🚧 Stage 3 Boundaries component completed");
+        handleComponentComplete("boundaries");
+      }
+    }
 
     if (completionMessage.includes(stage2TransitionPhrase)) {
       console.log("✅ Stage 1->2 transition detected! Moving to Stage 2");

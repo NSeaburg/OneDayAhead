@@ -3806,7 +3806,73 @@ ${JSON.stringify(conversationHistory)}`;
     }
   });
 
-  // Image generation endpoint for Stage 3 Assessment Bot design
+  // Multiple avatar options generation endpoint
+  app.post("/api/intake/generate-avatars", async (req, res) => {
+    try {
+      const { prompt, style = "digital art", count = 3 } = req.body;
+
+      if (!prompt) {
+        return res.status(400).json({ error: "Image prompt is required" });
+      }
+
+      if (!openai) {
+        return res.status(500).json({ 
+          error: "OpenAI API key not configured",
+          details: "Image generation is not available - please provide OPENAI_API_KEY" 
+        });
+      }
+
+      console.log(`🎨 Generating ${count} avatar options with OpenAI DALL-E 3 for prompt:`, prompt);
+      
+      // Generate multiple images with slight variations
+      const avatarPromises = Array.from({ length: count }, (_, i) => {
+        const variation = i === 0 ? "" : `, variation ${i + 1}`;
+        return openai.images.generate({
+          model: "dall-e-3",
+          prompt: `${prompt}${variation}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration, professional character design.`,
+          size: "1024x1024",
+          quality: "standard",
+          n: 1,
+        });
+      });
+
+      const responses = await Promise.all(avatarPromises);
+      const avatars = responses.map((response, index) => ({
+        id: `avatar_${index + 1}`,
+        imageUrl: response.data[0]?.url,
+        description: `${prompt} - Option ${index + 1}`
+      })).filter(avatar => avatar.imageUrl);
+
+      console.log(`✅ Generated ${avatars.length} avatar options successfully`);
+
+      res.json({
+        success: true,
+        avatars,
+        prompt: prompt,
+        style: style,
+        source: "OpenAI DALL-E 3"
+      });
+
+    } catch (error: any) {
+      console.error('Multiple avatar generation error:', error);
+      
+      let errorMessage = 'Failed to generate avatars';
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid OpenAI API key';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded - too many image generation requests';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      res.status(500).json({
+        error: "Avatar generation failed",
+        details: errorMessage
+      });
+    }
+  });
+
+  // Single image generation endpoint for Stage 3 Assessment Bot design  
   app.post("/api/intake/generate-image", async (req, res) => {
     try {
       const { prompt, style = "digital art" } = req.body;
@@ -3822,10 +3888,12 @@ ${JSON.stringify(conversationHistory)}`;
         });
       }
 
+      console.log("🎨 Generating image with OpenAI DALL-E 3 for prompt:", prompt);
+      
       // Generate image using OpenAI DALL-E
       const response = await openai.images.generate({
         model: "dall-e-3",
-        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style illustration.`,
+        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration.`,
         size: "1024x1024",
         quality: "standard",
         n: 1,
@@ -3833,7 +3901,10 @@ ${JSON.stringify(conversationHistory)}`;
 
       const imageUrl = response.data[0]?.url;
       
+      console.log("✅ OpenAI DALL-E 3 response received, image URL:", imageUrl ? "✓" : "✗");
+      
       if (!imageUrl) {
+        console.error("❌ No image URL returned from OpenAI");
         return res.status(500).json({ 
           error: "Failed to generate image",
           details: "No image URL returned from OpenAI" 
@@ -3844,7 +3915,8 @@ ${JSON.stringify(conversationHistory)}`;
         success: true,
         imageUrl,
         prompt: prompt,
-        style: style
+        style: style,
+        source: "OpenAI DALL-E 3"
       });
 
     } catch (error: any) {
@@ -3862,6 +3934,87 @@ ${JSON.stringify(conversationHistory)}`;
       res.status(500).json({
         error: "Image generation failed",
         details: errorMessage
+      });
+    }
+  });
+
+  // System prompt generation endpoint - wraps personality, avatar, boundaries into complete system prompt
+  app.post("/api/intake/generate-system-prompt", async (req, res) => {
+    try {
+      const { 
+        personality, 
+        avatar, 
+        boundaries, 
+        course,
+        topic,
+        gradeLevel,
+        goals 
+      } = req.body;
+
+      if (!personality) {
+        return res.status(400).json({ error: "Personality description is required" });
+      }
+
+      // Generate comprehensive system prompt
+      const systemPrompt = `# ${personality.name || "Assessment Bot"} - AI Teaching Assistant
+
+## PERSONALITY & CHARACTER
+${personality.description || "You are a friendly and knowledgeable AI assistant."}
+
+${personality.speakingStyle ? `### Speaking Style
+${personality.speakingStyle}` : ""}
+
+${personality.sampleDialogue ? `### Sample Dialogue
+${personality.sampleDialogue}` : ""}
+
+## VISUAL REPRESENTATION
+${avatar?.description ? `You appear as: ${avatar.description}` : ""}
+${avatar?.imageUrl ? `Avatar Image: ${avatar.imageUrl}` : ""}
+
+## EDUCATIONAL CONTEXT
+- **Course**: ${course || "General Education"}
+- **Topic**: ${topic || "Learning Content"}
+- **Grade Level**: ${gradeLevel || "Grade Level Not Specified"}
+
+## GOALS & OBJECTIVES
+${goals ? goals : `Your primary goal is to assess student understanding of ${topic || "the learning content"} and provide appropriate feedback and guidance.`}
+
+## BOUNDARIES & LIMITATIONS
+${boundaries ? boundaries : "Maintain appropriate classroom standards and stay focused on educational content."}
+
+## ASSESSMENT APPROACH
+- Engage students in meaningful conversation about ${topic || "the topic"}
+- Ask follow-up questions to gauge deep understanding
+- Provide encouragement and constructive feedback
+- Route students to appropriate next steps based on their performance
+
+## RESPONSE GUIDELINES
+- Keep responses conversational and age-appropriate for ${gradeLevel || "students"}
+- Use ${personality.name || "your character's"} voice consistently
+- Be encouraging while maintaining academic rigor
+- Ask one question at a time to avoid overwhelming students
+- Acknowledge correct responses and gently correct misconceptions`;
+
+      res.json({
+        success: true,
+        systemPrompt,
+        components: {
+          personality,
+          avatar,
+          boundaries,
+          course,
+          topic,
+          gradeLevel,
+          goals
+        },
+        generatedAt: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error('System prompt generation error:', error);
+      res.status(500).json({
+        error: "Failed to generate system prompt",
+        details: error.message
       });
     }
   });
