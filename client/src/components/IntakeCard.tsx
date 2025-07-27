@@ -117,10 +117,6 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
     <Card className="bg-gray-100 border border-gray-300 shadow-sm">
       <CardContent className="p-4">
         <div className="space-y-4">
-          <div className="text-sm text-gray-700 font-medium">
-            Just need a few more details:
-          </div>
-          
           <div className="space-y-3">
             {fields.map((field) => (
               <div key={field.id} className="space-y-1">
