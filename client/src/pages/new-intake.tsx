@@ -647,7 +647,12 @@ function IntakeChat({
                 message.isBot
                   ? "bg-blue-50 border border-blue-200 text-gray-900"
                   : "bg-gray-100 text-gray-900 border border-gray-300"
-              } rounded-lg p-4 max-w-2xl w-fit min-w-[60px]`}
+              } rounded-lg p-4 ${
+                // Make bot messages wider if they're summary messages (contain "Perfect!" or "Great!" at start)
+                message.isBot && (message.content.startsWith("Perfect!") || message.content.startsWith("Great!") || message.content.includes("I've captured") || message.content.includes("summary"))
+                  ? "max-w-2xl"
+                  : "max-w-xs"
+              } w-fit min-w-[60px]`}
             >
               {message.isBot ? (
                 (() => {
