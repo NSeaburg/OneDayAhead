@@ -893,13 +893,24 @@ function IntakeChat({
       {/* Input Area */}
       <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
         <div className="flex gap-2">
-          <Input
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your response..."
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+            onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
             disabled={isLoading}
-            className="flex-grow bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+            rows={1}
+            className="flex-grow bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden min-h-[40px] max-h-[120px]"
+            style={{
+              resize: 'none',
+              height: 'auto',
+            }}
+            ref={(textarea) => {
+              if (textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+              }
+            }}
           />
           <Button 
             onClick={handleSend} 
@@ -1395,16 +1406,7 @@ export default function NewIntake() {
 
   return (
     <div className="h-screen p-4 md:p-6 flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="mb-6 text-center flex-shrink-0 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Build Your AI Learning Experience
-        </h1>
-        <p className="mt-2 text-sm md:text-lg text-gray-600">
-          We'll build this together through conversation - it takes about 10
-          minutes
-        </p>
-      </div>
+
 
       {/* Main content area with sidebar and chat */}
       <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 min-h-0">

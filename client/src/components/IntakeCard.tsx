@@ -131,6 +131,7 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
                   placeholder={field.placeholder}
                   value={formData[field.id] || ''}
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
                   className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
