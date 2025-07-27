@@ -607,6 +607,51 @@ function IntakeChat({
         // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
 
+        // Check for avatar generation triggers in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot") {
+          console.log("🎨 Avatar detection - Checking bot response for triggers...");
+          console.log("🎨 Avatar detection - Bot response preview:", botResponse.substring(0, 200));
+          
+          // Check if bot wants to generate an avatar
+          if (botResponse.includes("Want me to create an avatar") || 
+              botResponse.includes("Should we see what") || 
+              botResponse.includes("I can generate a visual") ||
+              botResponse.includes("Let me create that avatar") ||
+              botResponse.includes("I'll generate an avatar") ||
+              botResponse.includes("avatar image based on") ||
+              botResponse.includes("looks like as a cartoon") ||
+              botResponse.includes("visual version of your bot")) {
+            
+            console.log("🎨 Avatar detection - TRIGGER DETECTED! Setting up avatar selection...");
+            
+            // Extract the description for avatar generation
+            const descriptionMatch = botResponse.match(/based on (?:that description|your description)[:.]?\s*(.*)$/i);
+            let extractedPrompt = "";
+            
+            if (descriptionMatch) {
+              extractedPrompt = descriptionMatch[1].trim();
+            } else {
+              // Try to extract from the conversation context
+              const allMessages = messages.map(m => m.content).join("\n");
+              const visualMatch = allMessages.match(/(?:should look|appears as|visual(?:ly)?|looks like)[:.]?\s*([^.!?]+[.!?])/i);
+              if (visualMatch) {
+                extractedPrompt = visualMatch[1].trim();
+              }
+            }
+            
+            console.log("🎨 Avatar detection - Extracted prompt:", extractedPrompt);
+            
+            if (extractedPrompt || botResponse.includes("avatar")) {
+              setAvatarPrompt(extractedPrompt || "A friendly cartoon-style educational bot character");
+              setShowAvatarSelection(true);
+              setPendingAvatarMessageId(finalMessageId);
+              console.log("🎨 Avatar detection - Avatar selection UI activated!");
+            }
+          } else {
+            console.log("🎨 Avatar detection - No trigger phrases found in response");
+          }
+        }
+
         // Check for stage progression
         onStageProgression(botResponse);
       }
@@ -634,11 +679,11 @@ function IntakeChat({
 
     // Re-focus the input field after sending message (UX improvement)
     setTimeout(() => {
-      const inputElement = document.querySelector(
-        'input[placeholder*="Type your response"]',
-      ) as HTMLInputElement;
-      if (inputElement) {
-        inputElement.focus();
+      const textareaElement = document.querySelector(
+        'textarea[placeholder*="Type your response"]',
+      ) as HTMLTextAreaElement;
+      if (textareaElement) {
+        textareaElement.focus();
       }
     }, 100);
   };
@@ -892,7 +937,12 @@ function IntakeChat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your response..."
-            onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             disabled={isLoading}
             rows={1}
             className="flex-grow bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden min-h-[40px] max-h-[120px]"

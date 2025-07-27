@@ -148,6 +148,12 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 27, 2025. Fixed avatar generation detection and UX issues in intake system
+  - Added avatar generation trigger detection to regular message handler (not just card submission handler)
+  - Fixed cursor focus issue - textarea now properly refocuses after sending messages with Enter key
+  - Changed from deprecated onKeyPress to onKeyDown for better Enter key handling
+  - Enhanced debugging with console logs for avatar trigger detection
+  - YouTube transcript extraction experiencing rate limiting - API is functional but hitting usage limits
 - July 27, 2025. Completed Stage 3 avatar generation system with OpenAI DALL-E integration
   - Fixed trigger phrase detection to match bot's programmed responses for avatar generation
   - Added comprehensive trigger phrase coverage: "Want me to create an avatar", "Should we see what", "I can generate a visual", "Let me create that avatar", "I'll generate an avatar", "avatar image based on", "looks like as a cartoon", "visual version of your bot"
