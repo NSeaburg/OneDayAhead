@@ -65,6 +65,7 @@ import {
   INTAKE_BASICS_PROMPT,
   INTAKE_CONTEXT_PROMPT,
   INTAKE_ASSESSMENT_BOT_PROMPT,
+  PERSONALITY_TESTING_PROMPT,
 } from "./prompts";
 
 import { contentManager } from "./contentManager";
@@ -3306,6 +3307,16 @@ ${fileContent}`;
         
         systemPrompt = assessmentBotPrompt;
         console.log(`✅ DEBUG Claude Chat - Using INTAKE_ASSESSMENT_BOT_PROMPT with context`);
+      } else if (assistantType === "personality-testing") {
+        // Handle personality testing bot
+        const botPersonality = (req.body as any).botPersonality || "";
+        systemPrompt = `${PERSONALITY_TESTING_PROMPT}
+
+## SPECIFIC PERSONALITY TO EMBODY:
+${botPersonality}
+
+Remember to stay true to this personality while being helpful and educational.`;
+        console.log(`✅ DEBUG Claude Chat - Using PERSONALITY_TESTING_PROMPT with custom personality`);
       }
       
       // Final debug log to see what system prompt is actually being sent to Claude

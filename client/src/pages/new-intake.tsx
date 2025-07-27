@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { IntakeCard, CompletedIntakeCard } from "@/components/IntakeCard";
+import { PersonalityTestingBot } from "@/components/PersonalityTestingBot";
 
 interface Stage {
   id: number;
@@ -821,6 +822,12 @@ export default function NewIntake() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [processingYoutube, setProcessingYoutube] = useState(false);
+  
+  // New state for personality testing bot feature
+  const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
+  const [personalitySummary, setPersonalitySummary] = useState<string | null>(null);
+  const [showPersonalityTester, setShowPersonalityTester] = useState(false);
+  const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: {
       detected: false,
@@ -1165,18 +1172,36 @@ export default function NewIntake() {
       if (completionMessage.includes("Fitzgerald") || completionMessage.includes("personality for your assessment bot") || completionMessage.includes("Does this feel like a good fit")) {
         console.log("🎭 Stage 3 Personality component completed");
         handleComponentComplete("personality");
+        
+        // Extract personality summary
+        const sentences = completionMessage.split('.').filter(s => s.length > 10);
+        const personalityDesc = sentences.find(s => 
+          s.includes("personality") || s.includes("character") || s.includes("teacher") || s.includes("professor")
+        );
+        if (personalityDesc) {
+          setPersonalitySummary(personalityDesc.trim().substring(0, 40) + "...");
+        } else {
+          setPersonalitySummary("Assessment bot personality defined");
+        }
       }
       
       // Avatar completion - when image is generated or shown
       if (completionMessage.includes("![Image") || completionMessage.includes("I'll create that avatar") || completionMessage.includes("avatar for you")) {
         console.log("🖼️ Stage 3 Avatar component completed");
         handleComponentComplete("avatar");
+        
+        // Look for generated image URL in the message
+        const imageMatch = completionMessage.match(/!\[.*?\]\((\/api\/.*?)\)/);
+        if (imageMatch) {
+          setGeneratedAvatar(imageMatch[1]);
+        }
       }
       
       // Boundaries completion - when boundaries discussion happens
       if (completionMessage.includes("criteria it will use to route") || completionMessage.includes("boundaries") || completionMessage.includes("avoid talking about")) {
         console.log("🚧 Stage 3 Boundaries component completed");
         handleComponentComplete("boundaries");
+        setShowPersonalityTester(true); // Show test button after boundaries completion
       }
     }
 
@@ -1573,6 +1598,66 @@ export default function NewIntake() {
             onFileRemove={handleFileRemove}
           />
         </div>
+        
+        {/* Personality Testing Bot - Fixed position at bottom */}
+        {showPersonalityTester && (
+          <div className={cn(
+            "fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg transition-all duration-300 ease-in-out z-50",
+            personalityTesterExpanded ? "h-96" : "h-16"
+          )}>
+            {personalityTesterExpanded ? (
+              <PersonalityTestingBot
+                avatar={generatedAvatar}
+                personalitySummary={personalitySummary}
+                botPersonality={personalitySummary || "A helpful and friendly assistant"} // Use personality summary as bot personality
+                onClose={() => {
+                  setShowPersonalityTester(false);
+                  setPersonalityTesterExpanded(false);
+                }}
+              />
+            ) : (
+              <div className="flex items-center px-4 h-full">
+                <div className="flex items-center gap-3 flex-1">
+                  {generatedAvatar ? (
+                    <img 
+                      src={generatedAvatar} 
+                      alt="Bot Avatar" 
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-blue-600" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">
+                      Test Your Assessment Bot
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {personalitySummary ? personalitySummary.substring(0, 80) + "..." : "Click to test your newly designed bot"}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => setPersonalityTesterExpanded(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Test Bot
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowPersonalityTester(false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
