@@ -608,16 +608,16 @@ function IntakeChat({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 min-h-0">
+    <div className="h-full flex flex-col bg-gray-800 rounded-lg shadow-sm border border-gray-700 min-h-0">
       {/* Chat Header */}
-      <div className="p-4 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+      <div className="p-4 bg-gray-700 border-b border-gray-600 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-blue-600" />
+          <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+            <Bot className="w-5 h-5 text-gray-300" />
           </div>
           <div>
-            <h3 className="font-medium text-gray-900">Intake Assistant</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="font-medium text-white">Intake Assistant</h3>
+            <p className="text-sm text-gray-300">
               Let's gather your course information
             </p>
           </div>
@@ -630,24 +630,24 @@ function IntakeChat({
           <div key={message.id} className="flex flex-col">
             <div className="flex items-start mb-1">
               {message.isBot ? (
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2 flex-shrink-0">
-                  <Bot className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
+                  <Bot className="w-4 h-4 text-gray-300" />
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gray-500 text-gray-200 flex items-center justify-center mr-2 flex-shrink-0">
                   <User className="h-4 w-4" />
                 </div>
               )}
-              <span className="text-xs text-gray-500 mt-1">
+              <span className="text-xs text-gray-400 mt-1">
                 {message.isBot ? "Intake Assistant" : "You"}
               </span>
             </div>
             <div
               className={`ml-10 ${
                 message.isBot
-                  ? "bg-gray-100 border border-gray-200"
-                  : "bg-blue-600 text-white border border-blue-600"
-              } rounded-lg p-3 text-gray-700 ${message.isBot ? "" : "text-white"} inline-block w-fit min-w-[60px]`}
+                  ? "bg-gray-600 border border-gray-500 text-white"
+                  : "bg-gray-300 text-gray-900 border border-gray-400"
+              } rounded-lg p-3 inline-block w-fit min-w-[60px]`}
             >
               {message.isBot ? (
                 (() => {
@@ -752,22 +752,22 @@ function IntakeChat({
         {isLoading && (
           <div className="flex flex-col">
             <div className="flex items-start mb-1">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2 flex-shrink-0">
-                <Bot className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center mr-2 flex-shrink-0">
+                <Bot className="w-4 h-4 text-gray-300" />
               </div>
-              <span className="text-xs text-gray-500 mt-1">
+              <span className="text-xs text-gray-400 mt-1">
                 Intake Assistant
               </span>
             </div>
-            <div className="ml-10 bg-gray-100 border border-gray-200 rounded-lg p-3">
+            <div className="ml-10 bg-gray-600 border border-gray-500 rounded-lg p-3">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"></div>
                 <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"
                   style={{ animationDelay: "0.1s" }}
                 ></div>
                 <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"
                   style={{ animationDelay: "0.2s" }}
                 ></div>
               </div>
@@ -780,7 +780,7 @@ function IntakeChat({
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-200 flex-shrink-0">
+      <div className="p-4 border-t border-gray-600 flex-shrink-0">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -788,9 +788,13 @@ function IntakeChat({
             placeholder="Type your response..."
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             disabled={isLoading}
-            className="flex-grow"
+            className="flex-grow bg-gray-700 border-gray-500 text-white placeholder-gray-400 focus:border-gray-400"
           />
-          <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+          <Button 
+            onClick={handleSend} 
+            disabled={isLoading || !input.trim()}
+            className="bg-gray-500 hover:bg-gray-400 text-white border border-gray-400"
+          >
             Send
           </Button>
         </div>
@@ -1216,13 +1220,13 @@ export default function NewIntake() {
     stages.find((stage) => stage.id === currentStageId) || stages[0];
 
   return (
-    <div className="h-screen p-2 md:p-4 flex flex-col bg-gray-50">
+    <div className="h-screen p-2 md:p-4 flex flex-col bg-gray-900">
       {/* Header */}
       <div className="mb-4 text-center flex-shrink-0">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl md:text-3xl font-bold text-white">
           Build Your AI Learning Experience
         </h1>
-        <p className="mt-2 text-sm md:text-lg text-gray-600">
+        <p className="mt-2 text-sm md:text-lg text-gray-300">
           We'll build this together through conversation - it takes about 10
           minutes
         </p>
@@ -1231,10 +1235,10 @@ export default function NewIntake() {
       {/* Main content area with sidebar and chat */}
       <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 min-h-0">
         {/* Left Sidebar */}
-        <div className="w-full md:w-1/3 bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 overflow-y-auto">
+        <div className="w-full md:w-1/3 bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-4 md:p-6 overflow-y-auto">
           <div>
-            <h2 className="font-semibold text-lg mb-2">Content Creator</h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <h2 className="font-semibold text-lg mb-2 text-white">Content Creator</h2>
+            <p className="text-sm text-gray-300 mb-4">
               Uplevel your Course with AI
             </p>
 
@@ -1262,10 +1266,10 @@ export default function NewIntake() {
                     key={stage.id}
                     className={`border rounded-lg p-3 transition-all duration-300 cursor-pointer ${
                       isActive
-                        ? "border-blue-200 bg-blue-50"
+                        ? "border-blue-500 bg-gray-700"
                         : shouldShowAsCompleted
-                          ? "border-green-200 bg-green-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-green-500 bg-gray-700"
+                          : "border-gray-600 hover:border-gray-500 bg-gray-750"
                     }`}
                     onClick={() => setCurrentStageId(stage.id)}
                   >
@@ -1286,14 +1290,14 @@ export default function NewIntake() {
                         )}
                       </span>
                       <div className="flex-1">
-                        <h3 className="font-medium text-sm">{stage.title}</h3>
-                        <p className="text-xs text-gray-500">
+                        <h3 className="font-medium text-sm text-white">{stage.title}</h3>
+                        <p className="text-xs text-gray-400">
                           {completedCount}/{stage.components.length}
                         </p>
                       </div>
                     </div>
                     {isExpanded && (
-                      <p className="text-xs text-gray-600 mb-3">
+                      <p className="text-xs text-gray-300 mb-3">
                         {stage.description}
                       </p>
                     )}
@@ -1318,7 +1322,7 @@ export default function NewIntake() {
                                         "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300",
                                         criterion.detected
                                           ? "bg-green-500 text-white"
-                                          : "bg-gray-300 text-gray-500",
+                                          : "bg-gray-600 text-gray-400",
                                       )}
                                     >
                                       {criterion.detected ? (
@@ -1332,15 +1336,15 @@ export default function NewIntake() {
                                         className={cn(
                                           "text-xs transition-colors break-words",
                                           criterion.detected
-                                            ? "text-green-700 font-medium"
-                                            : "text-gray-700",
+                                            ? "text-green-400 font-medium"
+                                            : "text-gray-300",
                                         )}
                                       >
                                         {label}
                                       </span>
                                       {criterion.detected &&
                                         criterion.finalValue && (
-                                          <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
+                                          <div className="text-xs text-green-300 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
                                             {key === "learningObjectives" ? (
                                               <div className="space-y-1">
                                                 {criterion.finalValue
@@ -1385,15 +1389,15 @@ export default function NewIntake() {
                                     className={`w-3 h-3 rounded-full ${
                                       component.completed
                                         ? "bg-green-500"
-                                        : "bg-gray-300"
+                                        : "bg-gray-600"
                                     }`}
                                   />
                                   <div className="flex-1">
-                                    <span className="text-xs text-gray-700">
+                                    <span className="text-xs text-gray-300">
                                       {component.title}
                                     </span>
                                     {component.note && (
-                                      <span className="text-xs text-gray-500 ml-1">
+                                      <span className="text-xs text-gray-400 ml-1">
                                         ({component.note})
                                       </span>
                                     )}
@@ -1417,7 +1421,7 @@ export default function NewIntake() {
                                       />
                                       <label
                                         htmlFor="file-upload"
-                                        className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer block"
+                                        className="border-2 border-dashed border-gray-500 rounded-lg p-3 bg-gray-700 hover:border-gray-400 transition-colors cursor-pointer block"
                                         onDrop={(e) => {
                                           e.preventDefault();
                                           const files = e.dataTransfer.files;
@@ -1428,8 +1432,8 @@ export default function NewIntake() {
                                         onDragOver={(e) => e.preventDefault()}
                                       >
                                         <div className="text-center">
-                                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
-                                          <div className="text-xs text-gray-500 mb-1">
+                                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-300" />
+                                          <div className="text-xs text-gray-300 mb-1">
                                             Drop files here or click to browse
                                           </div>
                                           <div className="text-xs text-gray-400">
@@ -1444,13 +1448,13 @@ export default function NewIntake() {
                                           {uploadedFiles.map((file) => (
                                             <div
                                               key={file.id}
-                                              className="flex items-center gap-2 text-xs bg-gray-100 p-2 rounded"
+                                              className="flex items-center gap-2 text-xs bg-gray-600 p-2 rounded"
                                             >
                                               <div className="flex-1">
-                                                <div className="font-medium">
+                                                <div className="font-medium text-white">
                                                   {file.name}
                                                 </div>
-                                                <div className="text-gray-500">
+                                                <div className="text-gray-300">
                                                   {file.processingStatus ===
                                                     "processing" &&
                                                     "Processing..."}
@@ -1475,7 +1479,7 @@ export default function NewIntake() {
                                       )}
 
                                       <div className="space-y-2">
-                                        <div className="text-xs text-gray-600 font-medium">
+                                        <div className="text-xs text-gray-300 font-medium">
                                           YouTube Video URL
                                         </div>
                                         <div className="flex gap-2">
