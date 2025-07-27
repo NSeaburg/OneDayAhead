@@ -747,7 +747,7 @@ function IntakeChat({
                 message.isBot
                   ? "bg-blue-50 border border-blue-200 text-gray-900"
                   : "bg-gray-100 text-gray-900 border border-gray-300"
-              } rounded-lg p-4 w-full`}
+              } rounded-lg p-3 text-gray-700`}
             >
               {message.isBot ? (
                 (() => {
