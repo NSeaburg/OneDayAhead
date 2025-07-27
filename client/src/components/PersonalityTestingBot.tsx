@@ -166,29 +166,33 @@ Feel free to ask me questions or have a conversation to see how I interact with 
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="flex-shrink-0 p-4 bg-blue-50 border-b border-blue-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {avatar ? (
-              <img 
-                src={avatar} 
-                alt="Bot Avatar" 
-                className="w-10 h-10 rounded-full object-cover border border-blue-200"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-blue-600" />
-              </div>
-            )}
-            <div>
-              <h3 className="font-medium text-gray-900">Personality Test Chat</h3>
-              <p className="text-sm text-gray-600">{personalitySummary || "Testing your assessment bot"}</p>
-            </div>
-          </div>
+      {/* Header with prominent bot avatar */}
+      <div className="flex-shrink-0 p-6 bg-blue-50 border-b border-blue-100">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-medium text-gray-900">Personality Test Chat</h3>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
+        </div>
+        
+        {/* Bot avatar and description prominently displayed */}
+        <div className="flex items-center gap-4">
+          {avatar ? (
+            <img 
+              src={avatar} 
+              alt="Bot Avatar" 
+              className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-200">
+              <Bot className="w-8 h-8 text-blue-600" />
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {personalitySummary || "Testing your newly designed assessment bot personality"}
+            </p>
+          </div>
         </div>
       </div>
 

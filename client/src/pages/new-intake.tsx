@@ -1184,15 +1184,23 @@ export default function NewIntake() {
         // Extract full personality description for testing bot
         setFullBotPersonality(completionMessage);
         
-        // Extract shorter summary for display
-        const sentences = completionMessage.split('.').filter(s => s.length > 10);
+        // Extract longer description for display (the intake assistant's description)
+        const sentences = completionMessage.split('.').filter(s => s.length > 20);
         const personalityDesc = sentences.find(s => 
-          s.includes("personality") || s.includes("character") || s.includes("teacher") || s.includes("professor")
+          s.includes("There's") || s.includes("definitely looks like") || s.includes("eager to share")
         );
         if (personalityDesc) {
-          setPersonalitySummary(personalityDesc.trim().substring(0, 40) + "...");
+          setPersonalitySummary(personalityDesc.trim());
         } else {
-          setPersonalitySummary("Assessment bot personality defined");
+          // Fallback to a longer description
+          const longerDesc = sentences.find(s => 
+            s.includes("personality") || s.includes("character") || s.includes("teacher") || s.includes("professor")
+          );
+          if (longerDesc) {
+            setPersonalitySummary(longerDesc.trim());
+          } else {
+            setPersonalitySummary("Assessment bot personality defined");
+          }
         }
       }
       
@@ -1599,8 +1607,8 @@ export default function NewIntake() {
                                 <div className="text-sm font-medium text-gray-900">
                                   {botName || "Assessment Bot"}
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  {personalitySummary ? personalitySummary.substring(0, 60) + "..." : "Your newly designed assessment bot"}
+                                <div className="text-xs text-gray-500 leading-relaxed">
+                                  {personalitySummary || "Your newly designed assessment bot"}
                                 </div>
                               </div>
                             </div>
@@ -1646,7 +1654,7 @@ export default function NewIntake() {
         {/* Personality Testing Bot Modal - Full screen overlay */}
         {personalityTesterExpanded && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-96 flex flex-col">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[600px] flex flex-col">
               <PersonalityTestingBot
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
