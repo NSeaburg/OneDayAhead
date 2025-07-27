@@ -1142,8 +1142,8 @@ export default function NewIntake() {
       completionMessage.substring(0, 100) + "...",
     );
 
-    // Check for Stage 1 to Stage 2 transition
-    const stage2TransitionPhrase = "Perfect. Now let's figure out where this AI experience should go in your course";
+    // Check for Stage 1 to Stage 2 transition - use a more reliable unique phrase
+    const stage2TransitionPhrase = "Tell me when you have it.";
     
     // Check for Stage 2 to Stage 3 transition  
     const stage3TransitionPhrase = "Great! Let's talk about the personality of your assessment bot. Do you have a persona in mind or would you like me to suggest some options?";
