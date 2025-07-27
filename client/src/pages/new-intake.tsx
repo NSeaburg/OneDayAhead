@@ -1235,10 +1235,10 @@ export default function NewIntake() {
       {/* Main content area with sidebar and chat */}
       <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 min-h-0">
         {/* Left Sidebar */}
-        <div className="w-full md:w-1/3 bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-4 md:p-6 overflow-y-auto">
+        <div className="w-full md:w-1/3 bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 overflow-y-auto">
           <div>
-            <h2 className="font-semibold text-lg mb-2 text-white">Content Creator</h2>
-            <p className="text-sm text-gray-300 mb-4">
+            <h2 className="font-semibold text-lg mb-2 text-gray-900">Content Creator</h2>
+            <p className="text-sm text-gray-600 mb-4">
               Uplevel your Course with AI
             </p>
 
@@ -1266,10 +1266,10 @@ export default function NewIntake() {
                     key={stage.id}
                     className={`border rounded-lg p-3 transition-all duration-300 cursor-pointer ${
                       isActive
-                        ? "border-blue-500 bg-gray-700"
+                        ? "border-blue-200 bg-blue-50"
                         : shouldShowAsCompleted
-                          ? "border-green-500 bg-gray-700"
-                          : "border-gray-600 hover:border-gray-500 bg-gray-750"
+                          ? "border-green-200 bg-green-50"
+                          : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => setCurrentStageId(stage.id)}
                   >
@@ -1290,14 +1290,14 @@ export default function NewIntake() {
                         )}
                       </span>
                       <div className="flex-1">
-                        <h3 className="font-medium text-sm text-white">{stage.title}</h3>
-                        <p className="text-xs text-gray-400">
+                        <h3 className="font-medium text-sm text-gray-900">{stage.title}</h3>
+                        <p className="text-xs text-gray-500">
                           {completedCount}/{stage.components.length}
                         </p>
                       </div>
                     </div>
                     {isExpanded && (
-                      <p className="text-xs text-gray-300 mb-3">
+                      <p className="text-xs text-gray-600 mb-3">
                         {stage.description}
                       </p>
                     )}
@@ -1322,7 +1322,7 @@ export default function NewIntake() {
                                         "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300",
                                         criterion.detected
                                           ? "bg-green-500 text-white"
-                                          : "bg-gray-600 text-gray-400",
+                                          : "bg-gray-300 text-gray-500",
                                       )}
                                     >
                                       {criterion.detected ? (
@@ -1336,15 +1336,15 @@ export default function NewIntake() {
                                         className={cn(
                                           "text-xs transition-colors break-words",
                                           criterion.detected
-                                            ? "text-green-400 font-medium"
-                                            : "text-gray-300",
+                                            ? "text-green-700 font-medium"
+                                            : "text-gray-700",
                                         )}
                                       >
                                         {label}
                                       </span>
                                       {criterion.detected &&
                                         criterion.finalValue && (
-                                          <div className="text-xs text-green-300 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
+                                          <div className="text-xs text-green-600 mt-0.5 animate-in slide-in-from-top-1 duration-300 break-words">
                                             {key === "learningObjectives" ? (
                                               <div className="space-y-1">
                                                 {criterion.finalValue
@@ -1389,15 +1389,15 @@ export default function NewIntake() {
                                     className={`w-3 h-3 rounded-full ${
                                       component.completed
                                         ? "bg-green-500"
-                                        : "bg-gray-600"
+                                        : "bg-gray-300"
                                     }`}
                                   />
                                   <div className="flex-1">
-                                    <span className="text-xs text-gray-300">
+                                    <span className="text-xs text-gray-700">
                                       {component.title}
                                     </span>
                                     {component.note && (
-                                      <span className="text-xs text-gray-400 ml-1">
+                                      <span className="text-xs text-gray-500 ml-1">
                                         ({component.note})
                                       </span>
                                     )}
@@ -1421,7 +1421,7 @@ export default function NewIntake() {
                                       />
                                       <label
                                         htmlFor="file-upload"
-                                        className="border-2 border-dashed border-gray-500 rounded-lg p-3 bg-gray-700 hover:border-gray-400 transition-colors cursor-pointer block"
+                                        className="border-2 border-dashed border-gray-300 rounded-lg p-3 bg-gray-50 hover:border-gray-400 transition-colors cursor-pointer block"
                                         onDrop={(e) => {
                                           e.preventDefault();
                                           const files = e.dataTransfer.files;
@@ -1432,8 +1432,8 @@ export default function NewIntake() {
                                         onDragOver={(e) => e.preventDefault()}
                                       >
                                         <div className="text-center">
-                                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-300" />
-                                          <div className="text-xs text-gray-300 mb-1">
+                                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
+                                          <div className="text-xs text-gray-500 mb-1">
                                             Drop files here or click to browse
                                           </div>
                                           <div className="text-xs text-gray-400">
@@ -1448,13 +1448,13 @@ export default function NewIntake() {
                                           {uploadedFiles.map((file) => (
                                             <div
                                               key={file.id}
-                                              className="flex items-center gap-2 text-xs bg-gray-600 p-2 rounded"
+                                              className="flex items-center gap-2 text-xs bg-gray-100 p-2 rounded"
                                             >
                                               <div className="flex-1">
-                                                <div className="font-medium text-white">
+                                                <div className="font-medium">
                                                   {file.name}
                                                 </div>
-                                                <div className="text-gray-300">
+                                                <div className="text-gray-500">
                                                   {file.processingStatus ===
                                                     "processing" &&
                                                     "Processing..."}
@@ -1479,7 +1479,7 @@ export default function NewIntake() {
                                       )}
 
                                       <div className="space-y-2">
-                                        <div className="text-xs text-gray-300 font-medium">
+                                        <div className="text-xs text-gray-600 font-medium">
                                           YouTube Video URL
                                         </div>
                                         <div className="flex gap-2">

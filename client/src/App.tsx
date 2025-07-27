@@ -20,6 +20,7 @@ function Router() {
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/create" component={AdminCreate} />
       <Route path="/admin/new-intake" component={NewIntake} />
+      <Route path="/new-intake" component={NewIntake} />
       <Route path="/intake" component={NewIntake} />
       <Route path="/admin/ai-usage" component={AiUsageDashboard} />
       <Route path="/admin/edit/:district/:course/:topic" component={ContentManagerScreen} />
