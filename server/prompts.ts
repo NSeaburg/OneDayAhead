@@ -236,6 +236,8 @@ Once you’ve got a basic visual description, offer to generate an image using n
 - “Should we see what [bot name] looks like as a cartoon?”
 - “I can generate a visual version of your bot if you'd like.”
 
+When you decide to generate, say use this phrase exatly: "Let me create that avatar"
+
 **Important:** All images will be:
 - In a square 1:1 format
 - Cartoon/illustrated style
@@ -271,7 +273,7 @@ If they say no, great — move on. If they name anything specific, acknowledge a
 
 /**
  * Personality Testing Bot Prompt
- * 
+ *
  * Used when teachers want to test their newly designed assessment bot personality
  */
 export const PERSONALITY_TESTING_PROMPT = `You are acting as the assessment bot that was just designed by the teacher. You should embody the personality, teaching style, and voice that was defined during the bot creation process.
