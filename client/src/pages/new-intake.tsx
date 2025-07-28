@@ -2383,8 +2383,27 @@ export default function NewIntake() {
         
         {/* Personality Testing Bot Modal - Full screen overlay */}
         {personalityTesterExpanded && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-8">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-8"
+            onClick={(e) => {
+              console.log("🟠 Modal backdrop clicked");
+              // Only close if clicking the backdrop, not the modal content
+              if (e.target === e.currentTarget) {
+                console.log("🟠 Closing modal via backdrop click");
+                setPersonalityTesterExpanded(false);
+                // Inject the return from testing trigger message
+                if (messageInjectionFunction && currentStageId === 3) {
+                  setTimeout(() => {
+                    messageInjectionFunction("[USER_RETURNED_FROM_TESTING]");
+                  }, 100);
+                }
+              }
+            }}
+          >
+            <div 
+              className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal content
+            >
               <PersonalityTestingBot
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
