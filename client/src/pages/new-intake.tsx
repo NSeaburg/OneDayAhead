@@ -256,31 +256,43 @@ function IntakeChat({
       if (imageResponse.ok) {
         const imageData = await imageResponse.json();
         
-        // Replace the [AVATAR_BUTTONS_HERE] marker with the generated image
+        // Replace the loading message or [AVATAR_BUTTONS_HERE] marker with the generated image
         setMessages(prev => prev.map(msg => 
           msg.id === avatarButtonMessageId
             ? { 
                 ...msg, 
-                content: msg.content.replace('[AVATAR_BUTTONS_HERE]', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
+                content: msg.content
+                  .replace('[AVATAR_BUTTONS_HERE]', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
+                  .replace('*Generating your avatar... this may take a moment.*', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
               }
             : msg
         ));
         
+        console.log("🖼️ Avatar image URL set in chat:", imageData.imageUrl);
+        
         // Mark avatar component as complete
         onComponentComplete && onComponentComplete("avatar");
+        
+        // Store the generated avatar for the program bar display
+        setGeneratedAvatar(imageData.imageUrl);
         
         // Notify parent component with avatar URL for PersonalityTestingBot
         onAvatarGenerated && onAvatarGenerated(imageData.imageUrl);
         
+        console.log("🖼️ Avatar stored for program bar:", imageData.imageUrl);
+        
         // Clear button state
         setAvatarButtonMessageId(null);
       } else {
+        console.error("Avatar generation failed with status:", imageResponse.status);
         // Show error message
         setMessages(prev => prev.map(msg => 
           msg.id === avatarButtonMessageId
             ? { 
                 ...msg, 
-                content: msg.content.replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+                content: msg.content
+                  .replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+                  .replace('*Generating your avatar... this may take a moment.*', "I had trouble generating the avatar. Let's continue with the bot design for now.")
               }
             : msg
         ));
@@ -292,7 +304,9 @@ function IntakeChat({
         msg.id === avatarButtonMessageId
           ? { 
               ...msg, 
-              content: msg.content.replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+              content: msg.content
+                .replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+                .replace('*Generating your avatar... this may take a moment.*', "I had trouble generating the avatar. Let's continue with the bot design for now.")
             }
           : msg
       ));
