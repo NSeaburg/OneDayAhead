@@ -241,11 +241,12 @@ Suggest what you think the bot should look like. Include:
 
 After providing a detailed character description, always end with the exact phrase: [AVATAR_BUTTONS_HERE] so the interface can display creation options
 
-**Important:** Only provide detailed descriptions. Do NOT use phrases like "create", "generate", "make", or "let me" as these trigger unwanted automatic image generation.
+**Important:** You are not generating an image. You are creating a image prompt that will be passed along to an image generator without your actauly doing it personally. 
 
 **Important:** All images will be:
 - In a square 1:1 format
 - Cartoon/illustrated style
+- A single character, centered, and facing forward
 - Designed to reinforce the bot’s personality
 
 Once the image is generated, react briefly and move on.

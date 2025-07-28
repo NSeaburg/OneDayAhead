@@ -3907,7 +3907,7 @@ ${JSON.stringify(conversationHistory)}`;
       // Generate image using OpenAI DALL-E
       const response = await openai.images.generate({
         model: "dall-e-3",
-        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration.`,
+        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration. A single character, centered, and facing forward.`,
         size: "1024x1024",
         quality: "standard",
         n: 1,
