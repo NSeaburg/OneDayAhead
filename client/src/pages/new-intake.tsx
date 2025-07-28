@@ -624,25 +624,61 @@ function IntakeChat({
             
             console.log("🎨 Avatar detection - TRIGGER DETECTED! Setting up avatar selection...");
             
-            // Extract the description for avatar generation
-            const descriptionMatch = botResponse.match(/based on (?:that description|your description)[:.]?\s*(.*)$/i);
+            // Extract the actual bot description for avatar generation
             let extractedPrompt = "";
             
-            if (descriptionMatch) {
-              extractedPrompt = descriptionMatch[1].trim();
-            } else {
-              // Try to extract from the conversation context
-              const allMessages = messages.map(m => m.content).join("\n");
-              const visualMatch = allMessages.match(/(?:should look|appears as|visual(?:ly)?|looks like)[:.]?\s*([^.!?]+[.!?])/i);
+            // Look for the most recent bot description/personality in the conversation
+            const allMessages = messages.map(m => m.content).join("\n");
+            
+            // Try to find bot personality description patterns
+            const personalityPatterns = [
+              /# ([A-Z\s,\-]+) - EXPANDED PERSONALITY\s*\*\*([^*]+)\*\* is ([^.]+\.(?:[^.]+\.)*)/i,
+              /(?:Bot Name|Character):\s*([^\n]+)\n[\s\S]*?(?:Description|Personality):\s*([^\n]+(?:\n[^\n:]+)*)/i,
+              /([A-Z][a-z]+ [A-Z][a-z]+) is a ([^.]+\.(?:\s*[^.]+\.)*)/i
+            ];
+            
+            for (const pattern of personalityPatterns) {
+              const match = allMessages.match(pattern);
+              if (match) {
+                if (pattern.source.includes('EXPANDED PERSONALITY')) {
+                  // Full personality description format
+                  extractedPrompt = `${match[2]} ${match[3]}`.trim();
+                } else {
+                  // Other formats - use the description part
+                  extractedPrompt = match[2] || match[1];
+                }
+                break;
+              }
+            }
+            
+            // If no structured description found, look for visual descriptions
+            if (!extractedPrompt) {
+              const visualMatch = allMessages.match(/(?:wearing|looks like|appears as|has|holding|with)[\s\w,]+(hula skirt|compass|Moana|wavy hair|boots|vest)[^.!?]*[.!?]/i);
               if (visualMatch) {
-                extractedPrompt = visualMatch[1].trim();
+                extractedPrompt = visualMatch[0].trim();
               }
             }
             
             console.log("🎨 Avatar detection - Extracted prompt:", extractedPrompt);
             
             if (extractedPrompt || botResponse.includes("avatar")) {
-              const finalPrompt = extractedPrompt || "A friendly cartoon-style educational bot character";
+              // Use the extracted description or build from bot details
+              let finalPrompt = extractedPrompt;
+              
+              if (!finalPrompt) {
+                // Fallback: construct from current bot name and visual details mentioned
+                const botNameFromContext = botName || "educational bot";
+                const visualDetails = [];
+                
+                if (allMessages.includes("hula skirt")) visualDetails.push("wearing a hula skirt");
+                if (allMessages.includes("compass")) visualDetails.push("holding a compass");
+                if (allMessages.includes("Moana")) visualDetails.push("with Moana-inspired hair");
+                if (allMessages.includes("wavy hair")) visualDetails.push("with long wavy hair");
+                if (allMessages.includes("confident")) visualDetails.push("with a confident expression");
+                
+                finalPrompt = `${botNameFromContext}${visualDetails.length ? ', ' + visualDetails.join(', ') : ''}, cartoon style character`;
+              }
+              
               console.log("🎨 Avatar detection - Setting avatar prompt:", finalPrompt);
               setAvatarPrompt(finalPrompt);
               setShowAvatarSelection(true);
