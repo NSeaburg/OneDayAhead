@@ -634,30 +634,25 @@ function IntakeChat({
             try {
               let avatarPrompt = "";
               
-              // Use stored visual description if available
-              if (botVisualDescription) {
-                avatarPrompt = botVisualDescription;
-                console.log("🎨 Using stored visual description:", avatarPrompt);
-              } else {
-                // Extract visual description from recent conversation
-                console.log("🎨 Extracting visual description from conversation...");
-                const allMessages = messages.map(m => m.content).join("\n");
-                const extractResponse = await fetch("/api/intake/extract-bot-info", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  credentials: "include",
-                  body: JSON.stringify({ botResponse: allMessages }),
-                });
+              // Always extract fresh visual description from the current bot response
+              console.log("🎨 Extracting visual description from current bot response...");
+              
+              // Use only the current bot response for extraction, not all messages
+              const extractResponse = await fetch("/api/intake/extract-bot-info", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ botResponse: botResponse }),
+              });
 
-                if (extractResponse.ok) {
-                  const extractionData = await extractResponse.json();
-                  avatarPrompt = extractionData.visualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
-                  console.log("🎨 AI extracted visual description:", avatarPrompt);
-                  setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
-                } else {
-                  avatarPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
-                  console.log("🎨 Using fallback avatar prompt:", avatarPrompt);
-                }
+              if (extractResponse.ok) {
+                const extractionData = await extractResponse.json();
+                avatarPrompt = extractionData.visualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
+                console.log("🎨 AI extracted visual description from current response:", avatarPrompt);
+                setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
+              } else {
+                avatarPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
+                console.log("🎨 Using fallback avatar prompt:", avatarPrompt);
               }
 
               // Show loading state in chat while generating
