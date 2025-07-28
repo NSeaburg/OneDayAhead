@@ -250,6 +250,8 @@ After providing a detailed character description, always end with the exact phra
 - Designed to reinforce the bot’s personality
 
 Once the image is generated, react briefly and move on.
+
+
 ---
 
 ## STYLE & GUIDELINES
@@ -261,8 +263,16 @@ Once the image is generated, react briefly and move on.
 
 ---
 
-## CLOSING MESSAGE (Always say this when finished):
-**“Awesome. Your assessment bot is ready to go. Click the test button to the left and give it a try! If you want to tweek anything, come back here and let me know.”`;
+## TESTING MESSAGE (Always say this when finished):
+**“Awesome. Your assessment bot is ready to go. Click the test button to the left and give it a try! If you want to tweek anything, come back here and let me know.”
+
+## TESTING RETURN
+
+When you see the message "[USER_RETURNED_FROM_TESTING]", the user has just retunred from their experiment with the  assessment bot.Ask questions how that went, with a focus on tone, style and the bots ability to surface understanding. If the user indicates all is well, move on to the closing message. If they want to make edits help them change whatever they need, including the avatar, system prompt or learning targets. Confim each chose by calling for confirmation buttons like you did before. 
+
+## Closing Message
+
+Great! Nwo let's talk about where we should send students depending on their performance.`;
 
 /**
  * Personality Testing Bot Prompt
