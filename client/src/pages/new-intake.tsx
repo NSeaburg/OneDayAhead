@@ -259,6 +259,9 @@ function IntakeChat({
         // Mark avatar component as complete
         onComponentComplete && onComponentComplete("avatar");
         
+        // Notify parent component with avatar URL for PersonalityTestingBot
+        onAvatarGenerated && onAvatarGenerated(imageData.imageUrl);
+        
         // Clear button state
         setAvatarButtonMessageId(null);
       } else {
@@ -304,10 +307,16 @@ function IntakeChat({
 
   // Helper function to detect if a message contains an INTAKE_CARD
   const detectIntakeCard = (content: string): { hasCard: boolean; cardContent: string; beforeCard: string; afterCard: string } => {
+    console.log('🎯 CARD DETECTION - Checking content for INTAKE_CARD:', content.includes('INTAKE_CARD'));
+    console.log('🎯 CARD DETECTION - Content preview:', content.substring(0, 200) + '...');
+    
     const cardStartIndex = content.indexOf('INTAKE_CARD');
     if (cardStartIndex === -1) {
+      console.log('🎯 CARD DETECTION - No INTAKE_CARD found in content');
       return { hasCard: false, cardContent: '', beforeCard: content, afterCard: '' };
     }
+    
+    console.log('🎯 CARD DETECTION - INTAKE_CARD found at index:', cardStartIndex);
 
     // Find the end of the card (look for next non-field line)
     const lines = content.split('\n');
@@ -323,26 +332,35 @@ function IntakeChat({
       
       if (cardStartLine !== -1) {
         const line = lines[i].trim();
-        // Check if this line is a field (contains : and _____)
-        if (line.includes(':') && line.includes('_____')) {
+        console.log('🎯 CARD PARSING - Line', i + ':', JSON.stringify(line));
+        // Check if this line is a field (contains : and looks like a form field)
+        if (line.includes(':') && line.match(/^[^:]+:\s*(.+|_____)\s*$/)) {
+          console.log('🎯 CARD PARSING - Found field line:', line);
           cardLines.push(lines[i]);
         } else if (line === '' || line.startsWith('```')) {
           // Empty line or code block end - continue
+          console.log('🎯 CARD PARSING - Found end marker or empty line:', line);
           if (line.startsWith('```')) {
             cardEndLine = i;
             break;
           }
         } else if (cardLines.length > 0) {
           // Non-field line after we've collected fields - end of card
+          console.log('🎯 CARD PARSING - Non-field line after fields, ending card');
           cardEndLine = i - 1;
           break;
+        } else {
+          console.log('🎯 CARD PARSING - Skipping line before fields found');
         }
       }
     }
 
     if (cardStartLine === -1 || cardLines.length === 0) {
+      console.log('🎯 CARD DETECTION - No valid card structure found. cardStartLine:', cardStartLine, 'cardLines.length:', cardLines.length);
       return { hasCard: false, cardContent: '', beforeCard: content, afterCard: '' };
     }
+    
+    console.log('🎯 CARD DETECTION - Valid card detected with', cardLines.length, 'fields');
 
     if (cardEndLine === -1) cardEndLine = lines.length - 1;
 
