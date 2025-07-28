@@ -9,25 +9,68 @@
         "id": "governmental-structure",
         "name": "Governmental Structure",
         "description": "Can you clearly explain how power is divided into three branches?",
-        "keywords": ["executive", "legislative", "judicial", "branch", "congress", "president", "court", "separation", "powers", "division"]
+        "keywords": [
+          "executive",
+          "legislative",
+          "judicial",
+          "branch",
+          "congress",
+          "president",
+          "court",
+          "separation",
+          "powers",
+          "division"
+        ]
       },
       {
         "id": "checks-balances",
         "name": "The System of Checks and Balances",
         "description": "Do you understand how the branches hold each other in check?",
-        "keywords": ["checks", "balances", "veto", "override", "impeach", "review", "constitutional", "control", "limit", "power"]
+        "keywords": [
+          "checks",
+          "balances",
+          "veto",
+          "override",
+          "impeach",
+          "review",
+          "constitutional",
+          "control",
+          "limit",
+          "power"
+        ]
       },
       {
         "id": "branch-roles",
         "name": "Roles of the Branches",
         "description": "Can you describe what Congress, the President, and the Courts actually do?",
-        "keywords": ["make laws", "execute", "enforce", "interpret", "appoint", "nominate", "approve", "legislation", "decisions", "judges", "supreme court", "laws", "bills", "executive branch", "legislative branch", "judicial branch", "pass laws", "enforces laws", "implementing", "lawmaking"]
+        "keywords": [
+          "make laws",
+          "execute",
+          "enforce",
+          "interpret",
+          "appoint",
+          "nominate",
+          "approve",
+          "legislation",
+          "decisions",
+          "judges",
+          "supreme court",
+          "laws",
+          "bills",
+          "executive branch",
+          "legislative branch",
+          "judicial branch",
+          "pass laws",
+          "enforces laws",
+          "implementing",
+          "lawmaking"
+        ]
       }
     ]
   },
   "progressSection": {
     "title": "Assessment Progress",
-    "completionThreshold": 8,
+    "completionThreshold": 6,
     "completionMessage": "Assessment Complete"
   },
   "keepInMindSection": {
