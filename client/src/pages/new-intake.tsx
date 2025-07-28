@@ -355,11 +355,10 @@ function IntakeChat({
 
       // Check for avatar generation triggers in Stage 3
       if (currentStageId === 3 && botType === "intake-assessment-bot") {
-        // Check if bot wants to generate an avatar
-        if (botResponse.includes("Perfect! I'll design") || 
-            botResponse.includes("The avatar will capture") || 
-            botResponse.includes("avatar will look like") ||
-            (botResponse.includes("avatar") && (botResponse.includes("design") || botResponse.includes("visual")))) {
+        // Check if bot has provided a complete avatar description (not just asking for input)
+        if ((botResponse.includes("Perfect! I'll design") && botResponse.includes("The avatar will capture")) || 
+            (botResponse.includes("avatar will look like") && botResponse.length > 200) ||
+            (botResponse.includes("I'll design") && botResponse.includes("as:") && botResponse.includes("-"))) {
           
           // Extract the description for avatar generation
           const descriptionMatch = botResponse.match(/based on (?:that description|your description)[:.]?\s*(.*)$/i);
@@ -614,11 +613,10 @@ function IntakeChat({
           console.log("🎨 Avatar detection - Checking bot response for triggers...");
           console.log("🎨 Avatar detection - Bot response preview:", botResponse.substring(0, 200));
           
-          // Check if bot has provided an avatar description
-          if (botResponse.includes("Perfect! I'll design") || 
-              botResponse.includes("The avatar will capture") || 
-              botResponse.includes("avatar will look like") ||
-              (botResponse.includes("avatar") && (botResponse.includes("design") || botResponse.includes("visual")))) {
+          // Check if bot has provided a complete avatar description (not just asking for input)
+          if ((botResponse.includes("Perfect! I'll design") && botResponse.includes("The avatar will capture")) || 
+              (botResponse.includes("avatar will look like") && botResponse.length > 200) ||
+              (botResponse.includes("I'll design") && botResponse.includes("as:") && botResponse.includes("-"))) {
             
             console.log("🎨 Avatar detection - TRIGGER DETECTED! Generating single avatar directly...");
             
@@ -1139,18 +1137,18 @@ export default function NewIntake() {
           note: "Character and teaching style",
         },
         {
-          id: "avatar",
-          title: "Avatar",
-          completed: false,
-          type: "bot-assisted", 
-          note: "Visual appearance",
-        },
-        {
           id: "boundaries",
           title: "Boundaries",
           completed: false,
           type: "bot-assisted",
           note: "Rules and limitations",
+        },
+        {
+          id: "avatar",
+          title: "Avatar",
+          completed: false,
+          type: "bot-assisted", 
+          note: "Visual appearance",
         },
       ],
       hasTestButton: false,
