@@ -228,22 +228,9 @@ function IntakeChat({
       const buttonMessage = messages.find(m => m.id === avatarButtonMessageId);
       if (!buttonMessage) return;
 
-      // Extract visual description from current bot response
-      const extractResponse = await fetch("/api/intake/extract-bot-info", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ botResponse: buttonMessage.content }),
-      });
-
-      let avatarPrompt = "";
-      if (extractResponse.ok) {
-        const extractionData = await extractResponse.json();
-        avatarPrompt = extractionData.visualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
-        setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
-      } else {
-        avatarPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
-      }
+      // Use the already confirmed visual description instead of re-extracting
+      console.log("🎨 Using confirmed visual description for avatar generation");
+      const avatarPrompt = botVisualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
 
       // Generate single image
       const imageResponse = await fetch("/api/intake/generate-image", {
@@ -358,6 +345,14 @@ function IntakeChat({
 
       if (extractResponse.ok) {
         const extractionData = await extractResponse.json();
+        console.log("✅ CONFIRMED PERSONA DATA:", extractionData);
+        
+        // Store visual description for avatar generation
+        if (extractionData.visualDescription) {
+          setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
+          console.log("🎨 Set confirmed visual description:", extractionData.visualDescription);
+        }
+        
         // Store the confirmed persona data in parent component state
         if (onComponentComplete) {
           onComponentComplete(extractionData);
@@ -1389,6 +1384,7 @@ export default function NewIntake() {
   const [botName, setBotName] = useState<string | null>(null);
   const [botJobTitle, setBotJobTitle] = useState<string | null>(null);
   const [botWelcomeMessage, setBotWelcomeMessage] = useState<string | null>(null);
+  const [botSampleDialogue, setBotSampleDialogue] = useState<string | null>(null);
   const [botVisualDescription, setBotVisualDescription] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
@@ -1480,7 +1476,64 @@ export default function NewIntake() {
     },
   ]);
 
-  const handleComponentComplete = (componentId: string) => {
+  const handleComponentComplete = (componentId: string | any) => {
+    console.log("🎯 Component completed:", componentId);
+    
+    // Handle different types of component completion data
+    if (typeof componentId === 'object' && componentId !== null) {
+      // This is extraction data from persona confirmation
+      console.log("✅ STORING CONFIRMED PERSONA DATA:", componentId);
+      
+      if (componentId.name) {
+        setBotName(componentId.name);
+        console.log("🏷️ Stored bot name:", componentId.name);
+      }
+      
+      if (componentId.jobTitle) {
+        setBotJobTitle(componentId.jobTitle);
+        console.log("💼 Stored job title:", componentId.jobTitle);
+      }
+      
+      if (componentId.description) {
+        setPersonalitySummary(componentId.description);
+        console.log("📝 Stored description:", componentId.description);
+      }
+      
+      if (componentId.sampleDialogue) {
+        setBotSampleDialogue(componentId.sampleDialogue);
+        console.log("💬 Stored sample dialogue:", componentId.sampleDialogue);
+      }
+      
+      if (componentId.welcomeMessage) {
+        setBotWelcomeMessage(componentId.welcomeMessage);
+        console.log("👋 Stored welcome message:", componentId.welcomeMessage);
+      }
+      
+      if (componentId.fullPersonality) {
+        setFullBotPersonality(componentId.fullPersonality);
+        console.log("🧠 Stored full personality:", componentId.fullPersonality);
+      }
+      
+      // Mark personality component as complete since this is confirmed persona data
+      setStages(prevStages =>
+        prevStages.map(stage =>
+          stage.id === 3
+            ? {
+                ...stage,
+                components: stage.components.map(comp =>
+                  comp.id === "personality"
+                    ? { ...comp, completed: true }
+                    : comp
+                )
+              }
+            : stage
+        )
+      );
+      
+      return;
+    }
+
+    // Handle simple string componentId (normal flow)
     setStages((prev) =>
       prev.map((stage) => ({
         ...stage,
@@ -1737,82 +1790,8 @@ export default function NewIntake() {
         console.log("🎭 Stage 3 Personality component completed");
         handleComponentComplete("personality");
         
-        // Only extract if we don't already have confirmed persona data
-        if (!botName || !personalitySummary) {
-          console.log("🤖 Using AI to extract bot name and description...");
-          
-          try {
-            const extractionResponse = await fetch('/api/intake/extract-bot-info', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ botResponse: completionMessage })
-            });
-
-            if (extractionResponse.ok) {
-              const extractionData = await extractionResponse.json();
-              console.log("🤖 AI extraction result:", extractionData);
-
-            if (extractionData.name) {
-              console.log("🏷️ AI extracted bot name:", extractionData.name);
-              setBotName(extractionData.name);
-            }
-
-            if (extractionData.jobTitle) {
-              console.log("💼 AI extracted job title:", extractionData.jobTitle);
-              setBotJobTitle(extractionData.jobTitle);
-            }
-
-            if (extractionData.description) {
-              console.log("📝 AI extracted description:", extractionData.description);
-              setPersonalitySummary(extractionData.description);
-            } else {
-              // Fallback description
-              const fallbackDesc = extractionData.name 
-                ? `Your ${extractionData.name} assessment bot is ready to engage with students about ${criteria.topic.finalValue || "the subject"}.`
-                : "Your custom assessment bot personality is ready to test!";
-              setPersonalitySummary(fallbackDesc);
-            }
-
-            if (extractionData.welcomeMessage) {
-              console.log("👋 AI extracted welcome message:", extractionData.welcomeMessage);
-              setBotWelcomeMessage(extractionData.welcomeMessage);
-            }
-
-            if (extractionData.fullPersonality) {
-              console.log("🧠 AI extracted full personality:", extractionData.fullPersonality);
-              setFullBotPersonality(extractionData.fullPersonality);
-            }
-            
-            // Debug: Log all state updates
-            console.log("🔍 STATE DEBUG after AI extraction:", {
-              name: extractionData.name,
-              jobTitle: extractionData.jobTitle,
-              description: extractionData.description,
-              welcomeMessage: extractionData.welcomeMessage,
-              fullPersonality: extractionData.fullPersonality
-            });
-
-            if (extractionData.visualDescription) {
-              console.log("🎨 AI extracted visual description:", extractionData.visualDescription);
-              setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
-            }
-            } else {
-              console.warn("⚠️ AI extraction failed, using fallback");
-              setPersonalitySummary("Your custom assessment bot personality is ready to test!");
-            }
-          } catch (error) {
-            console.error("❌ Error during AI extraction:", error);
-            setPersonalitySummary("Your custom assessment bot personality is ready to test!");
-          }
-        } else {
-          console.log("🎯 Using confirmed persona data from persona confirmation step");
-        }
-        
-        // Store full personality description for testing bot (only if not already set by AI extraction)
-        if (!fullBotPersonality) {
-          setFullBotPersonality(completionMessage);
-        }
+        // NOTE: DO NOT extract automatically here - only use confirmed persona data from persona confirmation step
+        console.log("🎯 Skipping automatic extraction - waiting for confirmed persona data from user confirmation");
       }
       
       // Avatar completion - when image is generated or shown
@@ -2280,6 +2259,7 @@ export default function NewIntake() {
                 botName={botName}
                 botJobTitle={botJobTitle}
                 botWelcomeMessage={botWelcomeMessage}
+                sampleDialogue={botSampleDialogue}
               />
             </div>
           </div>

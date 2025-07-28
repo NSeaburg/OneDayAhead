@@ -20,6 +20,7 @@ interface PersonalityTestingBotProps {
   botName?: string | null;
   botJobTitle?: string | null;
   botWelcomeMessage?: string | null;
+  sampleDialogue?: string | null;
 }
 
 export function PersonalityTestingBot({ 
@@ -29,7 +30,8 @@ export function PersonalityTestingBot({
   onClose,
   botName,
   botJobTitle,
-  botWelcomeMessage
+  botWelcomeMessage,
+  sampleDialogue
 }: PersonalityTestingBotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

@@ -3963,15 +3963,14 @@ ${JSON.stringify(conversationHistory)}`;
 
       console.log("🤖 Extracting bot info from response using Claude...");
 
-      const extractionPrompt = `Please analyze this AI assistant's response and extract comprehensive information about the bot being created.
+      const extractionPrompt = `Please analyze this AI assistant's response and extract ONLY information about the bot personality being confirmed.
 
-The assistant is introducing a character/bot personality. Extract:
+The assistant is introducing a character/bot personality that the user has chosen to confirm. Extract:
 1. The bot's name (if mentioned)
-2. Invent an appropriate job title for this character
-3. A concise 2-3 sentence description of who this person is
-4. Compose a welcome message this bot would say to greet students (1-2 sentences, in character)
-5. Extract the full personality description (include all details, speaking style, traits, etc.)
-6. Create a visual description suitable for image generation (appearance, clothing, props, expression)
+2. The bot's role or title/job title (e.g., "Literature Professor", "Island Guide")
+3. A SHORT personality description (maximum 2-3 sentences focusing on key traits)
+4. A few lines of sample dialogue showing how this bot would speak to students (2-3 example sentences)
+5. Create a visual description suitable for image generation (appearance, clothing, props, expression)
 
 Response to analyze:
 "${botResponse}"
@@ -3979,10 +3978,9 @@ Response to analyze:
 Respond in JSON format:
 {
   "name": "extracted name or null",
-  "jobTitle": "appropriate job title for this character",
-  "description": "2-3 sentence description of who this person is",
-  "welcomeMessage": "1-2 sentence greeting message in character",
-  "fullPersonality": "complete personality description with all details",
+  "jobTitle": "role or title for this character",
+  "description": "SHORT 2-3 sentence personality description",
+  "sampleDialogue": "2-3 example sentences showing how the bot speaks",
   "visualDescription": "detailed physical appearance for image generation"
 }`;
 
@@ -4032,8 +4030,7 @@ Respond in JSON format:
           name: null,
           jobTitle: "Educational Character",
           description: "A friendly educational assistant",
-          welcomeMessage: "Hello! I'm here to help with your learning.",
-          fullPersonality: "Limited personality details available.",
+          sampleDialogue: "Hello! I'm here to help with your learning. What would you like to explore today?",
           visualDescription: "A friendly cartoon character appropriate for educational settings"
         };
         console.log("🔄 Using fallback extraction due to parse error");
@@ -4046,8 +4043,7 @@ Respond in JSON format:
         name: extractedInfo.name || null,
         jobTitle: extractedInfo.jobTitle || null,
         description: extractedInfo.description || null,
-        welcomeMessage: extractedInfo.welcomeMessage || null,
-        fullPersonality: extractedInfo.fullPersonality || null,
+        sampleDialogue: extractedInfo.sampleDialogue || null,
         visualDescription: extractedInfo.visualDescription || null,
         source: "Claude AI extraction"
       });
