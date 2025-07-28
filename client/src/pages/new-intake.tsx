@@ -273,10 +273,7 @@ function IntakeChat({
         // Mark avatar component as complete
         onComponentComplete && onComponentComplete("avatar");
         
-        // Store the generated avatar for the program bar display
-        setGeneratedAvatar(imageData.imageUrl);
-        
-        // Notify parent component with avatar URL for PersonalityTestingBot
+        // Notify parent component with avatar URL for program bar and PersonalityTestingBot
         onAvatarGenerated && onAvatarGenerated(imageData.imageUrl);
         
         console.log("🖼️ Avatar stored for program bar:", imageData.imageUrl);
@@ -1944,8 +1941,9 @@ export default function NewIntake() {
                         {/* Show bot preview and test button for completed Stage 3 */}
                         {stage.id === 3 && stage.components.every(comp => comp.completed) && (
                           <div className="mt-4 border-t border-gray-200 pt-3">
-                            <div className="flex items-start gap-3 mb-3">
-                              <div className="flex items-center gap-2">
+                            <div className="mb-3">
+                              {/* Top row: Avatar and Name */}
+                              <div className="flex items-center gap-2 mb-2">
                                 {generatedAvatar ? (
                                   <img 
                                     src={generatedAvatar} 
@@ -1961,15 +1959,17 @@ export default function NewIntake() {
                                   {botName || "Assessment Bot"}
                                 </div>
                               </div>
-                              <div className="flex-1">
-                                {botJobTitle && (
-                                  <div className="text-xs font-medium text-blue-600 mb-1">
-                                    {botJobTitle}
-                                  </div>
-                                )}
-                                <div className="text-xs text-gray-500 leading-relaxed">
-                                  {personalitySummary || "Your newly designed assessment bot"}
+                              
+                              {/* Job title spans full width */}
+                              {botJobTitle && (
+                                <div className="text-xs font-medium text-blue-600 mb-1">
+                                  {botJobTitle}
                                 </div>
+                              )}
+                              
+                              {/* Description spans full width */}
+                              <div className="text-xs text-gray-500 leading-relaxed">
+                                {personalitySummary || "Your newly designed assessment bot"}
                               </div>
                             </div>
                             <Button 
