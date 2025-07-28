@@ -660,6 +660,18 @@ function IntakeChat({
                 }
               }
 
+              // Show loading state in chat while generating
+              const loadingMessageId = `avatar-loading-${Date.now()}`;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: loadingMessageId,
+                  content: "🎨 *Generating your bot's avatar... this may take a moment...*",
+                  isBot: true,
+                  timestamp: new Date(),
+                }
+              ]);
+
               // Generate single image
               const imageResponse = await fetch("/api/intake/generate-image", {
                 method: "POST",
@@ -671,28 +683,52 @@ function IntakeChat({
                 })
               });
 
+              // Remove loading message and add result
+              setMessages((prev) => prev.filter(msg => msg.id !== loadingMessageId));
+
               if (imageResponse.ok) {
                 const imageData = await imageResponse.json();
                 console.log("🎨 Generated avatar image:", imageData.imageUrl);
                 
-                // Add the generated image to the chat by updating the bot's message
-                setMessages((prev) => 
-                  prev.map((msg) => 
-                    msg.id === finalMessageId 
-                      ? { 
-                          ...msg, 
-                          content: msg.content + `\n\n![Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`
-                        }
-                      : msg
-                  )
-                );
+                // Add the generated image as a new message instead of modifying existing
+                const avatarMessageId = `avatar-${Date.now()}`;
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: avatarMessageId,
+                    content: `![Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`,
+                    isBot: true,
+                    timestamp: new Date(),
+                  }
+                ]);
                 
-                handleComponentComplete("avatar");
+                onComponentComplete && onComponentComplete("avatar");
               } else {
                 console.warn("⚠️ Avatar generation failed");
+                // Add error message
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: `avatar-error-${Date.now()}`,
+                    content: "I had trouble generating the avatar. Let's continue with the bot design for now.",
+                    isBot: true,
+                    timestamp: new Date(),
+                  }
+                ]);
               }
             } catch (error) {
               console.error("❌ Error during avatar generation:", error);
+              // Add error message without referencing loadingMessageId
+              // (loadingMessageId was already cleaned up in the filter above)
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `avatar-error-${Date.now()}`,
+                  content: "I had trouble generating the avatar. Let's continue with the bot design for now.",
+                  isBot: true,
+                  timestamp: new Date(),
+                }
+              ]);
             }
           } else {
             console.log("🎨 Avatar detection - No trigger phrases found in response");
