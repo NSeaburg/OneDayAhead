@@ -628,19 +628,19 @@ function IntakeChat({
               botResponse.includes("looks like as a cartoon") ||
               botResponse.includes("visual version of your bot")) {
             
-            console.log("🎨 Avatar detection - TRIGGER DETECTED! Using AI extraction for visual description...");
+            console.log("🎨 Avatar detection - TRIGGER DETECTED! Generating single avatar directly...");
             
-            // Use the visual description from the comprehensive extraction if available
-            if (botVisualDescription) {
-              console.log("🎨 Avatar detection - Using stored visual description:", botVisualDescription);
-              setAvatarPrompt(botVisualDescription);
-              setShowAvatarSelection(true);
-              setPendingAvatarMessageId(finalMessageId);
-              console.log("🎨 Avatar detection - Avatar selection UI activated!");
-            } else {
-              console.log("🎨 Avatar detection - No stored visual description, triggering AI extraction...");
-              // Run AI extraction to get visual description for avatar generation
-              try {
+            // Generate single avatar directly in chat
+            try {
+              let avatarPrompt = "";
+              
+              // Use stored visual description if available
+              if (botVisualDescription) {
+                avatarPrompt = botVisualDescription;
+                console.log("🎨 Using stored visual description:", avatarPrompt);
+              } else {
+                // Extract visual description from recent conversation
+                console.log("🎨 Extracting visual description from conversation...");
                 const allMessages = messages.map(m => m.content).join("\n");
                 const extractResponse = await fetch("/api/intake/extract-bot-info", {
                   method: "POST",
@@ -651,37 +651,48 @@ function IntakeChat({
 
                 if (extractResponse.ok) {
                   const extractionData = await extractResponse.json();
-                  console.log("🎨 AI extraction for avatar - Result:", extractionData);
-
-                  if (extractionData.visualDescription) {
-                    console.log("🎨 AI extracted visual description:", extractionData.visualDescription);
-                    setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
-                    setAvatarPrompt(extractionData.visualDescription);
-                    setShowAvatarSelection(true);
-                    setPendingAvatarMessageId(finalMessageId);
-                    console.log("🎨 Avatar detection - Avatar selection UI activated with AI description!");
-                  } else {
-                    // Fallback to basic description
-                    const fallbackPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
-                    console.log("🎨 Using fallback avatar prompt:", fallbackPrompt);
-                    setAvatarPrompt(fallbackPrompt);
-                    setShowAvatarSelection(true);
-                    setPendingAvatarMessageId(finalMessageId);
-                  }
+                  avatarPrompt = extractionData.visualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
+                  console.log("🎨 AI extracted visual description:", avatarPrompt);
+                  setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
                 } else {
-                  console.warn("⚠️ AI extraction failed for avatar generation");
-                  const fallbackPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
-                  setAvatarPrompt(fallbackPrompt);
-                  setShowAvatarSelection(true);
-                  setPendingAvatarMessageId(finalMessageId);
+                  avatarPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
+                  console.log("🎨 Using fallback avatar prompt:", avatarPrompt);
                 }
-              } catch (error) {
-                console.error("❌ Error during avatar AI extraction:", error);
-                const fallbackPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
-                setAvatarPrompt(fallbackPrompt);
-                setShowAvatarSelection(true);
-                setPendingAvatarMessageId(finalMessageId);
               }
+
+              // Generate single image
+              const imageResponse = await fetch("/api/intake/generate-image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ 
+                  prompt: avatarPrompt,
+                  style: "cartoon illustration"
+                })
+              });
+
+              if (imageResponse.ok) {
+                const imageData = await imageResponse.json();
+                console.log("🎨 Generated avatar image:", imageData.imageUrl);
+                
+                // Add the generated image to the chat by updating the bot's message
+                setMessages((prev) => 
+                  prev.map((msg) => 
+                    msg.id === finalMessageId 
+                      ? { 
+                          ...msg, 
+                          content: msg.content + `\n\n![Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`
+                        }
+                      : msg
+                  )
+                );
+                
+                handleComponentComplete("avatar");
+              } else {
+                console.warn("⚠️ Avatar generation failed");
+              }
+            } catch (error) {
+              console.error("❌ Error during avatar generation:", error);
             }
           } else {
             console.log("🎨 Avatar detection - No trigger phrases found in response");
