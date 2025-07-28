@@ -3848,6 +3848,8 @@ ${JSON.stringify(conversationHistory)}`;
       });
 
       const responses = await Promise.all(avatarPromises);
+      console.log(`🎨 OpenAI responses received:`, responses.length);
+      
       const avatars = responses.map((response, index) => ({
         id: `avatar_${index + 1}`,
         imageUrl: response.data[0]?.url,
@@ -3855,6 +3857,7 @@ ${JSON.stringify(conversationHistory)}`;
       })).filter(avatar => avatar.imageUrl);
 
       console.log(`✅ Generated ${avatars.length} avatar options successfully`);
+      console.log(`🎨 Avatar URLs:`, avatars.map(a => a.imageUrl ? '✓' : '✗'));
 
       res.json({
         success: true,

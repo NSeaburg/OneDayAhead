@@ -236,7 +236,7 @@ Once you’ve got a basic visual description, offer to generate an image using n
 - “Should we see what [bot name] looks like as a cartoon?”
 - “I can generate a visual version of your bot if you'd like.”
 
-When you decide to generate, say use this phrase exatly: "Let me create that avatar"
+When you decide to generate, say use this phrase exatly: "Let me create that avatar."
 
 **Important:** All images will be:
 - In a square 1:1 format

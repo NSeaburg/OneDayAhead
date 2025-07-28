@@ -17,13 +17,15 @@ interface PersonalityTestingBotProps {
   personalitySummary?: string | null;
   botPersonality: string;
   onClose: () => void;
+  botName?: string | null;
 }
 
 export function PersonalityTestingBot({ 
   avatar, 
   personalitySummary, 
   botPersonality,
-  onClose 
+  onClose,
+  botName 
 }: PersonalityTestingBotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -34,14 +36,14 @@ export function PersonalityTestingBot({
   useEffect(() => {
     const welcomeMessage: Message = {
       id: "welcome",
-      content: `Hello! I'm your newly designed assessment bot. I'm here to help you test out my personality and teaching style. 
+      content: `Hello! I'm ${botName || 'your newly designed assessment bot'}. I'm here to help you test out my personality and teaching style. 
 
 Feel free to ask me questions or have a conversation to see how I interact with students. What would you like to talk about?`,
       isBot: true,
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
-  }, []);
+  }, [botName]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -181,14 +183,17 @@ Feel free to ask me questions or have a conversation to see how I interact with 
             <img 
               src={avatar} 
               alt="Bot Avatar" 
-              className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+              className="w-20 h-20 rounded-full object-cover border-2 border-blue-200 shadow-sm"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-200">
-              <Bot className="w-8 h-8 text-blue-600" />
+            <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-200">
+              <Bot className="w-10 h-10 text-blue-600" />
             </div>
           )}
           <div className="flex-1">
+            {botName && (
+              <h4 className="font-semibold text-lg text-gray-900 mb-1">{botName}</h4>
+            )}
             <p className="text-sm text-gray-700 leading-relaxed">
               {personalitySummary || "Testing your newly designed assessment bot personality"}
             </p>

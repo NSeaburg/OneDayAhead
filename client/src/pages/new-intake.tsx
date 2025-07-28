@@ -642,7 +642,9 @@ function IntakeChat({
             console.log("🎨 Avatar detection - Extracted prompt:", extractedPrompt);
             
             if (extractedPrompt || botResponse.includes("avatar")) {
-              setAvatarPrompt(extractedPrompt || "A friendly cartoon-style educational bot character");
+              const finalPrompt = extractedPrompt || "A friendly cartoon-style educational bot character";
+              console.log("🎨 Avatar detection - Setting avatar prompt:", finalPrompt);
+              setAvatarPrompt(finalPrompt);
               setShowAvatarSelection(true);
               setPendingAvatarMessageId(finalMessageId);
               console.log("🎨 Avatar detection - Avatar selection UI activated!");
@@ -1330,32 +1332,64 @@ export default function NewIntake() {
         console.log("🎭 Stage 3 Personality component completed");
         handleComponentComplete("personality");
         
-        // Extract bot name
-        const nameMatch = completionMessage.match(/(Professor|Mr\.|Mrs\.|Dr\.)\s+([A-Z][a-z]+)/);
-        if (nameMatch) {
-          setBotName(nameMatch[0]);
+        // Extract bot name - look for various patterns
+        const namePatterns = [
+          /(Professor|Mr\.|Mrs\.|Dr\.)\s+([A-Z][a-z]+)/,
+          /\*\*([A-Z][a-z]+(?: [A-Z][a-z]+)+)\*\*/,  // Bold text like **West Egg Observer**
+          /"([A-Z][a-z]+(?: [A-Z][a-z]+)+)"/,        // Quoted names
+          /The ([A-Z][a-z]+(?: [A-Z][a-z]+)+) -/,    // "The West Egg Observer -"
+          /([A-Z][a-z]+ (?:Egg|Lake|River|Hill|Valley|Mountain) [A-Z][a-z]+)/, // Geographic names
+        ];
+        
+        let extractedName = null;
+        for (const pattern of namePatterns) {
+          const match = completionMessage.match(pattern);
+          if (match) {
+            extractedName = match[1] || match[0];
+            break;
+          }
+        }
+        
+        if (extractedName) {
+          console.log("🏷️ Extracted bot name:", extractedName);
+          setBotName(extractedName);
         }
         
         // Extract full personality description for testing bot
         setFullBotPersonality(completionMessage);
         
-        // Extract longer description for display (the intake assistant's description)
-        const sentences = completionMessage.split('.').filter(s => s.length > 20);
-        const personalityDesc = sentences.find(s => 
-          s.includes("There's") || s.includes("definitely looks like") || s.includes("eager to share")
-        );
-        if (personalityDesc) {
-          setPersonalitySummary(personalityDesc.trim());
-        } else {
-          // Fallback to a longer description
-          const longerDesc = sentences.find(s => 
-            s.includes("personality") || s.includes("character") || s.includes("teacher") || s.includes("professor")
-          );
-          if (longerDesc) {
-            setPersonalitySummary(longerDesc.trim());
-          } else {
-            setPersonalitySummary("Assessment bot personality defined");
+        // Extract longer description for display
+        const sentences = completionMessage.split(/[.!?]/).filter(s => s.length > 20);
+        
+        // Look for descriptive sentences about the bot
+        const descriptivePatterns = [
+          /(?:is|appears|seems|looks like|acts as|behaves like)\s+(?:a|an|the)?\s*(.+)/i,
+          /(?:character|personality|persona|bot)(?:\s+is)?\s*[:]\s*(.+)/i,
+          /(?:I've|We've|You've)\s+(?:created|designed|built)\s+(.+)/i,
+          /(?:sharp-eyed|eager|mysterious|friendly|professional|knowledgeable)\s+(.+)/i,
+          /(?:columnist|reporter|observer|teacher|professor)\s+(?:who|that)\s+(.+)/i,
+        ];
+        
+        let bestDescription = null;
+        for (const sentence of sentences) {
+          for (const pattern of descriptivePatterns) {
+            const match = sentence.match(pattern);
+            if (match && match[1]) {
+              bestDescription = sentence.trim();
+              break;
+            }
           }
+          if (bestDescription) break;
+        }
+        
+        if (bestDescription) {
+          console.log("📝 Extracted bot description:", bestDescription);
+          setPersonalitySummary(bestDescription);
+        } else if (extractedName) {
+          // If we have a name but no description, create a simple one
+          setPersonalitySummary(`Your ${extractedName} assessment bot is ready to engage with students about ${criteria.topic.finalValue || "the subject"}.`);
+        } else {
+          setPersonalitySummary("Your custom assessment bot personality is ready to test!");
         }
       }
       
@@ -1801,13 +1835,14 @@ export default function NewIntake() {
         
         {/* Personality Testing Bot Modal - Full screen overlay */}
         {personalityTesterExpanded && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[600px] flex flex-col">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-8">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col">
               <PersonalityTestingBot
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
                 onClose={() => setPersonalityTesterExpanded(false)}
+                botName={botName}
               />
             </div>
           </div>

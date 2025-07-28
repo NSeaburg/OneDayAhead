@@ -47,8 +47,11 @@ export function AvatarSelection({ prompt, onSelect, onCancel }: AvatarSelectionP
       }
 
       const data = await response.json();
+      console.log("🎨 Avatar generation response:", data);
+      
       if (data.avatars && data.avatars.length > 0) {
         setAvatars(data.avatars);
+        console.log("✅ Set avatars:", data.avatars.length, "images");
       } else {
         throw new Error('No avatars generated');
       }
