@@ -19,15 +19,25 @@ export function AvatarSelection({ prompt, onSelect, onCancel }: AvatarSelectionP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
-  // Generate avatars on mount
+  // Generate avatars on mount - but only once
   useEffect(() => {
-    generateAvatars();
-  }, []);
+    if (!hasGenerated && !loading) {
+      generateAvatars();
+    }
+  }, [hasGenerated, loading]);
 
   const generateAvatars = async () => {
+    // Prevent multiple simultaneous calls
+    if (loading || hasGenerated) {
+      console.log("🚫 Avatar generation already in progress or completed");
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setHasGenerated(true);
 
     try {
       const response = await fetch('/api/intake/generate-avatars', {
@@ -61,8 +71,10 @@ export function AvatarSelection({ prompt, onSelect, onCancel }: AvatarSelectionP
       // Handle rate limiting specifically
       if (error.message.includes('Rate limit exceeded') || error.message.includes('429')) {
         setError('OpenAI rate limit reached (5 images/minute). Please wait a moment and try again.');
+        setHasGenerated(false); // Allow retry for rate limit errors
       } else {
         setError(error.message || 'Failed to generate avatars');
+        setHasGenerated(false); // Allow retry for other errors too
       }
     } finally {
       setLoading(false);
@@ -91,10 +103,14 @@ export function AvatarSelection({ prompt, onSelect, onCancel }: AvatarSelectionP
         <div className="text-red-600 text-sm mb-3">
           {error}
           <Button 
-            onClick={generateAvatars} 
+            onClick={() => {
+              setHasGenerated(false);
+              generateAvatars();
+            }} 
             size="sm" 
             variant="outline" 
             className="ml-3"
+            disabled={loading}
           >
             Try Again
           </Button>
