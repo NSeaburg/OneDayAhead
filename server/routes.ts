@@ -3952,6 +3952,79 @@ ${JSON.stringify(conversationHistory)}`;
     }
   });
 
+  // AI-powered bot name and description extraction endpoint
+  app.post("/api/intake/extract-bot-info", async (req, res) => {
+    try {
+      const { botResponse } = req.body;
+
+      if (!botResponse) {
+        return res.status(400).json({ error: "Bot response is required" });
+      }
+
+      console.log("🤖 Extracting bot info from response using Claude...");
+
+      const extractionPrompt = `Please analyze this AI assistant's response and extract the bot's name and a brief description.
+
+The assistant is introducing a character/bot personality. Extract:
+1. The bot's name (if mentioned)
+2. A concise 1-2 sentence description of the bot's personality/role
+
+Response to analyze:
+"${botResponse}"
+
+Respond in JSON format:
+{
+  "name": "extracted name or null",
+  "description": "brief personality description or null"
+}`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 200,
+        messages: [
+          {
+            role: "user",
+            content: extractionPrompt,
+          },
+        ],
+      });
+
+      const content = message.content[0].type === 'text' ? message.content[0].text : '';
+      console.log("🤖 Claude extraction response:", content);
+
+      // Parse the JSON response
+      let extractedInfo;
+      try {
+        // Handle potential markdown code blocks
+        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, content];
+        const jsonString = jsonMatch[1] || content;
+        extractedInfo = JSON.parse(jsonString.trim());
+      } catch (parseError) {
+        console.error("Failed to parse Claude response as JSON:", parseError);
+        return res.status(500).json({
+          error: "Failed to parse extraction results",
+          details: "Could not parse AI response"
+        });
+      }
+
+      console.log("✅ Extracted bot info:", extractedInfo);
+
+      res.json({
+        success: true,
+        name: extractedInfo.name || null,
+        description: extractedInfo.description || null,
+        source: "Claude AI extraction"
+      });
+
+    } catch (error: any) {
+      console.error('Bot info extraction error:', error);
+      res.status(500).json({
+        error: "Failed to extract bot information",
+        details: error.message
+      });
+    }
+  });
+
   // System prompt generation endpoint - wraps personality, avatar, boundaries into complete system prompt
   app.post("/api/intake/generate-system-prompt", async (req, res) => {
     try {
