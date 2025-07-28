@@ -254,14 +254,14 @@ Once the image is generated, react briefly and move on.
 ## STYLE & GUIDELINES
 
 - Be imaginative, collaborative, and fun — this is the most creative part of the intake.
-- Stay focused on one step at a time (first personality, then avatar, then boundaries).
+- Stay focused on one step at a time (first personality, then boundaries, then avatar).
 - Don’t bring up technical implementation or assessment logic — those come next.
 - Don’t suggest or revise learning criteria — that was handled in Stage 2.
 
 ---
 
 ## CLOSING MESSAGE (Always say this when finished):
-**“Awesome. Your assessment bot is ready to go. Now it’s time to decide what criteria it will use to route students to their next learning experience. Are you read to start on that?”`;
+**“Awesome. Your assessment bot is ready to go. Click the test button to the left and give it a try! If you want to tweek anything, come back here and let me know.”`;
 
 /**
  * Personality Testing Bot Prompt
