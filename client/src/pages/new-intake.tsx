@@ -156,6 +156,9 @@ function IntakeChat({
   const [pendingAvatarMessageId, setPendingAvatarMessageId] = useState<string | null>(null);
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [avatarButtonMessageId, setAvatarButtonMessageId] = useState<string | null>(null);
+  
+  // New state for Persona Confirmation Buttons
+  const [personaConfirmationMessageId, setPersonaConfirmationMessageId] = useState<string | null>(null);
 
   // Handle avatar selection
   const handleAvatarSelect = (selectedImageUrl: string) => {
@@ -324,6 +327,61 @@ function IntakeChat({
     ));
     
     setAvatarButtonMessageId(null);
+  };
+
+  // Handle persona confirmation actions
+  const handleConfirmPersona = async () => {
+    if (!personaConfirmationMessageId) return;
+
+    // Extract bot information from the message with the buttons
+    const buttonMessage = messages.find(m => m.id === personaConfirmationMessageId);
+    if (!buttonMessage) return;
+
+    // Replace the buttons with acceptance message
+    setMessages(prev => prev.map(msg => 
+      msg.id === personaConfirmationMessageId
+        ? { 
+            ...msg, 
+            content: msg.content.replace('[PERSONA_CONFIRMATION_BUTTONS]', "\n*Great choice! This persona is confirmed. Now let's talk about any specific boundaries or guidelines for your bot.*")
+          }
+        : msg
+    ));
+
+    // Extract and store bot information for later use
+    try {
+      const extractResponse = await fetch("/api/intake/extract-bot-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ botResponse: buttonMessage.content }),
+      });
+
+      if (extractResponse.ok) {
+        const extractionData = await extractResponse.json();
+        // Store the confirmed persona data in parent component state
+        if (onComponentComplete) {
+          onComponentComplete("personality", extractionData);
+        }
+      }
+    } catch (error) {
+      console.error("Error extracting confirmed persona:", error);
+    }
+
+    setPersonaConfirmationMessageId(null);
+  };
+
+  const handleRevisePersona = () => {
+    // Replace the buttons with a message asking for revision
+    setMessages(prev => prev.map(msg => 
+      msg.id === personaConfirmationMessageId
+        ? { 
+            ...msg, 
+            content: msg.content.replace('[PERSONA_CONFIRMATION_BUTTONS]', "\n*What would you like me to change about this persona? Please let me know and I'll revise it.*")
+          }
+        : msg
+    ));
+    
+    setPersonaConfirmationMessageId(null);
   };
 
   // Helper function to detect if a message contains an INTAKE_CARD
@@ -724,6 +782,12 @@ function IntakeChat({
         // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
 
+        // Check for persona confirmation button marker in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[PERSONA_CONFIRMATION_BUTTONS]')) {
+          console.log("✅ Persona confirmation buttons detected in streaming response");
+          setPersonaConfirmationMessageId(finalMessageId);
+        }
+
         // Check for avatar button marker in Stage 3
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
           console.log("🎨 Avatar buttons detected in streaming response");
@@ -939,10 +1003,83 @@ function IntakeChat({
                       </div>
                     );
                   } else {
-                    // Regular message without card - check for avatar buttons
+                    // Regular message without card - check for persona confirmation or avatar buttons
+                    const hasPersonaConfirmationButtons = message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]');
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
                     
-                    if (hasAvatarButtons && avatarButtonMessageId === message.id) {
+                    if (hasPersonaConfirmationButtons && personaConfirmationMessageId === message.id) {
+                      // Split content around the persona confirmation marker
+                      const [beforeButtons, afterButtons] = message.content.split('[PERSONA_CONFIRMATION_BUTTONS]');
+                      
+                      return (
+                        <div className="prose prose-sm max-w-none">
+                          {/* Content before buttons */}
+                          {beforeButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {beforeButtons}
+                            </ReactMarkdown>
+                          )}
+                          
+                          {/* Persona confirmation buttons */}
+                          <div className="flex gap-3 my-4">
+                            <Button
+                              onClick={handleConfirmPersona}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              ✓ Confirm This Persona
+                            </Button>
+                            <Button
+                              onClick={handleRevisePersona}
+                              variant="outline"
+                              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                              ✏️ Make Changes
+                            </Button>
+                          </div>
+                          
+                          {/* Content after buttons */}
+                          {afterButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {afterButtons}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                      );
+                    } else if (hasAvatarButtons && avatarButtonMessageId === message.id) {
                       // Split content around the marker
                       const [beforeButtons, afterButtons] = message.content.split('[AVATAR_BUTTONS_HERE]');
                       
