@@ -57,7 +57,13 @@ export function AvatarSelection({ prompt, onSelect, onCancel }: AvatarSelectionP
       }
     } catch (error: any) {
       console.error('Avatar generation error:', error);
-      setError(error.message || 'Failed to generate avatars');
+      
+      // Handle rate limiting specifically
+      if (error.message.includes('Rate limit exceeded') || error.message.includes('429')) {
+        setError('OpenAI rate limit reached (5 images/minute). Please wait a moment and try again.');
+      } else {
+        setError(error.message || 'Failed to generate avatars');
+      }
     } finally {
       setLoading(false);
     }

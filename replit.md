@@ -148,6 +148,13 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 28, 2025. Enhanced AI extraction system and confirmed avatar selection UI functionality
+  - Enhanced extraction bot to comprehensively extract bot name, invented job title, 2-3 sentence description, and welcome message
+  - Integrated comprehensive bot information into PersonalityTestingBot testing environment with job title display
+  - Fixed avatar selection UI rendering - component now displays properly between messages and input area
+  - Added enhanced error handling for OpenAI rate limiting with user-friendly retry functionality
+  - Confirmed OpenAI DALL-E 3 integration is fully functional - hitting expected 5 images/minute rate limit during testing
+  - Updated bot preview cards in Stage 3 to display extracted job titles alongside bot names
 - July 27, 2025. Fixed avatar generation detection and UX issues in intake system
   - Added avatar generation trigger detection to regular message handler (not just card submission handler)
   - Fixed cursor focus issue - textarea now properly refocuses after sending messages with Enter key
