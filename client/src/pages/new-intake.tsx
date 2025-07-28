@@ -932,6 +932,17 @@ function IntakeChat({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Avatar Selection Component */}
+      {showAvatarSelection && avatarPrompt && (
+        <div className="p-4 border-t border-gray-200">
+          <AvatarSelection
+            prompt={avatarPrompt}
+            onSelect={handleAvatarSelect}
+            onCancel={handleAvatarCancel}
+          />
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
         <div className="flex gap-2">
