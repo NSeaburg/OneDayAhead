@@ -105,6 +105,14 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
     });
     
     onSubmit(submissionData);
+    
+    // Refocus the main chat textarea after submission
+    setTimeout(() => {
+      const mainTextarea = document.querySelector('textarea[placeholder*="Type your response"]') as HTMLTextAreaElement;
+      if (mainTextarea) {
+        mainTextarea.focus();
+      }
+    }, 100);
   };
 
   const isFormValid = fields.every(field => 

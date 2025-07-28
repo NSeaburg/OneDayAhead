@@ -4003,16 +4003,40 @@ Respond in JSON format:
       // Parse the JSON response
       let extractedInfo;
       try {
-        // Handle potential markdown code blocks
-        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, content];
-        const jsonString = jsonMatch[1] || content;
+        // Handle potential markdown code blocks and extra text
+        let jsonString;
+        
+        // Try to extract JSON from code blocks first
+        const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          jsonString = codeBlockMatch[1];
+        } else {
+          // Look for JSON object pattern
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            jsonString = jsonMatch[0];
+          } else {
+            jsonString = content;
+          }
+        }
+        
         extractedInfo = JSON.parse(jsonString.trim());
+        console.log("✅ Successfully parsed JSON:", extractedInfo);
+        
       } catch (parseError) {
         console.error("Failed to parse Claude response as JSON:", parseError);
-        return res.status(500).json({
-          error: "Failed to parse extraction results",
-          details: "Could not parse AI response"
-        });
+        console.error("Raw Claude response:", content);
+        
+        // Return a fallback extraction with basic info
+        extractedInfo = {
+          name: null,
+          jobTitle: "Educational Character",
+          description: "A friendly educational assistant",
+          welcomeMessage: "Hello! I'm here to help with your learning.",
+          fullPersonality: "Limited personality details available.",
+          visualDescription: "A friendly cartoon character appropriate for educational settings"
+        };
+        console.log("🔄 Using fallback extraction due to parse error");
       }
 
       console.log("✅ Extracted bot info:", extractedInfo);
