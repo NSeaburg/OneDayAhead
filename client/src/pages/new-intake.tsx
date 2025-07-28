@@ -9,6 +9,7 @@ import ReactMarkdown from "react-markdown";
 import { IntakeCard, CompletedIntakeCard } from "@/components/IntakeCard";
 import { PersonalityTestingBot } from "@/components/PersonalityTestingBot";
 import { AvatarSelection } from "@/components/AvatarSelection";
+import { AvatarButtons } from "@/components/AvatarButtons";
 
 interface Stage {
   id: number;
@@ -153,6 +154,8 @@ function IntakeChat({
   const [showAvatarSelection, setShowAvatarSelection] = useState(false);
   const [avatarPrompt, setAvatarPrompt] = useState("");
   const [pendingAvatarMessageId, setPendingAvatarMessageId] = useState<string | null>(null);
+  const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
+  const [avatarButtonMessageId, setAvatarButtonMessageId] = useState<string | null>(null);
 
   // Handle avatar selection
   const handleAvatarSelect = (selectedImageUrl: string) => {
@@ -199,6 +202,104 @@ function IntakeChat({
     setShowAvatarSelection(false);
     setAvatarPrompt("");
     setPendingAvatarMessageId(null);
+  };
+
+  // Handle avatar button actions
+  const handleCreateAvatar = async () => {
+    if (!avatarButtonMessageId) return;
+
+    setIsGeneratingAvatar(true);
+    
+    try {
+      // Extract visual description from the message with the buttons
+      const buttonMessage = messages.find(m => m.id === avatarButtonMessageId);
+      if (!buttonMessage) return;
+
+      // Extract visual description from current bot response
+      const extractResponse = await fetch("/api/intake/extract-bot-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ botResponse: buttonMessage.content }),
+      });
+
+      let avatarPrompt = "";
+      if (extractResponse.ok) {
+        const extractionData = await extractResponse.json();
+        avatarPrompt = extractionData.visualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
+        setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
+      } else {
+        avatarPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
+      }
+
+      // Generate single image
+      const imageResponse = await fetch("/api/intake/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          prompt: avatarPrompt,
+          style: "cartoon illustration"
+        })
+      });
+
+      if (imageResponse.ok) {
+        const imageData = await imageResponse.json();
+        
+        // Replace the [AVATAR_BUTTONS_HERE] marker with the generated image
+        setMessages(prev => prev.map(msg => 
+          msg.id === avatarButtonMessageId
+            ? { 
+                ...msg, 
+                content: msg.content.replace('[AVATAR_BUTTONS_HERE]', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
+              }
+            : msg
+        ));
+        
+        // Mark avatar component as complete
+        onComponentComplete && onComponentComplete("avatar");
+        
+        // Clear button state
+        setAvatarButtonMessageId(null);
+      } else {
+        // Show error message
+        setMessages(prev => prev.map(msg => 
+          msg.id === avatarButtonMessageId
+            ? { 
+                ...msg, 
+                content: msg.content.replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+              }
+            : msg
+        ));
+      }
+    } catch (error) {
+      console.error("Avatar generation error:", error);
+      // Show error message
+      setMessages(prev => prev.map(msg => 
+        msg.id === avatarButtonMessageId
+          ? { 
+              ...msg, 
+              content: msg.content.replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+            }
+          : msg
+      ));
+    } finally {
+      setIsGeneratingAvatar(false);
+    }
+  };
+
+  const handleReviseDescription = () => {
+    // Replace the buttons with a message asking for revision
+    setMessages(prev => prev.map(msg => 
+      msg.id === avatarButtonMessageId
+        ? { 
+            ...msg, 
+            content: msg.content.replace('[AVATAR_BUTTONS_HERE]', "\n*What would you like me to change about this description? Please let me know and I'll revise it.*")
+          }
+        : msg
+    ));
+    
+    setAvatarButtonMessageId(null);
   };
 
   // Helper function to detect if a message contains an INTAKE_CARD
@@ -353,7 +454,11 @@ function IntakeChat({
       // Run background analysis
       await analyzeConversation(botResponse);
 
-      // Avatar generation will be handled by button-based approach
+      // Check for avatar button marker in Stage 3
+      if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
+        console.log("🎨 Avatar buttons detected in bot response");
+        setAvatarButtonMessageId(finalMessageId);
+      }
 
       // Check for stage progression
       onStageProgression(botResponse);
@@ -580,7 +685,11 @@ function IntakeChat({
         // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
 
-        // Avatar generation will be handled by button-based approach
+        // Check for avatar button marker in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
+          console.log("🎨 Avatar buttons detected in streaming response");
+          setAvatarButtonMessageId(finalMessageId);
+        }
 
         // Check for stage progression
         onStageProgression(botResponse);
@@ -791,31 +900,98 @@ function IntakeChat({
                       </div>
                     );
                   } else {
-                    // Regular message without card
-                    return (
-                      <div className="prose prose-sm max-w-none">
-                        <ReactMarkdown
-                          components={{
-                            p: ({ children }) => (
-                              <div className="mb-2 last:mb-0">{children}</div>
-                            ),
-                            strong: ({ children }) => (
-                              <strong className="font-bold text-gray-900">
-                                {children}
-                              </strong>
-                            ),
-                            em: ({ children }) => (
-                              <em className="italic">{children}</em>
-                            ),
-                            br: () => <br />,
-                            code: () => null, // Hide inline code completely
-                            pre: () => null, // Hide code blocks completely
-                          }}
-                        >
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
-                    );
+                    // Regular message without card - check for avatar buttons
+                    const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
+                    
+                    if (hasAvatarButtons && avatarButtonMessageId === message.id) {
+                      // Split content around the marker
+                      const [beforeButtons, afterButtons] = message.content.split('[AVATAR_BUTTONS_HERE]');
+                      
+                      return (
+                        <div className="prose prose-sm max-w-none">
+                          {/* Content before buttons */}
+                          {beforeButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {beforeButtons}
+                            </ReactMarkdown>
+                          )}
+                          
+                          {/* Avatar buttons */}
+                          <AvatarButtons
+                            onCreateAvatar={handleCreateAvatar}
+                            onReviseDescription={handleReviseDescription}
+                            isGenerating={isGeneratingAvatar}
+                          />
+                          
+                          {/* Content after buttons */}
+                          {afterButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {afterButtons}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                      );
+                    } else {
+                      // Regular message without avatar buttons
+                      return (
+                        <div className="prose prose-sm max-w-none">
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => (
+                                <div className="mb-2 last:mb-0">{children}</div>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-bold text-gray-900">
+                                  {children}
+                                </strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                              ),
+                              br: () => <br />,
+                              code: () => null, // Hide inline code completely
+                              pre: () => null, // Hide code blocks completely
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      );
+                    }
                   }
                 })()
               ) : (
