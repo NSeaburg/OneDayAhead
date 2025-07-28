@@ -360,7 +360,7 @@ function IntakeChat({
         const extractionData = await extractResponse.json();
         // Store the confirmed persona data in parent component state
         if (onComponentComplete) {
-          onComponentComplete("personality", extractionData);
+          onComponentComplete(extractionData);
         }
       }
     } catch (error) {
@@ -368,6 +368,117 @@ function IntakeChat({
     }
 
     setPersonaConfirmationMessageId(null);
+
+    // Send a user message to continue the conversation
+    const confirmationMessage: Message = {
+      id: Date.now().toString(),
+      content: "Perfect! I confirm this persona choice.",
+      isBot: false,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, confirmationMessage]);
+    setIsLoading(true);
+
+    // Send to bot to continue conversation
+    try {
+      const response = await fetch("/api/claude/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          messages: [
+            ...messages.map((msg) => ({
+              role: msg.isBot ? "assistant" : "user",
+              content: msg.content,
+            })),
+            { role: "user", content: confirmationMessage.content },
+          ],
+          assistantType: botType,
+          stageContext: stageContext,
+          uploadedFiles: uploadedFiles,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to get response");
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      let botResponse = "";
+      let streamingMessageId = `streaming-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Add initial streaming message 
+      setMessages(prev => [...prev, {
+        id: streamingMessageId,
+        content: "",
+        isBot: true,
+        timestamp: new Date(),
+      }]);
+
+      let hasStartedStreaming = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split("\n").filter((line) => line.trim());
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                if (!hasStartedStreaming) {
+                  setIsLoading(false);
+                  hasStartedStreaming = true;
+                }
+                
+                botResponse += parsed.content;
+
+                setMessages((prev) => 
+                  prev.map((msg) => 
+                    msg.id === streamingMessageId 
+                      ? { ...msg, content: botResponse }
+                      : msg
+                  )
+                );
+              }
+            } catch (e) {
+              // Ignore JSON parsing errors for streaming
+            }
+          }
+        }
+      }
+
+      // Replace streaming message with final message
+      if (botResponse) {
+        const finalMessageId = `final-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        setMessages((prev) => 
+          prev.map((msg) => 
+            msg.id === streamingMessageId 
+              ? { ...msg, id: finalMessageId }
+              : msg
+          )
+        );
+
+        // Check for avatar button marker after confirmation
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
+          console.log("🎨 Avatar buttons detected after persona confirmation");
+          setAvatarButtonMessageId(finalMessageId);
+        }
+
+        onStageProgression(botResponse);
+      }
+    } catch (error) {
+      console.error("Chat error after persona confirmation:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRevisePersona = () => {
@@ -1626,20 +1737,21 @@ export default function NewIntake() {
         console.log("🎭 Stage 3 Personality component completed");
         handleComponentComplete("personality");
         
-        // Extract bot name and description using AI
-        console.log("🤖 Using AI to extract bot name and description...");
-        
-        try {
-          const extractionResponse = await fetch('/api/intake/extract-bot-info', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ botResponse: completionMessage })
-          });
+        // Only extract if we don't already have confirmed persona data
+        if (!botName || !personalitySummary) {
+          console.log("🤖 Using AI to extract bot name and description...");
+          
+          try {
+            const extractionResponse = await fetch('/api/intake/extract-bot-info', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ botResponse: completionMessage })
+            });
 
-          if (extractionResponse.ok) {
-            const extractionData = await extractionResponse.json();
-            console.log("🤖 AI extraction result:", extractionData);
+            if (extractionResponse.ok) {
+              const extractionData = await extractionResponse.json();
+              console.log("🤖 AI extraction result:", extractionData);
 
             if (extractionData.name) {
               console.log("🏷️ AI extracted bot name:", extractionData.name);
@@ -1685,13 +1797,16 @@ export default function NewIntake() {
               console.log("🎨 AI extracted visual description:", extractionData.visualDescription);
               setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
             }
-          } else {
-            console.warn("⚠️ AI extraction failed, using fallback");
+            } else {
+              console.warn("⚠️ AI extraction failed, using fallback");
+              setPersonalitySummary("Your custom assessment bot personality is ready to test!");
+            }
+          } catch (error) {
+            console.error("❌ Error during AI extraction:", error);
             setPersonalitySummary("Your custom assessment bot personality is ready to test!");
           }
-        } catch (error) {
-          console.error("❌ Error during AI extraction:", error);
-          setPersonalitySummary("Your custom assessment bot personality is ready to test!");
+        } else {
+          console.log("🎯 Using confirmed persona data from persona confirmation step");
         }
         
         // Store full personality description for testing bot (only if not already set by AI extraction)

@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 28, 2025. FIXED: Stage 3 persona confirmation workflow and image generation issues
+  - **CRITICAL FIX**: Persona confirmation button now properly sends user message to continue conversation flow
+  - **IMAGE GENERATION FIX**: Enhanced DALL-E prompts with "IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures."
+  - **EXTRACTION TIMING FIX**: Bot information extraction now only occurs from confirmed persona choice, not from earlier personality options
+  - Added proper conversation continuation after persona confirmation with "Perfect! I confirm this persona choice." message
+  - Fixed extraction logic to prioritize confirmed persona data over automatic stage progression extraction
+  - Enhanced avatar generation to prevent multiple characters in single image through explicit prompt engineering
+  - **WORKFLOW IMPROVEMENT**: System now properly waits for user confirmation before extracting final bot information
 - July 28, 2025. Replaced fragile pattern matching with robust AI-powered extraction system
   - **ARCHITECTURAL IMPROVEMENT**: Eliminated all regex pattern matching for bot information extraction
   - Enhanced extraction bot to return comprehensive JSON: name, job title, description, welcome message, full personality, and visual description

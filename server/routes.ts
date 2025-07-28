@@ -3840,7 +3840,7 @@ ${JSON.stringify(conversationHistory)}`;
         const variation = i === 0 ? "" : `, variation ${i + 1}`;
         return openai.images.generate({
           model: "dall-e-3",
-          prompt: `${prompt}${variation}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration, professional character design.`,
+          prompt: `${prompt}${variation}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration, professional character design. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`,
           size: "1024x1024",
           quality: "standard",
           n: 1,
@@ -3907,7 +3907,7 @@ ${JSON.stringify(conversationHistory)}`;
       // Generate image using OpenAI DALL-E
       const response = await openai.images.generate({
         model: "dall-e-3",
-        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration. A single character, centered, and facing forward.`,
+        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`,
         size: "1024x1024",
         quality: "standard",
         n: 1,
