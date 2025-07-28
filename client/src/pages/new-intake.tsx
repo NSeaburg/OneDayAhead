@@ -39,6 +39,9 @@ interface IntakeChatProps {
   onFileRemove: (fileId: string) => void;
   currentStageId: number;
   onAvatarGenerated?: (avatarUrl: string) => void;
+  botName?: string | null;
+  botVisualDescription?: string | null;
+  setBotVisualDescription?: (description: string | null) => void;
 }
 
 interface UploadedFile {
@@ -112,6 +115,9 @@ function IntakeChat({
   onFileRemove,
   currentStageId,
   onAvatarGenerated,
+  botName,
+  botVisualDescription,
+  setBotVisualDescription,
 }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
@@ -622,68 +628,60 @@ function IntakeChat({
               botResponse.includes("looks like as a cartoon") ||
               botResponse.includes("visual version of your bot")) {
             
-            console.log("🎨 Avatar detection - TRIGGER DETECTED! Setting up avatar selection...");
+            console.log("🎨 Avatar detection - TRIGGER DETECTED! Using AI extraction for visual description...");
             
-            // Extract the actual bot description for avatar generation
-            let extractedPrompt = "";
-            
-            // Look for the most recent bot description/personality in the conversation
-            const allMessages = messages.map(m => m.content).join("\n");
-            
-            // Try to find bot personality description patterns
-            const personalityPatterns = [
-              /# ([A-Z\s,\-]+) - EXPANDED PERSONALITY\s*\*\*([^*]+)\*\* is ([^.]+\.(?:[^.]+\.)*)/i,
-              /(?:Bot Name|Character):\s*([^\n]+)\n[\s\S]*?(?:Description|Personality):\s*([^\n]+(?:\n[^\n:]+)*)/i,
-              /([A-Z][a-z]+ [A-Z][a-z]+) is a ([^.]+\.(?:\s*[^.]+\.)*)/i
-            ];
-            
-            for (const pattern of personalityPatterns) {
-              const match = allMessages.match(pattern);
-              if (match) {
-                if (pattern.source.includes('EXPANDED PERSONALITY')) {
-                  // Full personality description format
-                  extractedPrompt = `${match[2]} ${match[3]}`.trim();
-                } else {
-                  // Other formats - use the description part
-                  extractedPrompt = match[2] || match[1];
-                }
-                break;
-              }
-            }
-            
-            // If no structured description found, look for visual descriptions
-            if (!extractedPrompt) {
-              const visualMatch = allMessages.match(/(?:wearing|looks like|appears as|has|holding|with)[\s\w,]+(hula skirt|compass|Moana|wavy hair|boots|vest)[^.!?]*[.!?]/i);
-              if (visualMatch) {
-                extractedPrompt = visualMatch[0].trim();
-              }
-            }
-            
-            console.log("🎨 Avatar detection - Extracted prompt:", extractedPrompt);
-            
-            if (extractedPrompt || botResponse.includes("avatar")) {
-              // Use the extracted description or build from bot details
-              let finalPrompt = extractedPrompt;
-              
-              if (!finalPrompt) {
-                // Fallback: construct from current bot name and visual details mentioned
-                const botNameFromContext = botName || "educational bot";
-                const visualDetails = [];
-                
-                if (allMessages.includes("hula skirt")) visualDetails.push("wearing a hula skirt");
-                if (allMessages.includes("compass")) visualDetails.push("holding a compass");
-                if (allMessages.includes("Moana")) visualDetails.push("with Moana-inspired hair");
-                if (allMessages.includes("wavy hair")) visualDetails.push("with long wavy hair");
-                if (allMessages.includes("confident")) visualDetails.push("with a confident expression");
-                
-                finalPrompt = `${botNameFromContext}${visualDetails.length ? ', ' + visualDetails.join(', ') : ''}, cartoon style character`;
-              }
-              
-              console.log("🎨 Avatar detection - Setting avatar prompt:", finalPrompt);
-              setAvatarPrompt(finalPrompt);
+            // Use the visual description from the comprehensive extraction if available
+            if (botVisualDescription) {
+              console.log("🎨 Avatar detection - Using stored visual description:", botVisualDescription);
+              setAvatarPrompt(botVisualDescription);
               setShowAvatarSelection(true);
               setPendingAvatarMessageId(finalMessageId);
               console.log("🎨 Avatar detection - Avatar selection UI activated!");
+            } else {
+              console.log("🎨 Avatar detection - No stored visual description, triggering AI extraction...");
+              // Run AI extraction to get visual description for avatar generation
+              try {
+                const allMessages = messages.map(m => m.content).join("\n");
+                const extractResponse = await fetch("/api/intake/extract-bot-info", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ botResponse: allMessages }),
+                });
+
+                if (extractResponse.ok) {
+                  const extractionData = await extractResponse.json();
+                  console.log("🎨 AI extraction for avatar - Result:", extractionData);
+
+                  if (extractionData.visualDescription) {
+                    console.log("🎨 AI extracted visual description:", extractionData.visualDescription);
+                    setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
+                    setAvatarPrompt(extractionData.visualDescription);
+                    setShowAvatarSelection(true);
+                    setPendingAvatarMessageId(finalMessageId);
+                    console.log("🎨 Avatar detection - Avatar selection UI activated with AI description!");
+                  } else {
+                    // Fallback to basic description
+                    const fallbackPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
+                    console.log("🎨 Using fallback avatar prompt:", fallbackPrompt);
+                    setAvatarPrompt(fallbackPrompt);
+                    setShowAvatarSelection(true);
+                    setPendingAvatarMessageId(finalMessageId);
+                  }
+                } else {
+                  console.warn("⚠️ AI extraction failed for avatar generation");
+                  const fallbackPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
+                  setAvatarPrompt(fallbackPrompt);
+                  setShowAvatarSelection(true);
+                  setPendingAvatarMessageId(finalMessageId);
+                }
+              } catch (error) {
+                console.error("❌ Error during avatar AI extraction:", error);
+                const fallbackPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
+                setAvatarPrompt(fallbackPrompt);
+                setShowAvatarSelection(true);
+                setPendingAvatarMessageId(finalMessageId);
+              }
             }
           } else {
             console.log("🎨 Avatar detection - No trigger phrases found in response");
@@ -1034,6 +1032,7 @@ export default function NewIntake() {
   const [botName, setBotName] = useState<string | null>(null);
   const [botJobTitle, setBotJobTitle] = useState<string | null>(null);
   const [botWelcomeMessage, setBotWelcomeMessage] = useState<string | null>(null);
+  const [botVisualDescription, setBotVisualDescription] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
   const [criteria, setCriteria] = useState<CriteriaState>({
@@ -1420,6 +1419,16 @@ export default function NewIntake() {
             if (extractionData.welcomeMessage) {
               console.log("👋 AI extracted welcome message:", extractionData.welcomeMessage);
               setBotWelcomeMessage(extractionData.welcomeMessage);
+            }
+
+            if (extractionData.fullPersonality) {
+              console.log("🧠 AI extracted full personality:", extractionData.fullPersonality);
+              setFullBotPersonality(extractionData.fullPersonality);
+            }
+
+            if (extractionData.visualDescription) {
+              console.log("🎨 AI extracted visual description:", extractionData.visualDescription);
+              setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
             }
           } else {
             console.warn("⚠️ AI extraction failed, using fallback");
@@ -1876,6 +1885,9 @@ export default function NewIntake() {
             onFileRemove={handleFileRemove}
             currentStageId={currentStageId}
             onAvatarGenerated={setGeneratedAvatar}
+            botName={botName}
+            botVisualDescription={botVisualDescription}
+            setBotVisualDescription={setBotVisualDescription}
           />
         </div>
         

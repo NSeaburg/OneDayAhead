@@ -148,6 +148,14 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 28, 2025. Replaced fragile pattern matching with robust AI-powered extraction system
+  - **ARCHITECTURAL IMPROVEMENT**: Eliminated all regex pattern matching for bot information extraction
+  - Enhanced extraction bot to return comprehensive JSON: name, job title, description, welcome message, full personality, and visual description
+  - Updated avatar generation to use AI-extracted visual descriptions instead of brittle text parsing
+  - Modified frontend data flow to store and use extracted visual descriptions for accurate avatar generation
+  - Added proper TypeScript interfaces for comprehensive bot information handling
+  - Enhanced error handling and fallback mechanisms throughout extraction pipeline
+  - **RELIABILITY BOOST**: System now uses consistent AI extraction for all bot data instead of fragile pattern matching
 - July 28, 2025. Enhanced AI extraction system and confirmed avatar selection UI functionality
   - Enhanced extraction bot to comprehensively extract bot name, invented job title, 2-3 sentence description, and welcome message
   - Integrated comprehensive bot information into PersonalityTestingBot testing environment with job title display

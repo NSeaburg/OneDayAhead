@@ -3970,6 +3970,8 @@ The assistant is introducing a character/bot personality. Extract:
 2. Invent an appropriate job title for this character
 3. A concise 2-3 sentence description of who this person is
 4. Compose a welcome message this bot would say to greet students (1-2 sentences, in character)
+5. Extract the full personality description (include all details, speaking style, traits, etc.)
+6. Create a visual description suitable for image generation (appearance, clothing, props, expression)
 
 Response to analyze:
 "${botResponse}"
@@ -3979,7 +3981,9 @@ Respond in JSON format:
   "name": "extracted name or null",
   "jobTitle": "appropriate job title for this character",
   "description": "2-3 sentence description of who this person is",
-  "welcomeMessage": "1-2 sentence greeting message in character"
+  "welcomeMessage": "1-2 sentence greeting message in character",
+  "fullPersonality": "complete personality description with all details",
+  "visualDescription": "detailed physical appearance for image generation"
 }`;
 
       const message = await anthropic.messages.create({
@@ -4019,6 +4023,8 @@ Respond in JSON format:
         jobTitle: extractedInfo.jobTitle || null,
         description: extractedInfo.description || null,
         welcomeMessage: extractedInfo.welcomeMessage || null,
+        fullPersonality: extractedInfo.fullPersonality || null,
+        visualDescription: extractedInfo.visualDescription || null,
         source: "Claude AI extraction"
       });
 
