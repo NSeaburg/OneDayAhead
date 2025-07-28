@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, Check, Circle, Send, User, Upload, X } from "lucide-react";
@@ -43,6 +43,7 @@ interface IntakeChatProps {
   botName?: string | null;
   botVisualDescription?: string | null;
   setBotVisualDescription?: (description: string | null) => void;
+  onInjectMessage?: (injectFunction: (message: string) => void) => void;
 }
 
 interface UploadedFile {
@@ -119,6 +120,7 @@ function IntakeChat({
   botName,
   botVisualDescription,
   setBotVisualDescription,
+  onInjectMessage,
 }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
@@ -489,6 +491,128 @@ function IntakeChat({
     
     setPersonaConfirmationMessageId(null);
   };
+
+  // Message injection function for external components (like PersonalityTestingBot)
+  const injectMessage = useCallback((messageContent: string) => {
+    if (!messageContent || !messageContent.trim()) {
+      console.error("Cannot inject empty message");
+      return;
+    }
+
+    const injectedMessage: Message = {
+      id: Date.now().toString(),
+      content: messageContent,
+      isBot: false,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, injectedMessage]);
+    setIsLoading(true);
+
+    // Process the injected message through the bot
+    const processInjectedMessage = async () => {
+      try {
+        // Get current messages state at time of injection
+        const currentMessages = messages.filter(msg => msg.content && msg.content.trim() !== "");
+        
+        const response = await fetch("/api/claude/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            messages: [
+              ...currentMessages.map((msg) => ({
+                role: msg.isBot ? "assistant" : "user",
+                content: msg.content,
+              })),
+              { role: "user", content: messageContent },
+            ],
+            assistantType: botType,
+            stageContext: stageContext,
+            uploadedFiles: uploadedFiles,
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to get response");
+
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("No response body");
+
+        let botResponse = "";
+        let streamingMessageId = `streaming-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        setMessages(prev => [...prev, {
+          id: streamingMessageId,
+          content: "",
+          isBot: true,
+          timestamp: new Date(),
+        }]);
+
+        let hasStartedStreaming = false;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split("\n").filter((line) => line.trim());
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  if (!hasStartedStreaming) {
+                    setIsLoading(false);
+                    hasStartedStreaming = true;
+                  }
+                  
+                  botResponse += parsed.content;
+
+                  setMessages(prev => prev.map(msg => 
+                    msg.id === streamingMessageId 
+                      ? { ...msg, content: botResponse }
+                      : msg
+                  ));
+                }
+              } catch (e) {
+                console.error("Error parsing streaming data:", e);
+              }
+            }
+          }
+        }
+
+        // Replace streaming message with final message
+        const finalMessageId = Date.now().toString();
+        setMessages(prev => prev.map(msg => 
+          msg.id === streamingMessageId 
+            ? { ...msg, id: finalMessageId, content: botResponse }
+            : msg
+        ));
+
+        // Trigger stage progression check
+        onStageProgression(botResponse);
+
+      } catch (error) {
+        console.error("Chat error during message injection:", error);
+        setMessages(prev => prev.filter(msg => !msg.id.startsWith("streaming")));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    processInjectedMessage();
+  }, [messages, botType, stageContext, uploadedFiles, onStageProgression]);
+
+  // Expose the injection function to parent component
+  useEffect(() => {
+    if (onInjectMessage) {
+      onInjectMessage(injectMessage);
+    }
+  }, [onInjectMessage]);
 
   // Helper function to detect if a message contains an INTAKE_CARD
   const detectIntakeCard = (content: string): { hasCard: boolean; cardContent: string; beforeCard: string; afterCard: string } => {
@@ -1388,6 +1512,7 @@ export default function NewIntake() {
   const [botVisualDescription, setBotVisualDescription] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
+  const [messageInjectionFunction, setMessageInjectionFunction] = useState<((message: string) => void) | null>(null);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: {
       detected: false,
@@ -2244,6 +2369,7 @@ export default function NewIntake() {
             botName={botName}
             botVisualDescription={botVisualDescription}
             setBotVisualDescription={setBotVisualDescription}
+            onInjectMessage={setMessageInjectionFunction}
           />
         </div>
         
@@ -2255,7 +2381,15 @@ export default function NewIntake() {
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
-                onClose={() => setPersonalityTesterExpanded(false)}
+                onClose={() => {
+                  setPersonalityTesterExpanded(false);
+                  // Inject the return from testing trigger message
+                  if (messageInjectionFunction && currentStageId === 3) {
+                    setTimeout(() => {
+                      messageInjectionFunction("[USER_RETURNED_FROM_TESTING]");
+                    }, 100); // Small delay to ensure modal is closed first
+                  }
+                }}
                 botName={botName}
                 botJobTitle={botJobTitle}
                 botWelcomeMessage={botWelcomeMessage}

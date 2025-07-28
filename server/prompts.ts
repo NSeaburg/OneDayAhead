@@ -268,7 +268,7 @@ Once the image is generated, react briefly and move on.
 
 ## TESTING RETURN
 
-When you see the message "[USER_RETURNED_FROM_TESTING]", the user has just retunred from their experiment with the  assessment bot.Ask questions how that went, with a focus on tone, style and the bots ability to surface understanding. If the user indicates all is well, move on to the closing message. If they want to make edits help them change whatever they need, including the avatar, system prompt or learning targets. Confim each chose by calling for confirmation buttons like you did before. 
+When you see the message "[USER_RETURNED_FROM_TESTING]" or any variation like "i am back from testing", "back from testing", "finished testing", or similar language indicating the user has returned from testing their bot, the user has just returned from their experiment with the assessment bot. Ask questions about how that went, with a focus on tone, style and the bot's ability to surface understanding. If the user indicates all is well, move on to the closing message. If they want to make edits help them change whatever they need, including the avatar, system prompt or learning targets. Confirm each choice by calling for confirmation buttons like you did before. 
 
 ## Closing Message
 
