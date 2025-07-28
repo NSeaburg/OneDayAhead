@@ -15,6 +15,7 @@ interface CardField {
   label: string;
   placeholder: string;
   required: boolean;
+  prefillValue?: string;
 }
 
 // Component to show completed form data
@@ -57,25 +58,27 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
       const trimmed = line.trim();
       console.log("🔧 DEBUG: Processing line:", trimmed);
       
-      // Look for lines like "School District: _____ (or N/A)" or "Subject Area: _____"
-      if (trimmed.includes(':') && trimmed.includes('_____')) {
-        const parts = trimmed.split(':');
-        if (parts.length >= 2) {
-          const label = parts[0].trim();
-          const isOptional = trimmed.includes('(or N/A)') || trimmed.includes('(or NA)');
-          
-          // Create field ID from label
-          const id = label.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-          
-          console.log("🔧 DEBUG: Found field -", label, "ID:", id, "Optional:", isOptional);
-          
-          fields.push({
-            id,
-            label,
-            placeholder: isOptional ? `Enter ${label.toLowerCase()} or N/A` : `Enter ${label.toLowerCase()}`,
-            required: !isOptional
-          });
-        }
+      // Look for lines like "School District: _____ (or N/A)" or "Subject Area: English"
+      if (trimmed.includes(':') && (trimmed.includes('_____') || trimmed.match(/^[^:]+:\s*[^_\s]/))) {
+        const colonIndex = trimmed.indexOf(':');
+        const label = trimmed.substring(0, colonIndex).trim();
+        const value = trimmed.substring(colonIndex + 1).trim();
+        
+        const isOptional = trimmed.includes('(or N/A)') || trimmed.includes('(or NA)');
+        const hasPrefill = !value.includes('_____') && value.length > 0;
+        
+        // Create field ID from label
+        const id = label.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+        
+        console.log("🔧 DEBUG: Found field -", label, "ID:", id, "Value:", value, "Has prefill:", hasPrefill, "Optional:", isOptional);
+        
+        fields.push({
+          id,
+          label,
+          placeholder: isOptional ? `Enter ${label.toLowerCase()} or N/A` : `Enter ${label.toLowerCase()}`,
+          required: !isOptional,
+          prefillValue: hasPrefill ? value.replace(/\([^)]*\)/g, '').trim() : '', // Remove parenthetical notes
+        });
       }
     }
     
@@ -84,7 +87,16 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
   };
 
   const fields = parseCardFields(cardContent);
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<Record<string, string>>(() => {
+    // Initialize form data with prefilled values
+    const initial: Record<string, string> = {};
+    fields.forEach(field => {
+      if (field.prefillValue) {
+        initial[field.id] = field.prefillValue;
+      }
+    });
+    return initial;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (fieldId: string, value: string) => {
@@ -137,7 +149,7 @@ export function IntakeCard({ cardContent, onSubmit }: IntakeCardProps) {
                 <Input
                   id={field.id}
                   placeholder={field.placeholder}
-                  value={formData[field.id] || ''}
+                  value={formData[field.id] || field.prefillValue || ''}
                   onChange={(e) => handleInputChange(field.id, e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
                   className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
