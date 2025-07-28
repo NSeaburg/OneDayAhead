@@ -494,11 +494,16 @@ function IntakeChat({
 
   // Message injection function for external components (like PersonalityTestingBot)
   const injectMessage = useCallback((messageContent: string) => {
+    console.log("🟢 injectMessage called with:", messageContent);
+    console.log("🟢 messageContent type:", typeof messageContent);
+    console.log("🟢 messageContent length:", messageContent?.length);
+    
     if (!messageContent || !messageContent.trim()) {
-      console.error("Cannot inject empty message");
+      console.error("🟢 Cannot inject empty message");
       return;
     }
 
+    console.log("🟢 Creating injected message object");
     const injectedMessage: Message = {
       id: Date.now().toString(),
       content: messageContent,
@@ -506,8 +511,11 @@ function IntakeChat({
       timestamp: new Date(),
     };
 
+    console.log("🟢 Adding injected message to messages array");
     setMessages((prev) => [...prev, injectedMessage]);
     setIsLoading(true);
+
+    console.log("🟢 Starting to process injected message through Claude API");
 
     // Process the injected message through the bot
     const processInjectedMessage = async () => {
@@ -2382,12 +2390,26 @@ export default function NewIntake() {
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
                 onClose={() => {
+                  console.log("🟡 PersonalityTestingBot onClose callback triggered");
+                  console.log("🟡 personalityTesterExpanded before:", personalityTesterExpanded);
+                  console.log("🟡 currentStageId:", currentStageId);
+                  console.log("🟡 messageInjectionFunction exists:", !!messageInjectionFunction);
+                  
                   setPersonalityTesterExpanded(false);
+                  console.log("🟡 personalityTesterExpanded set to false");
+                  
                   // Inject the return from testing trigger message
                   if (messageInjectionFunction && currentStageId === 3) {
+                    console.log("🟡 About to inject [USER_RETURNED_FROM_TESTING] message");
                     setTimeout(() => {
+                      console.log("🟡 Executing messageInjectionFunction with trigger");
                       messageInjectionFunction("[USER_RETURNED_FROM_TESTING]");
+                      console.log("🟡 messageInjectionFunction completed");
                     }, 100); // Small delay to ensure modal is closed first
+                  } else {
+                    console.log("🟡 NOT injecting message - requirements not met");
+                    console.log("🟡 messageInjectionFunction:", !!messageInjectionFunction);
+                    console.log("🟡 currentStageId === 3:", currentStageId === 3);
                   }
                 }}
                 botName={botName}

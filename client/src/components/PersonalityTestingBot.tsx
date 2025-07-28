@@ -181,7 +181,13 @@ Feel free to ask me questions or have a conversation to see how I interact with 
       <div className="flex-shrink-0 p-6 bg-blue-50 border-b border-blue-100">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-gray-900">Personality Test Chat</h3>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={() => {
+            console.log("🔴 PersonalityTestingBot X button clicked");
+            console.log("🔴 onClose function type:", typeof onClose);
+            console.log("🔴 About to call onClose function");
+            onClose();
+            console.log("🔴 onClose function called successfully");
+          }}>
             <X className="w-4 h-4" />
           </Button>
         </div>
