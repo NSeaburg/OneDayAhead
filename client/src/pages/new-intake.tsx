@@ -356,14 +356,10 @@ function IntakeChat({
       // Check for avatar generation triggers in Stage 3
       if (currentStageId === 3 && botType === "intake-assessment-bot") {
         // Check if bot wants to generate an avatar
-        if (botResponse.includes("Want me to create an avatar") || 
-            botResponse.includes("Should we see what") || 
-            botResponse.includes("I can generate a visual") ||
-            botResponse.includes("Let me create that avatar") ||
-            botResponse.includes("I'll generate an avatar") ||
-            botResponse.includes("avatar image based on") ||
-            botResponse.includes("looks like as a cartoon") ||
-            botResponse.includes("visual version of your bot")) {
+        if (botResponse.includes("Perfect! I'll design") || 
+            botResponse.includes("The avatar will capture") || 
+            botResponse.includes("avatar will look like") ||
+            (botResponse.includes("avatar") && (botResponse.includes("design") || botResponse.includes("visual")))) {
           
           // Extract the description for avatar generation
           const descriptionMatch = botResponse.match(/based on (?:that description|your description)[:.]?\s*(.*)$/i);
@@ -618,15 +614,11 @@ function IntakeChat({
           console.log("🎨 Avatar detection - Checking bot response for triggers...");
           console.log("🎨 Avatar detection - Bot response preview:", botResponse.substring(0, 200));
           
-          // Check if bot wants to generate an avatar
-          if (botResponse.includes("Want me to create an avatar") || 
-              botResponse.includes("Should we see what") || 
-              botResponse.includes("I can generate a visual") ||
-              botResponse.includes("Let me create that avatar") ||
-              botResponse.includes("I'll generate an avatar") ||
-              botResponse.includes("avatar image based on") ||
-              botResponse.includes("looks like as a cartoon") ||
-              botResponse.includes("visual version of your bot")) {
+          // Check if bot has provided an avatar description
+          if (botResponse.includes("Perfect! I'll design") || 
+              botResponse.includes("The avatar will capture") || 
+              botResponse.includes("avatar will look like") ||
+              (botResponse.includes("avatar") && (botResponse.includes("design") || botResponse.includes("visual")))) {
             
             console.log("🎨 Avatar detection - TRIGGER DETECTED! Generating single avatar directly...");
             
