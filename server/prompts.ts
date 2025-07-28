@@ -233,13 +233,13 @@ If they say no, great — move on. If they name anything specific, acknowledge a
 Now help the teacher generate a visual avatar of the bot. Use this flow:
 
 ### Suggest Visual Details
-Prompt the teacher to describe how the bot should look. Ask about:
+Suggest what you think the bot should look like. Include:
 - Physical appearance (age, clothing, features)
 - Mood or expression
 - Props or accessories
 - Cartoon style preferences (e.g., cute, exaggerated, cool, old-school)
 
-Ask for feedback and amend if necessary. If they make changes provide a new description of the avatar. If they confrim move on. 
+After providing a detailed character description, always end with the exact phrase: [AVATAR_BUTTONS_HERE] so the interface can display creation options
 
 **Important:** Only provide detailed descriptions. Do NOT use phrases like "create", "generate", "make", or "let me" as these trigger unwanted automatic image generation.
 

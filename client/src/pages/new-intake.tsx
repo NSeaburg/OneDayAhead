@@ -353,35 +353,7 @@ function IntakeChat({
       // Run background analysis
       await analyzeConversation(botResponse);
 
-      // Check for avatar generation triggers in Stage 3
-      if (currentStageId === 3 && botType === "intake-assessment-bot") {
-        // Check if bot has provided a complete avatar description (not just asking for input)
-        if ((botResponse.includes("Perfect! I'll design") && botResponse.includes("The avatar will capture")) || 
-            (botResponse.includes("avatar will look like") && botResponse.length > 200) ||
-            (botResponse.includes("I'll design") && botResponse.includes("as:") && botResponse.includes("-"))) {
-          
-          // Extract the description for avatar generation
-          const descriptionMatch = botResponse.match(/based on (?:that description|your description)[:.]?\s*(.*)$/i);
-          let extractedPrompt = "";
-          
-          if (descriptionMatch) {
-            extractedPrompt = descriptionMatch[1].trim();
-          } else {
-            // Try to extract from the conversation context
-            const allMessages = messages.map(m => m.content).join("\n");
-            const visualMatch = allMessages.match(/(?:should look|appears as|visual(?:ly)?|looks like)[:.]?\s*([^.!?]+[.!?])/i);
-            if (visualMatch) {
-              extractedPrompt = visualMatch[1].trim();
-            }
-          }
-          
-          if (extractedPrompt || botResponse.includes("avatar")) {
-            setAvatarPrompt(extractedPrompt || "A friendly cartoon-style educational bot character");
-            setShowAvatarSelection(true);
-            setPendingAvatarMessageId(finalMessageId);
-          }
-        }
-      }
+      // Avatar generation will be handled by button-based approach
 
       // Check for stage progression
       onStageProgression(botResponse);
@@ -608,117 +580,7 @@ function IntakeChat({
         // Trigger background analysis after bot response is complete
         analyzeConversation(botResponse);
 
-        // Check for avatar generation triggers in Stage 3
-        if (currentStageId === 3 && botType === "intake-assessment-bot") {
-          console.log("🎨 Avatar detection - Checking bot response for triggers...");
-          console.log("🎨 Avatar detection - Bot response preview:", botResponse.substring(0, 200));
-          
-          // Check if bot has provided a complete avatar description (not just asking for input)
-          if ((botResponse.includes("Perfect! I'll design") && botResponse.includes("The avatar will capture")) || 
-              (botResponse.includes("avatar will look like") && botResponse.length > 200) ||
-              (botResponse.includes("I'll design") && botResponse.includes("as:") && botResponse.includes("-"))) {
-            
-            console.log("🎨 Avatar detection - TRIGGER DETECTED! Generating single avatar directly...");
-            
-            // Generate single avatar directly in chat
-            try {
-              let avatarPrompt = "";
-              
-              // Always extract fresh visual description from the current bot response
-              console.log("🎨 Extracting visual description from current bot response...");
-              
-              // Use only the current bot response for extraction, not all messages
-              const extractResponse = await fetch("/api/intake/extract-bot-info", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ botResponse: botResponse }),
-              });
-
-              if (extractResponse.ok) {
-                const extractionData = await extractResponse.json();
-                avatarPrompt = extractionData.visualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
-                console.log("🎨 AI extracted visual description from current response:", avatarPrompt);
-                setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
-              } else {
-                avatarPrompt = `${botName || "educational assessment bot"}, friendly cartoon character`;
-                console.log("🎨 Using fallback avatar prompt:", avatarPrompt);
-              }
-
-              // Show loading state in chat while generating
-              const loadingMessageId = `avatar-loading-${Date.now()}`;
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: loadingMessageId,
-                  content: "🎨 *Generating your bot's avatar... this may take a moment...*",
-                  isBot: true,
-                  timestamp: new Date(),
-                }
-              ]);
-
-              // Generate single image
-              const imageResponse = await fetch("/api/intake/generate-image", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ 
-                  prompt: avatarPrompt,
-                  style: "cartoon illustration"
-                })
-              });
-
-              // Remove loading message and add result
-              setMessages((prev) => prev.filter(msg => msg.id !== loadingMessageId));
-
-              if (imageResponse.ok) {
-                const imageData = await imageResponse.json();
-                console.log("🎨 Generated avatar image:", imageData.imageUrl);
-                
-                // Add the generated image as a new message instead of modifying existing
-                const avatarMessageId = `avatar-${Date.now()}`;
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: avatarMessageId,
-                    content: `![Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`,
-                    isBot: true,
-                    timestamp: new Date(),
-                  }
-                ]);
-                
-                onComponentComplete && onComponentComplete("avatar");
-              } else {
-                console.warn("⚠️ Avatar generation failed");
-                // Add error message
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `avatar-error-${Date.now()}`,
-                    content: "I had trouble generating the avatar. Let's continue with the bot design for now.",
-                    isBot: true,
-                    timestamp: new Date(),
-                  }
-                ]);
-              }
-            } catch (error) {
-              console.error("❌ Error during avatar generation:", error);
-              // Add error message without referencing loadingMessageId
-              // (loadingMessageId was already cleaned up in the filter above)
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: `avatar-error-${Date.now()}`,
-                  content: "I had trouble generating the avatar. Let's continue with the bot design for now.",
-                  isBot: true,
-                  timestamp: new Date(),
-                }
-              ]);
-            }
-          } else {
-            console.log("🎨 Avatar detection - No trigger phrases found in response");
-          }
-        }
+        // Avatar generation will be handled by button-based approach
 
         // Check for stage progression
         onStageProgression(botResponse);
