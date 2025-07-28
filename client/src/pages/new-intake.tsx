@@ -996,6 +996,8 @@ export default function NewIntake() {
   const [personalitySummary, setPersonalitySummary] = useState<string | null>(null);
   const [fullBotPersonality, setFullBotPersonality] = useState<string | null>(null);
   const [botName, setBotName] = useState<string | null>(null);
+  const [botJobTitle, setBotJobTitle] = useState<string | null>(null);
+  const [botWelcomeMessage, setBotWelcomeMessage] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
   const [criteria, setCriteria] = useState<CriteriaState>({
@@ -1363,6 +1365,11 @@ export default function NewIntake() {
               setBotName(extractionData.name);
             }
 
+            if (extractionData.jobTitle) {
+              console.log("💼 AI extracted job title:", extractionData.jobTitle);
+              setBotJobTitle(extractionData.jobTitle);
+            }
+
             if (extractionData.description) {
               console.log("📝 AI extracted description:", extractionData.description);
               setPersonalitySummary(extractionData.description);
@@ -1372,6 +1379,11 @@ export default function NewIntake() {
                 ? `Your ${extractionData.name} assessment bot is ready to engage with students about ${criteria.topic.finalValue || "the subject"}.`
                 : "Your custom assessment bot personality is ready to test!";
               setPersonalitySummary(fallbackDesc);
+            }
+
+            if (extractionData.welcomeMessage) {
+              console.log("👋 AI extracted welcome message:", extractionData.welcomeMessage);
+              setBotWelcomeMessage(extractionData.welcomeMessage);
             }
           } else {
             console.warn("⚠️ AI extraction failed, using fallback");
@@ -1780,6 +1792,11 @@ export default function NewIntake() {
                                 <div className="text-sm font-medium text-gray-900">
                                   {botName || "Assessment Bot"}
                                 </div>
+                                {botJobTitle && (
+                                  <div className="text-xs font-medium text-blue-600 mb-1">
+                                    {botJobTitle}
+                                  </div>
+                                )}
                                 <div className="text-xs text-gray-500 leading-relaxed">
                                   {personalitySummary || "Your newly designed assessment bot"}
                                 </div>
@@ -1836,6 +1853,8 @@ export default function NewIntake() {
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
                 onClose={() => setPersonalityTesterExpanded(false)}
                 botName={botName}
+                botJobTitle={botJobTitle}
+                botWelcomeMessage={botWelcomeMessage}
               />
             </div>
           </div>

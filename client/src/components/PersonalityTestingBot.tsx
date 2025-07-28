@@ -18,6 +18,8 @@ interface PersonalityTestingBotProps {
   botPersonality: string;
   onClose: () => void;
   botName?: string | null;
+  botJobTitle?: string | null;
+  botWelcomeMessage?: string | null;
 }
 
 export function PersonalityTestingBot({ 
@@ -25,7 +27,9 @@ export function PersonalityTestingBot({
   personalitySummary, 
   botPersonality,
   onClose,
-  botName 
+  botName,
+  botJobTitle,
+  botWelcomeMessage
 }: PersonalityTestingBotProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -34,16 +38,19 @@ export function PersonalityTestingBot({
 
   // Initialize with welcome message
   useEffect(() => {
+    const welcomeContent = botWelcomeMessage || 
+      `Hello! I'm ${botName || 'your newly designed assessment bot'}. I'm here to help you test out my personality and teaching style. 
+
+Feel free to ask me questions or have a conversation to see how I interact with students. What would you like to talk about?`;
+
     const welcomeMessage: Message = {
       id: "welcome",
-      content: `Hello! I'm ${botName || 'your newly designed assessment bot'}. I'm here to help you test out my personality and teaching style. 
-
-Feel free to ask me questions or have a conversation to see how I interact with students. What would you like to talk about?`,
+      content: welcomeContent,
       isBot: true,
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
-  }, [botName]);
+  }, [botName, botWelcomeMessage]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -193,6 +200,9 @@ Feel free to ask me questions or have a conversation to see how I interact with 
           <div className="flex-1">
             {botName && (
               <h4 className="font-semibold text-lg text-gray-900 mb-1">{botName}</h4>
+            )}
+            {botJobTitle && (
+              <p className="text-sm font-medium text-blue-600 mb-1">{botJobTitle}</p>
             )}
             <p className="text-sm text-gray-700 leading-relaxed">
               {personalitySummary || "Testing your newly designed assessment bot personality"}

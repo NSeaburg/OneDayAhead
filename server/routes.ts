@@ -3963,11 +3963,13 @@ ${JSON.stringify(conversationHistory)}`;
 
       console.log("🤖 Extracting bot info from response using Claude...");
 
-      const extractionPrompt = `Please analyze this AI assistant's response and extract the bot's name and a brief description.
+      const extractionPrompt = `Please analyze this AI assistant's response and extract comprehensive information about the bot being created.
 
 The assistant is introducing a character/bot personality. Extract:
 1. The bot's name (if mentioned)
-2. A concise 1-2 sentence description of the bot's personality/role
+2. Invent an appropriate job title for this character
+3. A concise 2-3 sentence description of who this person is
+4. Compose a welcome message this bot would say to greet students (1-2 sentences, in character)
 
 Response to analyze:
 "${botResponse}"
@@ -3975,7 +3977,9 @@ Response to analyze:
 Respond in JSON format:
 {
   "name": "extracted name or null",
-  "description": "brief personality description or null"
+  "jobTitle": "appropriate job title for this character",
+  "description": "2-3 sentence description of who this person is",
+  "welcomeMessage": "1-2 sentence greeting message in character"
 }`;
 
       const message = await anthropic.messages.create({
@@ -4012,7 +4016,9 @@ Respond in JSON format:
       res.json({
         success: true,
         name: extractedInfo.name || null,
+        jobTitle: extractedInfo.jobTitle || null,
         description: extractedInfo.description || null,
+        welcomeMessage: extractedInfo.welcomeMessage || null,
         source: "Claude AI extraction"
       });
 
