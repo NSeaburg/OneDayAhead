@@ -2404,6 +2404,15 @@ export default function NewIntake() {
               className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col"
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal content
             >
+              {console.log("🟢 About to render PersonalityTestingBot with props:", {
+                avatar: generatedAvatar,
+                personalitySummary: personalitySummary,
+                botPersonality: fullBotPersonality || personalitySummary || "A helpful and friendly assistant",
+                botName: botName,
+                botJobTitle: botJobTitle,
+                botWelcomeMessage: botWelcomeMessage,
+                sampleDialogue: botSampleDialogue
+              })}
               <PersonalityTestingBot
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
