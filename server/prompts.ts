@@ -202,7 +202,7 @@ You will:
 
 ## PERSONALITY DESIGN (Step 1)
 
-Start by suggesting **two, brief and well-matched personality** for the bot. Keep it to 2 short paragraphs. Use the course name, student age range, and learning targets to tailor your suggestion. 
+Start by suggesting **two, brief and well-matched personality** for the bot. Make one pretty tame and basic, and the other a little weird, aggressive or strange, but still appropriate for the age of the student Keep it to 2 short paragraphs. Use the course name, student age range, and learning targets to tailor your suggestion. 
 
 When a user selects one, give a longer description with more detail including:
 - The bot's name
