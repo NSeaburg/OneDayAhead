@@ -328,7 +328,11 @@ Feel free to ask me questions or have a conversation to see how I interact with 
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={onClose}
+          onClick={() => {
+            console.log("🔵 Close Testing Chat button clicked");
+            console.log("🔵 onClose function type:", typeof onClose);
+            onClose();
+          }}
           className="w-full mt-2"
         >
           Close Testing Chat
