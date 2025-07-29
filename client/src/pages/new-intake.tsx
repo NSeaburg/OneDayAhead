@@ -622,6 +622,23 @@ function IntakeChat({
     }
   }, [onInjectMessage]);
 
+  // Listen for custom inject-message events (for PersonalityTestingBot return trigger)
+  useEffect(() => {
+    const handleInjectMessage = (event: any) => {
+      console.log("🟢 Custom event received:", event.detail);
+      if (event.detail && event.detail.message && event.detail.stageId === currentStageId) {
+        console.log("🟢 Processing custom event message:", event.detail.message);
+        injectMessage(event.detail.message);
+      }
+    };
+
+    window.addEventListener('inject-message', handleInjectMessage);
+    
+    return () => {
+      window.removeEventListener('inject-message', handleInjectMessage);
+    };
+  }, [injectMessage, currentStageId]);
+
   // Helper function to detect if a message contains an INTAKE_CARD
   const detectIntakeCard = (content: string): { hasCard: boolean; cardContent: string; beforeCard: string; afterCard: string } => {
     console.log('🎯 CARD DETECTION - Checking content for INTAKE_CARD:', content.includes('INTAKE_CARD'));
@@ -2424,25 +2441,24 @@ export default function NewIntake() {
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
                 onClose={() => {
                   console.log("🟡 PersonalityTestingBot onClose callback triggered");
-                  console.log("🟡 personalityTesterExpanded before:", personalityTesterExpanded);
-                  console.log("🟡 currentStageId:", currentStageId);
-                  console.log("🟡 messageInjectionFunction exists:", !!messageInjectionFunction);
-                  
                   setPersonalityTesterExpanded(false);
-                  console.log("🟡 personalityTesterExpanded set to false");
                   
-                  // Inject the return from testing trigger message
-                  if (messageInjectionFunction && currentStageId === 3) {
-                    console.log("🟡 About to inject [USER_RETURNED_FROM_TESTING] message");
+                  // Direct trigger: find the current Stage 3 chat and manually add the trigger message
+                  if (currentStageId === 3) {
+                    console.log("🟡 Directly triggering return-from-testing message for Stage 3");
+                    
                     setTimeout(() => {
-                      console.log("🟡 Executing messageInjectionFunction with trigger");
-                      messageInjectionFunction("[USER_RETURNED_FROM_TESTING]");
-                      console.log("🟡 messageInjectionFunction completed");
-                    }, 100); // Small delay to ensure modal is closed first
-                  } else {
-                    console.log("🟡 NOT injecting message - requirements not met");
-                    console.log("🟡 messageInjectionFunction:", !!messageInjectionFunction);
-                    console.log("🟡 currentStageId === 3:", currentStageId === 3);
+                      // Find the IntakeChat component and trigger message directly
+                      const triggerMessage = "[USER_RETURNED_FROM_TESTING]";
+                      console.log("🟡 Adding trigger message directly to chat");
+                      
+                      // Create a custom event to communicate with the active chat
+                      const event = new CustomEvent('inject-message', { 
+                        detail: { message: triggerMessage, stageId: 3 }
+                      });
+                      window.dispatchEvent(event);
+                      console.log("🟡 Dispatched inject-message event");
+                    }, 100);
                   }
                 }}
                 botName={botName}
