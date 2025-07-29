@@ -33,7 +33,16 @@ export function PersonalityTestingBot({
   botWelcomeMessage,
   sampleDialogue
 }: PersonalityTestingBotProps) {
-  console.log("🔴 PersonalityTestingBot component rendered");
+  console.log("🔴 PersonalityTestingBot component rendered with props:", {
+    avatar: !!avatar,
+    personalitySummary: !!personalitySummary,
+    botPersonality: !!botPersonality,
+    onClose: typeof onClose,
+    botName: !!botName,
+    botJobTitle: !!botJobTitle,
+    botWelcomeMessage: !!botWelcomeMessage,
+    sampleDialogue: !!sampleDialogue
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);

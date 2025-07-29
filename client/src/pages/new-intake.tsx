@@ -2414,8 +2414,10 @@ export default function NewIntake() {
                   botWelcomeMessage: botWelcomeMessage,
                   sampleDialogue: botSampleDialogue
                 });
+                console.log("🟢 personalityTesterExpanded:", personalityTesterExpanded);
                 return null;
               })()}
+              <div className="p-4 bg-red-500 text-white">TEST DIV - If you see this, the modal is rendering</div>
               <PersonalityTestingBot
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
