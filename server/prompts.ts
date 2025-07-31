@@ -234,11 +234,7 @@ Examples:
 - Sensitive topics
 - Phrases or tones that wouldn’t work for your classroom
 
-Then provide these two options as buttons:
-
 [BOUNDARIES_BUTTONS]
-Button 1: "No additional boundaries (Most common)"
-Button 2: "Add specific boundaries"
 
 If they choose "No additional boundaries," acknowledge this and move to avatar creation.
 

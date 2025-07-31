@@ -148,6 +148,15 @@ User Message → Express Backend → Anthropic API → Streaming Response → Fr
 
 ## Changelog
 
+- July 31, 2025. FIXED: Boundaries button rendering issue and implemented consistent button confirmation workflow
+  - **CRITICAL FIX**: Resolved boundaries buttons showing as literal text instead of rendered buttons
+  - Root cause: `boundariesButtonMessageId` state was never being set despite successful detection
+  - Added state setting logic to message detection section to match working persona confirmation pattern
+  - Boundaries buttons now use clean "Looks good" / "Add specific boundaries" styling matching assessment targets
+  - Implemented proper button disappearing behavior - buttons replace with confirmation messages after clicking
+  - Cleaned up prompt to remove redundant button text that was appearing as literal content
+  - Enhanced debugging system to track button detection, state management, and rendering conditions
+  - **CONSISTENCY ACHIEVED**: All button confirmation workflows now follow the same pattern across stages
 - July 28, 2025. FIXED: Stage 3 persona confirmation workflow and image generation issues
   - **CRITICAL FIX**: Persona confirmation button now properly sends user message to continue conversation flow
   - **IMAGE GENERATION FIX**: Enhanced DALL-E prompts with "IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures."
