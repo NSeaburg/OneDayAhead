@@ -1644,6 +1644,13 @@ function IntakeChat({
                     const hasIntakeConfirmationButtons = message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]');
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
                     const hasBoundariesButtons = message.content.includes('[BOUNDARIES_BUTTONS]');
+                    
+                    // Debug boundaries button state
+                    if (hasBoundariesButtons) {
+                      console.log("🚧 BOUNDARIES DEBUG - Found BOUNDARIES_BUTTONS in message:", message.id);
+                      console.log("🚧 BOUNDARIES DEBUG - Current boundariesButtonMessageId:", boundariesButtonMessageId);
+                      console.log("🚧 BOUNDARIES DEBUG - State match:", boundariesButtonMessageId === message.id);
+                    }
                     const hasBoundariesConfirmationButtons = message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]');
                     const hasAssessmentTargetsConfirmationButtons = message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]');
                     if (hasAssessmentTargetsConfirmationButtons) {
