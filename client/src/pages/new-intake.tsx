@@ -1614,6 +1614,10 @@ function IntakeChat({
                     const hasIntakeConfirmationButtons = message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]');
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
                     const hasBoundariesButtons = message.content.includes('[BOUNDARIES_BUTTONS]');
+                    if (hasBoundariesButtons) {
+                      console.log("🚧 BOUNDARIES DEBUG - Found BOUNDARIES_BUTTONS in message:", message.id);
+                      console.log("🚧 BOUNDARIES DEBUG - Current boundariesButtonMessageId:", boundariesButtonMessageId);
+                    }
                     const hasBoundariesConfirmationButtons = message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]');
                     const hasAssessmentTargetsConfirmationButtons = message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]');
                     
@@ -1829,6 +1833,9 @@ function IntakeChat({
                         </div>
                       );
                     } else if (hasBoundariesButtons && boundariesButtonMessageId === message.id) {
+                      console.log("🚧 BOUNDARIES DEBUG - Rendering boundaries buttons for message:", message.id);
+                      console.log("🚧 BOUNDARIES DEBUG - boundariesButtonMessageId:", boundariesButtonMessageId);
+                      console.log("🚧 BOUNDARIES DEBUG - hasBoundariesButtons:", hasBoundariesButtons);
                       // Split content around the boundaries marker
                       const [beforeButtons, afterButtons] = message.content.split('[BOUNDARIES_BUTTONS]');
                       
