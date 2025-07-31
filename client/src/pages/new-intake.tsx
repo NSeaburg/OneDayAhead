@@ -1027,18 +1027,23 @@ function IntakeChat({
           (botResponse.includes("Ok! Here's what I've got so far:") || 
            botResponse.includes("Ok, here's what I've got so far:"))) {
         console.log("🎯 Summary detected in bot response - adding confirmation buttons");
+        console.log("🎯 Current finalMessageId:", finalMessageId);
+        console.log("🎯 Bot response length:", botResponse.length);
         
         // Add confirmation buttons to the bot response
-        const summaryMessageId = `summary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const updatedResponse = botResponse + "\n\n[INTAKE_CONFIRMATION_BUTTONS]";
+        console.log("🎯 Updated response includes marker:", updatedResponse.includes('[INTAKE_CONFIRMATION_BUTTONS]'));
         
-        setMessages(prev => prev.map(msg => 
-          msg.id === finalMessageId 
-            ? { ...msg, id: summaryMessageId, content: updatedResponse }
-            : msg
-        ));
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === finalMessageId) {
+            console.log("🎯 Updating message with finalMessageId:", finalMessageId, "to include buttons");
+            return { ...msg, content: updatedResponse };
+          }
+          return msg;
+        }));
         
-        setIntakeConfirmationMessageId(summaryMessageId);
+        console.log("🎯 Setting intakeConfirmationMessageId to:", finalMessageId);
+        setIntakeConfirmationMessageId(finalMessageId);
       }
 
       // Check for avatar button marker in Stage 3
@@ -1518,6 +1523,11 @@ function IntakeChat({
                         </div>
                       );
                     } else if (hasIntakeConfirmationButtons && intakeConfirmationMessageId === message.id) {
+                      console.log("🎯 RENDERING: Intake confirmation buttons detected");
+                      console.log("🎯 RENDERING: Message ID:", message.id);
+                      console.log("🎯 RENDERING: Expected ID:", intakeConfirmationMessageId);
+                      console.log("🎯 RENDERING: Message content includes marker:", hasIntakeConfirmationButtons);
+                      
                       // Split content around the intake confirmation marker
                       const [beforeButtons, afterButtons] = message.content.split('[INTAKE_CONFIRMATION_BUTTONS]');
                       
