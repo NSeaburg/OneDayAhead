@@ -1436,8 +1436,14 @@ function IntakeChat({
         }
 
         // Check for boundaries button marker in Stage 3
+        console.log("🚧 BOUNDARIES STREAMING DEBUG - Checking conditions:", {
+          currentStageId,
+          botType,
+          hasMarker: botResponse.includes('[BOUNDARIES_BUTTONS]'),
+          botResponsePreview: botResponse.substring(botResponse.length - 200)
+        });
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_BUTTONS]')) {
-          console.log("🚧 Boundaries buttons detected in streaming response");
+          console.log("🚧 Boundaries buttons detected in streaming response - setting state to:", finalMessageId);
           setBoundariesButtonMessageId(finalMessageId);
         }
 
