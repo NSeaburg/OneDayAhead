@@ -190,9 +190,15 @@ function IntakeChat({
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          message: messageText,
+          messages: [
+            ...messages.map((msg) => ({
+              role: msg.isBot ? "assistant" : "user",
+              content: msg.content,
+            })),
+            { role: "user", content: messageText },
+          ],
           assistantType: currentStageId === 2 ? "intake-context" : "intake-assessment-bot",
-          stageContext: getStageContext(),
+          stageContext: stageContext,
           uploadedFiles: uploadedFiles || []
         }),
       });
@@ -269,6 +275,13 @@ function IntakeChat({
       onStageProgression(botResponse);
     } catch (error) {
       console.error('Error sending button message:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
     } finally {
       setIsLoading(false);
     }
