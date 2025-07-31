@@ -1392,10 +1392,21 @@ function IntakeChat({
         console.log("🔥 STREAMING COMPLETION - currentStageId:", currentStageId, "botType:", botType);
         console.log("🔥 STREAMING COMPLETION - botResponse preview:", botResponse.substring(botResponse.length - 300));
         
+        // Check for boundaries and inject marker BEFORE updating message ID
+        const isBoundariesQuestion = currentStageId === 3 && botType === "intake-assessment-bot" && 
+          (botResponse.includes('boundaries') || botResponse.includes('avoid talking about') || 
+           botResponse.includes('specific to your classroom') || botResponse.includes('school-appropriate standards'));
+        
+        if (isBoundariesQuestion && !botResponse.includes('[BOUNDARIES_BUTTONS]')) {
+          console.log("🚧 Boundaries question detected without marker - auto-injecting");
+          botResponse += '\n\n[BOUNDARIES_BUTTONS]';
+        }
+        
+        // NOW update the message ID and content together
         setMessages((prev) => 
           prev.map((msg) => 
             msg.id === streamingMessageId 
-              ? { ...msg, id: finalMessageId }
+              ? { ...msg, id: finalMessageId, content: botResponse }
               : msg
           )
         );
@@ -1439,37 +1450,68 @@ function IntakeChat({
           setAvatarButtonMessageId(finalMessageId);
         }
 
-        // Check for boundaries button marker in Stage 3 (or inject if missing)
-        const isBoundariesQuestion = currentStageId === 3 && botType === "intake-assessment-bot" && 
-          (botResponse.includes('boundaries') || botResponse.includes('avoid talking about') || 
-           botResponse.includes('specific to your classroom') || botResponse.includes('school-appropriate standards'));
-        
-        console.log("🚧 BOUNDARIES STREAMING DEBUG - Checking conditions:", {
-          currentStageId,
-          botType,
-          hasMarker: botResponse.includes('[BOUNDARIES_BUTTONS]'),
-          isBoundariesQuestion,
-          botResponsePreview: botResponse.substring(botResponse.length - 200)
-        });
-        
-        if (isBoundariesQuestion && !botResponse.includes('[BOUNDARIES_BUTTONS]')) {
-          console.log("🚧 Boundaries question detected without marker - auto-injecting");
-          botResponse += '\n\n[BOUNDARIES_BUTTONS]';
-          
-          // Update the message with the injected marker
-          setMessages((prev) => 
-            prev.map((msg) => 
-              msg.id === streamingMessageId 
-                ? { ...msg, content: botResponse }
-                : msg
-            )
-          );
-        }
-        
+        // Check for boundaries button marker in Stage 3 - REMOVED DUPLICATE LOGIC
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_BUTTONS]')) {
           console.log("🚧 Boundaries buttons detected in streaming response - setting state to:", finalMessageId);
           setBoundariesButtonMessageId(finalMessageId);
         }
+
+        // Check for boundaries confirmation button marker in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
+          console.log("🚧 Boundaries confirmation buttons detected in streaming response");
+          setBoundariesConfirmationMessageId(finalMessageId);
+        }
+
+        // Check for assessment targets confirmation button marker in Stage 2
+        if (currentStageId === 2 && botType === "intake-context" && botResponse.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')) {
+          console.log("🎯 Assessment targets confirmation buttons detected in streaming response");
+          setAssessmentTargetsConfirmationMessageId(finalMessageId);
+        }
+
+        // Check for stage progression
+        onStageProgression(botResponse);
+      }
+
+        // Trigger background analysis after bot response is complete
+
+
+        // Check for intake confirmation summary in Stage 1 (for revision flow)
+        if (currentStageId === 1 && botType === "intake-basics" && 
+            (botResponse.includes("Ok! Here's what I've got so far:") || 
+             botResponse.includes("Ok, here's what I've got so far:"))) {
+          console.log("🎯 REVISION FLOW: Summary detected in regular message - adding confirmation buttons");
+          console.log("🎯 REVISION FLOW: Current finalMessageId:", finalMessageId);
+          console.log("🎯 REVISION FLOW: Bot response length:", botResponse.length);
+          
+          // Add confirmation buttons to the bot response
+          const updatedResponse = botResponse + "\n\n[INTAKE_CONFIRMATION_BUTTONS]";
+          console.log("🎯 REVISION FLOW: Updated response includes marker:", updatedResponse.includes('[INTAKE_CONFIRMATION_BUTTONS]'));
+          
+          setMessages(prev => prev.map(msg => {
+            if (msg.id === finalMessageId) {
+              console.log("🎯 REVISION FLOW: Updating message with finalMessageId:", finalMessageId, "to include buttons");
+              return { ...msg, content: updatedResponse };
+            }
+            return msg;
+          }));
+          
+          console.log("🎯 REVISION FLOW: Setting intakeConfirmationMessageId to:", finalMessageId);
+          setIntakeConfirmationMessageId(finalMessageId);
+        }
+
+        // Check for persona confirmation button marker in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[PERSONA_CONFIRMATION_BUTTONS]')) {
+          console.log("✅ Persona confirmation buttons detected in streaming response");
+          setPersonaConfirmationMessageId(finalMessageId);
+        }
+
+        // Check for avatar button marker in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
+          console.log("🎨 Avatar buttons detected in streaming response");
+          setAvatarButtonMessageId(finalMessageId);
+        }
+
+
 
         // Check for boundaries confirmation button marker in Stage 3
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
