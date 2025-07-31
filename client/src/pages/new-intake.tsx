@@ -461,35 +461,40 @@ function IntakeChat({
         : msg
     ));
 
-    // Extract and store bot information for later use
-    try {
-      const extractResponse = await fetch("/api/intake/extract-bot-info", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ botResponse: buttonMessage.content }),
-      });
-
-      if (extractResponse.ok) {
-        const extractionData = await extractResponse.json();
-        console.log("✅ CONFIRMED PERSONA DATA:", extractionData);
-        
-        // Store visual description for avatar generation
-        if (extractionData.visualDescription) {
-          setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
-          console.log("🎨 Set confirmed visual description:", extractionData.visualDescription);
-        }
-        
-        // Store the confirmed persona data in parent component state
-        if (onComponentComplete) {
-          onComponentComplete(extractionData);
-        }
-      }
-    } catch (error) {
-      console.error("Error extracting confirmed persona:", error);
-    }
-
     setPersonaConfirmationMessageId(null);
+
+    // Extract and store bot information for later use (in background, non-blocking)
+    const extractBotInfoAsync = async () => {
+      try {
+        const extractResponse = await fetch("/api/intake/extract-bot-info", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ botResponse: buttonMessage.content }),
+        });
+
+        if (extractResponse.ok) {
+          const extractionData = await extractResponse.json();
+          console.log("✅ CONFIRMED PERSONA DATA (background):", extractionData);
+          
+          // Store visual description for avatar generation
+          if (extractionData.visualDescription) {
+            setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
+            console.log("🎨 Set confirmed visual description (background):", extractionData.visualDescription);
+          }
+          
+          // Store the confirmed persona data in parent component state
+          if (onComponentComplete) {
+            onComponentComplete(extractionData);
+          }
+        }
+      } catch (error) {
+        console.error("Error extracting confirmed persona (background):", error);
+      }
+    };
+
+    // Start extraction in background (non-blocking)
+    extractBotInfoAsync();
 
     // Send a user message to continue the conversation
     const confirmationMessage: Message = {
@@ -1935,6 +1940,9 @@ function IntakeChat({
                                 
                                 // Clear the button state
                                 setBoundariesButtonMessageId(null);
+                                
+                                // Send continuation message to bot
+                                await sendButtonMessage("I want to add specific boundaries for my bot. Please ask me what I'd like to avoid.");
                               }}
                               className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
                             >
