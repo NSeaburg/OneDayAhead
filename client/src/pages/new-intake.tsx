@@ -1868,21 +1868,47 @@ function IntakeChat({
                           {/* Boundaries buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
-                              onClick={() => {
-                                console.log("🚧 No additional boundaries button clicked");
-                                sendButtonMessage("No additional boundaries (Most common)");
+                              onClick={async () => {
+                                console.log("🚧 Looks good button clicked for boundaries");
+                                
+                                // Replace buttons with confirmation message
+                                setMessages(prev => prev.map(msg => 
+                                  msg.id === boundariesButtonMessageId
+                                    ? { 
+                                        ...msg, 
+                                        content: msg.content.replace('[BOUNDARIES_BUTTONS]', "\n*Perfect! No additional boundaries needed. Now let's create your bot's visual avatar.*")
+                                      }
+                                    : msg
+                                ));
+                                
+                                // Clear the button state
+                                setBoundariesButtonMessageId(null);
+                                
+                                // Send continuation message to bot
+                                await sendButtonMessage("No additional boundaries needed. Let's create the avatar.");
                               }}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
                             >
-                              No additional boundaries (Most common)
+                              Looks good
                             </Button>
                             <Button 
-                              onClick={() => {
-                                console.log("🚧 Add specific boundaries button clicked");
-                                sendButtonMessage("Add specific boundaries");
+                              onClick={async () => {
+                                console.log("🚧 Add specific boundaries clicked");
+                                
+                                // Replace buttons with revision message
+                                setMessages(prev => prev.map(msg => 
+                                  msg.id === boundariesButtonMessageId
+                                    ? { 
+                                        ...msg, 
+                                        content: msg.content.replace('[BOUNDARIES_BUTTONS]', "\n*What specific boundaries would you like me to add for your bot? Please describe what topics or approaches it should avoid.*")
+                                      }
+                                    : msg
+                                ));
+                                
+                                // Clear the button state
+                                setBoundariesButtonMessageId(null);
                               }}
-                              variant="outline"
-                              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                              className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
                             >
                               Add specific boundaries
                             </Button>
