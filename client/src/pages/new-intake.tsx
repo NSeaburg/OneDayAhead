@@ -764,8 +764,14 @@ function IntakeChat({
 
     setMessages((prev) => [...prev, userMessage]);
 
-    // Create a summary message with confirmation buttons for Stage 1
-    if (currentStageId === 1) {
+    // Only create a summary for Stage 1 if the bot message contains the summary trigger phrase
+    // This prevents us from creating a summary on every card submission
+    const lastBotMessage = messages.filter(m => m.isBot).pop();
+    const shouldCreateSummary = currentStageId === 1 && 
+      (lastBotMessage?.content.includes("Ok, here's what I've got so far:") || 
+       lastBotMessage?.content.includes("Ok! Here's what I've got so far:"));
+
+    if (shouldCreateSummary) {
       const summaryMessageId = `summary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
       // Get all criteria from the program bar state for complete summary
