@@ -48,7 +48,10 @@ export function PersonalityTestingBot({
     botName: !!botName,
     botJobTitle: !!botJobTitle,
     botWelcomeMessage: !!botWelcomeMessage,
-    sampleDialogue: !!sampleDialogue
+    sampleDialogue: !!sampleDialogue,
+    boundaries: boundaries,
+    stageContext: stageContext,
+    uploadedFiles: uploadedFiles?.length || 0
   });
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

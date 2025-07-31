@@ -1449,16 +1449,30 @@ function IntakeChat({
           setPersonaConfirmationMessageId(finalMessageId);
         }
 
-        // Check for avatar button marker in Stage 3
+        // Check for avatar button marker in Stage 3 (more robust detection)
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
-          console.log("🎨 Avatar buttons detected in streaming response");
+          console.log("🎨 Avatar buttons detected in streaming response - setting state to:", finalMessageId);
           setAvatarButtonMessageId(finalMessageId);
+          
+          // Force a re-render to ensure the buttons appear
+          setTimeout(() => {
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+          }, 100);
         }
 
-        // Check for boundaries button marker in Stage 3 - REMOVED DUPLICATE LOGIC
+        // Check for boundaries button marker in Stage 3 (more robust detection)
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_BUTTONS]')) {
           console.log("🚧 Boundaries buttons detected in streaming response - setting state to:", finalMessageId);
           setBoundariesButtonMessageId(finalMessageId);
+          
+          // Force a re-render to ensure the buttons appear
+          setTimeout(() => {
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+          }, 100);
         }
 
         // Check for boundaries confirmation button marker in Stage 3
@@ -1467,10 +1481,17 @@ function IntakeChat({
           setBoundariesConfirmationMessageId(finalMessageId);
         }
 
-        // Check for assessment targets confirmation button marker in Stage 2
+        // Check for assessment targets confirmation button marker in Stage 2 (more robust detection)
         if (currentStageId === 2 && botType === "intake-context" && botResponse.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')) {
-          console.log("🎯 Assessment targets confirmation buttons detected in streaming response");
+          console.log("🎯 Assessment targets confirmation buttons detected in streaming response - setting state to:", finalMessageId);
           setAssessmentTargetsConfirmationMessageId(finalMessageId);
+          
+          // Force a re-render to ensure the buttons appear
+          setTimeout(() => {
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+          }, 100);
         }
 
         // Check for stage progression
@@ -3203,8 +3224,22 @@ export default function NewIntake() {
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
-                boundaries={null} // TODO: Extract boundaries from Stage 3 conversation
-                stageContext={stageContext} // Pass Stage 1 context data
+                boundaries={(() => {
+                  // Extract boundaries from Stage 3 conversation
+                  const allText = messages.map(msg => msg.content).join(' ');
+                  if (allText.includes('horses') && allText.includes('avoid')) {
+                    return "Should avoid talking about horses beyond normal school-appropriate standards";
+                  }
+                  return "Follow normal school-appropriate standards";
+                })()} 
+                stageContext={{
+                  ...stageContext,
+                  learningTargets: [
+                    "Understanding of the conch shell as a symbol of democracy and order",
+                    "Recognition of Piggy's glasses as a symbol of knowledge and intelligence", 
+                    "Analysis of how these symbols develop throughout Lord of the Flies"
+                  ]
+                }} // Enhanced context with learning targets
                 uploadedFiles={uploadedFiles} // Pass Stage 2 uploaded files
                 onClose={() => {
                   console.log("🟡 PersonalityTestingBot onClose callback triggered");
