@@ -1388,6 +1388,10 @@ function IntakeChat({
       // Replace streaming message with final message with permanent ID
       if (botResponse) {
         const finalMessageId = `final-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        console.log("🔥 STREAMING COMPLETION - botResponse contains BOUNDARIES_BUTTONS:", botResponse.includes('[BOUNDARIES_BUTTONS]'));
+        console.log("🔥 STREAMING COMPLETION - currentStageId:", currentStageId, "botType:", botType);
+        console.log("🔥 STREAMING COMPLETION - botResponse preview:", botResponse.substring(botResponse.length - 300));
+        
         setMessages((prev) => 
           prev.map((msg) => 
             msg.id === streamingMessageId 
