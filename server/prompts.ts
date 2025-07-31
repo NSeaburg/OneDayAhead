@@ -238,7 +238,7 @@ Examples:
 
 If they choose "No additional boundaries," acknowledge this and move to avatar creation.
 
-If they choose "Add specific boundaries," ask them to specify what the bot should avoid. After they provide specific boundaries, note what they said and offer confirmation:
+If they choose "Add additional boundaries," ask them to specify what the bot should avoid. After they provide specific boundaries, note what they said and offer confirmation:
 
 "Got it! So in addition to maintaining normal school-appropriate standards, the but should also avoid [repeat their boundaries]. Does that sound right?"
 

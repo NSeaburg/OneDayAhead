@@ -1454,12 +1454,18 @@ function IntakeChat({
           console.log("🎨 Avatar buttons detected in streaming response - setting state to:", finalMessageId);
           setAvatarButtonMessageId(finalMessageId);
           
-          // Force a re-render to ensure the buttons appear
+          // Multiple attempts to ensure buttons appear
           setTimeout(() => {
+            console.log("🎨 Force re-render for avatar buttons attempt 1");
             setMessages(prev => prev.map(msg => 
               msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
             ));
-          }, 100);
+          }, 50);
+          
+          setTimeout(() => {
+            console.log("🎨 Force re-render for avatar buttons attempt 2");
+            setAvatarButtonMessageId(finalMessageId); // Re-set state
+          }, 200);
         }
 
         // Check for boundaries button marker in Stage 3 (more robust detection)
@@ -1467,12 +1473,18 @@ function IntakeChat({
           console.log("🚧 Boundaries buttons detected in streaming response - setting state to:", finalMessageId);
           setBoundariesButtonMessageId(finalMessageId);
           
-          // Force a re-render to ensure the buttons appear
+          // Multiple attempts to ensure buttons appear
           setTimeout(() => {
+            console.log("🚧 Force re-render for boundaries buttons attempt 1");
             setMessages(prev => prev.map(msg => 
               msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
             ));
-          }, 100);
+          }, 50);
+          
+          setTimeout(() => {
+            console.log("🚧 Force re-render for boundaries buttons attempt 2");
+            setBoundariesButtonMessageId(finalMessageId); // Re-set state
+          }, 200);
         }
 
         // Check for boundaries confirmation button marker in Stage 3
@@ -1967,7 +1979,7 @@ function IntakeChat({
                               }}
                               className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
                             >
-                              Add specific boundaries
+                              Add additional boundaries
                             </Button>
                           </div>
                           
@@ -2029,18 +2041,48 @@ function IntakeChat({
                           {/* Boundaries confirmation buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
-                              onClick={() => {
+                              onClick={async () => {
                                 console.log("🚧 Yes, boundaries correct button clicked");
-                                sendButtonMessage("Yes, that's correct");
+                                
+                                // Replace buttons with confirmation message
+                                setMessages(prev => prev.map(msg => 
+                                  msg.id === boundariesConfirmationMessageId
+                                    ? { 
+                                        ...msg, 
+                                        content: msg.content.replace('[BOUNDARIES_CONFIRMATION_BUTTONS]', "\n*Perfect! Those boundaries are confirmed.*")
+                                      }
+                                    : msg
+                                ));
+                                
+                                // Clear the button state
+                                setBoundariesConfirmationMessageId(null);
+                                
+                                // Send continuation message to bot
+                                await sendButtonMessage("Yes, that's correct");
                               }}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               Yes, that's correct
                             </Button>
                             <Button 
-                              onClick={() => {
+                              onClick={async () => {
                                 console.log("🚧 Let me revise boundaries button clicked");
-                                sendButtonMessage("Let me revise that");
+                                
+                                // Replace buttons with revision message
+                                setMessages(prev => prev.map(msg => 
+                                  msg.id === boundariesConfirmationMessageId
+                                    ? { 
+                                        ...msg, 
+                                        content: msg.content.replace('[BOUNDARIES_CONFIRMATION_BUTTONS]', "\n*What changes would you like me to make to the boundaries?*")
+                                      }
+                                    : msg
+                                ));
+                                
+                                // Clear the button state
+                                setBoundariesConfirmationMessageId(null);
+                                
+                                // Send continuation message to bot
+                                await sendButtonMessage("Let me revise that");
                               }}
                               variant="outline"
                               className="border-orange-600 text-orange-600 hover:bg-orange-50"
@@ -3225,8 +3267,9 @@ export default function NewIntake() {
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
                 boundaries={(() => {
-                  // Extract boundaries from Stage 3 conversation
-                  const allText = messages.map(msg => msg.content).join(' ');
+                  // Extract boundaries from Stage 3 conversation using stageMessages
+                  const currentStageMessages = stageMessages[3] || [];
+                  const allText = currentStageMessages.map(msg => msg.content).join(' ');
                   if (allText.includes('horses') && allText.includes('avoid')) {
                     return "Should avoid talking about horses beyond normal school-appropriate standards";
                   }
