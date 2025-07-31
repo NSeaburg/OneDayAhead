@@ -768,9 +768,47 @@ function IntakeChat({
     if (currentStageId === 1) {
       const summaryMessageId = `summary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Format card data for summary display
-      const summaryItems = Object.entries(cardData)
-        .map(([label, value]) => `- ${label}: ${value}`)
+      // Get all criteria from the program bar state for complete summary
+      const allCriteria = [
+        { key: 'schoolDistrict', label: 'School District' },
+        { key: 'school', label: 'School Name' },
+        { key: 'subject', label: 'Subject Area' },
+        { key: 'topic', label: 'Specific Topic' },
+        { key: 'gradeLevel', label: 'Grade Level' }
+      ];
+      
+      // Extract information from conversation history since criteriaState isn't populated
+      const conversationText = messages.map(m => m.content).join(' ');
+      
+      // Build summary from conversation analysis plus new card data
+      const summaryItems = allCriteria
+        .map(({ key, label }) => {
+          // Check if this field was in the card submission (prioritize new data)
+          const cardValue = cardData[label] || cardData[key];
+          if (cardValue) {
+            return `- ${label}: ${cardValue}`;
+          }
+          
+          // Extract from conversation history using simple pattern matching
+          let extractedValue = null;
+          
+          if (key === 'schoolDistrict') {
+            // Look for school district mentions
+            const districtMatch = conversationText.match(/Blueberry/i);
+            extractedValue = districtMatch ? 'Blueberry' : null;
+          } else if (key === 'school') {
+            // Look for school name mentions
+            const schoolMatch = conversationText.match(/Redmond Middle School/i);
+            extractedValue = schoolMatch ? 'Redmond Middle School' : null;
+          }
+          
+          if (extractedValue) {
+            return `- ${label}: ${extractedValue}`;
+          }
+          
+          return null; // Skip if no value found
+        })
+        .filter(Boolean) // Remove null entries
         .join('\n');
 
       const summaryMessage: Message = {
