@@ -1439,13 +1439,33 @@ function IntakeChat({
           setAvatarButtonMessageId(finalMessageId);
         }
 
-        // Check for boundaries button marker in Stage 3
+        // Check for boundaries button marker in Stage 3 (or inject if missing)
+        const isBoundariesQuestion = currentStageId === 3 && botType === "intake-assessment-bot" && 
+          (botResponse.includes('boundaries') || botResponse.includes('avoid talking about') || 
+           botResponse.includes('specific to your classroom') || botResponse.includes('school-appropriate standards'));
+        
         console.log("🚧 BOUNDARIES STREAMING DEBUG - Checking conditions:", {
           currentStageId,
           botType,
           hasMarker: botResponse.includes('[BOUNDARIES_BUTTONS]'),
+          isBoundariesQuestion,
           botResponsePreview: botResponse.substring(botResponse.length - 200)
         });
+        
+        if (isBoundariesQuestion && !botResponse.includes('[BOUNDARIES_BUTTONS]')) {
+          console.log("🚧 Boundaries question detected without marker - auto-injecting");
+          botResponse += '\n\n[BOUNDARIES_BUTTONS]';
+          
+          // Update the message with the injected marker
+          setMessages((prev) => 
+            prev.map((msg) => 
+              msg.id === streamingMessageId 
+                ? { ...msg, content: botResponse }
+                : msg
+            )
+          );
+        }
+        
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_BUTTONS]')) {
           console.log("🚧 Boundaries buttons detected in streaming response - setting state to:", finalMessageId);
           setBoundariesButtonMessageId(finalMessageId);
