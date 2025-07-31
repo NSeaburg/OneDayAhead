@@ -164,6 +164,10 @@ function IntakeChat({
   
   // New state for Intake Card Confirmation
   const [intakeConfirmationMessageId, setIntakeConfirmationMessageId] = useState<string | null>(null);
+  
+  // New state for Boundaries Buttons
+  const [boundariesButtonMessageId, setBoundariesButtonMessageId] = useState<string | null>(null);
+  const [boundariesConfirmationMessageId, setBoundariesConfirmationMessageId] = useState<string | null>(null);
 
   // Handle avatar selection
   const handleAvatarSelect = (selectedImageUrl: string) => {
@@ -1313,6 +1317,18 @@ function IntakeChat({
           setAvatarButtonMessageId(finalMessageId);
         }
 
+        // Check for boundaries button marker in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_BUTTONS]')) {
+          console.log("🚧 Boundaries buttons detected in streaming response");
+          setBoundariesButtonMessageId(finalMessageId);
+        }
+
+        // Check for boundaries confirmation button marker in Stage 3
+        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
+          console.log("🚧 Boundaries confirmation buttons detected in streaming response");
+          setBoundariesConfirmationMessageId(finalMessageId);
+        }
+
         // Check for stage progression
         onStageProgression(botResponse);
       }
@@ -1473,6 +1489,8 @@ function IntakeChat({
                     const hasPersonaConfirmationButtons = message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]');
                     const hasIntakeConfirmationButtons = message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]');
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
+                    const hasBoundariesButtons = message.content.includes('[BOUNDARIES_BUTTONS]');
+                    const hasBoundariesConfirmationButtons = message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]');
                     
                     if (hasPersonaConfirmationButtons && personaConfirmationMessageId === message.id) {
                       // Split content around the persona confirmation marker
@@ -1685,8 +1703,164 @@ function IntakeChat({
                           )}
                         </div>
                       );
+                    } else if (hasBoundariesButtons && boundariesButtonMessageId === message.id) {
+                      // Split content around the boundaries marker
+                      const [beforeButtons, afterButtons] = message.content.split('[BOUNDARIES_BUTTONS]');
+                      
+                      return (
+                        <div className="prose prose-sm max-w-none">
+                          {/* Content before buttons */}
+                          {beforeButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {beforeButtons}
+                            </ReactMarkdown>
+                          )}
+                          
+                          {/* Boundaries buttons */}
+                          <div className="flex flex-col gap-3 my-4 max-w-md">
+                            <Button 
+                              onClick={() => {
+                                console.log("🚧 No additional boundaries button clicked");
+                                handleSubmit("No additional boundaries (Most common)", message.id);
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              No additional boundaries (Most common)
+                            </Button>
+                            <Button 
+                              onClick={() => {
+                                console.log("🚧 Add specific boundaries button clicked");
+                                handleSubmit("Add specific boundaries", message.id);
+                              }}
+                              variant="outline"
+                              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                            >
+                              Add specific boundaries
+                            </Button>
+                          </div>
+                          
+                          {/* Content after buttons */}
+                          {afterButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {afterButtons}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                      );
+                    } else if (hasBoundariesConfirmationButtons && boundariesConfirmationMessageId === message.id) {
+                      // Split content around the boundaries confirmation marker
+                      const [beforeButtons, afterButtons] = message.content.split('[BOUNDARIES_CONFIRMATION_BUTTONS]');
+                      
+                      return (
+                        <div className="prose prose-sm max-w-none">
+                          {/* Content before buttons */}
+                          {beforeButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {beforeButtons}
+                            </ReactMarkdown>
+                          )}
+                          
+                          {/* Boundaries confirmation buttons */}
+                          <div className="flex flex-col gap-3 my-4 max-w-md">
+                            <Button 
+                              onClick={() => {
+                                console.log("🚧 Yes, boundaries correct button clicked");
+                                handleSubmit("Yes, that's correct", message.id);
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Yes, that's correct
+                            </Button>
+                            <Button 
+                              onClick={() => {
+                                console.log("🚧 Let me revise boundaries button clicked");
+                                handleSubmit("Let me revise that", message.id);
+                              }}
+                              variant="outline"
+                              className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                            >
+                              Let me revise that
+                            </Button>
+                          </div>
+                          
+                          {/* Content after buttons */}
+                          {afterButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {afterButtons}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                      );
                     } else {
-                      // Regular message without avatar buttons
+                      // Regular message without special buttons
                       return (
                         <div className="prose prose-sm max-w-none">
                           <ReactMarkdown
