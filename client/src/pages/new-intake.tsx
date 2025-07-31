@@ -161,6 +161,9 @@ function IntakeChat({
   
   // New state for Persona Confirmation Buttons
   const [personaConfirmationMessageId, setPersonaConfirmationMessageId] = useState<string | null>(null);
+  
+  // New state for Intake Card Confirmation
+  const [intakeConfirmationMessageId, setIntakeConfirmationMessageId] = useState<string | null>(null);
 
   // Handle avatar selection
   const handleAvatarSelect = (selectedImageUrl: string) => {
@@ -478,6 +481,45 @@ function IntakeChat({
     }
   };
 
+  // Handle intake confirmation 
+  const handleConfirmIntake = async () => {
+    if (!intakeConfirmationMessageId) return;
+
+    // Replace the buttons with confirmed message
+    setMessages(prev => prev.map(msg => 
+      msg.id === intakeConfirmationMessageId
+        ? { 
+            ...msg, 
+            content: msg.content.replace('[INTAKE_CONFIRMATION_BUTTONS]', "\n*Perfect! I've got all your course details. Now let's figure out where this AI experience should go in your course.*")
+          }
+        : msg
+    ));
+
+    setIntakeConfirmationMessageId(null);
+
+    // Directly update the program bar to show Stage 1 complete
+    onComponentComplete && onComponentComplete("stage1-criteria");
+
+    // Stage progression will be handled by parent component automatically
+  };
+
+  const handleUpdateIntake = () => {
+    if (!intakeConfirmationMessageId) return;
+
+    // Replace the buttons with revision message and clear the confirmation
+    setMessages(prev => prev.map(msg => 
+      msg.id === intakeConfirmationMessageId
+        ? { 
+            ...msg, 
+            content: msg.content.replace('[INTAKE_CONFIRMATION_BUTTONS]', "\n*No problem! What would you like to update? Just tell me what needs to be different.*")
+          }
+        : msg
+    ));
+
+    setIntakeConfirmationMessageId(null);
+    // Conversation will continue naturally with user input
+  };
+
   const handleRevisePersona = () => {
     // Replace the buttons with a message asking for revision
     setMessages(prev => prev.map(msg => 
@@ -721,9 +763,31 @@ function IntakeChat({
     };
 
     setMessages((prev) => [...prev, userMessage]);
+
+    // Create a summary message with confirmation buttons for Stage 1
+    if (currentStageId === 1) {
+      const summaryMessageId = `summary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Format card data for summary display
+      const summaryItems = Object.entries(cardData)
+        .map(([label, value]) => `- ${label}: ${value}`)
+        .join('\n');
+
+      const summaryMessage: Message = {
+        id: summaryMessageId,
+        content: `Ok, here's what I've got so far:\n\n${summaryItems}\n\nAnything you'd like to update before we move on?\n\n[INTAKE_CONFIRMATION_BUTTONS]`,
+        isBot: true,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, summaryMessage]);
+      setIntakeConfirmationMessageId(summaryMessageId);
+      return; // Don't continue with bot response yet
+    }
+
+    // For other stages, continue with normal flow
     setIsLoading(true);
 
-    // Continue conversation with the form data
     try {
       const response = await fetch("/api/claude/chat", {
         method: "POST",
@@ -803,8 +867,7 @@ function IntakeChat({
           : msg
       ));
 
-      // Run background analysis
-      await analyzeConversation(botResponse);
+
 
       // Check for avatar button marker in Stage 3
       if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
@@ -1035,7 +1098,7 @@ function IntakeChat({
         );
 
         // Trigger background analysis after bot response is complete
-        analyzeConversation(botResponse);
+
 
         // Check for persona confirmation button marker in Stage 3
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[PERSONA_CONFIRMATION_BUTTONS]')) {
@@ -1085,60 +1148,7 @@ function IntakeChat({
     }, 100);
   };
 
-  // Background analysis function
-  const analyzeConversation = async (botResponse: string) => {
-    try {
-      const conversationHistory = messages.map((msg) => ({
-        role: msg.isBot ? "assistant" : "user",
-        content: msg.content,
-      }));
 
-      // Check if this is a summary message using the specific trigger phrase
-      const isSummary = botResponse.includes("Ok! Here's what I've got so far");
-
-      const response = await fetch("/api/intake/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          botResponse,
-          conversationHistory,
-          isSummary,
-        }),
-      });
-
-      if (response.ok) {
-        const analysisResult = await response.json();
-
-        // Update criteria state with analysis results
-        if (analysisResult.criteria) {
-          onCriteriaUpdate((prev: CriteriaState) => {
-            const updated = { ...prev };
-            Object.keys(analysisResult.criteria).forEach((key) => {
-              const criterion = analysisResult.criteria[key];
-              if (criterion.detected && criterion.confidence > 0.7) {
-                // Always update detected status for green checkmarks
-                updated[key as keyof CriteriaState] = {
-                  ...updated[key as keyof CriteriaState],
-                  detected: true,
-                  confidence: criterion.confidence,
-                  value: criterion.value, // Keep this for internal tracking
-                  // Only set finalValue if this is a summary or if we already have finalValue
-                  finalValue: isSummary
-                    ? criterion.value
-                    : updated[key as keyof CriteriaState]?.finalValue || null,
-                };
-              }
-            });
-            return updated;
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Analysis error:", error);
-      // Fail silently - analysis is not critical to conversation flow
-    }
-  };
 
   return (
     <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 min-h-0">
@@ -1258,8 +1268,9 @@ function IntakeChat({
                       </div>
                     );
                   } else {
-                    // Regular message without card - check for persona confirmation or avatar buttons
+                    // Regular message without card - check for persona confirmation, intake confirmation, or avatar buttons
                     const hasPersonaConfirmationButtons = message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]');
+                    const hasIntakeConfirmationButtons = message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]');
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
                     
                     if (hasPersonaConfirmationButtons && personaConfirmationMessageId === message.id) {
@@ -1306,6 +1317,78 @@ function IntakeChat({
                               className="border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                               ✏️ Make Changes
+                            </Button>
+                          </div>
+                          
+                          {/* Content after buttons */}
+                          {afterButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {afterButtons}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                      );
+                    } else if (hasIntakeConfirmationButtons && intakeConfirmationMessageId === message.id) {
+                      // Split content around the intake confirmation marker
+                      const [beforeButtons, afterButtons] = message.content.split('[INTAKE_CONFIRMATION_BUTTONS]');
+                      
+                      return (
+                        <div className="prose prose-sm max-w-none">
+                          {/* Content before buttons */}
+                          {beforeButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {beforeButtons}
+                            </ReactMarkdown>
+                          )}
+                          
+                          {/* Intake confirmation buttons */}
+                          <div className="flex gap-3 my-4">
+                            <Button
+                              onClick={handleConfirmIntake}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              ✓ Looks Good!
+                            </Button>
+                            <Button
+                              onClick={handleUpdateIntake}
+                              variant="outline"
+                              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                              ✏️ Update Details
                             </Button>
                           </div>
                           
