@@ -764,70 +764,7 @@ function IntakeChat({
 
     setMessages((prev) => [...prev, userMessage]);
 
-    // Only create a summary for Stage 1 if the bot message contains the summary trigger phrase
-    // This prevents us from creating a summary on every card submission
-    const lastBotMessage = messages.filter(m => m.isBot).pop();
-    const shouldCreateSummary = currentStageId === 1 && 
-      (lastBotMessage?.content.includes("Ok, here's what I've got so far:") || 
-       lastBotMessage?.content.includes("Ok! Here's what I've got so far:"));
-
-    if (shouldCreateSummary) {
-      const summaryMessageId = `summary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Get all criteria from the program bar state for complete summary
-      const allCriteria = [
-        { key: 'schoolDistrict', label: 'School District' },
-        { key: 'school', label: 'School Name' },
-        { key: 'subject', label: 'Subject Area' },
-        { key: 'topic', label: 'Specific Topic' },
-        { key: 'gradeLevel', label: 'Grade Level' }
-      ];
-      
-      // Extract information from conversation history since criteriaState isn't populated
-      const conversationText = messages.map(m => m.content).join(' ');
-      
-      // Build summary from conversation analysis plus new card data
-      const summaryItems = allCriteria
-        .map(({ key, label }) => {
-          // Check if this field was in the card submission (prioritize new data)
-          const cardValue = cardData[label] || cardData[key];
-          if (cardValue) {
-            return `- ${label}: ${cardValue}`;
-          }
-          
-          // Extract from conversation history using simple pattern matching
-          let extractedValue = null;
-          
-          if (key === 'schoolDistrict') {
-            // Look for school district mentions
-            const districtMatch = conversationText.match(/Blueberry/i);
-            extractedValue = districtMatch ? 'Blueberry' : null;
-          } else if (key === 'school') {
-            // Look for school name mentions
-            const schoolMatch = conversationText.match(/Redmond Middle School/i);
-            extractedValue = schoolMatch ? 'Redmond Middle School' : null;
-          }
-          
-          if (extractedValue) {
-            return `- ${label}: ${extractedValue}`;
-          }
-          
-          return null; // Skip if no value found
-        })
-        .filter(Boolean) // Remove null entries
-        .join('\n');
-
-      const summaryMessage: Message = {
-        id: summaryMessageId,
-        content: `Ok, here's what I've got so far:\n\n${summaryItems}\n\nAnything you'd like to update before we move on?\n\n[INTAKE_CONFIRMATION_BUTTONS]`,
-        isBot: true,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, summaryMessage]);
-      setIntakeConfirmationMessageId(summaryMessageId);
-      return; // Don't continue with bot response yet
-    }
+    // Don't intercept the flow here - let the bot respond naturally
 
     // For other stages, continue with normal flow
     setIsLoading(true);
@@ -912,6 +849,25 @@ function IntakeChat({
       ));
 
 
+
+      // Check for intake confirmation summary in Stage 1
+      if (currentStageId === 1 && botType === "intake-basics" && 
+          (botResponse.includes("Ok! Here's what I've got so far:") || 
+           botResponse.includes("Ok, here's what I've got so far:"))) {
+        console.log("🎯 Summary detected in bot response - adding confirmation buttons");
+        
+        // Add confirmation buttons to the bot response
+        const summaryMessageId = `summary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const updatedResponse = botResponse + "\n\n[INTAKE_CONFIRMATION_BUTTONS]";
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === finalMessageId 
+            ? { ...msg, id: summaryMessageId, content: updatedResponse }
+            : msg
+        ));
+        
+        setIntakeConfirmationMessageId(summaryMessageId);
+      }
 
       // Check for avatar button marker in Stage 3
       if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
