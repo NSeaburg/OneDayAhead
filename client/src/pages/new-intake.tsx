@@ -2728,6 +2728,9 @@ export default function NewIntake() {
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
+                boundaries={null} // TODO: Extract boundaries from Stage 3 conversation
+                stageContext={stageContext} // Pass Stage 1 context data
+                uploadedFiles={uploadedFiles} // Pass Stage 2 uploaded files
                 onClose={() => {
                   console.log("🟡 PersonalityTestingBot onClose callback triggered");
                   setPersonalityTesterExpanded(false);

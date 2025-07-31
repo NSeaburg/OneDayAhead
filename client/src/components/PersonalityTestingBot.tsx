@@ -21,6 +21,10 @@ interface PersonalityTestingBotProps {
   botJobTitle?: string | null;
   botWelcomeMessage?: string | null;
   sampleDialogue?: string | null;
+  // Additional context data
+  boundaries?: string | null;
+  stageContext?: any;
+  uploadedFiles?: any[];
 }
 
 export function PersonalityTestingBot({ 
@@ -31,7 +35,10 @@ export function PersonalityTestingBot({
   botName,
   botJobTitle,
   botWelcomeMessage,
-  sampleDialogue
+  sampleDialogue,
+  boundaries,
+  stageContext,
+  uploadedFiles
 }: PersonalityTestingBotProps) {
   console.log("🔴 PersonalityTestingBot component rendered with props:", {
     avatar: !!avatar,
@@ -98,6 +105,11 @@ Feel free to ask me questions or have a conversation to see how I interact with 
           ],
           assistantType: "personality-testing",
           botPersonality: botPersonality,
+          botName: botName,
+          botJobTitle: botJobTitle,
+          boundaries: boundaries,
+          stageContext: stageContext,
+          uploadedFiles: uploadedFiles,
         }),
       });
 

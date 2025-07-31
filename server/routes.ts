@@ -3308,15 +3308,76 @@ ${fileContent}`;
         systemPrompt = assessmentBotPrompt;
         console.log(`✅ DEBUG Claude Chat - Using INTAKE_ASSESSMENT_BOT_PROMPT with context`);
       } else if (assistantType === "personality-testing") {
-        // Handle personality testing bot
+        // Handle personality testing bot - include ALL collected context
         const botPersonality = (req.body as any).botPersonality || "";
+        const botName = (req.body as any).botName || "";
+        const botJobTitle = (req.body as any).botJobTitle || "";
+        const boundaries = (req.body as any).boundaries || "";
+        const stageContext = (req.body as any).stageContext || {};
+        const uploadedFiles = (req.body as any).uploadedFiles || [];
+        
+        // Build comprehensive context for the assessment bot
+        let contextInfo = "";
+        
+        if (stageContext && Object.keys(stageContext).length > 0) {
+          contextInfo += `
+
+## COURSE CONTEXT (from Stage 1):
+- School District: ${stageContext.schoolDistrict || 'Not specified'}
+- School: ${stageContext.school || 'Not specified'}  
+- Subject: ${stageContext.subject || 'Not specified'}
+- Topic/Unit: ${stageContext.topic || 'Not specified'}
+- Grade Level: ${stageContext.gradeLevel || 'Not specified'}
+
+## YOUR ASSESSMENT PURPOSE:
+You are an assessment bot designed specifically for this course context. Your job is to evaluate student understanding of "${stageContext.topic || 'the topic'}" in ${stageContext.subject || 'this subject'} for ${stageContext.gradeLevel || 'these students'}.`;
+        }
+        
+        if (boundaries) {
+          contextInfo += `
+
+## BOUNDARIES & RESTRICTIONS:
+${boundaries}`;
+        }
+        
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
+          
+          if (completedFiles.length > 0) {
+            const fileContent = completedFiles
+              .map((file: any) => `## ${file.name}:\n${file.extractedContent.substring(0, 500)}...`)
+              .join('\n\n');
+            
+            contextInfo += `
+
+## COURSE MATERIALS PROVIDED (from Stage 2):
+Here are the materials the teacher provided for context:
+
+${fileContent}`;
+          }
+        }
+        
         systemPrompt = `${PERSONALITY_TESTING_PROMPT}
+
+## YOUR IDENTITY:
+- Name: ${botName || 'Assessment Bot'}
+- Role: ${botJobTitle || 'Educational Assistant'}
 
 ## SPECIFIC PERSONALITY TO EMBODY:
 ${botPersonality}
 
-Remember to stay true to this personality while being helpful and educational.`;
-        console.log(`✅ DEBUG Claude Chat - Using PERSONALITY_TESTING_PROMPT with custom personality`);
+${contextInfo}
+
+## TESTING INSTRUCTIONS:
+This is a testing environment where the teacher can experience how you would interact with their actual students. Demonstrate your personality while staying focused on assessing understanding of the specific topic and grade level mentioned above.
+
+Remember to stay true to your personality while being helpful, educational, and appropriate for the specified grade level.`;
+        
+        console.log(`✅ DEBUG Claude Chat - Using PERSONALITY_TESTING_PROMPT with comprehensive context`);
+        console.log(`🎯 DEBUG - Bot Identity: ${botName} (${botJobTitle})`);
+        console.log(`🎯 DEBUG - Course Context: ${stageContext.subject} - ${stageContext.topic} (Grade ${stageContext.gradeLevel})`);
+        console.log(`🎯 DEBUG - Uploaded Files: ${uploadedFiles?.length || 0} files`);
+        console.log(`🎯 DEBUG - Boundaries provided: ${boundaries ? 'Yes' : 'No'}`);
       }
       
       // Final debug log to see what system prompt is actually being sent to Claude
