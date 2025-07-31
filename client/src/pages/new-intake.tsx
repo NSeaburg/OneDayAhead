@@ -1860,7 +1860,7 @@ function IntakeChat({
                           )}
                         </div>
                       );
-                    } else if (hasBoundariesButtons && boundariesButtonMessageId === message.id) {
+                    } else if (hasBoundariesButtons) {
                       console.log("🚧 BOUNDARIES DEBUG - Rendering boundaries buttons for message:", message.id);
                       console.log("🚧 BOUNDARIES DEBUG - boundariesButtonMessageId:", boundariesButtonMessageId);
                       console.log("🚧 BOUNDARIES DEBUG - hasBoundariesButtons:", hasBoundariesButtons);
