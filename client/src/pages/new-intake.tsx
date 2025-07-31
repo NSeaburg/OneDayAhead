@@ -485,22 +485,194 @@ function IntakeChat({
   const handleConfirmIntake = async () => {
     if (!intakeConfirmationMessageId) return;
 
-    // Replace the buttons with confirmed message
-    setMessages(prev => prev.map(msg => 
-      msg.id === intakeConfirmationMessageId
-        ? { 
-            ...msg, 
-            content: msg.content.replace('[INTAKE_CONFIRMATION_BUTTONS]', "\n*Perfect! I've got all your course details. Now let's figure out where this AI experience should go in your course.*")
+    // Find the summary message to extract criteria data
+    const summaryMessage = messages.find(msg => msg.id === intakeConfirmationMessageId);
+    if (summaryMessage) {
+      // Extract criteria from the summary content
+      const content = summaryMessage.content;
+      const criteriaData: { [key: string]: string } = {};
+      
+      // Parse the summary format to extract values
+      const lines = content.split('\n');
+      for (const line of lines) {
+        if (line.includes('School District:')) {
+          criteriaData.schoolDistrict = line.split('School District:')[1]?.trim() || '';
+        }
+        if (line.includes('School Name:')) {
+          criteriaData.school = line.split('School Name:')[1]?.trim() || '';
+        }
+        if (line.includes('Subject Area:')) {
+          criteriaData.subject = line.split('Subject Area:')[1]?.trim() || '';
+        }
+        if (line.includes('Topic/Unit:') || line.includes('Specific Topic:')) {
+          const topicValue = line.split('Topic/Unit:')[1]?.trim() || line.split('Specific Topic:')[1]?.trim();
+          criteriaData.topic = topicValue || '';
+        }
+        if (line.includes('Grade Level:')) {
+          criteriaData.gradeLevel = line.split('Grade Level:')[1]?.trim() || '';
+        }
+      }
+
+      console.log("📋 Extracted criteria data:", criteriaData);
+
+      // Update the parent component with the extracted criteria using onCriteriaUpdate
+      if (onCriteriaUpdate) {
+        onCriteriaUpdate((prev) => ({
+          ...prev,
+          schoolDistrict: {
+            ...prev.schoolDistrict,
+            finalValue: criteriaData.schoolDistrict,
+            detected: true,
+            confidence: 1.0
+          },
+          school: {
+            ...prev.school,
+            finalValue: criteriaData.school,
+            detected: true,
+            confidence: 1.0
+          },
+          subject: {
+            ...prev.subject,
+            finalValue: criteriaData.subject,
+            detected: true,
+            confidence: 1.0
+          },
+          topic: {
+            ...prev.topic,
+            finalValue: criteriaData.topic,
+            detected: true,
+            confidence: 1.0
+          },
+          gradeLevel: {
+            ...prev.gradeLevel,
+            finalValue: criteriaData.gradeLevel,
+            detected: true,
+            confidence: 1.0
           }
-        : msg
-    ));
+        }));
+      }
+
+      // Mark stage 1 as complete
+      if (onComponentComplete) {
+        onComponentComplete("stage1-criteria");
+      }
+    }
+
+    // Replace the buttons with user's confirmation message
+    const confirmationUserMessage: Message = {
+      id: Date.now().toString(),
+      content: "Looks good!",
+      isBot: false,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [
+      ...prev.map(msg => 
+        msg.id === intakeConfirmationMessageId
+          ? { 
+              ...msg, 
+              content: msg.content.replace('[INTAKE_CONFIRMATION_BUTTONS]', '')
+            }
+          : msg
+      ),
+      confirmationUserMessage
+    ]);
 
     setIntakeConfirmationMessageId(null);
+    setIsLoading(true);
 
-    // Directly update the program bar to show Stage 1 complete
-    onComponentComplete && onComponentComplete("stage1-criteria");
+    // Send to bot to get the stage transition response
+    try {
+      const response = await fetch("/api/claude/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          messages: [
+            ...messages.map((msg) => ({
+              role: msg.isBot ? "assistant" : "user",
+              content: msg.content.replace('[INTAKE_CONFIRMATION_BUTTONS]', ''),
+            })),
+            { role: "user", content: "Looks good!" },
+          ],
+          assistantType: botType,
+          stageContext: stageContext,
+          uploadedFiles: uploadedFiles,
+        }),
+      });
 
-    // Stage progression will be handled by parent component automatically
+      if (!response.ok) throw new Error("Failed to get response");
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      let botResponse = "";
+      let streamingMessageId = `streaming-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Add initial streaming message 
+      setMessages(prev => [...prev, {
+        id: streamingMessageId,
+        content: "",
+        isBot: true,
+        timestamp: new Date(),
+      }]);
+
+      let hasStartedStreaming = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split("\n").filter((line) => line.trim());
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                if (!hasStartedStreaming) {
+                  setIsLoading(false);
+                  hasStartedStreaming = true;
+                }
+                
+                botResponse += parsed.content;
+
+                setMessages((prev) => 
+                  prev.map((msg) => 
+                    msg.id === streamingMessageId 
+                      ? { ...msg, content: botResponse }
+                      : msg
+                  )
+                );
+              }
+            } catch (e) {
+              // Ignore JSON parsing errors for streaming
+            }
+          }
+        }
+      }
+
+      // Replace streaming message with final message
+      const finalMessageId = `final-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      setMessages((prev) => 
+        prev.map((msg) => 
+          msg.id === streamingMessageId 
+            ? { ...msg, id: finalMessageId }
+            : msg
+        )
+      );
+
+      // Check for stage progression
+      onStageProgression(botResponse);
+    } catch (error) {
+      console.error("Error confirming intake:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleUpdateIntake = () => {
