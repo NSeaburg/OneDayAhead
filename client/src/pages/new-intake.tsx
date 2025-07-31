@@ -168,6 +168,111 @@ function IntakeChat({
   // New state for Boundaries Buttons
   const [boundariesButtonMessageId, setBoundariesButtonMessageId] = useState<string | null>(null);
   const [boundariesConfirmationMessageId, setBoundariesConfirmationMessageId] = useState<string | null>(null);
+  
+  // New state for Assessment Targets Confirmation Buttons
+  const [assessmentTargetsConfirmationMessageId, setAssessmentTargetsConfirmationMessageId] = useState<string | null>(null);
+
+  // Helper function to send button click messages
+  const sendButtonMessage = async (messageText: string, buttonMessageId?: string) => {
+    const buttonMessage: Message = {
+      id: Date.now().toString(),
+      content: messageText,
+      isBot: false,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, buttonMessage]);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/claude/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          message: messageText,
+          assistantType: currentStageId === 2 ? "intake-context" : "intake-assessment-bot",
+          stageContext: getStageContext(),
+          uploadedFiles: uploadedFiles || []
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response stream");
+
+      let botResponse = "";
+      const streamingMessageId = `streaming-${Date.now()}`;
+      
+      setMessages(prev => [...prev, {
+        id: streamingMessageId,
+        content: "",
+        isBot: true,
+        timestamp: new Date(),
+      }]);
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                botResponse += parsed.content;
+                setMessages(prev => prev.map(msg => 
+                  msg.id === streamingMessageId 
+                    ? { ...msg, content: botResponse }
+                    : msg
+                ));
+              }
+            } catch (e) {
+              console.error('Error parsing streaming data:', e);
+            }
+          }
+        }
+      }
+
+      // Replace streaming message with final message
+      const finalMessageId = `message-${Date.now()}`;
+      setMessages(prev => prev.map(msg => 
+        msg.id === streamingMessageId 
+          ? { ...msg, id: finalMessageId }
+          : msg
+      ));
+
+      // Handle button detection for the response
+      if (botResponse.includes('[BOUNDARIES_BUTTONS]')) {
+        setBoundariesButtonMessageId(finalMessageId);
+      }
+      if (botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
+        setBoundariesConfirmationMessageId(finalMessageId);
+      }
+      if (botResponse.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')) {
+        setAssessmentTargetsConfirmationMessageId(finalMessageId);
+      }
+
+      onStageProgression(botResponse);
+    } catch (error) {
+      console.error('Error sending button message:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle avatar selection
   const handleAvatarSelect = (selectedImageUrl: string) => {
@@ -1329,6 +1434,12 @@ function IntakeChat({
           setBoundariesConfirmationMessageId(finalMessageId);
         }
 
+        // Check for assessment targets confirmation button marker in Stage 2
+        if (currentStageId === 2 && botType === "intake-context" && botResponse.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')) {
+          console.log("🎯 Assessment targets confirmation buttons detected in streaming response");
+          setAssessmentTargetsConfirmationMessageId(finalMessageId);
+        }
+
         // Check for stage progression
         onStageProgression(botResponse);
       }
@@ -1491,6 +1602,7 @@ function IntakeChat({
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
                     const hasBoundariesButtons = message.content.includes('[BOUNDARIES_BUTTONS]');
                     const hasBoundariesConfirmationButtons = message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]');
+                    const hasAssessmentTargetsConfirmationButtons = message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]');
                     
                     if (hasPersonaConfirmationButtons && personaConfirmationMessageId === message.id) {
                       // Split content around the persona confirmation marker
@@ -1738,7 +1850,7 @@ function IntakeChat({
                             <Button 
                               onClick={() => {
                                 console.log("🚧 No additional boundaries button clicked");
-                                handleSubmit("No additional boundaries (Most common)", message.id);
+                                sendButtonMessage("No additional boundaries (Most common)");
                               }}
                               className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
@@ -1747,7 +1859,7 @@ function IntakeChat({
                             <Button 
                               onClick={() => {
                                 console.log("🚧 Add specific boundaries button clicked");
-                                handleSubmit("Add specific boundaries", message.id);
+                                sendButtonMessage("Add specific boundaries");
                               }}
                               variant="outline"
                               className="border-blue-600 text-blue-600 hover:bg-blue-50"
@@ -1816,7 +1928,7 @@ function IntakeChat({
                             <Button 
                               onClick={() => {
                                 console.log("🚧 Yes, boundaries correct button clicked");
-                                handleSubmit("Yes, that's correct", message.id);
+                                sendButtonMessage("Yes, that's correct");
                               }}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
@@ -1825,12 +1937,90 @@ function IntakeChat({
                             <Button 
                               onClick={() => {
                                 console.log("🚧 Let me revise boundaries button clicked");
-                                handleSubmit("Let me revise that", message.id);
+                                sendButtonMessage("Let me revise that");
                               }}
                               variant="outline"
                               className="border-orange-600 text-orange-600 hover:bg-orange-50"
                             >
                               Let me revise that
+                            </Button>
+                          </div>
+                          
+                          {/* Content after buttons */}
+                          {afterButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {afterButtons}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                      );
+                    } else if (hasAssessmentTargetsConfirmationButtons && assessmentTargetsConfirmationMessageId === message.id) {
+                      // Split content around the assessment targets confirmation marker
+                      const [beforeButtons, afterButtons] = message.content.split('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]');
+                      
+                      return (
+                        <div className="prose prose-sm max-w-none">
+                          {/* Content before buttons */}
+                          {beforeButtons && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <div className="mb-2 last:mb-0">{children}</div>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold text-gray-900">
+                                    {children}
+                                  </strong>
+                                ),
+                                em: ({ children }) => (
+                                  <em className="italic">{children}</em>
+                                ),
+                                br: () => <br />,
+                                code: () => null,
+                                pre: () => null,
+                              }}
+                            >
+                              {beforeButtons}
+                            </ReactMarkdown>
+                          )}
+                          
+                          {/* Assessment targets confirmation buttons */}
+                          <div className="flex flex-col gap-3 my-4 max-w-md">
+                            <Button 
+                              onClick={() => {
+                                console.log("🎯 Yes, those targets work button clicked");
+                                sendButtonMessage("Yes, those targets work");
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Yes, those targets work
+                            </Button>
+                            <Button 
+                              onClick={() => {
+                                console.log("🎯 Let me revise those button clicked");
+                                sendButtonMessage("Let me revise those");
+                              }}
+                              variant="outline"
+                              className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                            >
+                              Let me revise those
                             </Button>
                           </div>
                           
