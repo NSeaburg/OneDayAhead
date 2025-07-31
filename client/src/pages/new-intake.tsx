@@ -1626,6 +1626,16 @@ function IntakeChat({
                     }
                     const hasBoundariesConfirmationButtons = message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]');
                     const hasAssessmentTargetsConfirmationButtons = message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]');
+                    if (hasAssessmentTargetsConfirmationButtons) {
+                      console.log("🎯 ASSESSMENT DEBUG - Found ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS in message:", message.id);
+                      console.log("🎯 ASSESSMENT DEBUG - Current assessmentTargetsConfirmationMessageId:", assessmentTargetsConfirmationMessageId);
+                      
+                      // Set the assessment targets confirmation message ID if not already set
+                      if (!assessmentTargetsConfirmationMessageId) {
+                        console.log("🎯 ASSESSMENT DEBUG - Setting assessmentTargetsConfirmationMessageId to:", message.id);
+                        setAssessmentTargetsConfirmationMessageId(message.id);
+                      }
+                    }
                     
                     if (hasPersonaConfirmationButtons && personaConfirmationMessageId === message.id) {
                       // Split content around the persona confirmation marker
@@ -2056,21 +2066,50 @@ function IntakeChat({
                           {/* Assessment targets confirmation buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
-                              onClick={() => {
+                              onClick={async () => {
                                 console.log("🎯 Yes, those targets work button clicked");
-                                sendButtonMessage("Yes, those targets work");
+                                
+                                // Replace buttons with confirmation message
+                                setMessages(prev => prev.map(msg => 
+                                  msg.id === assessmentTargetsConfirmationMessageId
+                                    ? { 
+                                        ...msg, 
+                                        content: msg.content.replace('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]', "\n*Perfect! Those assessment targets look great.*")
+                                      }
+                                    : msg
+                                ));
+                                
+                                // Clear the button state
+                                setAssessmentTargetsConfirmationMessageId(null);
+                                
+                                // Send continuation message to bot
+                                await sendButtonMessage("Yes, those targets work");
                               }}
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
                             >
                               Yes, those targets work
                             </Button>
                             <Button 
-                              onClick={() => {
+                              onClick={async () => {
                                 console.log("🎯 Let me revise those button clicked");
-                                sendButtonMessage("Let me revise those");
+                                
+                                // Replace buttons with revision message
+                                setMessages(prev => prev.map(msg => 
+                                  msg.id === assessmentTargetsConfirmationMessageId
+                                    ? { 
+                                        ...msg, 
+                                        content: msg.content.replace('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]', "\n*What changes would you like me to make to the assessment targets?*")
+                                      }
+                                    : msg
+                                ));
+                                
+                                // Clear the button state
+                                setAssessmentTargetsConfirmationMessageId(null);
+                                
+                                // Send continuation message to bot
+                                await sendButtonMessage("Let me revise those");
                               }}
-                              variant="outline"
-                              className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                              className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
                             >
                               Let me revise those
                             </Button>

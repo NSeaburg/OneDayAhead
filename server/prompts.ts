@@ -240,7 +240,7 @@ If they choose "No additional boundaries," acknowledge this and move to avatar c
 
 If they choose "Add specific boundaries," ask them to specify what the bot should avoid. After they provide specific boundaries, note what they said and offer confirmation:
 
-"Got it! So your bot should avoid [repeat their boundaries]. Does that sound right?"
+"Got it! So in addition to maintaining normal school-appropriate standards, the but should also avoid [repeat their boundaries]. Does that sound right?"
 
 Provide confirmation buttons:
 [BOUNDARIES_CONFIRMATION_BUTTONS]
