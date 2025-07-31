@@ -1471,63 +1471,6 @@ function IntakeChat({
         // Check for stage progression
         onStageProgression(botResponse);
       }
-
-        // Trigger background analysis after bot response is complete
-
-
-        // Check for intake confirmation summary in Stage 1 (for revision flow)
-        if (currentStageId === 1 && botType === "intake-basics" && 
-            (botResponse.includes("Ok! Here's what I've got so far:") || 
-             botResponse.includes("Ok, here's what I've got so far:"))) {
-          console.log("🎯 REVISION FLOW: Summary detected in regular message - adding confirmation buttons");
-          console.log("🎯 REVISION FLOW: Current finalMessageId:", finalMessageId);
-          console.log("🎯 REVISION FLOW: Bot response length:", botResponse.length);
-          
-          // Add confirmation buttons to the bot response
-          const updatedResponse = botResponse + "\n\n[INTAKE_CONFIRMATION_BUTTONS]";
-          console.log("🎯 REVISION FLOW: Updated response includes marker:", updatedResponse.includes('[INTAKE_CONFIRMATION_BUTTONS]'));
-          
-          setMessages(prev => prev.map(msg => {
-            if (msg.id === finalMessageId) {
-              console.log("🎯 REVISION FLOW: Updating message with finalMessageId:", finalMessageId, "to include buttons");
-              return { ...msg, content: updatedResponse };
-            }
-            return msg;
-          }));
-          
-          console.log("🎯 REVISION FLOW: Setting intakeConfirmationMessageId to:", finalMessageId);
-          setIntakeConfirmationMessageId(finalMessageId);
-        }
-
-        // Check for persona confirmation button marker in Stage 3
-        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[PERSONA_CONFIRMATION_BUTTONS]')) {
-          console.log("✅ Persona confirmation buttons detected in streaming response");
-          setPersonaConfirmationMessageId(finalMessageId);
-        }
-
-        // Check for avatar button marker in Stage 3
-        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
-          console.log("🎨 Avatar buttons detected in streaming response");
-          setAvatarButtonMessageId(finalMessageId);
-        }
-
-
-
-        // Check for boundaries confirmation button marker in Stage 3
-        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
-          console.log("🚧 Boundaries confirmation buttons detected in streaming response");
-          setBoundariesConfirmationMessageId(finalMessageId);
-        }
-
-        // Check for assessment targets confirmation button marker in Stage 2
-        if (currentStageId === 2 && botType === "intake-context" && botResponse.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')) {
-          console.log("🎯 Assessment targets confirmation buttons detected in streaming response");
-          setAssessmentTargetsConfirmationMessageId(finalMessageId);
-        }
-
-        // Check for stage progression
-        onStageProgression(botResponse);
-      }
     } catch (error) {
       console.error("Chat error:", error);
       // Remove any streaming messages and add error message
