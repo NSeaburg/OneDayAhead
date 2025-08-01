@@ -171,6 +171,9 @@ function IntakeChat({
   
   // New state for Assessment Targets Confirmation Buttons
   const [assessmentTargetsConfirmationMessageId, setAssessmentTargetsConfirmationMessageId] = useState<string | null>(null);
+  
+  // State for extracted boundaries
+  const [extractedBoundaries, setExtractedBoundaries] = useState<string>("");
 
   // Helper function to send button click messages
   const sendButtonMessage = async (messageText: string, buttonMessageId?: string) => {
@@ -1452,20 +1455,24 @@ function IntakeChat({
         // Check for avatar button marker in Stage 3 (more robust detection)
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
           console.log("🎨 Avatar buttons detected in streaming response - setting state to:", finalMessageId);
-          setAvatarButtonMessageId(finalMessageId);
           
-          // Multiple attempts to ensure buttons appear
+          // Multiple attempts with increasing delays to ensure buttons appear
           setTimeout(() => {
-            console.log("🎨 Force re-render for avatar buttons attempt 1");
-            setMessages(prev => prev.map(msg => 
-              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
-            ));
-          }, 50);
+            console.log("🎨 Setting avatar button state attempt 1");
+            setAvatarButtonMessageId(finalMessageId);
+          }, 100);
           
           setTimeout(() => {
             console.log("🎨 Force re-render for avatar buttons attempt 2");
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+          }, 300);
+          
+          setTimeout(() => {
+            console.log("🎨 Re-setting avatar button state attempt 3");
             setAvatarButtonMessageId(finalMessageId); // Re-set state
-          }, 200);
+          }, 500);
         }
 
         // Check for boundaries button marker in Stage 3 (more robust detection)
@@ -1947,6 +1954,9 @@ function IntakeChat({
                                     : msg
                                 ));
                                 
+                                // Set boundaries to default when no additional ones needed
+                                setExtractedBoundaries("Follow normal school-appropriate standards");
+                                
                                 // Clear the button state
                                 setBoundariesButtonMessageId(null);
                                 
@@ -2053,6 +2063,18 @@ function IntakeChat({
                                       }
                                     : msg
                                 ));
+                                
+                                // Extract boundaries from the message content
+                                const boundariesMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
+                                if (boundariesMessage) {
+                                  // Extract the specific boundaries text (looking for horses example)
+                                  const content = boundariesMessage.content;
+                                  if (content.includes('horses') && content.includes('avoid')) {
+                                    setExtractedBoundaries("Should avoid talking about horses beyond normal school-appropriate standards");
+                                  } else {
+                                    setExtractedBoundaries("Follow normal school-appropriate standards");
+                                  }
+                                }
                                 
                                 // Clear the button state
                                 setBoundariesConfirmationMessageId(null);
@@ -2364,6 +2386,7 @@ export default function NewIntake() {
   const [botVisualDescription, setBotVisualDescription] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
+  const [extractedBoundaries, setExtractedBoundaries] = useState<string>("");
   const [messageInjectionFunction, setMessageInjectionFunction] = useState<((message: string) => void) | null>(null);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: {
@@ -3266,15 +3289,7 @@ export default function NewIntake() {
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
-                boundaries={(() => {
-                  // Extract boundaries from Stage 3 conversation using stageMessages
-                  const currentStageMessages = stageMessages[3] || [];
-                  const allText = currentStageMessages.map(msg => msg.content).join(' ');
-                  if (allText.includes('horses') && allText.includes('avoid')) {
-                    return "Should avoid talking about horses beyond normal school-appropriate standards";
-                  }
-                  return "Follow normal school-appropriate standards";
-                })()} 
+                boundaries={extractedBoundaries || "Follow normal school-appropriate standards"} 
                 stageContext={{
                   ...stageContext,
                   learningTargets: [

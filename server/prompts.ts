@@ -244,8 +244,7 @@ If they choose "Add additional boundaries," ask them to specify what the bot sho
 
 Provide confirmation buttons:
 [BOUNDARIES_CONFIRMATION_BUTTONS]
-Button 1: "Yes, that's correct"
-Button 2: "Let me revise that"
+
 
 If they revise, collect the new boundaries and confirm again. Once confirmed, move to avatar creation.
 
