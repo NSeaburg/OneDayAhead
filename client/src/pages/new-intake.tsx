@@ -1557,8 +1557,13 @@ function IntakeChat({
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
           console.log("🎨 Avatar buttons detected in streaming response - setting state to:", finalMessageId);
           
-          // Set state immediately
+          // Set state immediately to hide marker text
           setAvatarButtonMessageId(finalMessageId);
+          
+          // Force immediate re-render to ensure visibility
+          setMessages(prev => prev.map(msg => 
+            msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+          ));
           
           // Additional attempts with delays to ensure buttons appear
           setTimeout(() => {
@@ -1602,20 +1607,28 @@ function IntakeChat({
         // Check for boundaries confirmation button marker in Stage 3
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
           console.log("🚧 Boundaries confirmation buttons detected in streaming response");
+          
+          // Set state immediately to hide the marker text
           setBoundariesConfirmationMessageId(finalMessageId);
           
-          // Multiple attempts to ensure buttons appear
+          // Multiple attempts to ensure buttons appear with same pattern as avatar buttons
           setTimeout(() => {
             console.log("🚧 Force re-render for boundaries confirmation buttons attempt 1");
             setMessages(prev => prev.map(msg => 
               msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
             ));
-          }, 100);
+            setBoundariesConfirmationMessageId(finalMessageId); // Re-set state
+          }, 50);
           
           setTimeout(() => {
             console.log("🚧 Re-setting boundaries confirmation button state attempt 2");
             setBoundariesConfirmationMessageId(finalMessageId); // Re-set state
-          }, 300);
+          }, 200);
+          
+          setTimeout(() => {
+            console.log("🚧 Final attempt to set boundaries confirmation button state");
+            setBoundariesConfirmationMessageId(finalMessageId); // Final re-set
+          }, 500);
         }
 
         // Check for assessment targets confirmation button marker in Stage 2 (more robust detection)
@@ -2497,6 +2510,30 @@ function IntakeChat({
           />
         </div>
       )}
+
+      {/* Test Your Bot Button in Chat Area */}
+      {(() => {
+        const stage3 = stages.find(s => s.id === 3);
+        const allStage3ComponentsComplete = stage3?.components.every(comp => comp.completed) || false;
+        
+        return allStage3ComponentsComplete && currentStageId === 3 && (
+          <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
+            <div className="text-center">
+              <div className="mb-3">
+                <h3 className="text-lg font-medium text-gray-900 mb-1">🎉 Your Assessment Bot is Ready!</h3>
+                <p className="text-sm text-gray-600">Test your bot to see how it will interact with students</p>
+              </div>
+              <Button
+                onClick={() => setPersonalityTesterExpanded(true)}
+                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+                size="lg"
+              >
+                🤖 Test Your Bot
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Input Area */}
       <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
