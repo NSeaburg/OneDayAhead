@@ -176,6 +176,47 @@ function IntakeChat({
   const [extractedBoundaries, setExtractedBoundaries] = useState<string>("");
 
   // Helper function to send button click messages
+  // Fallback check system to ensure buttons appear if they were missed
+  const checkAndFixMissingButtons = () => {
+    messages.forEach((message) => {
+      // Check for avatar buttons that should be displayed but aren't
+      if (message.content.includes('[AVATAR_BUTTONS_HERE]') && !avatarButtonMessageId) {
+        console.log("🔧 FALLBACK: Found missing avatar buttons, fixing for message:", message.id);
+        setAvatarButtonMessageId(message.id);
+      }
+      
+      // Check for boundaries buttons that should be displayed but aren't
+      if (message.content.includes('[BOUNDARIES_BUTTONS]') && !boundariesButtonMessageId) {
+        console.log("🔧 FALLBACK: Found missing boundaries buttons, fixing for message:", message.id);
+        setBoundariesButtonMessageId(message.id);
+      }
+      
+      // Check for boundaries confirmation buttons that should be displayed but aren't
+      if (message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]') && !boundariesConfirmationMessageId) {
+        console.log("🔧 FALLBACK: Found missing boundaries confirmation buttons, fixing for message:", message.id);
+        setBoundariesConfirmationMessageId(message.id);
+      }
+      
+      // Check for persona confirmation buttons that should be displayed but aren't
+      if (message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]') && !personaConfirmationMessageId) {
+        console.log("🔧 FALLBACK: Found missing persona confirmation buttons, fixing for message:", message.id);
+        setPersonaConfirmationMessageId(message.id);
+      }
+      
+      // Check for intake confirmation buttons that should be displayed but aren't
+      if (message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]') && !intakeConfirmationMessageId) {
+        console.log("🔧 FALLBACK: Found missing intake confirmation buttons, fixing for message:", message.id);
+        setIntakeConfirmationMessageId(message.id);
+      }
+      
+      // Check for assessment targets confirmation buttons that should be displayed but aren't
+      if (message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]') && !assessmentTargetsConfirmationMessageId) {
+        console.log("🔧 FALLBACK: Found missing assessment targets confirmation buttons, fixing for message:", message.id);
+        setAssessmentTargetsConfirmationMessageId(message.id);
+      }
+    });
+  };
+
   const sendButtonMessage = async (messageText: string, buttonMessageId?: string) => {
     const buttonMessage: Message = {
       id: Date.now().toString(),
@@ -960,6 +1001,28 @@ function IntakeChat({
   }, [messages, botType, stageContext, uploadedFiles, onStageProgression]);
 
   // Expose the injection function to parent component
+  // Periodic fallback check to ensure buttons appear (runs every 2 seconds)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const hasButtonMarkers = messages.some(msg => 
+        msg.content.includes('[AVATAR_BUTTONS_HERE]') ||
+        msg.content.includes('[BOUNDARIES_BUTTONS]') ||
+        msg.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]') ||
+        msg.content.includes('[PERSONA_CONFIRMATION_BUTTONS]') ||
+        msg.content.includes('[INTAKE_CONFIRMATION_BUTTONS]') ||
+        msg.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')
+      );
+      
+      if (hasButtonMarkers) {
+        console.log("🔧 PERIODIC CHECK: Button markers found, running fallback check");
+        checkAndFixMissingButtons();
+      }
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [messages, avatarButtonMessageId, boundariesButtonMessageId, boundariesConfirmationMessageId, 
+      personaConfirmationMessageId, intakeConfirmationMessageId, assessmentTargetsConfirmationMessageId]);
+
   useEffect(() => {
     if (onInjectMessage) {
       onInjectMessage(injectMessage);
@@ -1444,12 +1507,50 @@ function IntakeChat({
           
           console.log("🎯 REVISION FLOW: Setting intakeConfirmationMessageId to:", finalMessageId);
           setIntakeConfirmationMessageId(finalMessageId);
+          
+          // Multiple attempts to ensure buttons appear
+          setTimeout(() => {
+            console.log("🎯 Force re-render for intake confirmation buttons attempt 1");
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+            setIntakeConfirmationMessageId(finalMessageId);
+          }, 50);
+          
+          setTimeout(() => {
+            console.log("🎯 Re-setting intake confirmation button state attempt 2");
+            setIntakeConfirmationMessageId(finalMessageId);
+          }, 200);
+          
+          setTimeout(() => {
+            console.log("🎯 Final attempt to set intake confirmation button state");
+            setIntakeConfirmationMessageId(finalMessageId);
+          }, 500);
         }
 
         // Check for persona confirmation button marker in Stage 3
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[PERSONA_CONFIRMATION_BUTTONS]')) {
           console.log("✅ Persona confirmation buttons detected in streaming response");
           setPersonaConfirmationMessageId(finalMessageId);
+          
+          // Multiple attempts to ensure buttons appear
+          setTimeout(() => {
+            console.log("✅ Force re-render for persona confirmation buttons attempt 1");
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+            setPersonaConfirmationMessageId(finalMessageId);
+          }, 50);
+          
+          setTimeout(() => {
+            console.log("✅ Re-setting persona confirmation button state attempt 2");
+            setPersonaConfirmationMessageId(finalMessageId);
+          }, 200);
+          
+          setTimeout(() => {
+            console.log("✅ Final attempt to set persona confirmation button state");
+            setPersonaConfirmationMessageId(finalMessageId);
+          }, 500);
         }
 
         // Check for avatar button marker in Stage 3 (more robust detection)
@@ -1522,12 +1623,24 @@ function IntakeChat({
           console.log("🎯 Assessment targets confirmation buttons detected in streaming response - setting state to:", finalMessageId);
           setAssessmentTargetsConfirmationMessageId(finalMessageId);
           
-          // Force a re-render to ensure the buttons appear
+          // Multiple attempts to ensure buttons appear
           setTimeout(() => {
+            console.log("🎯 Force re-render for assessment targets confirmation buttons attempt 1");
             setMessages(prev => prev.map(msg => 
               msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
             ));
-          }, 100);
+            setAssessmentTargetsConfirmationMessageId(finalMessageId);
+          }, 50);
+          
+          setTimeout(() => {
+            console.log("🎯 Re-setting assessment targets confirmation button state attempt 2");
+            setAssessmentTargetsConfirmationMessageId(finalMessageId);
+          }, 200);
+          
+          setTimeout(() => {
+            console.log("🎯 Final attempt to set assessment targets confirmation button state");
+            setAssessmentTargetsConfirmationMessageId(finalMessageId);
+          }, 500);
         }
 
         // Check for stage progression
@@ -1564,6 +1677,12 @@ function IntakeChat({
         textareaElement.focus();
       }
     }, 100);
+
+    // Fallback check system - run after all retry attempts
+    setTimeout(() => {
+      console.log("🔧 FALLBACK CHECK: Running button verification system");
+      checkAndFixMissingButtons();
+    }, 1000);
   };
 
 
