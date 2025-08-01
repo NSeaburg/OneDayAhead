@@ -44,6 +44,8 @@ interface IntakeChatProps {
   botVisualDescription?: string | null;
   setBotVisualDescription?: (description: string | null) => void;
   onInjectMessage?: (injectFunction: (message: string) => void) => void;
+  stages?: Stage[];
+  onTestBotClick?: () => void;
 }
 
 interface UploadedFile {
@@ -121,6 +123,8 @@ function IntakeChat({
   botVisualDescription,
   setBotVisualDescription,
   onInjectMessage,
+  stages,
+  onTestBotClick,
 }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
@@ -174,6 +178,10 @@ function IntakeChat({
   
   // State for extracted boundaries
   const [extractedBoundaries, setExtractedBoundaries] = useState<string>("");
+  
+  // State for Test Your Bot button
+  const [testBotButtonMessageId, setTestBotButtonMessageId] = useState<string | null>(null);
+  const [hasInjectedTestButton, setHasInjectedTestButton] = useState(false);
 
   // Helper function to send button click messages
   // Fallback check system to ensure buttons appear if they were missed
@@ -213,6 +221,12 @@ function IntakeChat({
       if (message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]') && !assessmentTargetsConfirmationMessageId) {
         console.log("🔧 FALLBACK: Found missing assessment targets confirmation buttons, fixing for message:", message.id);
         setAssessmentTargetsConfirmationMessageId(message.id);
+      }
+      
+      // Check for test bot button that should be displayed but isn't
+      if (message.content.includes('[TEST_YOUR_BOT]') && !testBotButtonMessageId) {
+        console.log("🔧 FALLBACK: Found missing test bot button, fixing for message:", message.id);
+        setTestBotButtonMessageId(message.id);
       }
     });
   };
@@ -1010,7 +1024,8 @@ function IntakeChat({
         msg.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]') ||
         msg.content.includes('[PERSONA_CONFIRMATION_BUTTONS]') ||
         msg.content.includes('[INTAKE_CONFIRMATION_BUTTONS]') ||
-        msg.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')
+        msg.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]') ||
+        msg.content.includes('[TEST_YOUR_BOT]')
       );
       
       if (hasButtonMarkers) {
@@ -1021,13 +1036,37 @@ function IntakeChat({
 
     return () => clearInterval(intervalId);
   }, [messages, avatarButtonMessageId, boundariesButtonMessageId, boundariesConfirmationMessageId, 
-      personaConfirmationMessageId, intakeConfirmationMessageId, assessmentTargetsConfirmationMessageId]);
+      personaConfirmationMessageId, intakeConfirmationMessageId, assessmentTargetsConfirmationMessageId, testBotButtonMessageId]);
 
   useEffect(() => {
     if (onInjectMessage) {
       onInjectMessage(injectMessage);
     }
   }, [onInjectMessage]);
+  
+  // Add useEffect to inject "Test Your Bot" message when Stage 3 is complete
+  useEffect(() => {
+    if (currentStageId === 3 && stages && !hasInjectedTestButton) {
+      const stage3 = stages.find(s => s.id === 3);
+      const allStage3ComponentsComplete = stage3?.components.every(comp => comp.completed) || false;
+      
+      if (allStage3ComponentsComplete) {
+        console.log("🟢 Stage 3 complete, injecting Test Your Bot message");
+        const testMessage = "[TEST_YOUR_BOT]";
+        
+        const testBotMessage: Message = {
+          id: `test-bot-${Date.now()}`,
+          content: testMessage,
+          isBot: true,
+          timestamp: new Date(),
+        };
+
+        setMessages(prev => [...prev, testBotMessage]);
+        setTestBotButtonMessageId(testBotMessage.id);
+        setHasInjectedTestButton(true);
+      }
+    }
+  }, [currentStageId, stages, hasInjectedTestButton]);
 
   // Listen for custom inject-message events (for PersonalityTestingBot return trigger)
   useEffect(() => {
@@ -1822,6 +1861,7 @@ function IntakeChat({
                     const hasPersonaConfirmationButtons = message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]');
                     const hasIntakeConfirmationButtons = message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]');
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
+                    const hasTestButton = message.content.includes('[TEST_YOUR_BOT]');
                     
                     // Debug avatar button detection
                     if (hasAvatarButtons) {
@@ -2406,6 +2446,25 @@ function IntakeChat({
                           )}
                         </div>
                       );
+                    } else if (hasTestButton && testBotButtonMessageId === message.id) {
+                      // Special test button rendering
+                      return (
+                        <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-green-50 to-blue-50">
+                          <div className="text-center">
+                            <div className="mb-3">
+                              <h3 className="text-lg font-medium text-gray-900 mb-1">🎉 Your Assessment Bot is Ready!</h3>
+                              <p className="text-sm text-gray-600">Test your bot to see how it will interact with students</p>
+                            </div>
+                            <Button
+                              onClick={onTestBotClick}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+                              size="lg"
+                            >
+                              🤖 Test Your Bot
+                            </Button>
+                          </div>
+                        </div>
+                      );
                     } else {
                       // Regular message without special buttons
                       // Hide marker text if the corresponding state hasn't been set yet
@@ -2429,6 +2488,9 @@ function IntakeChat({
                       }
                       if (message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]') && !intakeConfirmationMessageId) {
                         displayContent = displayContent.replace('[INTAKE_CONFIRMATION_BUTTONS]', '');
+                      }
+                      if (message.content.includes('[TEST_YOUR_BOT]') && !testBotButtonMessageId) {
+                        displayContent = displayContent.replace('[TEST_YOUR_BOT]', '');
                       }
                       
                       return (
@@ -3431,31 +3493,11 @@ export default function NewIntake() {
             botVisualDescription={botVisualDescription}
             setBotVisualDescription={setBotVisualDescription}
             onInjectMessage={setMessageInjectionFunction}
+            stages={stages}
+            onTestBotClick={() => setPersonalityTesterExpanded(true)}
           />
           
-          {/* Test Your Bot Button in Chat Area */}
-          {(() => {
-            const stage3 = stages.find(s => s.id === 3);
-            const allStage3ComponentsComplete = stage3?.components.every(comp => comp.completed) || false;
-            
-            return allStage3ComponentsComplete && currentStageId === 3 && (
-              <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
-                <div className="text-center">
-                  <div className="mb-3">
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">🎉 Your Assessment Bot is Ready!</h3>
-                    <p className="text-sm text-gray-600">Test your bot to see how it will interact with students</p>
-                  </div>
-                  <Button
-                    onClick={() => setPersonalityTesterExpanded(true)}
-                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
-                    size="lg"
-                  >
-                    🤖 Test Your Bot
-                  </Button>
-                </div>
-              </div>
-            );
-          })()}
+
         </div>
         
         {/* Personality Testing Bot Modal - Full screen overlay */}
