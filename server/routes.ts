@@ -3308,76 +3308,50 @@ ${fileContent}`;
         systemPrompt = assessmentBotPrompt;
         console.log(`✅ DEBUG Claude Chat - Using INTAKE_ASSESSMENT_BOT_PROMPT with context`);
       } else if (assistantType === "personality-testing") {
-        // Handle personality testing bot - include ALL collected context
+        // Handle personality testing bot using GBPAC template
         const botPersonality = (req.body as any).botPersonality || "";
         const botName = (req.body as any).botName || "";
         const botJobTitle = (req.body as any).botJobTitle || "";
-        const boundaries = (req.body as any).boundaries || "";
+        const boundaries = (req.body as any).boundaries || "Follow normal school-appropriate standards";
+        const botWelcomeMessage = (req.body as any).botWelcomeMessage || "";
+        const assessmentTargets = (req.body as any).assessmentTargets || (req.body as any).stageContext?.learningTargets || [];
         const stageContext = (req.body as any).stageContext || {};
         const uploadedFiles = (req.body as any).uploadedFiles || [];
         
-        // Build comprehensive context for the assessment bot
-        let contextInfo = "";
-        
-        if (stageContext && Object.keys(stageContext).length > 0) {
-          contextInfo += `
-
-## COURSE CONTEXT (from Stage 1):
-- School District: ${stageContext.schoolDistrict || 'Not specified'}
-- School: ${stageContext.school || 'Not specified'}  
-- Subject: ${stageContext.subject || 'Not specified'}
-- Topic/Unit: ${stageContext.topic || 'Not specified'}
-- Grade Level: ${stageContext.gradeLevel || 'Not specified'}
-
-## YOUR ASSESSMENT PURPOSE:
-You are an assessment bot designed specifically for this course context. Your job is to evaluate student understanding of "${stageContext.topic || 'the topic'}" in ${stageContext.subject || 'this subject'} for ${stageContext.gradeLevel || 'these students'}.`;
-        }
-        
-        if (boundaries) {
-          contextInfo += `
-
-## BOUNDARIES & RESTRICTIONS:
-${boundaries}`;
-        }
-        
+        // Build uploaded files context
+        let uploadedFilesContext = "No additional materials provided";
         if (uploadedFiles && uploadedFiles.length > 0) {
           const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
           
           if (completedFiles.length > 0) {
-            const fileContent = completedFiles
-              .map((file: any) => `## ${file.name}:\n${file.extractedContent.substring(0, 500)}...`)
+            uploadedFilesContext = completedFiles
+              .map((file: any) => `${file.name}: ${file.extractedContent.substring(0, 300)}...`)
               .join('\n\n');
-            
-            contextInfo += `
-
-## COURSE MATERIALS PROVIDED (from Stage 2):
-Here are the materials the teacher provided for context:
-
-${fileContent}`;
           }
         }
         
-        systemPrompt = `${PERSONALITY_TESTING_PROMPT}
-
-## YOUR IDENTITY:
-- Name: ${botName || 'Assessment Bot'}
-- Role: ${botJobTitle || 'Educational Assistant'}
-
-## SPECIFIC PERSONALITY TO EMBODY:
-${botPersonality}
-
-${contextInfo}
-
-## TESTING INSTRUCTIONS:
-This is a testing environment where the teacher can experience how you would interact with their actual students. Demonstrate your personality while staying focused on assessing understanding of the specific topic and grade level mentioned above.
-
-Remember to stay true to your personality while being helpful, educational, and appropriate for the specified grade level.`;
+        // Use GBPAC template with variable substitution
+        systemPrompt = PERSONALITY_TESTING_PROMPT
+          .replace('[botName]', botName || 'Assessment Bot')
+          .replace('[botJobTitle]', botJobTitle || 'Educational Assistant')
+          .replace('[assessmentTargets]', Array.isArray(assessmentTargets) ? assessmentTargets.join(', ') : assessmentTargets || 'general understanding')
+          .replace('[botPersonality]', botPersonality)
+          .replace('[gradeLevel]', stageContext.gradeLevel || 'appropriate grade level')
+          .replace(/\[gradeLevel\]/g, stageContext.gradeLevel || 'appropriate grade level') // Replace all instances
+          .replace('[subject]', stageContext.subject || 'this subject')
+          .replace(/\[subject\]/g, stageContext.subject || 'this subject') // Replace all instances
+          .replace('[topic]', stageContext.topic || 'the topic')
+          .replace('[uploadedFiles]', uploadedFilesContext)
+          .replace('[botWelcomeMessage]', botWelcomeMessage || 'Welcome! Let\'s assess your understanding.')
+          .replace('[boundaries]', boundaries);
         
-        console.log(`✅ DEBUG Claude Chat - Using PERSONALITY_TESTING_PROMPT with comprehensive context`);
+        console.log(`✅ DEBUG Claude Chat - Using GBPAC template for personality testing`);
         console.log(`🎯 DEBUG - Bot Identity: ${botName} (${botJobTitle})`);
         console.log(`🎯 DEBUG - Course Context: ${stageContext.subject} - ${stageContext.topic} (Grade ${stageContext.gradeLevel})`);
+        console.log(`🎯 DEBUG - Assessment Targets: ${Array.isArray(assessmentTargets) ? assessmentTargets.join(', ') : assessmentTargets}`);
         console.log(`🎯 DEBUG - Uploaded Files: ${uploadedFiles?.length || 0} files`);
-        console.log(`🎯 DEBUG - Boundaries provided: ${boundaries ? 'Yes' : 'No'}`);
+        console.log(`🎯 DEBUG - Welcome Message: ${botWelcomeMessage ? 'Yes' : 'No'}`);
+        console.log(`🎯 DEBUG - Boundaries: ${boundaries}`);
       }
       
       // Final debug log to see what system prompt is actually being sent to Claude
@@ -3936,6 +3910,65 @@ Remember to stay true to your personality while being helpful, educational, and 
   });
 
   // AI-powered bot name and description extraction endpoint
+  app.post("/api/intake/generate-welcome-message", async (req, res) => {
+    try {
+      const { botName, botJobTitle, botPersonality, stageContext } = req.body;
+
+      if (!botName || !botPersonality) {
+        return res.status(400).json({ error: "Bot name and personality are required" });
+      }
+
+      const welcomePrompt = `Generate a warm, engaging welcome message for students who are about to interact with an assessment bot. This message will appear on the page before they start chatting with the bot.
+
+## Bot Details:
+- Name: ${botName}
+- Role: ${botJobTitle || 'Assessment Bot'}
+- Personality: ${botPersonality}
+
+## Course Context:
+- Subject: ${stageContext?.subject || 'N/A'}
+- Topic: ${stageContext?.topic || 'N/A'} 
+- Grade Level: ${stageContext?.gradeLevel || 'N/A'}
+
+## Requirements:
+- Introduce who the bot is with personality
+- Explain that this is an assessment conversation
+- Be encouraging and welcoming
+- Stay true to the bot's character
+- Keep it concise (2-3 sentences max)
+- Age-appropriate for the grade level
+- Don't mention specific learning targets
+
+Generate only the welcome message text, nothing else.`;
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 200,
+        temperature: 0.7,
+        messages: [
+          {
+            role: "user",
+            content: welcomePrompt
+          }
+        ]
+      });
+
+      const welcomeMessage = response.content[0].type === 'text' ? response.content[0].text.trim() : 'Welcome! Let\'s assess your understanding.';
+
+      res.json({
+        success: true,
+        welcomeMessage: welcomeMessage
+      });
+
+    } catch (error: any) {
+      console.error('Welcome message generation error:', error);
+      res.status(500).json({
+        error: "Failed to generate welcome message",
+        details: error.message
+      });
+    }
+  });
+
   app.post("/api/intake/extract-bot-info", async (req, res) => {
     try {
       const { botResponse } = req.body;

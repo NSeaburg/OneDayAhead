@@ -541,6 +541,33 @@ function IntakeChat({
             console.log("🎨 Set confirmed visual description (background):", extractionData.visualDescription);
           }
           
+          // Generate welcome message silently in background
+          if (extractionData.name && extractionData.personality) {
+            try {
+              const welcomeResponse = await fetch("/api/intake/generate-welcome-message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                  botName: extractionData.name,
+                  botJobTitle: extractionData.jobTitle,
+                  botPersonality: extractionData.personality,
+                  stageContext: stageContext,
+                }),
+              });
+
+              if (welcomeResponse.ok) {
+                const welcomeData = await welcomeResponse.json();
+                console.log("🎯 Generated welcome message (background):", welcomeData.welcomeMessage);
+                
+                // Add welcome message to extraction data
+                extractionData.welcomeMessage = welcomeData.welcomeMessage;
+              }
+            } catch (error) {
+              console.error("Error generating welcome message:", error);
+            }
+          }
+          
           // Store the confirmed persona data in parent component state
           if (onComponentComplete) {
             onComponentComplete(extractionData);
