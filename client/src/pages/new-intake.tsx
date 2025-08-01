@@ -1755,7 +1755,6 @@ function IntakeChat({
           </div>
         </div>
       </div>
-
       {/* Messages Area - Uses same structure as successful Reggie bot */}
       <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
         {/* Show avatar selection if active */}
@@ -2138,7 +2137,6 @@ function IntakeChat({
                               {beforeButtons}
                             </ReactMarkdown>
                           )}
-                          
                           {/* Boundaries buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
@@ -2165,9 +2163,7 @@ function IntakeChat({
                                 await sendButtonMessage("No additional boundaries needed. Let's create the avatar.");
                               }}
                               className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
-                            >
-                              Looks good
-                            </Button>
+                            >Use Standard Boundaries</Button>
                             <Button 
                               onClick={async () => {
                                 console.log("🚧 Add specific boundaries clicked");
@@ -2193,7 +2189,6 @@ function IntakeChat({
                               Add additional boundaries
                             </Button>
                           </div>
-                          
                           {/* Content after buttons */}
                           {afterButtons && (
                             <ReactMarkdown
@@ -2522,11 +2517,7 @@ function IntakeChat({
                 })()
               ) : (
                 // Check if this user message has card data to render as completed card
-                message.cardData ? (
-                  <CompletedIntakeCard data={message.cardData} />
-                ) : (
-                  <div className="whitespace-pre-wrap">{message.content}</div>
-                )
+                (message.cardData ? (<CompletedIntakeCard data={message.cardData} />) : (<div className="whitespace-pre-wrap">{message.content}</div>))
               )}
             </div>
           </div>
@@ -2561,7 +2552,6 @@ function IntakeChat({
         {/* Reference for scrolling to bottom */}
         <div ref={messagesEndRef} />
       </div>
-
       {/* Avatar Selection Component */}
       {showAvatarSelection && avatarPrompt && (
         <div className="p-4 border-t border-gray-200">
@@ -2572,9 +2562,6 @@ function IntakeChat({
           />
         </div>
       )}
-
-
-
       {/* Input Area */}
       <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
         <div className="flex gap-2">
@@ -3134,8 +3121,6 @@ export default function NewIntake() {
 
   return (
     <div className="h-screen p-4 md:p-6 flex flex-col bg-gray-50">
-
-
       {/* Main content area with sidebar and chat */}
       <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 min-h-0">
         {/* Left Sidebar */}
@@ -3205,7 +3190,6 @@ export default function NewIntake() {
                         {stage.description}
                       </p>
                     )}
-
                     {/* Expanded content - only show if stage is active */}
                     {isExpanded && (
                       <>
