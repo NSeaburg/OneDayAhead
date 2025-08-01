@@ -1456,22 +1456,26 @@ function IntakeChat({
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
           console.log("🎨 Avatar buttons detected in streaming response - setting state to:", finalMessageId);
           
-          // Multiple attempts with increasing delays to ensure buttons appear
-          setTimeout(() => {
-            console.log("🎨 Setting avatar button state attempt 1");
-            setAvatarButtonMessageId(finalMessageId);
-          }, 100);
+          // Set state immediately
+          setAvatarButtonMessageId(finalMessageId);
           
+          // Additional attempts with delays to ensure buttons appear
           setTimeout(() => {
-            console.log("🎨 Force re-render for avatar buttons attempt 2");
+            console.log("🎨 Force re-render for avatar buttons attempt 1");
             setMessages(prev => prev.map(msg => 
               msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
             ));
-          }, 300);
+            setAvatarButtonMessageId(finalMessageId); // Re-set state
+          }, 50);
           
           setTimeout(() => {
-            console.log("🎨 Re-setting avatar button state attempt 3");
-            setAvatarButtonMessageId(finalMessageId); // Re-set state
+            console.log("🎨 Re-setting avatar button state attempt 2");
+            setAvatarButtonMessageId(finalMessageId); // Re-set state again
+          }, 200);
+          
+          setTimeout(() => {
+            console.log("🎨 Final attempt to set avatar button state");
+            setAvatarButtonMessageId(finalMessageId); // Final re-set
           }, 500);
         }
 
@@ -1686,6 +1690,13 @@ function IntakeChat({
                     const hasPersonaConfirmationButtons = message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]');
                     const hasIntakeConfirmationButtons = message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]');
                     const hasAvatarButtons = message.content.includes('[AVATAR_BUTTONS_HERE]');
+                    
+                    // Debug avatar button detection
+                    if (hasAvatarButtons) {
+                      console.log("🎨 AVATAR DEBUG - Found AVATAR_BUTTONS_HERE in message:", message.id);
+                      console.log("🎨 AVATAR DEBUG - Current avatarButtonMessageId:", avatarButtonMessageId);
+                      console.log("🎨 AVATAR DEBUG - State match:", avatarButtonMessageId === message.id);
+                    }
                     const hasBoundariesButtons = message.content.includes('[BOUNDARIES_BUTTONS]');
                     
                     // Debug boundaries button state
@@ -1857,6 +1868,11 @@ function IntakeChat({
                         </div>
                       );
                     } else if (hasAvatarButtons && avatarButtonMessageId === message.id) {
+                      console.log("🎨 AVATAR DEBUG - Rendering avatar buttons for message:", message.id);
+                      console.log("🎨 AVATAR DEBUG - avatarButtonMessageId:", avatarButtonMessageId);
+                      console.log("🎨 AVATAR DEBUG - hasAvatarButtons:", hasAvatarButtons);
+                      console.log("🎨 AVATAR DEBUG - Message content preview:", message.content.substring(0, 100));
+                      
                       // Split content around the marker
                       const [beforeButtons, afterButtons] = message.content.split('[AVATAR_BUTTONS_HERE]');
                       
