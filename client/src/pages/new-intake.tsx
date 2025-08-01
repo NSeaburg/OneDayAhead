@@ -2511,29 +2511,7 @@ function IntakeChat({
         </div>
       )}
 
-      {/* Test Your Bot Button in Chat Area */}
-      {(() => {
-        const stage3 = stages.find(s => s.id === 3);
-        const allStage3ComponentsComplete = stage3?.components.every(comp => comp.completed) || false;
-        
-        return allStage3ComponentsComplete && currentStageId === 3 && (
-          <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
-            <div className="text-center">
-              <div className="mb-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-1">🎉 Your Assessment Bot is Ready!</h3>
-                <p className="text-sm text-gray-600">Test your bot to see how it will interact with students</p>
-              </div>
-              <Button
-                onClick={() => setPersonalityTesterExpanded(true)}
-                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
-                size="lg"
-              >
-                🤖 Test Your Bot
-              </Button>
-            </div>
-          </div>
-        );
-      })()}
+
 
       {/* Input Area */}
       <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
@@ -3454,6 +3432,30 @@ export default function NewIntake() {
             setBotVisualDescription={setBotVisualDescription}
             onInjectMessage={setMessageInjectionFunction}
           />
+          
+          {/* Test Your Bot Button in Chat Area */}
+          {(() => {
+            const stage3 = stages.find(s => s.id === 3);
+            const allStage3ComponentsComplete = stage3?.components.every(comp => comp.completed) || false;
+            
+            return allStage3ComponentsComplete && currentStageId === 3 && (
+              <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
+                <div className="text-center">
+                  <div className="mb-3">
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">🎉 Your Assessment Bot is Ready!</h3>
+                    <p className="text-sm text-gray-600">Test your bot to see how it will interact with students</p>
+                  </div>
+                  <Button
+                    onClick={() => setPersonalityTesterExpanded(true)}
+                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+                    size="lg"
+                  >
+                    🤖 Test Your Bot
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
         
         {/* Personality Testing Bot Modal - Full screen overlay */}
