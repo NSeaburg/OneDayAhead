@@ -1498,6 +1498,19 @@ function IntakeChat({
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
           console.log("🚧 Boundaries confirmation buttons detected in streaming response");
           setBoundariesConfirmationMessageId(finalMessageId);
+          
+          // Multiple attempts to ensure buttons appear
+          setTimeout(() => {
+            console.log("🚧 Force re-render for boundaries confirmation buttons attempt 1");
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+          }, 100);
+          
+          setTimeout(() => {
+            console.log("🚧 Re-setting boundaries confirmation button state attempt 2");
+            setBoundariesConfirmationMessageId(finalMessageId); // Re-set state
+          }, 300);
         }
 
         // Check for assessment targets confirmation button marker in Stage 2 (more robust detection)
@@ -1905,7 +1918,7 @@ function IntakeChat({
                           )}
                         </div>
                       );
-                    } else if (hasBoundariesButtons) {
+                    } else if (hasBoundariesButtons && boundariesButtonMessageId === message.id) {
                       console.log("🚧 BOUNDARIES DEBUG - Rendering boundaries buttons for message:", message.id);
                       console.log("🚧 BOUNDARIES DEBUG - boundariesButtonMessageId:", boundariesButtonMessageId);
                       console.log("🚧 BOUNDARIES DEBUG - hasBoundariesButtons:", hasBoundariesButtons);
@@ -2247,6 +2260,29 @@ function IntakeChat({
                       );
                     } else {
                       // Regular message without special buttons
+                      // Hide marker text if the corresponding state hasn't been set yet
+                      let displayContent = message.content;
+                      
+                      // Remove markers that haven't been activated yet
+                      if (message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]') && !boundariesConfirmationMessageId) {
+                        displayContent = displayContent.replace('[BOUNDARIES_CONFIRMATION_BUTTONS]', '');
+                      }
+                      if (message.content.includes('[AVATAR_BUTTONS_HERE]') && !avatarButtonMessageId) {
+                        displayContent = displayContent.replace('[AVATAR_BUTTONS_HERE]', '');
+                      }
+                      if (message.content.includes('[BOUNDARIES_BUTTONS]') && !boundariesButtonMessageId) {
+                        displayContent = displayContent.replace('[BOUNDARIES_BUTTONS]', '');
+                      }
+                      if (message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]') && !assessmentTargetsConfirmationMessageId) {
+                        displayContent = displayContent.replace('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]', '');
+                      }
+                      if (message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]') && !personaConfirmationMessageId) {
+                        displayContent = displayContent.replace('[PERSONA_CONFIRMATION_BUTTONS]', '');
+                      }
+                      if (message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]') && !intakeConfirmationMessageId) {
+                        displayContent = displayContent.replace('[INTAKE_CONFIRMATION_BUTTONS]', '');
+                      }
+                      
                       return (
                         <div className="prose prose-sm max-w-none">
                           <ReactMarkdown
@@ -2267,7 +2303,7 @@ function IntakeChat({
                               pre: () => null, // Hide code blocks completely
                             }}
                           >
-                            {message.content}
+                            {displayContent}
                           </ReactMarkdown>
                         </div>
                       );
