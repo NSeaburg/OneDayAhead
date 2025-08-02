@@ -223,7 +223,7 @@ function IntakeChat({
             break;
             
           case 'set_boundaries':
-            console.log('🔍 JSON DETECTION - Setting boundaries selection buttons');
+            console.log('🔍 JSON DETECTION - Setting boundaries buttons');
             setBoundariesButtonMessageId(messageId);
             break;
             
@@ -235,13 +235,10 @@ function IntakeChat({
           case 'generate_avatar':
             console.log('🔍 JSON DETECTION - Setting avatar generation buttons');
             setAvatarButtonMessageId(messageId);
-            if (parsed.data?.prompt) {
-              setAvatarPrompt(parsed.data.prompt);
-            }
             break;
             
           case 'test_bot':
-            console.log('🔍 JSON DETECTION - Setting test bot button');
+            console.log('🔍 JSON DETECTION - Setting test bot buttons');
             setTestBotButtonMessageId(messageId);
             break;
             
@@ -2087,40 +2084,34 @@ function IntakeChat({
                           )}
                         </div>
                       );
-                    } else if (hasAvatarButtons && avatarButtonMessageId === message.id) {
+                    } else if (avatarButtonMessageId === message.id) {
                       console.log("🎨 AVATAR DEBUG - Rendering avatar buttons for message:", message.id);
-                      console.log("🎨 AVATAR DEBUG - avatarButtonMessageId:", avatarButtonMessageId);
-                      console.log("🎨 AVATAR DEBUG - hasAvatarButtons:", hasAvatarButtons);
-                      console.log("🎨 AVATAR DEBUG - Message content preview:", message.content.substring(0, 100));
-                      
-                      // Split content around the marker
-                      const [beforeButtons, afterButtons] = message.content.split('[AVATAR_BUTTONS_HERE]');
+                      // Remove JSON blocks from display since we use JSON detection
+                      const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
                       
                       return (
                         <div className="prose prose-sm max-w-none">
-                          {/* Content before buttons */}
-                          {beforeButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {beforeButtons}
-                            </ReactMarkdown>
-                          )}
+                          {/* Message content */}
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => (
+                                <div className="mb-2 last:mb-0">{children}</div>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-bold text-gray-900">
+                                  {children}
+                                </strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                              ),
+                              br: () => <br />,
+                              code: () => null,
+                              pre: () => null,
+                            }}
+                          >
+                            {contentWithoutJson}
+                          </ReactMarkdown>
                           
                           {/* Avatar buttons */}
                           <AvatarButtons
@@ -2128,76 +2119,48 @@ function IntakeChat({
                             onReviseDescription={handleReviseDescription}
                             isGenerating={isGeneratingAvatar}
                           />
-                          
-                          {/* Content after buttons */}
-                          {afterButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {afterButtons}
-                            </ReactMarkdown>
-                          )}
                         </div>
                       );
-                    } else if (hasBoundariesButtons && boundariesButtonMessageId === message.id) {
+                    } else if (boundariesButtonMessageId === message.id) {
                       console.log("🚧 BOUNDARIES DEBUG - Rendering boundaries buttons for message:", message.id);
-                      console.log("🚧 BOUNDARIES DEBUG - boundariesButtonMessageId:", boundariesButtonMessageId);
-                      console.log("🚧 BOUNDARIES DEBUG - hasBoundariesButtons:", hasBoundariesButtons);
-                      // Split content around the boundaries marker
-                      const [beforeButtons, afterButtons] = message.content.split('[BOUNDARIES_BUTTONS]');
+                      // Remove JSON blocks from display since we use JSON detection
+                      const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
                       
                       return (
                         <div className="prose prose-sm max-w-none">
-                          {/* Content before buttons */}
-                          {beforeButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {beforeButtons}
-                            </ReactMarkdown>
-                          )}
+                          {/* Message content */}
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => (
+                                <div className="mb-2 last:mb-0">{children}</div>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-bold text-gray-900">
+                                  {children}
+                                </strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                              ),
+                              br: () => <br />,
+                              code: () => null,
+                              pre: () => null,
+                            }}
+                          >
+                            {contentWithoutJson}
+                          </ReactMarkdown>
                           {/* Boundaries buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
                               onClick={async () => {
                                 console.log("🚧 Looks good button clicked for boundaries");
                                 
-                                // Replace buttons with confirmation message
+                                // Replace with confirmation message (remove JSON)
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesButtonMessageId
                                     ? { 
                                         ...msg, 
-                                        content: msg.content.replace('[BOUNDARIES_BUTTONS]', "\n*Perfect! No additional boundaries needed. Now let's create your bot's visual avatar.*")
+                                        content: contentWithoutJson + "\n\n*Perfect! No additional boundaries needed. Now let's create your bot's visual avatar.*"
                                       }
                                     : msg
                                 ));
@@ -2217,12 +2180,12 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🚧 Add specific boundaries clicked");
                                 
-                                // Replace buttons with revision message
+                                // Replace with revision message (remove JSON)
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesButtonMessageId
                                     ? { 
                                         ...msg, 
-                                        content: msg.content.replace('[BOUNDARIES_BUTTONS]', "\n*What specific boundaries would you like me to add for your bot? Please describe what topics or approaches it should avoid.*")
+                                        content: contentWithoutJson + "\n\n*What specific boundaries would you like me to add for your bot? Please describe what topics or approaches it should avoid.*"
                                       }
                                     : msg
                                 ));
@@ -2263,35 +2226,33 @@ function IntakeChat({
                           )}
                         </div>
                       );
-                    } else if (hasBoundariesConfirmationButtons && boundariesConfirmationMessageId === message.id) {
-                      // Split content around the boundaries confirmation marker
-                      const [beforeButtons, afterButtons] = message.content.split('[BOUNDARIES_CONFIRMATION_BUTTONS]');
+                    } else if (boundariesConfirmationMessageId === message.id) {
+                      // Remove JSON blocks from display since we use JSON detection
+                      const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
                       
                       return (
                         <div className="prose prose-sm max-w-none">
-                          {/* Content before buttons */}
-                          {beforeButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {beforeButtons}
-                            </ReactMarkdown>
-                          )}
+                          {/* Message content */}
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => (
+                                <div className="mb-2 last:mb-0">{children}</div>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-bold text-gray-900">
+                                  {children}
+                                </strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                              ),
+                              br: () => <br />,
+                              code: () => null,
+                              pre: () => null,
+                            }}
+                          >
+                            {contentWithoutJson}
+                          </ReactMarkdown>
                           
                           {/* Boundaries confirmation buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
@@ -2299,12 +2260,12 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🚧 Yes, boundaries correct button clicked");
                                 
-                                // Replace buttons with confirmation message
+                                // Replace with confirmation message (remove JSON)
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: msg.content.replace('[BOUNDARIES_CONFIRMATION_BUTTONS]', "\n*Perfect! Those boundaries are confirmed.*")
+                                        content: contentWithoutJson + "\n\n*Perfect! Those boundaries are confirmed.*"
                                       }
                                     : msg
                                 ));
@@ -2335,12 +2296,12 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🚧 Let me revise boundaries button clicked");
                                 
-                                // Replace buttons with revision message
+                                // Replace with revision message (remove JSON)
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: msg.content.replace('[BOUNDARIES_CONFIRMATION_BUTTONS]', "\n*What changes would you like me to make to the boundaries?*")
+                                        content: contentWithoutJson + "\n\n*What changes would you like me to make to the boundaries?*"
                                       }
                                     : msg
                                 ));
@@ -2357,30 +2318,6 @@ function IntakeChat({
                               Let me revise that
                             </Button>
                           </div>
-                          
-                          {/* Content after buttons */}
-                          {afterButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {afterButtons}
-                            </ReactMarkdown>
-                          )}
                         </div>
                       );
                     } else if (assessmentTargetsConfirmationMessageId === message.id) {
