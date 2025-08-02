@@ -2383,35 +2383,34 @@ function IntakeChat({
                           )}
                         </div>
                       );
-                    } else if (hasAssessmentTargetsConfirmationButtons && assessmentTargetsConfirmationMessageId === message.id) {
-                      // Split content around the assessment targets confirmation marker
-                      const [beforeButtons, afterButtons] = message.content.split('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]');
+                    } else if (assessmentTargetsConfirmationMessageId === message.id) {
+                      // Display the full content without JSON markers, since we now use JSON detection
+                      // Remove JSON blocks from display
+                      const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
                       
                       return (
                         <div className="prose prose-sm max-w-none">
-                          {/* Content before buttons */}
-                          {beforeButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {beforeButtons}
-                            </ReactMarkdown>
-                          )}
+                          {/* Message content */}
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => (
+                                <div className="mb-2 last:mb-0">{children}</div>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-bold text-gray-900">
+                                  {children}
+                                </strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                              ),
+                              br: () => <br />,
+                              code: () => null,
+                              pre: () => null,
+                            }}
+                          >
+                            {contentWithoutJson}
+                          </ReactMarkdown>
                           
                           {/* Assessment targets confirmation buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
@@ -2419,12 +2418,12 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🎯 Yes, those targets work button clicked");
                                 
-                                // Replace buttons with confirmation message
+                                // Replace with confirmation message (remove JSON)
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === assessmentTargetsConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: msg.content.replace('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]', "\n*Perfect! Those assessment targets look great.*")
+                                        content: contentWithoutJson + "\n\n*Perfect! Those assessment targets look great.*"
                                       }
                                     : msg
                                 ));
@@ -2443,12 +2442,12 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🎯 Let me revise those button clicked");
                                 
-                                // Replace buttons with revision message
+                                // Replace with revision message (remove JSON)
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === assessmentTargetsConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: msg.content.replace('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]', "\n*What changes would you like me to make to the assessment targets?*")
+                                        content: contentWithoutJson + "\n\n*What changes would you like me to make to the assessment targets?*"
                                       }
                                     : msg
                                 ));
@@ -2464,30 +2463,6 @@ function IntakeChat({
                               Let me revise those
                             </Button>
                           </div>
-                          
-                          {/* Content after buttons */}
-                          {afterButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {afterButtons}
-                            </ReactMarkdown>
-                          )}
                         </div>
                       );
                     } else if (hasTestButton && testBotButtonMessageId === message.id) {
