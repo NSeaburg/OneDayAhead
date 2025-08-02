@@ -3318,14 +3318,14 @@ ${fileContent}`;
         const stageContext = (req.body as any).stageContext || {};
         const uploadedFiles = (req.body as any).uploadedFiles || [];
         
-        // Build uploaded files context
+        // Build uploaded files context from summaries
         let uploadedFilesContext = "No additional materials provided";
         if (uploadedFiles && uploadedFiles.length > 0) {
           const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
           
           if (completedFiles.length > 0) {
             uploadedFilesContext = completedFiles
-              .map((file: any) => `${file.name}: ${file.extractedContent.substring(0, 300)}...`)
+              .map((file: any) => `${file.name}: ${file.extractedContent}`) // Use full summary (no truncation)
               .join('\n\n');
           }
         }
@@ -3964,6 +3964,65 @@ Generate only the welcome message text, nothing else.`;
       console.error('Welcome message generation error:', error);
       res.status(500).json({
         error: "Failed to generate welcome message",
+        details: error.message
+      });
+    }
+  });
+
+  // Content summarization endpoint
+  app.post("/api/intake/summarize-content", async (req, res) => {
+    try {
+      const { content, fileName, fileType, subject, topic, gradeLevel } = req.body;
+
+      if (!content) {
+        return res.status(400).json({ error: "Content is required" });
+      }
+
+      const summarizationPrompt = `You are analyzing course materials to create a concise summary for an AI assessment bot. The bot needs to understand what students just learned.
+
+## Course Context:
+- Subject: ${subject || 'Not specified'}
+- Topic: ${topic || 'Not specified'}
+- Grade Level: ${gradeLevel || 'Not specified'}
+- File: ${fileName || 'Unknown file'}
+- Type: ${fileType || 'Unknown type'}
+
+## Content to Summarize:
+${content}
+
+## Instructions:
+Create a brief, focused summary (2-3 sentences max) that captures:
+1. The main learning concepts presented
+2. Key facts or skills students should have gained
+3. Any specific examples or cases mentioned
+
+Focus on what students were supposed to learn, not implementation details. Be concise but informative.
+
+Generate only the summary text, nothing else.`;
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 150,
+        temperature: 0.3,
+        messages: [
+          {
+            role: "user",
+            content: summarizationPrompt
+          }
+        ]
+      });
+
+      const summary = response.content[0].type === 'text' ? response.content[0].text.trim() : 'Content uploaded and processed.';
+
+      res.json({
+        success: true,
+        summary: summary
+      });
+
+    } catch (error: any) {
+      console.error('Content summarization error:', error);
+      res.status(500).json({
+        error: "Failed to summarize content",
         details: error.message
       });
     }

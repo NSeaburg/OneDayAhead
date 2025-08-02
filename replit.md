@@ -51,6 +51,8 @@ The platform is a full-stack web application.
 - **AI-Powered Intake Wizard**: Guides teachers through content creation with conversational AI, generating dynamic educational content and UI configurations.
 - **Dynamic UI Configuration**: All UI elements for assessment and teaching bots are configurable via content packages, enabling full customization of bot titles, descriptions, teaching approaches, and more.
 - **Content Package Structure**: Standardized file-based configuration (`ui-config.json`, `assessment-criteria.json`, `feedback-instructions.json`) for interchangeable experiences.
+- **Content Summarization**: Uploaded materials (PDFs, text files, YouTube transcripts, Canvas IMSCC files) are automatically summarized using Claude for concise assessment context rather than storing raw content.
+- **GBPAC Assessment Framework**: Assessment bots use Goals, Boundaries, Personality, Audience, Context template system with comprehensive variable substitution for consistent deployment-ready experiences.
 
 ## External Dependencies
 

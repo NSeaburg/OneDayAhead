@@ -2888,25 +2888,63 @@ export default function NewIntake() {
         const result = await response.json();
 
         if (result.success) {
-          let extractedContent = "";
+          let rawContent = "";
           let interpretation = "";
           
           if (endpoint === "/api/intake/upload-imscc") {
             // Handle Canvas .imscc files
-            extractedContent = result.summary;
-            interpretation = `✅ Parsed Canvas course "${result.courseName}". Found ${result.fullData.moduleCount} modules, ${result.fullData.pagesCount} pages, and ${result.fullData.quizzesCount} quizzes. This course structure is now available for the AI assistant to reference.`;
+            rawContent = result.summary;
+            interpretation = `✅ Parsed Canvas course "${result.courseName}". Found ${result.fullData.moduleCount} modules, ${result.fullData.pagesCount} pages, and ${result.fullData.quizzesCount} quizzes.`;
           } else {
             // Handle PDF and text files
-            extractedContent = result.text;
-            interpretation = `✅ Extracted text from ${file.name}. This content is now available for the AI assistant to reference.`;
+            rawContent = result.text;
+            interpretation = `✅ Extracted text from ${file.name}.`;
           }
           
-          handleFileUpload({
-            ...uploadedFile,
-            processingStatus: "completed",
-            extractedContent,
-            interpretation,
-          });
+          // Now summarize the content
+          try {
+            const summarizeResponse = await fetch('/api/intake/summarize-content', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content: rawContent,
+                fileName: file.name,
+                fileType: file.type,
+                subject: stageOneData?.subject,
+                topic: stageOneData?.topic,
+                gradeLevel: stageOneData?.gradeLevel,
+              }),
+            });
+
+            if (summarizeResponse.ok) {
+              const summaryResult = await summarizeResponse.json();
+              handleFileUpload({
+                ...uploadedFile,
+                processingStatus: "completed",
+                extractedContent: summaryResult.summary, // Store summary instead of raw content
+                interpretation: interpretation + " Content summarized for assessment context.",
+              });
+            } else {
+              // Fallback if summarization fails
+              handleFileUpload({
+                ...uploadedFile,
+                processingStatus: "completed",
+                extractedContent: rawContent.substring(0, 500) + "...", // Truncated fallback
+                interpretation: interpretation + " Content processed for assessment context.",
+              });
+            }
+          } catch (summaryError) {
+            console.error('Content summarization failed:', summaryError);
+            // Fallback if summarization fails
+            handleFileUpload({
+              ...uploadedFile,
+              processingStatus: "completed",
+              extractedContent: rawContent.substring(0, 500) + "...", // Truncated fallback
+              interpretation: interpretation + " Content processed for assessment context.",
+            });
+          }
         } else {
           handleFileUpload({
             ...uploadedFile,
@@ -2983,24 +3021,67 @@ export default function NewIntake() {
           };
           handleFileUpload(errorFile);
         } else {
-          const youtubeFile: UploadedFile = {
-            id: Date.now().toString(),
-            name: result.title || "YouTube Video",
-            type: "video/youtube",
-            size: 0,
-            processingStatus: "completed",
-            extractedContent: result.transcript,
-            interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". This content is now available for the AI assistant to reference.`,
-          };
+          // Summarize the YouTube transcript
+          try {
+            const summarizeResponse = await fetch('/api/intake/summarize-content', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content: result.transcript,
+                fileName: result.title || "YouTube Video",
+                fileType: "video/youtube",
+                subject: stageOneData?.subject,
+                topic: stageOneData?.topic,
+                gradeLevel: stageOneData?.gradeLevel,
+              }),
+            });
 
-          console.log("🔍 FRONTEND YOUTUBE DEBUG - Created file object:", {
-            id: youtubeFile.id,
-            name: youtubeFile.name,
-            extractedContent: youtubeFile.extractedContent,
-            contentLength: youtubeFile.extractedContent?.length || 0
-          });
+            let finalContent = result.transcript;
+            let interpretation = `✅ Extracted transcript from YouTube video: "${result.title}".`;
 
-          handleFileUpload(youtubeFile);
+            if (summarizeResponse.ok) {
+              const summaryResult = await summarizeResponse.json();
+              finalContent = summaryResult.summary;
+              interpretation += " Content summarized for assessment context.";
+            } else {
+              finalContent = result.transcript.substring(0, 500) + "...";
+              interpretation += " Content processed for assessment context.";
+            }
+
+            const youtubeFile: UploadedFile = {
+              id: Date.now().toString(),
+              name: result.title || "YouTube Video",
+              type: "video/youtube",
+              size: 0,
+              processingStatus: "completed",
+              extractedContent: finalContent,
+              interpretation: interpretation,
+            };
+
+            console.log("🔍 FRONTEND YOUTUBE DEBUG - Created file object:", {
+              id: youtubeFile.id,
+              name: youtubeFile.name,
+              extractedContent: youtubeFile.extractedContent,
+              contentLength: youtubeFile.extractedContent?.length || 0
+            });
+
+            handleFileUpload(youtubeFile);
+          } catch (summaryError) {
+            console.error('YouTube content summarization failed:', summaryError);
+            // Fallback if summarization fails
+            const youtubeFile: UploadedFile = {
+              id: Date.now().toString(),
+              name: result.title || "YouTube Video",
+              type: "video/youtube",
+              size: 0,
+              processingStatus: "completed",
+              extractedContent: result.transcript.substring(0, 500) + "...",
+              interpretation: `✅ Extracted transcript from YouTube video: "${result.title}". Content processed for assessment context.`,
+            };
+            handleFileUpload(youtubeFile);
+          }
         }
         setYoutubeUrl("");
       } else {
