@@ -56,7 +56,28 @@ export function PersonalityTestingBot({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showNextButton, setShowNextButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // JSON Button Detection System for Assessment Complete
+  const handleJsonButtonDetection = (botResponse: string) => {
+    const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+    let match;
+    
+    while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+      try {
+        const jsonStr = match[1].trim();
+        const parsed = JSON.parse(jsonStr);
+        
+        if (parsed.action === 'assessment_complete') {
+          console.log('🔍 PersonalityTestingBot - Assessment complete detected');
+          setShowNextButton(true);
+        }
+      } catch (error) {
+        console.error('🔍 PersonalityTestingBot - Error parsing JSON block:', error);
+      }
+    }
+  };
 
   // Initialize with welcome message
   useEffect(() => {
@@ -181,6 +202,9 @@ Feel free to ask me questions or have a conversation to see how I interact with 
               : msg
           )
         );
+
+        // Handle JSON button detection for assessment completion
+        handleJsonButtonDetection(botResponse);
       }
     } catch (error) {
       console.error("Chat error:", error);
@@ -340,6 +364,14 @@ Feel free to ask me questions or have a conversation to see how I interact with 
             <Send className="w-4 h-4" />
           </Button>
         </div>
+        {showNextButton && (
+          <Button 
+            onClick={onClose}
+            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Next
+          </Button>
+        )}
         <Button 
           variant="outline" 
           size="sm" 

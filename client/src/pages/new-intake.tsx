@@ -187,48 +187,81 @@ function IntakeChat({
   // Fallback check system to ensure buttons appear if they were missed
   const checkAndFixMissingButtons = () => {
     messages.forEach((message) => {
-      // Check for avatar buttons that should be displayed but aren't
-      if (message.content.includes('[AVATAR_BUTTONS_HERE]') && !avatarButtonMessageId) {
-        console.log("🔧 FALLBACK: Found missing avatar buttons, fixing for message:", message.id);
-        setAvatarButtonMessageId(message.id);
-      }
-      
-      // Check for boundaries buttons that should be displayed but aren't
-      if (message.content.includes('[BOUNDARIES_BUTTONS]') && !boundariesButtonMessageId) {
-        console.log("🔧 FALLBACK: Found missing boundaries buttons, fixing for message:", message.id);
-        setBoundariesButtonMessageId(message.id);
-      }
-      
-      // Check for boundaries confirmation buttons that should be displayed but aren't
-      if (message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]') && !boundariesConfirmationMessageId) {
-        console.log("🔧 FALLBACK: Found missing boundaries confirmation buttons, fixing for message:", message.id);
-        setBoundariesConfirmationMessageId(message.id);
-      }
-      
-      // Check for persona confirmation buttons that should be displayed but aren't
-      if (message.content.includes('[PERSONA_CONFIRMATION_BUTTONS]') && !personaConfirmationMessageId) {
-        console.log("🔧 FALLBACK: Found missing persona confirmation buttons, fixing for message:", message.id);
-        setPersonaConfirmationMessageId(message.id);
-      }
-      
-      // Check for intake confirmation buttons that should be displayed but aren't
-      if (message.content.includes('[INTAKE_CONFIRMATION_BUTTONS]') && !intakeConfirmationMessageId) {
-        console.log("🔧 FALLBACK: Found missing intake confirmation buttons, fixing for message:", message.id);
-        setIntakeConfirmationMessageId(message.id);
-      }
-      
-      // Check for assessment targets confirmation buttons that should be displayed but aren't
-      if (message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]') && !assessmentTargetsConfirmationMessageId) {
-        console.log("🔧 FALLBACK: Found missing assessment targets confirmation buttons, fixing for message:", message.id);
-        setAssessmentTargetsConfirmationMessageId(message.id);
-      }
-      
-      // Check for test bot button that should be displayed but isn't
-      if (message.content.includes('[TEST_YOUR_BOT]') && !testBotButtonMessageId) {
-        console.log("🔧 FALLBACK: Found missing test bot button, fixing for message:", message.id);
-        setTestBotButtonMessageId(message.id);
-      }
+      // Run JSON detection on message content as fallback
+      handleJsonButtonDetection(message.content, message.id);
     });
+  };
+
+  // JSON Button Detection System
+  const handleJsonButtonDetection = (botResponse: string, messageId: string) => {
+    console.log('🔍 JSON DETECTION - Scanning response for JSON blocks');
+    
+    // Look for JSON code blocks in the response
+    const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+    let match;
+    
+    while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+      try {
+        const jsonStr = match[1].trim();
+        const parsed = JSON.parse(jsonStr);
+        console.log('🔍 JSON DETECTION - Found valid JSON:', parsed);
+        
+        switch (parsed.action) {
+          case 'confirm_basics':
+            console.log('🔍 JSON DETECTION - Setting basics confirmation buttons');
+            setIntakeConfirmationMessageId(messageId);
+            break;
+            
+          case 'confirm_learning_targets':
+            console.log('🔍 JSON DETECTION - Setting learning targets confirmation buttons');
+            setAssessmentTargetsConfirmationMessageId(messageId);
+            break;
+            
+          case 'confirm_persona':
+            console.log('🔍 JSON DETECTION - Setting persona confirmation buttons');
+            setPersonaConfirmationMessageId(messageId);
+            break;
+            
+          case 'set_boundaries':
+            console.log('🔍 JSON DETECTION - Setting boundaries selection buttons');
+            setBoundariesButtonMessageId(messageId);
+            break;
+            
+          case 'confirm_boundaries':
+            console.log('🔍 JSON DETECTION - Setting boundaries confirmation buttons');
+            setBoundariesConfirmationMessageId(messageId);
+            break;
+            
+          case 'generate_avatar':
+            console.log('🔍 JSON DETECTION - Setting avatar generation buttons');
+            setAvatarButtonMessageId(messageId);
+            if (parsed.data?.prompt) {
+              setAvatarPrompt(parsed.data.prompt);
+            }
+            break;
+            
+          case 'test_bot':
+            console.log('🔍 JSON DETECTION - Setting test bot button');
+            setTestBotButtonMessageId(messageId);
+            break;
+            
+          case 'complete_bot_design':
+            console.log('🔍 JSON DETECTION - Bot design complete');
+            // Handle completion if needed
+            break;
+            
+          case 'assessment_complete':
+            console.log('🔍 JSON DETECTION - Assessment complete');
+            // Handle assessment completion if needed
+            break;
+            
+          default:
+            console.log('🔍 JSON DETECTION - Unknown action:', parsed.action);
+        }
+      } catch (error) {
+        console.error('🔍 JSON DETECTION - Error parsing JSON block:', error);
+      }
+    }
   };
 
   const sendButtonMessage = async (messageText: string, buttonMessageId?: string) => {
@@ -319,16 +352,8 @@ function IntakeChat({
           : msg
       ));
 
-      // Handle button detection for the response
-      if (botResponse.includes('[BOUNDARIES_BUTTONS]')) {
-        setBoundariesButtonMessageId(finalMessageId);
-      }
-      if (botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
-        setBoundariesConfirmationMessageId(finalMessageId);
-      }
-      if (botResponse.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]')) {
-        setAssessmentTargetsConfirmationMessageId(finalMessageId);
-      }
+      // Handle JSON button detection for the response
+      handleJsonButtonDetection(botResponse, finalMessageId);
 
       onStageProgression(botResponse);
     } catch (error) {
@@ -678,11 +703,8 @@ function IntakeChat({
           )
         );
 
-        // Check for avatar button marker after confirmation
-        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[AVATAR_BUTTONS_HERE]')) {
-          console.log("🎨 Avatar buttons detected after persona confirmation");
-          setAvatarButtonMessageId(finalMessageId);
-        }
+        // Handle JSON button detection for the response
+        handleJsonButtonDetection(botResponse, finalMessageId);
 
         onStageProgression(botResponse);
       }
@@ -2912,9 +2934,9 @@ export default function NewIntake() {
                 content: rawContent,
                 fileName: file.name,
                 fileType: file.type,
-                subject: stageOneData?.subject,
-                topic: stageOneData?.topic,
-                gradeLevel: stageOneData?.gradeLevel,
+                subject: stageContext?.subject || '',
+                topic: stageContext?.topic || '',
+                gradeLevel: stageContext?.gradeLevel || '',
               }),
             });
 
@@ -3032,9 +3054,9 @@ export default function NewIntake() {
                 content: result.transcript,
                 fileName: result.title || "YouTube Video",
                 fileType: "video/youtube",
-                subject: stageOneData?.subject,
-                topic: stageOneData?.topic,
-                gradeLevel: stageOneData?.gradeLevel,
+                subject: stageContext?.subject || '',
+                topic: stageContext?.topic || '',
+                gradeLevel: stageContext?.gradeLevel || '',
               }),
             });
 
