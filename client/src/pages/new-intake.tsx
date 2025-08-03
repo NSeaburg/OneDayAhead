@@ -1791,6 +1791,13 @@ function IntakeChat({
                     break;
                   case "confirm_boundaries":
                     setBoundariesConfirmationMessageId(finalMessageId);
+                    // Store the complete boundary data directly
+                    if (jsonData.data) {
+                      const combinedBoundaries = jsonData.data.standardBoundaries + 
+                        (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
+                      console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON (markdown):', combinedBoundaries);
+                      setExtractedBoundaries(combinedBoundaries);
+                    }
                     break;
                   case "generate_avatar":
                     setAvatarButtonMessageId(finalMessageId);
@@ -1838,7 +1845,7 @@ function IntakeChat({
                       if (jsonData.data) {
                         const combinedBoundaries = jsonData.data.standardBoundaries + 
                           (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
-                        console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON:', combinedBoundaries);
+                        console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON (plain):', combinedBoundaries);
                         setExtractedBoundaries(combinedBoundaries);
                       }
                       break;
@@ -3947,8 +3954,12 @@ export default function NewIntake() {
                   botName: botName,
                   botJobTitle: botJobTitle,
                   botWelcomeMessage: botWelcomeMessage,
-                  sampleDialogue: botSampleDialogue
+                  sampleDialogue: botSampleDialogue,
+                  boundaries: extractedBoundaries || "Follow normal school-appropriate standards",
+                  extractedBoundariesState: extractedBoundaries
                 });
+                console.log("🚧 BOUNDARIES DEBUG - extractedBoundaries state value:", extractedBoundaries);
+                console.log("🚧 BOUNDARIES DEBUG - Final boundaries prop:", extractedBoundaries || "Follow normal school-appropriate standards");
                 console.log("🟢 personalityTesterExpanded:", personalityTesterExpanded);
                 return null;
               })()}
