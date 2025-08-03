@@ -6,6 +6,15 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+- **August 2, 2025**: Completed comprehensive JSON-based button system refactor
+  - Unified all 7 button trigger methods into single JSON detection system
+  - Fixed undefined variables (hasAssessmentTargetsConfirmationButtons, hasBoundariesButtons, hasAvatarButtons)
+  - Replaced old bracket marker detection ([BOUNDARIES_BUTTONS], [AVATAR_BUTTONS_HERE]) with JSON parsing
+  - All button systems now use consistent {"action": "button_type", "data": {...}} structure
+  - Eliminated 6 different inconsistent button trigger methods
+  - System now handles: confirm_basics, confirm_learning_targets, confirm_persona, set_boundaries, confirm_boundaries, generate_avatar, test_bot
+
 ## System Architecture
 The platform is a full-stack web application.
 

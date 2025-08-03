@@ -2201,29 +2201,6 @@ function IntakeChat({
                               Add additional boundaries
                             </Button>
                           </div>
-                          {/* Content after buttons */}
-                          {afterButtons && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <div className="mb-2 last:mb-0">{children}</div>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold text-gray-900">
-                                    {children}
-                                  </strong>
-                                ),
-                                em: ({ children }) => (
-                                  <em className="italic">{children}</em>
-                                ),
-                                br: () => <br />,
-                                code: () => null,
-                                pre: () => null,
-                              }}
-                            >
-                              {afterButtons}
-                            </ReactMarkdown>
-                          )}
                         </div>
                       );
                     } else if (boundariesConfirmationMessageId === message.id) {
