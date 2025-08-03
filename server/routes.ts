@@ -3320,6 +3320,17 @@ ${fileContent}`;
         const stageContext = (req.body as any).stageContext || {};
         const uploadedFiles = (req.body as any).uploadedFiles || [];
         
+        // 🔍 DETAILED DEBUG LOGGING
+        console.log("🔥 PERSONALITY-TESTING DEBUG - Full request body keys:", Object.keys(req.body));
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botPersonality:", botPersonality);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botName:", botName);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botJobTitle:", botJobTitle);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - boundaries:", boundaries);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botWelcomeMessage:", botWelcomeMessage);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - assessmentTargets:", assessmentTargets);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - stageContext:", JSON.stringify(stageContext, null, 2));
+        console.log("🔥 PERSONALITY-TESTING DEBUG - uploadedFiles length:", uploadedFiles?.length || 0);
+        
         // Build uploaded files context from summaries
         let uploadedFilesContext = "No additional materials provided";
         if (uploadedFiles && uploadedFiles.length > 0) {
@@ -3354,6 +3365,8 @@ ${fileContent}`;
         console.log(`🎯 DEBUG - Uploaded Files: ${uploadedFiles?.length || 0} files`);
         console.log(`🎯 DEBUG - Welcome Message: ${botWelcomeMessage ? 'Yes' : 'No'}`);
         console.log(`🎯 DEBUG - Boundaries: ${boundaries}`);
+        console.log("🔥 FINAL SYSTEM PROMPT (first 500 chars):", systemPrompt.substring(0, 500));
+        console.log("🔥 FINAL SYSTEM PROMPT (length):", systemPrompt.length);
       }
       
       // Final debug log to see what system prompt is actually being sent to Claude
