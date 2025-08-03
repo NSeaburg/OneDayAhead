@@ -1409,6 +1409,15 @@ function IntakeChat({
       } catch (error) {
         console.log('🔍 IMMEDIATE JSON DETECTION - Error processing JSON:', error);
       }
+      
+      // DEBUG: Show what we're actually searching through
+      if (botResponse.includes('confirm_learning_targets')) {
+        console.log('🔍 DEBUG - Response contains confirm_learning_targets, searching around it...');
+        const targetIndex = botResponse.indexOf('confirm_learning_targets');
+        const contextStart = Math.max(0, targetIndex - 200);
+        const contextEnd = Math.min(botResponse.length, targetIndex + 200);
+        console.log('🔍 DEBUG - Context around confirm_learning_targets:', botResponse.substring(contextStart, contextEnd));
+      }
 
       // Check for intake confirmation summary in Stage 1
       if (currentStageId === 1 && botType === "intake-basics" && 
