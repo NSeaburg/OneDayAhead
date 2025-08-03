@@ -608,6 +608,9 @@ function IntakeChat({
                 
                 // Add welcome message to extraction data
                 extractionData.welcomeMessage = welcomeData.welcomeMessage;
+                console.log("🎯 Welcome message added to extractionData:", extractionData.welcomeMessage);
+              } else {
+                console.error("🎯 Welcome message generation failed:", welcomeResponse.status, welcomeResponse.statusText);
               }
             } catch (error) {
               console.error("Error generating welcome message:", error);
@@ -616,6 +619,8 @@ function IntakeChat({
           
           // Store the confirmed persona data in parent component state
           if (onComponentComplete) {
+            console.log("🎯 About to call onComponentComplete with extractionData:", extractionData);
+            console.log("🎯 extractionData.welcomeMessage:", extractionData.welcomeMessage);
             onComponentComplete(extractionData);
           }
         }
@@ -3017,6 +3022,9 @@ export default function NewIntake() {
       if (componentId.welcomeMessage) {
         setBotWelcomeMessage(componentId.welcomeMessage);
         console.log("👋 Stored welcome message:", componentId.welcomeMessage);
+        console.log("👋 Welcome message successfully set in state");
+      } else {
+        console.log("⚠️ No welcome message found in componentId:", componentId);
       }
       
       if (componentId.fullPersonality) {
@@ -3917,10 +3925,6 @@ export default function NewIntake() {
                     }, 100);
                   }
                 }}
-                botName={botName}
-                botJobTitle={botJobTitle}
-                botWelcomeMessage={botWelcomeMessage}
-                sampleDialogue={botSampleDialogue}
               />
             </div>
           </div>
