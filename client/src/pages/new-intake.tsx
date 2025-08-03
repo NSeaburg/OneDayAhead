@@ -1722,13 +1722,17 @@ function IntakeChat({
         // Add immediate JSON detection for user messages  
         console.log('🔍 USER MESSAGE COMPLETION - Processing JSON detection');
         try {
+          // First try markdown JSON blocks
           const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
           let match;
+          let foundAction = false;
+          
           while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
             try {
               const jsonData = JSON.parse(match[1]);
               if (jsonData.action) {
                 console.log('🔍 USER MESSAGE JSON DETECTION - Processing action:', jsonData.action);
+                foundAction = true;
                 switch (jsonData.action) {
                   case "confirm_learning_targets":
                     console.log('🔍 USER MESSAGE JSON DETECTION - Setting assessment targets confirmation buttons');
@@ -1738,6 +1742,7 @@ function IntakeChat({
                     setIntakeConfirmationMessageId(finalMessageId);
                     break;
                   case "confirm_persona":
+                    console.log('🔍 USER MESSAGE JSON DETECTION - Setting persona confirmation buttons');
                     setPersonaConfirmationMessageId(finalMessageId);
                     break;
                   case "set_boundaries":
@@ -1756,6 +1761,50 @@ function IntakeChat({
               }
             } catch (parseError) {
               console.log('🔍 USER MESSAGE JSON DETECTION - JSON parse error:', parseError);
+            }
+          }
+          
+          // If no markdown JSON found, try plain JSON format (like what Claude actually sent)
+          if (!foundAction) {
+            console.log('🔍 USER MESSAGE JSON DETECTION - No markdown JSON found, trying plain JSON detection');
+            // Look for JSON object patterns in the response
+            const plainJsonRegex = /\{\s*"action":\s*"[^"]+"\s*,[\s\S]*?\}/g;
+            let plainMatch;
+            
+            while ((plainMatch = plainJsonRegex.exec(botResponse)) !== null) {
+              try {
+                const jsonData = JSON.parse(plainMatch[0]);
+                if (jsonData.action) {
+                  console.log('🔍 USER MESSAGE PLAIN JSON DETECTION - Processing action:', jsonData.action);
+                  switch (jsonData.action) {
+                    case "confirm_learning_targets":
+                      console.log('🔍 USER MESSAGE PLAIN JSON DETECTION - Setting assessment targets confirmation buttons');
+                      setAssessmentTargetsConfirmationMessageId(finalMessageId);
+                      break;
+                    case "confirm_basics":
+                      setIntakeConfirmationMessageId(finalMessageId);
+                      break;
+                    case "confirm_persona":
+                      console.log('🔍 USER MESSAGE PLAIN JSON DETECTION - Setting persona confirmation buttons');
+                      setPersonaConfirmationMessageId(finalMessageId);
+                      break;
+                    case "set_boundaries":
+                      setBoundariesButtonMessageId(finalMessageId);
+                      break;
+                    case "confirm_boundaries":
+                      setBoundariesConfirmationMessageId(finalMessageId);
+                      break;
+                    case "generate_avatar":
+                      setAvatarButtonMessageId(finalMessageId);
+                      break;
+                    case "test_bot":
+                      setTestBotButtonMessageId(finalMessageId);
+                      break;
+                  }
+                }
+              } catch (parseError) {
+                console.log('🔍 USER MESSAGE PLAIN JSON DETECTION - JSON parse error:', parseError);
+              }
             }
           }
         } catch (error) {
