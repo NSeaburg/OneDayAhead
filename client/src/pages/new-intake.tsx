@@ -1739,19 +1739,12 @@ function IntakeChat({
       // Replace streaming message with final message with permanent ID
       if (botResponse) {
         const finalMessageId = `final-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        console.log("🔥 STREAMING COMPLETION - botResponse contains BOUNDARIES_BUTTONS:", botResponse.includes('[BOUNDARIES_BUTTONS]'));
+        // REMOVED: Legacy [BOUNDARIES_BUTTONS] logging - now using JSON-only detection
         console.log("🔥 STREAMING COMPLETION - currentStageId:", currentStageId, "botType:", botType);
         console.log("🔥 STREAMING COMPLETION - botResponse preview:", botResponse.substring(botResponse.length - 300));
         
-        // Check for boundaries and inject marker BEFORE updating message ID
-        const isBoundariesQuestion = currentStageId === 3 && botType === "intake-assessment-bot" && 
-          (botResponse.includes('boundaries') || botResponse.includes('avoid talking about') || 
-           botResponse.includes('specific to your classroom') || botResponse.includes('school-appropriate standards'));
-        
-        if (isBoundariesQuestion && !botResponse.includes('[BOUNDARIES_BUTTONS]')) {
-          console.log("🚧 Boundaries question detected without marker - auto-injecting");
-          botResponse += '\n\n[BOUNDARIES_BUTTONS]';
-        }
+        // REMOVED: Legacy auto-injection of [BOUNDARIES_BUTTONS] marker
+        // Now using JSON-based detection only via immediate JSON detection below
         
         // NOW update the message ID and content together
         setMessages((prev) => 
@@ -1962,24 +1955,7 @@ function IntakeChat({
           }, 500);
         }
 
-        // Check for boundaries button marker in Stage 3 (more robust detection)
-        if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_BUTTONS]')) {
-          console.log("🚧 Boundaries buttons detected in streaming response - setting state to:", finalMessageId);
-          setBoundariesButtonMessageId(finalMessageId);
-          
-          // Multiple attempts to ensure buttons appear
-          setTimeout(() => {
-            console.log("🚧 Force re-render for boundaries buttons attempt 1");
-            setMessages(prev => prev.map(msg => 
-              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
-            ));
-          }, 50);
-          
-          setTimeout(() => {
-            console.log("🚧 Force re-render for boundaries buttons attempt 2");
-            setBoundariesButtonMessageId(finalMessageId); // Re-set state
-          }, 200);
-        }
+        // REMOVED: Legacy [BOUNDARIES_BUTTONS] marker detection - now using JSON-only detection
 
         // Check for boundaries confirmation button marker in Stage 3
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
@@ -2731,9 +2707,7 @@ function IntakeChat({
                       if (message.content.includes('[AVATAR_BUTTONS_HERE]') && !avatarButtonMessageId) {
                         displayContent = displayContent.replace('[AVATAR_BUTTONS_HERE]', '');
                       }
-                      if (message.content.includes('[BOUNDARIES_BUTTONS]') && !boundariesButtonMessageId) {
-                        displayContent = displayContent.replace('[BOUNDARIES_BUTTONS]', '');
-                      }
+                      // REMOVED: Legacy [BOUNDARIES_BUTTONS] marker cleanup - now using JSON-only detection
                       if (message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]') && !assessmentTargetsConfirmationMessageId) {
                         displayContent = displayContent.replace('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]', '');
                       }
