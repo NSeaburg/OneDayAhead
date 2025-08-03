@@ -293,11 +293,11 @@ function IntakeChat({
       // IMMEDIATE JSON DETECTION for button messages - Process JSON buttons ONLY in the current bot response
       console.log('🔍 BUTTON MESSAGE JSON DETECTION - Processing response for JSON blocks');
       console.log('🔍 BUTTON MESSAGE JSON DETECTION - Response contains JSON marker:', botResponse.includes('```json'));
-      console.log('🔍 BUTTON MESSAGE JSON DETECTION - Response contains confirm_learning_targets:', botResponse.includes('confirm_learning_targets'));
+      console.log('🔍 BUTTON MESSAGE JSON DETECTION - Response contains confirm_persona:', botResponse.includes('confirm_persona'));
       
       try {
-        // Look for JSON blocks in the current bot response
-        const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+        // Look for JSON blocks in the current bot response - flexible regex for different newline formats
+        const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
         let match;
         
         while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
@@ -700,7 +700,7 @@ function IntakeChat({
         // Add immediate JSON detection for persona confirmation
         console.log('🔍 PERSONA CONFIRMATION - Processing JSON detection');
         try {
-          const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+          const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
           let match;
           while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
             try {
@@ -1317,7 +1317,7 @@ function IntakeChat({
                   console.log('🚀 REAL-TIME - Found complete JSON block in stream, length:', botResponse.length);
                   console.log('🚀 REAL-TIME - Stream contains confirm_learning_targets:', botResponse.includes('confirm_learning_targets'));
                   
-                  const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+                  const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
                   let match;
                   
                   while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
@@ -1388,7 +1388,7 @@ function IntakeChat({
       
       try {
         // Look for JSON blocks ONLY in the current bot response (not conversation history)
-        const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+        const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
         let match;
         
         while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
@@ -1721,13 +1721,18 @@ function IntakeChat({
 
         // Add immediate JSON detection for user messages  
         console.log('🔍 USER MESSAGE COMPLETION - Processing JSON detection');
+        console.log('🔍 USER MESSAGE COMPLETION - botResponse contains ```json:', botResponse.includes('```json'));
+        console.log('🔍 USER MESSAGE COMPLETION - botResponse contains confirm_persona:', botResponse.includes('confirm_persona'));
+        
         try {
-          // First try markdown JSON blocks
-          const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+          // First try markdown JSON blocks - using flexible regex for different newline formats
+          const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
           let match;
           let foundAction = false;
           
+          console.log('🔍 USER MESSAGE JSON DETECTION - Attempting to match with regex');
           while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+            console.log('🔍 USER MESSAGE JSON DETECTION - Found markdown JSON match:', match[1]);
             try {
               const jsonData = JSON.parse(match[1]);
               if (jsonData.action) {
