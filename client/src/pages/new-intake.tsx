@@ -334,6 +334,15 @@ function IntakeChat({
                 case "generate_avatar":
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting avatar buttons immediately');
                   setAvatarButtonMessageId(finalMessageId);
+                  
+                  // Auto-trigger avatar generation
+                  console.log('🎨 AUTO-GENERATION - Triggering automatic avatar generation from button message JSON');
+                  setTimeout(() => {
+                    if (finalMessageId) {
+                      console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar automatically');
+                      handleCreateAvatar();
+                    }
+                  }, 500);
                   break;
                 case "test_bot":
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting test bot button immediately');
@@ -1442,6 +1451,17 @@ function IntakeChat({
                 case "generate_avatar":
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting avatar buttons immediately');
                   setAvatarButtonMessageId(finalMessageId);
+                  
+                  // Auto-trigger avatar generation
+                  console.log('🎨 AUTO-GENERATION - Triggering automatic avatar generation from JSON');
+                  setTimeout(() => {
+                    // Use the handleCreateAvatar function to automatically generate
+                    if (finalMessageId) {
+                      console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar automatically');
+                      // Trigger generation automatically
+                      handleCreateAvatar();
+                    }
+                  }, 500);
                   break;
                 case "test_bot":
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting test bot button immediately');
@@ -2352,9 +2372,15 @@ function IntakeChat({
                         </div>
                       );
                     } else if (avatarButtonMessageId === message.id) {
-                      console.log("🎨 AVATAR DEBUG - Rendering avatar buttons for message:", message.id);
+                      console.log("🎨 AVATAR DEBUG - Rendering avatar content for message:", message.id);
                       // Remove JSON blocks from display since we use JSON detection
                       const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
+                      
+                      // Check if this message already has a generated avatar image
+                      const hasGeneratedAvatar = contentWithoutJson.includes('![Generated Avatar]') || contentWithoutJson.includes('![');
+                      
+                      console.log("🎨 AVATAR DEBUG - Has generated avatar:", hasGeneratedAvatar);
+                      console.log("🎨 AVATAR DEBUG - Content preview:", contentWithoutJson.substring(0, 100));
                       
                       return (
                         <div className="prose prose-sm max-w-none">
@@ -2375,17 +2401,37 @@ function IntakeChat({
                               br: () => <br />,
                               code: () => null,
                               pre: () => null,
+                              img: ({ src, alt }) => {
+                                console.log("🖼️ AVATAR IMG COMPONENT - Rendering avatar image:", { src, alt });
+                                return (
+                                  <div className="my-4 text-center">
+                                    <img 
+                                      src={src} 
+                                      alt={alt} 
+                                      className="max-w-full h-auto rounded-lg shadow-md mx-auto max-h-96"
+                                      style={{ maxHeight: '384px' }}
+                                      onLoad={() => console.log("🖼️ AVATAR IMG COMPONENT - Avatar image loaded successfully:", src)}
+                                      onError={(e) => console.error("🖼️ AVATAR IMG COMPONENT - Avatar image failed to load:", src, e)}
+                                    />
+                                    {alt && (
+                                      <p className="text-sm text-gray-600 mt-2 italic">{alt}</p>
+                                    )}
+                                  </div>
+                                );
+                              },
                             }}
                           >
                             {contentWithoutJson}
                           </ReactMarkdown>
                           
-                          {/* Avatar buttons */}
-                          <AvatarButtons
-                            onCreateAvatar={handleCreateAvatar}
-                            onReviseDescription={handleReviseDescription}
-                            isGenerating={isGeneratingAvatar}
-                          />
+                          {/* Only show avatar buttons if no avatar has been generated yet */}
+                          {!hasGeneratedAvatar && (
+                            <AvatarButtons
+                              onCreateAvatar={handleCreateAvatar}
+                              onReviseDescription={handleReviseDescription}
+                              isGenerating={isGeneratingAvatar}
+                            />
+                          )}
                         </div>
                       );
                     } else if (boundariesButtonMessageId === message.id) {
