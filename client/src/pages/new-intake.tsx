@@ -1282,6 +1282,48 @@ function IntakeChat({
                     ? { ...msg, content: botResponse }
                     : msg
                 ));
+
+                // REAL-TIME JSON DETECTION - Check for complete JSON blocks during streaming
+                if (botResponse.includes('```json') && botResponse.includes('```')) {
+                  const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+                  let match;
+                  
+                  while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+                    try {
+                      const jsonStr = match[1];
+                      const jsonData = JSON.parse(jsonStr);
+                      
+                      if (jsonData.action) {
+                        console.log('🚀 REAL-TIME JSON DETECTION - Found action during streaming:', jsonData.action);
+                        
+                        // Set button states immediately when JSON is detected during streaming
+                        switch (jsonData.action) {
+                          case "confirm_learning_targets":
+                            if (!assessmentTargetsConfirmationMessageId) {
+                              console.log('🚀 REAL-TIME - Setting assessment targets buttons during streaming');
+                              setAssessmentTargetsConfirmationMessageId(streamingMessageId);
+                            }
+                            break;
+                          case "confirm_basics":
+                            if (!intakeConfirmationMessageId) {
+                              console.log('🚀 REAL-TIME - Setting intake confirmation buttons during streaming');
+                              setIntakeConfirmationMessageId(streamingMessageId);
+                            }
+                            break;
+                          case "confirm_persona":
+                            if (!personaConfirmationMessageId) {
+                              console.log('🚀 REAL-TIME - Setting persona confirmation buttons during streaming');
+                              setPersonaConfirmationMessageId(streamingMessageId);
+                            }
+                            break;
+                          // Add other cases as needed
+                        }
+                      }
+                    } catch (parseError) {
+                      // JSON not complete yet, continue streaming
+                    }
+                  }
+                }
               }
             } catch (e) {
               console.error("Error parsing streaming data:", e);
@@ -1298,7 +1340,61 @@ function IntakeChat({
           : msg
       ));
 
-
+      // IMMEDIATE JSON DETECTION - Process JSON buttons right after streaming completes
+      console.log('🔍 IMMEDIATE JSON DETECTION - Processing response:', botResponse.substring(0, 100) + '...');
+      
+      try {
+        // Look for JSON blocks in the response
+        const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+        let match;
+        
+        while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+          try {
+            const jsonStr = match[1];
+            const jsonData = JSON.parse(jsonStr);
+            console.log('🔍 IMMEDIATE JSON DETECTION - Found valid JSON:', jsonData);
+            
+            if (jsonData.action) {
+              console.log('🔍 IMMEDIATE JSON DETECTION - Processing action:', jsonData.action);
+              
+              switch (jsonData.action) {
+                case "confirm_learning_targets":
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting assessment targets confirmation buttons immediately');
+                  setAssessmentTargetsConfirmationMessageId(finalMessageId);
+                  break;
+                case "confirm_basics":
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting intake confirmation buttons immediately');
+                  setIntakeConfirmationMessageId(finalMessageId);
+                  break;
+                case "confirm_persona":
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting persona confirmation buttons immediately');
+                  setPersonaConfirmationMessageId(finalMessageId);
+                  break;
+                case "set_boundaries":
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting boundaries buttons immediately');
+                  setBoundariesButtonMessageId(finalMessageId);
+                  break;
+                case "confirm_boundaries":
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting boundaries confirmation buttons immediately');
+                  setBoundariesConfirmationMessageId(finalMessageId);
+                  break;
+                case "generate_avatar":
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting avatar buttons immediately');
+                  setAvatarButtonMessageId(finalMessageId);
+                  break;
+                case "test_bot":
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting test bot button immediately');
+                  setTestBotButtonMessageId(finalMessageId);
+                  break;
+              }
+            }
+          } catch (parseError) {
+            console.log('🔍 IMMEDIATE JSON DETECTION - Failed to parse JSON block:', parseError);
+          }
+        }
+      } catch (error) {
+        console.log('🔍 IMMEDIATE JSON DETECTION - Error processing JSON:', error);
+      }
 
       // Check for intake confirmation summary in Stage 1
       if (currentStageId === 1 && botType === "intake-basics" && 
