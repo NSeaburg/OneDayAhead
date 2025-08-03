@@ -3416,6 +3416,29 @@ ${fileContent}`;
           }
         }
 
+        // 🔍 LOG: Capture the exact JSON format Claude is sending
+        console.log('🔥 STREAMING COMPLETION - Full content length:', fullContent.length);
+        console.log('🔥 STREAMING COMPLETION - Last 500 chars:', fullContent.substring(fullContent.length - 500));
+        
+        // Check for JSON patterns in Claude's response
+        if (fullContent.includes('confirm_persona')) {
+          console.log('🔥 STREAMING COMPLETION - Contains confirm_persona, extracting JSON patterns:');
+          
+          // Check for markdown JSON blocks
+          const markdownJsonRegex = /```json\s*\n([\s\S]*?)\n```/g;
+          let match;
+          while ((match = markdownJsonRegex.exec(fullContent)) !== null) {
+            console.log('🔥 STREAMING COMPLETION - Found markdown JSON:', match[1]);
+          }
+          
+          // Check for plain JSON objects
+          const plainJsonRegex = /\{\s*"action":\s*"[^"]+"\s*,[\s\S]*?\}/g;
+          let plainMatch;
+          while ((plainMatch = plainJsonRegex.exec(fullContent)) !== null) {
+            console.log('🔥 STREAMING COMPLETION - Found plain JSON:', plainMatch[0]);
+          }
+        }
+
         // Send the [DONE] event
         res.write("data: [DONE]\n\n");
         res.end();
