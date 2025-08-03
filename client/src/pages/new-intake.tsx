@@ -286,8 +286,68 @@ function IntakeChat({
           : msg
       ));
 
-      // Handle JSON button detection for the response
-      handleJsonButtonDetection(botResponse, finalMessageId);
+      console.log('🔍 BUTTON MESSAGE COMPLETION - About to run immediate JSON detection');
+      console.log('🔍 BUTTON MESSAGE COMPLETION - botResponse length:', botResponse.length);
+      console.log('🔍 BUTTON MESSAGE COMPLETION - finalMessageId:', finalMessageId);
+
+      // IMMEDIATE JSON DETECTION for button messages - Process JSON buttons ONLY in the current bot response
+      console.log('🔍 BUTTON MESSAGE JSON DETECTION - Processing response for JSON blocks');
+      console.log('🔍 BUTTON MESSAGE JSON DETECTION - Response contains JSON marker:', botResponse.includes('```json'));
+      console.log('🔍 BUTTON MESSAGE JSON DETECTION - Response contains confirm_learning_targets:', botResponse.includes('confirm_learning_targets'));
+      
+      try {
+        // Look for JSON blocks in the current bot response
+        const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+        let match;
+        
+        while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+          try {
+            const jsonStr = match[1];
+            console.log('🔍 BUTTON MESSAGE JSON DETECTION - Extracted JSON string:', jsonStr);
+            const jsonData = JSON.parse(jsonStr);
+            console.log('🔍 BUTTON MESSAGE JSON DETECTION - Found valid JSON:', jsonData);
+            
+            if (jsonData.action) {
+              console.log('🔍 BUTTON MESSAGE JSON DETECTION - Processing action:', jsonData.action);
+              
+              switch (jsonData.action) {
+                case "confirm_learning_targets":
+                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting assessment targets confirmation buttons immediately');
+                  setAssessmentTargetsConfirmationMessageId(finalMessageId);
+                  break;
+                case "confirm_basics":
+                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting intake confirmation buttons immediately');
+                  setIntakeConfirmationMessageId(finalMessageId);
+                  break;
+                case "confirm_persona":
+                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting persona confirmation buttons immediately');
+                  setPersonaConfirmationMessageId(finalMessageId);
+                  break;
+                case "set_boundaries":
+                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting boundaries buttons immediately');
+                  setBoundariesButtonMessageId(finalMessageId);
+                  break;
+                case "confirm_boundaries":
+                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting boundaries confirmation buttons immediately');
+                  setBoundariesConfirmationMessageId(finalMessageId);
+                  break;
+                case "generate_avatar":
+                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting avatar buttons immediately');
+                  setAvatarButtonMessageId(finalMessageId);
+                  break;
+                case "test_bot":
+                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting test bot button immediately');
+                  setTestBotButtonMessageId(finalMessageId);
+                  break;
+              }
+            }
+          } catch (parseError) {
+            console.log('🔍 BUTTON MESSAGE JSON DETECTION - Failed to parse JSON block:', parseError);
+          }
+        }
+      } catch (error) {
+        console.log('🔍 BUTTON MESSAGE JSON DETECTION - Error processing JSON:', error);
+      }
 
       onStageProgression(botResponse);
     } catch (error) {
@@ -637,8 +697,40 @@ function IntakeChat({
           )
         );
 
-        // Handle JSON button detection for the response
-        handleJsonButtonDetection(botResponse, finalMessageId);
+        // Add immediate JSON detection for persona confirmation
+        console.log('🔍 PERSONA CONFIRMATION - Processing JSON detection');
+        try {
+          const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+          let match;
+          while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+            try {
+              const jsonData = JSON.parse(match[1]);
+              if (jsonData.action) {
+                switch (jsonData.action) {
+                  case "confirm_learning_targets":
+                    setAssessmentTargetsConfirmationMessageId(finalMessageId);
+                    break;
+                  case "set_boundaries":
+                    setBoundariesButtonMessageId(finalMessageId);
+                    break;
+                  case "confirm_boundaries":
+                    setBoundariesConfirmationMessageId(finalMessageId);
+                    break;
+                  case "generate_avatar":
+                    setAvatarButtonMessageId(finalMessageId);
+                    break;
+                  case "test_bot":
+                    setTestBotButtonMessageId(finalMessageId);
+                    break;
+                }
+              }
+            } catch (parseError) {
+              console.log('🔍 PERSONA CONFIRMATION - JSON parse error:', parseError);
+            }
+          }
+        } catch (error) {
+          console.log('🔍 PERSONA CONFIRMATION - JSON detection error:', error);
+        }
 
         onStageProgression(botResponse);
       }
@@ -1282,6 +1374,10 @@ function IntakeChat({
           : msg
       ));
 
+      console.log('🔍 STREAM COMPLETION - About to run immediate JSON detection');
+      console.log('🔍 STREAM COMPLETION - botResponse length:', botResponse.length);
+      console.log('🔍 STREAM COMPLETION - finalMessageId:', finalMessageId);
+
       // IMMEDIATE JSON DETECTION - Process JSON buttons ONLY in the current bot response
       console.log('🔍 IMMEDIATE JSON DETECTION - Processing CURRENT response only:', botResponse.substring(0, 100) + '...');
       console.log('🔍 IMMEDIATE JSON DETECTION - Response end:', botResponse.slice(-200));
@@ -1622,6 +1718,49 @@ function IntakeChat({
               : msg
           )
         );
+
+        // Add immediate JSON detection for user messages  
+        console.log('🔍 USER MESSAGE COMPLETION - Processing JSON detection');
+        try {
+          const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+          let match;
+          while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+            try {
+              const jsonData = JSON.parse(match[1]);
+              if (jsonData.action) {
+                console.log('🔍 USER MESSAGE JSON DETECTION - Processing action:', jsonData.action);
+                switch (jsonData.action) {
+                  case "confirm_learning_targets":
+                    console.log('🔍 USER MESSAGE JSON DETECTION - Setting assessment targets confirmation buttons');
+                    setAssessmentTargetsConfirmationMessageId(finalMessageId);
+                    break;
+                  case "confirm_basics":
+                    setIntakeConfirmationMessageId(finalMessageId);
+                    break;
+                  case "confirm_persona":
+                    setPersonaConfirmationMessageId(finalMessageId);
+                    break;
+                  case "set_boundaries":
+                    setBoundariesButtonMessageId(finalMessageId);
+                    break;
+                  case "confirm_boundaries":
+                    setBoundariesConfirmationMessageId(finalMessageId);
+                    break;
+                  case "generate_avatar":
+                    setAvatarButtonMessageId(finalMessageId);
+                    break;
+                  case "test_bot":
+                    setTestBotButtonMessageId(finalMessageId);
+                    break;
+                }
+              }
+            } catch (parseError) {
+              console.log('🔍 USER MESSAGE JSON DETECTION - JSON parse error:', parseError);
+            }
+          }
+        } catch (error) {
+          console.log('🔍 USER MESSAGE JSON DETECTION - Error:', error);
+        }
 
         // Trigger background analysis after bot response is complete
 
