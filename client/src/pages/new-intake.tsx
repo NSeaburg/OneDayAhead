@@ -1107,7 +1107,7 @@ function IntakeChat({
         console.log("🔧 PERIODIC CHECK: Button markers found, running fallback check");
         checkAndFixMissingButtons();
       }
-    }, 2000);
+    }, 250);
 
     return () => clearInterval(intervalId);
   }, [messages, avatarButtonMessageId, boundariesButtonMessageId, boundariesConfirmationMessageId, 
@@ -2696,6 +2696,19 @@ function IntakeChat({
                               br: () => <br />,
                               code: () => null, // Hide inline code completely
                               pre: () => null, // Hide code blocks completely
+                              img: ({ src, alt }) => (
+                                <div className="my-4 text-center">
+                                  <img 
+                                    src={src} 
+                                    alt={alt} 
+                                    className="max-w-full h-auto rounded-lg shadow-md mx-auto max-h-96"
+                                    style={{ maxHeight: '384px' }}
+                                  />
+                                  {alt && (
+                                    <p className="text-sm text-gray-600 mt-2 italic">{alt}</p>
+                                  )}
+                                </div>
+                              ),
                             }}
                           >
                             {displayContent}
