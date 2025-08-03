@@ -193,7 +193,7 @@ Say exactly this:
 2. [Second specific, verifiable learning target]
 3. [Third specific, verifiable learning target, if applicable]
 
-CRITICAL: You MUST include this JSON block immediately after the targets to show confirmation buttons:
+CRITICAL: You MUST include this JSON block the the same response with the the targets to show confirmation buttons:
 
 \`\`\`json
 {

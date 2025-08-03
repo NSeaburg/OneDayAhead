@@ -1285,12 +1285,16 @@ function IntakeChat({
 
                 // REAL-TIME JSON DETECTION - Check for complete JSON blocks during streaming
                 if (botResponse.includes('```json') && botResponse.includes('```')) {
+                  console.log('🚀 REAL-TIME - Found complete JSON block in stream, length:', botResponse.length);
+                  console.log('🚀 REAL-TIME - Stream contains confirm_learning_targets:', botResponse.includes('confirm_learning_targets'));
+                  
                   const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
                   let match;
                   
                   while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
                     try {
                       const jsonStr = match[1];
+                      console.log('🚀 REAL-TIME - Extracted JSON during streaming:', jsonStr);
                       const jsonData = JSON.parse(jsonStr);
                       
                       if (jsonData.action) {
@@ -1320,6 +1324,7 @@ function IntakeChat({
                         }
                       }
                     } catch (parseError) {
+                      console.log('🚀 REAL-TIME - JSON not complete yet, parseError:', parseError);
                       // JSON not complete yet, continue streaming
                     }
                   }
@@ -1342,6 +1347,11 @@ function IntakeChat({
 
       // IMMEDIATE JSON DETECTION - Process JSON buttons right after streaming completes
       console.log('🔍 IMMEDIATE JSON DETECTION - Processing response:', botResponse.substring(0, 100) + '...');
+      console.log('🔍 IMMEDIATE JSON DETECTION - Response end:', botResponse.slice(-200));
+      console.log('🔍 IMMEDIATE JSON DETECTION - Full response length:', botResponse.length);
+      console.log('🔍 IMMEDIATE JSON DETECTION - Response contains JSON marker:', botResponse.includes('```json'));
+      console.log('🔍 IMMEDIATE JSON DETECTION - Response contains confirm_learning_targets:', botResponse.includes('confirm_learning_targets'));
+      console.log('🔍 IMMEDIATE JSON DETECTION - Response contains closing json marker:', botResponse.includes('```', botResponse.indexOf('```json') + 1));
       
       try {
         // Look for JSON blocks in the response
@@ -1351,15 +1361,18 @@ function IntakeChat({
         while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
           try {
             const jsonStr = match[1];
+            console.log('🔍 IMMEDIATE JSON DETECTION - Extracted JSON string:', jsonStr);
             const jsonData = JSON.parse(jsonStr);
             console.log('🔍 IMMEDIATE JSON DETECTION - Found valid JSON:', jsonData);
             
             if (jsonData.action) {
               console.log('🔍 IMMEDIATE JSON DETECTION - Processing action:', jsonData.action);
+              console.log('🔍 IMMEDIATE JSON DETECTION - Current assessmentTargetsConfirmationMessageId:', assessmentTargetsConfirmationMessageId);
               
               switch (jsonData.action) {
                 case "confirm_learning_targets":
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting assessment targets confirmation buttons immediately');
+                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting finalMessageId to:', finalMessageId);
                   setAssessmentTargetsConfirmationMessageId(finalMessageId);
                   break;
                 case "confirm_basics":
@@ -1390,6 +1403,7 @@ function IntakeChat({
             }
           } catch (parseError) {
             console.log('🔍 IMMEDIATE JSON DETECTION - Failed to parse JSON block:', parseError);
+            console.log('🔍 IMMEDIATE JSON DETECTION - Raw JSON that failed to parse:', match[1]);
           }
         }
       } catch (error) {
