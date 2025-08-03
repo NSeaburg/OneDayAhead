@@ -7,6 +7,12 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **August 3, 2025**: Fixed assessment targets and persona confirmation button issues
+  - Root cause: JSON detection was only in card submission flow, not button message flows
+  - Added immediate JSON detection to all 3 streaming completion functions (sendButtonMessage, handleConfirmPersona, handleSend)
+  - Disabled interfering fallback system that scanned conversation history
+  - Strengthened Stage 3 persona prompt to require confirm_persona JSON block
+  - All 7 JSON button types now work consistently across all interaction flows
 - **August 2, 2025**: Completed comprehensive JSON-based button system refactor
   - Unified all 7 button trigger methods into single JSON detection system
   - Fixed undefined variables (hasAssessmentTargetsConfirmationButtons, hasBoundariesButtons, hasAvatarButtons)
