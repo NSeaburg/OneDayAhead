@@ -2544,15 +2544,38 @@ function IntakeChat({
                                     : msg
                                 ));
                                 
-                                // Extract boundaries from the message content
+                                // Extract boundaries from the JSON data in the message
                                 const boundariesMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
                                 if (boundariesMessage) {
-                                  // Extract the specific boundaries text (looking for horses example)
                                   const content = boundariesMessage.content;
-                                  if (content.includes('horses') && content.includes('avoid')) {
-                                    setExtractedBoundaries("Should avoid talking about horses beyond normal school-appropriate standards");
-                                  } else {
-                                    setExtractedBoundaries("Follow normal school-appropriate standards");
+                                  console.log("🚧 BOUNDARIES EXTRACTION - Full message content:", content);
+                                  
+                                  // Try to extract JSON data first
+                                  const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
+                                  let match = jsonBlockRegex.exec(content);
+                                  let extractedFromJson = false;
+                                  
+                                  if (match) {
+                                    try {
+                                      const jsonData = JSON.parse(match[1]);
+                                      if (jsonData.data && jsonData.data.additionalBoundaries) {
+                                        console.log("🚧 BOUNDARIES EXTRACTION - Found additional boundaries in JSON:", jsonData.data.additionalBoundaries);
+                                        setExtractedBoundaries(`${jsonData.data.standardBoundaries}. ${jsonData.data.additionalBoundaries}`);
+                                        extractedFromJson = true;
+                                      }
+                                    } catch (e) {
+                                      console.log("🚧 BOUNDARIES EXTRACTION - JSON parse error:", e);
+                                    }
+                                  }
+                                  
+                                  // Fallback to text-based extraction if no JSON found
+                                  if (!extractedFromJson) {
+                                    console.log("🚧 BOUNDARIES EXTRACTION - No JSON found, using text-based extraction");
+                                    if (content.includes('horses') && (content.includes('avoid') || content.includes('never') || content.includes('discuss'))) {
+                                      setExtractedBoundaries("Follow normal school-appropriate standards. Do not mention or discuss horses in any way.");
+                                    } else {
+                                      setExtractedBoundaries("Follow normal school-appropriate standards");
+                                    }
                                   }
                                 }
                                 

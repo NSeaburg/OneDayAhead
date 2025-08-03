@@ -290,7 +290,7 @@ Present initial boundary options with this JSON:
 
 If they choose "No additional boundaries," acknowledge this and move to avatar creation.
 
-If they choose "Add additional boundaries," ask them to specify what the bot should avoid. After they provide specific boundaries, present confirmation with this JSON:
+If they choose "Add additional boundaries," ask them to specify what the bot should avoid. After they provide specific boundaries, explain that this new boundry will be added to the standard boundries, then present confirmation with this JSON:
 
 \`\`\`json
 {
