@@ -2921,6 +2921,92 @@ export default function NewIntake() {
     },
   });
 
+  // Function to skip to boundaries stage with Detective Piggy data
+  const skipToBoundaries = () => {
+    console.log("🚀 SKIP TO BOUNDARIES: Loading Detective Piggy state...");
+    
+    // Set up basic stage 1 data
+    const stage1Data = {
+      schoolDistrict: "Blueberry",
+      school: "Redmond Middle School", 
+      subject: "English",
+      topic: "Lord of the Flies symbolism (conch shell and glasses)",
+      gradeLevel: "8th grade"
+    };
+    
+    // Set up stage 2 context data
+    const stage2Context = {
+      ...stage1Data,
+      completionMessage: "Great! Let's talk about the personality of your assessment bot. Do you have a persona in mind or would you like me to suggest some options?",
+      uploadedFiles: [],
+      learningTargets: [
+        "Understanding of the conch shell as a symbol of democracy and order",
+        "Recognition of Piggy's glasses as a symbol of knowledge and intelligence",
+        "Analysis of how these symbols develop throughout Lord of the Flies"
+      ]
+    };
+    
+    // Set up Detective Piggy persona data
+    const detectivePiggyData = {
+      botName: "Detective Piggy",
+      botJobTitle: "Analytical Detective",
+      personalitySummary: "A brilliant detective who specializes in uncovering hidden meanings and symbols. Approaches analysis with methodical precision and encourages students to think like detectives when examining literature.",
+      fullBotPersonality: "You are Detective Piggy, a brilliant analytical detective who specializes in uncovering hidden meanings and symbols in literature. You approach every text like a crime scene, looking for clues and evidence. You're methodical, precise, and encouraging. You help students develop their analytical skills by teaching them to think like detectives when examining literature. You use detective metaphors and terminology while staying age-appropriate and engaging.",
+      botSampleDialogue: "Ah, interesting observation! I see you've spotted something about that conch shell. Tell me, detective, what clues in the text led you to that conclusion? Every good detective needs evidence to support their theories.",
+      botVisualDescription: "A cartoon pig character with a scholarly, detective appearance. Wearing oversized, round glasses similar to Piggy's from Lord of the Flies, a detective's trench coat, and carrying a magnifying glass. Has an intelligent, observant expression that conveys both wisdom and approachability.",
+      generatedAvatar: "https://example.com/detective-piggy-avatar.png", // Placeholder since we don't have the actual generated image
+      botWelcomeMessage: "Greetings, young detective! I'm Detective Piggy, and I'm here to help you uncover the hidden mysteries within Lord of the Flies. Every great detective knows that symbols and deeper meanings are like clues waiting to be discovered. Are you ready to put on your detective hat and explore the evidence together?"
+    };
+    
+    // Mark stages 1 and 2 as completed, stage 3 partially completed (personality done, boundaries next)
+    setStages(prev => prev.map(stage => {
+      if (stage.id === 1 || stage.id === 2) {
+        return {
+          ...stage,
+          components: stage.components.map(comp => ({ ...comp, completed: true }))
+        };
+      } else if (stage.id === 3) {
+        return {
+          ...stage,
+          components: stage.components.map(comp => 
+            comp.id === "personality" ? { ...comp, completed: true } : comp
+          )
+        };
+      }
+      return stage;
+    }));
+    
+    // Set current stage to 3
+    setCurrentStageId(3);
+    setCurrentBotType("intake-assessment-bot");
+    
+    // Set up all the state variables
+    setStageContext(stage2Context);
+    setCriteria(prev => ({
+      ...prev,
+      schoolDistrict: { detected: true, value: stage1Data.schoolDistrict, confidence: 1.0, finalValue: stage1Data.schoolDistrict },
+      school: { detected: true, value: stage1Data.school, confidence: 1.0, finalValue: stage1Data.school },
+      subject: { detected: true, value: stage1Data.subject, confidence: 1.0, finalValue: stage1Data.subject },
+      topic: { detected: true, value: stage1Data.topic, confidence: 1.0, finalValue: stage1Data.topic },
+      gradeLevel: { detected: true, value: stage1Data.gradeLevel, confidence: 1.0, finalValue: stage1Data.gradeLevel }
+    }));
+    
+    // Set persona data
+    setBotName(detectivePiggyData.botName);
+    setBotJobTitle(detectivePiggyData.botJobTitle);
+    setPersonalitySummary(detectivePiggyData.personalitySummary);
+    setFullBotPersonality(detectivePiggyData.fullBotPersonality);
+    setBotSampleDialogue(detectivePiggyData.botSampleDialogue);
+    setBotVisualDescription(detectivePiggyData.botVisualDescription);
+    setGeneratedAvatar(detectivePiggyData.generatedAvatar);
+    setBotWelcomeMessage(detectivePiggyData.botWelcomeMessage);
+    
+    // Set boundaries state to be ready for the next step
+    setExtractedBoundaries(""); // This will be the next thing to work on
+    
+    console.log("🚀 SKIP TO BOUNDARIES: State loaded! Ready to work on boundaries flow.");
+  };
+
   const [stages, setStages] = useState<Stage[]>([
     {
       id: 1,
@@ -3490,7 +3576,17 @@ export default function NewIntake() {
         {/* Left Sidebar */}
         <div className="w-full md:w-1/3 bg-white rounded-lg shadow-lg border border-gray-200 p-6 overflow-y-auto">
           <div>
-            <h2 className="font-semibold text-lg mb-2 text-gray-900">Content Creator</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-semibold text-lg text-gray-900">Content Creator</h2>
+              <Button
+                onClick={skipToBoundaries}
+                size="sm"
+                variant="outline"
+                className="text-xs px-2 py-1 h-auto border-orange-300 text-orange-600 hover:bg-orange-50"
+              >
+                Skip to Boundaries
+              </Button>
+            </div>
             <p className="text-sm text-gray-600 mb-4">
               Uplevel your Course with AI
             </p>
