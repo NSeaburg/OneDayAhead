@@ -81,19 +81,65 @@ export function PersonalityTestingBot({
 
   // Initialize with welcome message
   useEffect(() => {
-    const welcomeContent = botWelcomeMessage || 
-      `Hello! I'm ${botName || 'your newly designed assessment bot'}. I'm here to help you test out my personality and teaching style. 
+    // If we have a custom welcome message, use it
+    if (botWelcomeMessage) {
+      const welcomeMessage: Message = {
+        id: "welcome",
+        content: botWelcomeMessage,
+        isBot: true,
+        timestamp: new Date(),
+      };
+      setMessages([welcomeMessage]);
+    } else {
+      // Generate a personalized welcome message using the bot's personality and context
+      const generatePersonalizedWelcome = async () => {
+        if (botName && botPersonality && stageContext) {
+          try {
+            const response = await fetch("/api/intake/generate-welcome-message", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                botName: botName,
+                botJobTitle: botJobTitle,
+                botPersonality: botPersonality,
+                stageContext: stageContext,
+              }),
+            });
+
+            if (response.ok) {
+              const welcomeData = await response.json();
+              const welcomeMessage: Message = {
+                id: "welcome",
+                content: welcomeData.welcomeMessage,
+                isBot: true,
+                timestamp: new Date(),
+              };
+              setMessages([welcomeMessage]);
+              return;
+            }
+          } catch (error) {
+            console.error("Error generating personalized welcome:", error);
+          }
+        }
+        
+        // Fallback to generic message
+        const welcomeContent = `Hello! I'm ${botName || 'your newly designed assessment bot'}. I'm here to help you test out my personality and teaching style. 
 
 Feel free to ask me questions or have a conversation to see how I interact with students. What would you like to talk about?`;
 
-    const welcomeMessage: Message = {
-      id: "welcome",
-      content: welcomeContent,
-      isBot: true,
-      timestamp: new Date(),
-    };
-    setMessages([welcomeMessage]);
-  }, [botName, botWelcomeMessage]);
+        const welcomeMessage: Message = {
+          id: "welcome",
+          content: welcomeContent,
+          isBot: true,
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMessage]);
+      };
+
+      generatePersonalizedWelcome();
+    }
+  }, [botName, botWelcomeMessage, botPersonality, botJobTitle, stageContext]);
 
   // Auto-scroll to bottom
   useEffect(() => {
