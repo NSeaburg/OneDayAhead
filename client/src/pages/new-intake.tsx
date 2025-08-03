@@ -2567,7 +2567,7 @@ function IntakeChat({
                                 // Send continuation message to bot
                                 await sendButtonMessage("Let me revise those");
                               }}
-                              className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
+                              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-full hover:bg-orange-200 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors bg-[#ffffff] text-[#000000]"
                             >
                               Let me revise those
                             </Button>
