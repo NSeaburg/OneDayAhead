@@ -431,7 +431,7 @@ function IntakeChat({
       msg.id === avatarButtonMessageId
         ? { 
             ...msg, 
-            content: msg.content.replace('[AVATAR_BUTTONS_HERE]', "\n*Generating your avatar... this may take a moment.*")
+            content: msg.content + "\n\n*Generating your avatar... this may take a moment.*"
           }
         : msg
     ));
@@ -468,9 +468,12 @@ function IntakeChat({
           const updatedMessages = prev.map(msg => {
             if (msg.id === avatarButtonMessageId) {
               const originalContent = msg.content;
-              const newContent = msg.content
-                .replace('[AVATAR_BUTTONS_HERE]', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
-                .replace('*Generating your avatar... this may take a moment.*', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`);
+              // Remove the loading message and append the avatar image
+              let newContent = msg.content.replace('*Generating your avatar... this may take a moment.*', '');
+              // Trim any trailing whitespace
+              newContent = newContent.trimEnd();
+              // Add the avatar image
+              newContent += `\n\n![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`;
               
               console.log("🖼️ AVATAR DEBUG - Message found, ID:", msg.id);
               console.log("🖼️ AVATAR DEBUG - Original content:", originalContent);
@@ -506,8 +509,8 @@ function IntakeChat({
             ? { 
                 ...msg, 
                 content: msg.content
-                  .replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
-                  .replace('*Generating your avatar... this may take a moment.*', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+                  .replace('*Generating your avatar... this may take a moment.*', '')
+                  .trimEnd() + "\n\nI had trouble generating the avatar. Let's continue with the bot design for now."
               }
             : msg
         ));
@@ -520,8 +523,8 @@ function IntakeChat({
           ? { 
               ...msg, 
               content: msg.content
-                .replace('[AVATAR_BUTTONS_HERE]', "I had trouble generating the avatar. Let's continue with the bot design for now.")
-                .replace('*Generating your avatar... this may take a moment.*', "I had trouble generating the avatar. Let's continue with the bot design for now.")
+                .replace('*Generating your avatar... this may take a moment.*', '')
+                .trimEnd() + "\n\nI had trouble generating the avatar. Let's continue with the bot design for now."
             }
           : msg
       ));
@@ -536,7 +539,7 @@ function IntakeChat({
       msg.id === avatarButtonMessageId
         ? { 
             ...msg, 
-            content: msg.content.replace('[AVATAR_BUTTONS_HERE]', "\n*What would you like me to change about this description? Please let me know and I'll revise it.*")
+            content: msg.content + "\n\n*What would you like me to change about this description? Please let me know and I'll revise it.*"
           }
         : msg
     ));
