@@ -2184,9 +2184,12 @@ function IntakeChat({
                       }
                     }
                     
-                    if (hasPersonaConfirmationButtons && personaConfirmationMessageId === message.id) {
-                      // Split content around the persona confirmation marker
-                      const [beforeButtons, afterButtons] = message.content.split('[PERSONA_CONFIRMATION_BUTTONS]');
+                    if (personaConfirmationMessageId === message.id) {
+                      // Show persona confirmation buttons - triggered by JSON detection, not marker
+                      console.log('🎭 PERSONA BUTTONS - Rendering buttons for message:', message.id);
+                      console.log('🎭 PERSONA BUTTONS - personaConfirmationMessageId:', personaConfirmationMessageId);
+                      const beforeButtons = message.content;
+                      const afterButtons = "";
                       
                       return (
                         <div className="prose prose-sm max-w-none">
