@@ -2391,7 +2391,7 @@ function IntakeChat({
                                 // Send continuation message to bot
                                 await sendButtonMessage("I want to add specific boundaries for my bot. Please ask me what I'd like to avoid.");
                               }}
-                              className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
+                              className="w-full hover:bg-orange-200 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors bg-[#ffffff] text-[#000000]"
                             >
                               Add additional boundaries
                             </Button>
