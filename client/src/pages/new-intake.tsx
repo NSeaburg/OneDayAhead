@@ -3881,10 +3881,14 @@ export default function NewIntake() {
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
                 botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
+                botName={botName}
+                botJobTitle={botJobTitle}
+                botWelcomeMessage={botWelcomeMessage}
+                sampleDialogue={botSampleDialogue}
                 boundaries={extractedBoundaries || "Follow normal school-appropriate standards"} 
                 stageContext={{
                   ...stageContext,
-                  learningTargets: [
+                  learningTargets: stageContext?.learningTargets || [
                     "Understanding of the conch shell as a symbol of democracy and order",
                     "Recognition of Piggy's glasses as a symbol of knowledge and intelligence", 
                     "Analysis of how these symbols develop throughout Lord of the Flies"

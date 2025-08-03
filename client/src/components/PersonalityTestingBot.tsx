@@ -134,6 +134,8 @@ Feel free to ask me questions or have a conversation to see how I interact with 
           boundaries: boundaries,
           stageContext: stageContext,
           uploadedFiles: uploadedFiles,
+          assessmentTargets: stageContext?.learningTargets || [],
+          botWelcomeMessage: botWelcomeMessage,
         }),
       });
 
