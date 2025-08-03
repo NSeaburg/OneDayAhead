@@ -451,16 +451,31 @@ function IntakeChat({
         const imageData = await imageResponse.json();
         
         // Replace the loading message or [AVATAR_BUTTONS_HERE] marker with the generated image
-        setMessages(prev => prev.map(msg => 
-          msg.id === avatarButtonMessageId
-            ? { 
-                ...msg, 
-                content: msg.content
-                  .replace('[AVATAR_BUTTONS_HERE]', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
-                  .replace('*Generating your avatar... this may take a moment.*', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
-              }
-            : msg
-        ));
+        console.log("🖼️ AVATAR DEBUG - About to update message with avatar");
+        console.log("🖼️ AVATAR DEBUG - avatarButtonMessageId:", avatarButtonMessageId);
+        console.log("🖼️ AVATAR DEBUG - imageData.imageUrl:", imageData.imageUrl);
+        
+        setMessages(prev => {
+          const updatedMessages = prev.map(msg => {
+            if (msg.id === avatarButtonMessageId) {
+              const originalContent = msg.content;
+              const newContent = msg.content
+                .replace('[AVATAR_BUTTONS_HERE]', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`)
+                .replace('*Generating your avatar... this may take a moment.*', `![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`);
+              
+              console.log("🖼️ AVATAR DEBUG - Message found, ID:", msg.id);
+              console.log("🖼️ AVATAR DEBUG - Original content:", originalContent);
+              console.log("🖼️ AVATAR DEBUG - New content:", newContent);
+              console.log("🖼️ AVATAR DEBUG - Content changed:", originalContent !== newContent);
+              
+              return { ...msg, content: newContent };
+            }
+            return msg;
+          });
+          
+          console.log("🖼️ AVATAR DEBUG - Updated messages count:", updatedMessages.length);
+          return updatedMessages;
+        });
         
         console.log("🖼️ Avatar image URL set in chat:", imageData.imageUrl);
         
@@ -2678,6 +2693,9 @@ function IntakeChat({
                         displayContent = displayContent.replace('[TEST_YOUR_BOT]', '');
                       }
                       
+                      console.log("🖼️ REGULAR MESSAGE - Rendering message with content:", displayContent.substring(0, 100) + "...");
+                      console.log("🖼️ REGULAR MESSAGE - Contains image markdown:", displayContent.includes('!['));
+                      
                       return (
                         <div className="prose prose-sm max-w-none">
                           <ReactMarkdown
@@ -2696,19 +2714,24 @@ function IntakeChat({
                               br: () => <br />,
                               code: () => null, // Hide inline code completely
                               pre: () => null, // Hide code blocks completely
-                              img: ({ src, alt }) => (
-                                <div className="my-4 text-center">
-                                  <img 
-                                    src={src} 
-                                    alt={alt} 
-                                    className="max-w-full h-auto rounded-lg shadow-md mx-auto max-h-96"
-                                    style={{ maxHeight: '384px' }}
-                                  />
-                                  {alt && (
-                                    <p className="text-sm text-gray-600 mt-2 italic">{alt}</p>
-                                  )}
-                                </div>
-                              ),
+                              img: ({ src, alt }) => {
+                                console.log("🖼️ IMG COMPONENT - Rendering image:", { src, alt });
+                                return (
+                                  <div className="my-4 text-center">
+                                    <img 
+                                      src={src} 
+                                      alt={alt} 
+                                      className="max-w-full h-auto rounded-lg shadow-md mx-auto max-h-96"
+                                      style={{ maxHeight: '384px' }}
+                                      onLoad={() => console.log("🖼️ IMG COMPONENT - Image loaded successfully:", src)}
+                                      onError={(e) => console.error("🖼️ IMG COMPONENT - Image failed to load:", src, e)}
+                                    />
+                                    {alt && (
+                                      <p className="text-sm text-gray-600 mt-2 italic">{alt}</p>
+                                    )}
+                                  </div>
+                                );
+                              },
                             }}
                           >
                             {displayContent}
