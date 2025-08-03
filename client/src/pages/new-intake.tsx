@@ -184,81 +184,18 @@ function IntakeChat({
   const [hasInjectedTestButton, setHasInjectedTestButton] = useState(false);
 
   // Helper function to send button click messages
-  // Fallback check system to ensure buttons appear if they were missed
+  // Fallback check system - DISABLED because it interferes with current message detection
   const checkAndFixMissingButtons = () => {
-    messages.forEach((message) => {
-      // Run JSON detection on message content as fallback
-      handleJsonButtonDetection(message.content, message.id);
-    });
+    console.log('🔧 FALLBACK CHECK: Disabled - using immediate detection instead');
+    // Disabled: This was scanning all conversation history and finding old JSON blocks
+    // which overrode the correct detection of current message JSON
   };
 
-  // JSON Button Detection System
+  // JSON Button Detection System - LEGACY (replaced by immediate detection)
   const handleJsonButtonDetection = (botResponse: string, messageId: string) => {
-    console.log('🔍 JSON DETECTION - Scanning response for JSON blocks');
-    
-    // Look for JSON code blocks in the response
-    const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
-    let match;
-    
-    while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
-      try {
-        const jsonStr = match[1].trim();
-        const parsed = JSON.parse(jsonStr);
-        console.log('🔍 JSON DETECTION - Found valid JSON:', parsed);
-        
-        switch (parsed.action) {
-          case 'confirm_basics':
-            console.log('🔍 JSON DETECTION - Setting basics confirmation buttons');
-            setIntakeConfirmationMessageId(messageId);
-            break;
-            
-          case 'confirm_learning_targets':
-            console.log('🔍 JSON DETECTION - Setting learning targets confirmation buttons');
-            setAssessmentTargetsConfirmationMessageId(messageId);
-            break;
-            
-          case 'confirm_persona':
-            console.log('🔍 JSON DETECTION - Setting persona confirmation buttons');
-            setPersonaConfirmationMessageId(messageId);
-            break;
-            
-          case 'set_boundaries':
-            console.log('🔍 JSON DETECTION - Setting boundaries buttons');
-            setBoundariesButtonMessageId(messageId);
-            break;
-            
-          case 'confirm_boundaries':
-            console.log('🔍 JSON DETECTION - Setting boundaries confirmation buttons');
-            setBoundariesConfirmationMessageId(messageId);
-            break;
-            
-          case 'generate_avatar':
-            console.log('🔍 JSON DETECTION - Setting avatar generation buttons');
-            setAvatarButtonMessageId(messageId);
-            break;
-            
-          case 'test_bot':
-            console.log('🔍 JSON DETECTION - Setting test bot buttons');
-            setTestBotButtonMessageId(messageId);
-            break;
-            
-          case 'complete_bot_design':
-            console.log('🔍 JSON DETECTION - Bot design complete');
-            // Handle completion if needed
-            break;
-            
-          case 'assessment_complete':
-            console.log('🔍 JSON DETECTION - Assessment complete');
-            // Handle assessment completion if needed
-            break;
-            
-          default:
-            console.log('🔍 JSON DETECTION - Unknown action:', parsed.action);
-        }
-      } catch (error) {
-        console.error('🔍 JSON DETECTION - Error parsing JSON block:', error);
-      }
-    }
+    console.log('🔍 LEGACY JSON DETECTION - Disabled to prevent interference');
+    // This function is disabled because it was scanning conversation history
+    // and finding old JSON blocks which interfered with current message detection
   };
 
   const sendButtonMessage = async (messageText: string, buttonMessageId?: string) => {
@@ -1345,8 +1282,8 @@ function IntakeChat({
           : msg
       ));
 
-      // IMMEDIATE JSON DETECTION - Process JSON buttons right after streaming completes
-      console.log('🔍 IMMEDIATE JSON DETECTION - Processing response:', botResponse.substring(0, 100) + '...');
+      // IMMEDIATE JSON DETECTION - Process JSON buttons ONLY in the current bot response
+      console.log('🔍 IMMEDIATE JSON DETECTION - Processing CURRENT response only:', botResponse.substring(0, 100) + '...');
       console.log('🔍 IMMEDIATE JSON DETECTION - Response end:', botResponse.slice(-200));
       console.log('🔍 IMMEDIATE JSON DETECTION - Full response length:', botResponse.length);
       console.log('🔍 IMMEDIATE JSON DETECTION - Response contains JSON marker:', botResponse.includes('```json'));
@@ -1354,7 +1291,7 @@ function IntakeChat({
       console.log('🔍 IMMEDIATE JSON DETECTION - Response contains closing json marker:', botResponse.includes('```', botResponse.indexOf('```json') + 1));
       
       try {
-        // Look for JSON blocks in the response
+        // Look for JSON blocks ONLY in the current bot response (not conversation history)
         const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
         let match;
         
