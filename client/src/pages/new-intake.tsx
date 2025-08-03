@@ -1834,6 +1834,13 @@ function IntakeChat({
                       break;
                     case "confirm_boundaries":
                       setBoundariesConfirmationMessageId(finalMessageId);
+                      // Store the complete boundary data directly
+                      if (jsonData.data) {
+                        const combinedBoundaries = jsonData.data.standardBoundaries + 
+                          (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
+                        console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON:', combinedBoundaries);
+                        setExtractedBoundaries(combinedBoundaries);
+                      }
                       break;
                     case "generate_avatar":
                       setAvatarButtonMessageId(finalMessageId);
@@ -2544,40 +2551,8 @@ function IntakeChat({
                                     : msg
                                 ));
                                 
-                                // Extract boundaries from the JSON data in the message
-                                const boundariesMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
-                                if (boundariesMessage) {
-                                  const content = boundariesMessage.content;
-                                  console.log("🚧 BOUNDARIES EXTRACTION - Full message content:", content);
-                                  
-                                  // Try to extract JSON data first
-                                  const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
-                                  let match = jsonBlockRegex.exec(content);
-                                  let extractedFromJson = false;
-                                  
-                                  if (match) {
-                                    try {
-                                      const jsonData = JSON.parse(match[1]);
-                                      if (jsonData.data && jsonData.data.additionalBoundaries) {
-                                        console.log("🚧 BOUNDARIES EXTRACTION - Found additional boundaries in JSON:", jsonData.data.additionalBoundaries);
-                                        setExtractedBoundaries(`${jsonData.data.standardBoundaries}. ${jsonData.data.additionalBoundaries}`);
-                                        extractedFromJson = true;
-                                      }
-                                    } catch (e) {
-                                      console.log("🚧 BOUNDARIES EXTRACTION - JSON parse error:", e);
-                                    }
-                                  }
-                                  
-                                  // Fallback to text-based extraction if no JSON found
-                                  if (!extractedFromJson) {
-                                    console.log("🚧 BOUNDARIES EXTRACTION - No JSON found, using text-based extraction");
-                                    if (content.includes('horses') && (content.includes('avoid') || content.includes('never') || content.includes('discuss'))) {
-                                      setExtractedBoundaries("Follow normal school-appropriate standards. Do not mention or discuss horses in any way.");
-                                    } else {
-                                      setExtractedBoundaries("Follow normal school-appropriate standards");
-                                    }
-                                  }
-                                }
+                                // Boundaries are now extracted automatically during JSON detection
+                                // No manual extraction needed here since it's handled in the streaming completion flow
                                 
                                 // Clear the button state
                                 setBoundariesConfirmationMessageId(null);
