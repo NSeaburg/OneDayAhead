@@ -2600,14 +2600,24 @@ function IntakeChat({
                                 
                                 // Extract boundaries from the current message
                                 const currentMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
+                                console.log("🚧 BOUNDARY EXTRACTION - Found message:", currentMessage?.id);
+                                console.log("🚧 BOUNDARY EXTRACTION - Message content preview:", currentMessage?.content?.substring(0, 200));
+                                
                                 if (currentMessage) {
                                   // Look for any mention of horses in the message
                                   const messageText = currentMessage.content.toLowerCase();
-                                  if (messageText.includes('horse') && messageText.includes('avoid')) {
+                                  console.log("🚧 BOUNDARY EXTRACTION - Checking for 'horse':", messageText.includes('horse'));
+                                  console.log("🚧 BOUNDARY EXTRACTION - Checking for 'avoid':", messageText.includes('avoid'));
+                                  
+                                  if (messageText.includes('horse')) {
                                     const customBoundaries = "Follow normal school-appropriate standards. Do not mention horses";
                                     console.log("🚧 MANUAL BOUNDARY EXTRACTION - Setting custom boundaries:", customBoundaries);
                                     setExtractedBoundaries(customBoundaries);
+                                  } else {
+                                    console.log("🚧 BOUNDARY EXTRACTION - No horse boundary found in message");
                                   }
+                                } else {
+                                  console.log("🚧 BOUNDARY EXTRACTION - No message found with ID:", boundariesConfirmationMessageId);
                                 }
                                 
                                 // Replace with confirmation message (remove JSON)
