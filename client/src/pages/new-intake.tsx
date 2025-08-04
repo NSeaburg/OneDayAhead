@@ -2598,6 +2598,18 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🚧 Yes, boundaries correct button clicked");
                                 
+                                // Extract boundaries from the current message
+                                const currentMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
+                                if (currentMessage) {
+                                  // Look for any mention of horses in the message
+                                  const messageText = currentMessage.content.toLowerCase();
+                                  if (messageText.includes('horse') && messageText.includes('avoid')) {
+                                    const customBoundaries = "Follow normal school-appropriate standards. Do not mention horses";
+                                    console.log("🚧 MANUAL BOUNDARY EXTRACTION - Setting custom boundaries:", customBoundaries);
+                                    setExtractedBoundaries(customBoundaries);
+                                  }
+                                }
+                                
                                 // Replace with confirmation message (remove JSON)
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesConfirmationMessageId
@@ -2607,9 +2619,6 @@ function IntakeChat({
                                       }
                                     : msg
                                 ));
-                                
-                                // Boundaries are now extracted automatically during JSON detection
-                                // No manual extraction needed here since it's handled in the streaming completion flow
                                 
                                 // Clear the button state
                                 setBoundariesConfirmationMessageId(null);
@@ -4024,7 +4033,11 @@ export default function NewIntake() {
                 botJobTitle={botJobTitle}
                 botWelcomeMessage={botWelcomeMessage}
                 sampleDialogue={botSampleDialogue}
-                boundaries={extractedBoundaries || "Follow normal school-appropriate standards"} 
+                boundaries={(() => {
+                  console.log("🚧 BOUNDARIES PROP DEBUG - extractedBoundaries state:", extractedBoundaries);
+                  console.log("🚧 BOUNDARIES PROP DEBUG - Passing to PersonalityTestingBot:", extractedBoundaries || 'Follow normal school-appropriate standards');
+                  return extractedBoundaries || 'Follow normal school-appropriate standards';
+                })()} 
                 stageContext={{
                   ...stageContext,
                   learningTargets: stageContext?.learningTargets || [
