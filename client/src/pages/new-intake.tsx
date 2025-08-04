@@ -1441,6 +1441,11 @@ function IntakeChat({
       console.log('🔍 IMMEDIATE JSON DETECTION - Response contains JSON marker:', botResponse.includes('```json'));
       console.log('🔍 IMMEDIATE JSON DETECTION - Response contains confirm_learning_targets:', botResponse.includes('confirm_learning_targets'));
       console.log('🔍 IMMEDIATE JSON DETECTION - Response contains confirm_boundaries:', botResponse.includes('confirm_boundaries'));
+      
+      // Log the actual response to see what's being generated
+      if (botResponse.includes('boundaries')) {
+        console.log('🚧 BOUNDARIES RESPONSE DETECTED - Full response:', botResponse);
+      }
       console.log('🔍 IMMEDIATE JSON DETECTION - Response contains closing json marker:', botResponse.includes('```', botResponse.indexOf('```json') + 1));
       
       try {
