@@ -1793,7 +1793,7 @@ function IntakeChat({
                     setBoundariesConfirmationMessageId(finalMessageId);
                     // Store the complete boundary data directly
                     if (jsonData.data) {
-                      const combinedBoundaries = jsonData.data.standardBoundaries + 
+                      const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
                         (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
                       console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON (markdown):', combinedBoundaries);
                       setExtractedBoundaries(combinedBoundaries);
@@ -1843,7 +1843,7 @@ function IntakeChat({
                       setBoundariesConfirmationMessageId(finalMessageId);
                       // Store the complete boundary data directly
                       if (jsonData.data) {
-                        const combinedBoundaries = jsonData.data.standardBoundaries + 
+                        const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
                           (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
                         console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON (plain):', combinedBoundaries);
                         setExtractedBoundaries(combinedBoundaries);
@@ -2476,8 +2476,13 @@ function IntakeChat({
                                     : msg
                                 ));
                                 
-                                // Set boundaries to default when no additional ones needed
-                                setExtractedBoundaries("Follow normal school-appropriate standards");
+                                // Only set default boundaries if none were already extracted
+                                if (!extractedBoundaries) {
+                                  setExtractedBoundaries("Follow normal school-appropriate standards");
+                                  console.log('🚧 BOUNDARIES - Setting default boundaries (none extracted)');
+                                } else {
+                                  console.log('🚧 BOUNDARIES - Keeping existing extracted boundaries:', extractedBoundaries);
+                                }
                                 
                                 // Clear the button state
                                 setBoundariesButtonMessageId(null);
@@ -3960,6 +3965,8 @@ export default function NewIntake() {
                 });
                 console.log("🚧 BOUNDARIES DEBUG - extractedBoundaries state value:", extractedBoundaries);
                 console.log("🚧 BOUNDARIES DEBUG - Final boundaries prop:", extractedBoundaries || "Follow normal school-appropriate standards");
+                console.log("🚧 BOUNDARIES DEBUG - Is boundaries custom?", extractedBoundaries && extractedBoundaries !== "Follow normal school-appropriate standards");
+                console.log("🚧 BOUNDARIES DEBUG - Boundaries length:", extractedBoundaries?.length || 0);
                 console.log("🟢 personalityTesterExpanded:", personalityTesterExpanded);
                 return null;
               })()}
