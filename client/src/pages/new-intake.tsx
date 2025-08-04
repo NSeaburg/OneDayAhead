@@ -330,6 +330,15 @@ function IntakeChat({
                 case "confirm_boundaries":
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting boundaries confirmation buttons immediately');
                   setBoundariesConfirmationMessageId(finalMessageId);
+                  // Extract and store boundaries immediately
+                  if (jsonData.data) {
+                    const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
+                      (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
+                    console.log('🚧 BOUNDARIES EXTRACTION IN SENDBUTTONMESSAGE - Storing boundaries:', combinedBoundaries);
+                    console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
+                    console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
+                    setExtractedBoundaries(combinedBoundaries);
+                  }
                   break;
                 case "generate_avatar":
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting avatar buttons immediately');
@@ -747,6 +756,15 @@ function IntakeChat({
                     break;
                   case "confirm_boundaries":
                     setBoundariesConfirmationMessageId(finalMessageId);
+                    // Extract and store boundaries immediately
+                    if (jsonData.data) {
+                      const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
+                        (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
+                      console.log('🚧 BOUNDARIES EXTRACTION IN HANDLECONFIRMPERSONA - Storing boundaries:', combinedBoundaries);
+                      console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
+                      console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
+                      setExtractedBoundaries(combinedBoundaries);
+                    }
                     break;
                   case "generate_avatar":
                     setAvatarButtonMessageId(finalMessageId);
@@ -1455,6 +1473,15 @@ function IntakeChat({
                 case "confirm_boundaries":
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting boundaries confirmation buttons immediately');
                   setBoundariesConfirmationMessageId(finalMessageId);
+                  // Extract and store boundaries immediately
+                  if (jsonData.data) {
+                    const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
+                      (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
+                    console.log('🚧 BOUNDARIES EXTRACTION IN HANDLECONFIRMPERSONA - Storing boundaries:', combinedBoundaries);
+                    console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
+                    console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
+                    setExtractedBoundaries(combinedBoundaries);
+                  }
                   break;
                 case "generate_avatar":
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting avatar buttons immediately');
@@ -1795,8 +1822,12 @@ function IntakeChat({
                     if (jsonData.data) {
                       const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
                         (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
-                      console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON (markdown):', combinedBoundaries);
+                      console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing combined boundaries from JSON (markdown):', combinedBoundaries);
+                      console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
+                      console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
                       setExtractedBoundaries(combinedBoundaries);
+                    } else {
+                      console.log('🚧 BOUNDARIES EXTRACTION ERROR - No data field in JSON');
                     }
                     break;
                   case "generate_avatar":
@@ -1845,8 +1876,12 @@ function IntakeChat({
                       if (jsonData.data) {
                         const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
                           (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
-                        console.log('🚧 BOUNDARIES - Storing combined boundaries from JSON (plain):', combinedBoundaries);
+                        console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing combined boundaries from JSON (plain):', combinedBoundaries);
+                        console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
+                        console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
                         setExtractedBoundaries(combinedBoundaries);
+                      } else {
+                        console.log('🚧 BOUNDARIES EXTRACTION ERROR - No data field in JSON');
                       }
                       break;
                     case "generate_avatar":
