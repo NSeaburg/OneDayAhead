@@ -177,7 +177,7 @@ Feel free to ask me questions or have a conversation to see how I interact with 
           botPersonality: botPersonality,
           botName: botName,
           botJobTitle: botJobTitle,
-          boundaries: boundaries,
+          additionalBoundaries: boundaries,
           stageContext: stageContext,
           uploadedFiles: uploadedFiles,
           assessmentTargets: stageContext?.learningTargets || [],
