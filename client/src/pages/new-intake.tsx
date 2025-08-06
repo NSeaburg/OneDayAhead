@@ -599,7 +599,7 @@ function IntakeChat({
         if (welcomeResponse.ok) {
           const welcomeData = await welcomeResponse.json();
           console.log("🎯 Generated welcome message (background):", welcomeData.welcomeMessage);
-          setBotWelcomeMessage(welcomeData.welcomeMessage);
+          // setBotWelcomeMessage(welcomeData.welcomeMessage); // TODO: Implement setBotWelcomeMessage
         } else {
           console.error("🎯 Welcome message generation failed:", welcomeResponse.status);
         }
@@ -627,28 +627,28 @@ function IntakeChat({
           console.log("  - Job Title:", jobTitle);
           console.log("  - Personality:", personality);
           
-          // Set the bot data synchronously
-          if (name) {
-            setBotName(name);
-            console.log("🎯 SYNC - Set botName:", name);
-            console.log("🔍 HANDOFF DEBUG - botName state after setting:", name);
+          // Set the bot data synchronously using onComponentComplete 
+          // Since onComponentComplete expects string but handleComponentComplete handles objects,
+          // we call it with the personality data object
+          const personalityData = {
+            name: name,
+            jobTitle: jobTitle, 
+            description: personality,
+            fullPersonality: personality
+          };
+          
+          console.log("🎯 SYNC - Calling onComponentComplete with persona data:", personalityData);
+          
+          if (onComponentComplete) {
+            // Cast to any since we know handleComponentComplete handles objects
+            (onComponentComplete as any)(personalityData);
           }
-          if (jobTitle) {
-            setBotJobTitle(jobTitle);
-            console.log("🎯 SYNC - Set botJobTitle:", jobTitle);
-            console.log("🔍 HANDOFF DEBUG - botJobTitle state after setting:", jobTitle);
-          }
-          if (personality) {
-            setBotPersonality(personality);
-            setPersonalitySummary(personality); // Also set as summary
-            console.log("🎯 SYNC - Set botPersonality:", personality);
-            console.log("🔍 HANDOFF DEBUG - botPersonality state after setting:", personality);
-          }
-          if (visual) {
-            setBotVisualDescription(visual);
-            console.log("🎯 SYNC - Set botVisualDescription:", visual);
-            console.log("🔍 HANDOFF DEBUG - botVisualDescription state after setting:", visual);
-          }
+          
+          console.log("🔍 HANDOFF DEBUG - Persona data sent to parent component");
+          console.log("  - Name:", name);
+          console.log("  - Job Title:", jobTitle);
+          console.log("  - Personality:", personality);
+          console.log("  - Visual Description:", visual);
           
           // CRITICAL DEBUGGING - Check state immediately after setting
           console.log("🔍 HANDOFF DEBUG - All State Variables After Persona Confirmation:");
@@ -3230,7 +3230,7 @@ export default function NewIntake() {
       }
       
       if (componentId.fullPersonality) {
-        setFullBotPersonality(componentId.fullPersonality);
+        setBotPersonality(componentId.fullPersonality);
         console.log("🧠 Stored full personality:", componentId.fullPersonality);
       }
       
