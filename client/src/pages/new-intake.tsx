@@ -2538,7 +2538,7 @@ function IntakeChat({
                                 setBoundariesButtonMessageId(null);
                                 
                                 // Mark boundaries component as completed
-                                handleComponentComplete('boundaries');
+                                onComponentComplete('boundaries');
                                 console.log("🚧 BOUNDARIES STANDARD - Marked boundaries component as completed");
                                 
                                 // Send continuation message to bot
@@ -2643,7 +2643,7 @@ function IntakeChat({
                                 setBoundariesConfirmationMessageId(null);
                                 
                                 // Mark boundaries component as completed
-                                handleComponentComplete('boundaries');
+                                onComponentComplete('boundaries');
                                 console.log("🚧 BOUNDARIES CONFIRMED - Marked boundaries component as completed");
                                 
                                 // Send continuation message to bot
