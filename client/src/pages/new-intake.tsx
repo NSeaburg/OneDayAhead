@@ -335,7 +335,7 @@ function IntakeChat({
                   if (jsonData.data) {
                     const additionalBoundaries = jsonData.data.additionalBoundaries || '';
                     console.log('🚧 BOUNDARIES EXTRACTION IN SENDBUTTONMESSAGE - Storing additional boundaries only:', additionalBoundaries);
-                    setExtractedBoundaries(additionalBoundaries);
+                    setAdditionalBoundaries(additionalBoundaries);
                   } else {
                     console.log('🚧 BOUNDARIES EXTRACTION (BUTTON MESSAGE) - No data field found in JSON:', jsonData);
                   }
@@ -1518,7 +1518,7 @@ function IntakeChat({
                   if (jsonData.data) {
                     const additionalBoundaries = jsonData.data.additionalBoundaries || '';
                     console.log('🚧 BOUNDARIES EXTRACTION IN HANDLECONFIRMPERSONA - Storing additional boundaries only:', additionalBoundaries);
-                    setExtractedBoundaries(additionalBoundaries);
+                    setAdditionalBoundaries(additionalBoundaries);
                   } else {
                     console.log('🚧 BOUNDARIES EXTRACTION - No data field found in JSON:', jsonData);
                   }
@@ -4043,7 +4043,7 @@ export default function NewIntake() {
             ?.components.find(comp => comp.id === "boundaries")?.completed;
           
           console.log("🚧 BOUNDARY CHECK - Boundaries completed:", boundariesCompleted);
-          console.log("🚧 BOUNDARY CHECK - ExtractedBoundaries state:", extractedBoundaries);
+          console.log("🚧 BOUNDARY CHECK - AdditionalBoundaries state:", additionalBoundaries);
           
           if (!boundariesCompleted) {
             console.log("🚧 BOUNDARY CHECK - PersonalityTestingBot blocked: boundaries not confirmed yet");
@@ -4096,7 +4096,7 @@ export default function NewIntake() {
                   botWelcomeMessage: botWelcomeMessage,
                   sampleDialogue: botSampleDialogue,
                   additionalBoundaries: additionalBoundaries || null,
-                  extractedBoundariesState: additionalBoundaries
+                  additionalBoundariesState: additionalBoundaries
                 });
                 console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - additionalBoundaries state value:", additionalBoundaries);
                 console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - Final additional boundaries prop:", additionalBoundaries || null);
