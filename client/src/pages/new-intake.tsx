@@ -3997,12 +3997,6 @@ export default function NewIntake() {
                             </Button>
                           </div>
                         )}
-
-                        {stage.hasTestButton && (
-                          <Button size="sm" className="w-full mt-3">
-                            {stage.testButtonText || "Test"}
-                          </Button>
-                        )}
                       </>
                     )}
                   </div>
