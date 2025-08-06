@@ -177,7 +177,7 @@ function IntakeChat({
   const [assessmentTargetsConfirmationMessageId, setAssessmentTargetsConfirmationMessageId] = useState<string | null>(null);
   
   // State for extracted boundaries
-  const [extractedBoundaries, setExtractedBoundaries] = useState<string>("");
+  const [additionalBoundaries, setAdditionalBoundaries] = useState<string>("");
   
   // State for Test Your Bot button
   const [testBotButtonMessageId, setTestBotButtonMessageId] = useState<string | null>(null);
@@ -637,9 +637,9 @@ function IntakeChat({
             console.log("🎯 SYNC - Set botJobTitle:", jobTitle);
           }
           if (personality) {
-            setFullBotPersonality(personality);
+            setBotPersonality(personality);
             setPersonalitySummary(personality); // Also set as summary
-            console.log("🎯 SYNC - Set fullBotPersonality:", personality);
+            console.log("🎯 SYNC - Set botPersonality:", personality);
           }
           if (visual) {
             setBotVisualDescription(visual);
@@ -795,7 +795,7 @@ function IntakeChat({
                       console.log('🚧 BOUNDARIES EXTRACTION IN HANDLECONFIRMPERSONA - Storing boundaries:', combinedBoundaries);
                       console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
                       console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
-                      setExtractedBoundaries(combinedBoundaries);
+                      setAdditionalBoundaries(combinedBoundaries);
                     } else {
                       console.log('🚧 BOUNDARIES EXTRACTION (PERSONA CONFIRM) - No data field found in JSON:', jsonData);
                     }
@@ -1871,7 +1871,7 @@ function IntakeChat({
                       console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing combined boundaries from JSON (markdown):', combinedBoundaries);
                       console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
                       console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
-                      setExtractedBoundaries(combinedBoundaries);
+                      setAdditionalBoundaries(combinedBoundaries);
                     } else {
                       console.log('🚧 BOUNDARIES EXTRACTION ERROR - No data field in JSON');
                     }
@@ -1925,7 +1925,7 @@ function IntakeChat({
                         console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing combined boundaries from JSON (plain):', combinedBoundaries);
                         console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
                         console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
-                        setExtractedBoundaries(combinedBoundaries);
+                        setAdditionalBoundaries(combinedBoundaries);
                       } else {
                         console.log('🚧 BOUNDARIES EXTRACTION ERROR - No data field in JSON');
                       }
@@ -2558,11 +2558,11 @@ function IntakeChat({
                                 ));
                                 
                                 // Only set default boundaries if none were already extracted
-                                if (!extractedBoundaries) {
-                                  setExtractedBoundaries("Follow normal school-appropriate standards");
+                                if (!additionalBoundaries) {
+                                  setAdditionalBoundaries("Follow normal school-appropriate standards");
                                   console.log('🚧 BOUNDARIES - Setting default boundaries (none extracted)');
                                 } else {
-                                  console.log('🚧 BOUNDARIES - Keeping existing extracted boundaries:', extractedBoundaries);
+                                  console.log('🚧 BOUNDARIES - Keeping existing extracted boundaries:', additionalBoundaries);
                                 }
                                 
                                 // Clear the button state
@@ -2656,7 +2656,7 @@ function IntakeChat({
                                       if (jsonData.action === 'confirm_boundaries' && jsonData.data) {
                                         const additionalBoundaries = jsonData.data.additionalBoundaries || "";
                                         console.log("🚧 BOUNDARY EXTRACTION - Extracted additional boundaries from JSON:", additionalBoundaries);
-                                        setExtractedBoundaries(additionalBoundaries);
+                                        setAdditionalBoundaries(additionalBoundaries);
                                       }
                                     } catch (error) {
                                       console.error("🚧 BOUNDARY EXTRACTION - Error parsing JSON:", error);
@@ -2991,7 +2991,7 @@ export default function NewIntake() {
   // New state for personality testing bot feature
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [personalitySummary, setPersonalitySummary] = useState<string | null>(null);
-  const [fullBotPersonality, setFullBotPersonality] = useState<string | null>(null);
+  const [botPersonality, setBotPersonality] = useState<string | null>(null);
   const [botName, setBotName] = useState<string | null>(null);
   const [botJobTitle, setBotJobTitle] = useState<string | null>(null);
   const [botWelcomeMessage, setBotWelcomeMessage] = useState<string | null>(null);
@@ -2999,7 +2999,7 @@ export default function NewIntake() {
   const [botVisualDescription, setBotVisualDescription] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
-  const [extractedBoundaries, setExtractedBoundaries] = useState<string>("");
+  const [additionalBoundaries, setAdditionalBoundaries] = useState<string>("");
   const [messageInjectionFunction, setMessageInjectionFunction] = useState<((message: string) => void) | null>(null);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: {
@@ -3093,14 +3093,14 @@ export default function NewIntake() {
     setBotName(detectivePiggyData.botName);
     setBotJobTitle(detectivePiggyData.botJobTitle);
     setPersonalitySummary(detectivePiggyData.personalitySummary);
-    setFullBotPersonality(detectivePiggyData.fullBotPersonality);
+    setBotPersonality(detectivePiggyData.fullBotPersonality);
     setBotSampleDialogue(detectivePiggyData.botSampleDialogue);
     setBotVisualDescription(detectivePiggyData.botVisualDescription);
     setGeneratedAvatar(detectivePiggyData.generatedAvatar);
     setBotWelcomeMessage(detectivePiggyData.botWelcomeMessage);
     
     // Set boundaries state to be ready for the next step
-    setExtractedBoundaries(""); // This will be the next thing to work on
+    setAdditionalBoundaries(""); // This will be the next thing to work on
     
     console.log("🚀 SKIP TO BOUNDARIES: State loaded! Ready to work on boundaries flow.");
   };
@@ -4090,18 +4090,18 @@ export default function NewIntake() {
                 console.log("🟢 About to render PersonalityTestingBot with props:", {
                   avatar: generatedAvatar,
                   personalitySummary: personalitySummary,
-                  botPersonality: fullBotPersonality || personalitySummary || "A helpful and friendly assistant",
+                  botPersonality: botPersonality || personalitySummary || "A helpful and friendly assistant",
                   botName: botName,
                   botJobTitle: botJobTitle,
                   botWelcomeMessage: botWelcomeMessage,
                   sampleDialogue: botSampleDialogue,
-                  additionalBoundaries: extractedBoundaries || null,
-                  extractedBoundariesState: extractedBoundaries
+                  additionalBoundaries: additionalBoundaries || null,
+                  extractedBoundariesState: additionalBoundaries
                 });
-                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - extractedBoundaries state value:", extractedBoundaries);
-                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - Final additional boundaries prop:", extractedBoundaries || null);
-                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - Has custom boundaries?", !!extractedBoundaries);
-                console.log("🚧 BOUNDARIES DEBUG - Boundaries length:", extractedBoundaries?.length || 0);
+                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - additionalBoundaries state value:", additionalBoundaries);
+                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - Final additional boundaries prop:", additionalBoundaries || null);
+                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - Has custom boundaries?", !!additionalBoundaries);
+                console.log("🚧 BOUNDARIES DEBUG - Boundaries length:", additionalBoundaries?.length || 0);
                 console.log("🟢 personalityTesterExpanded:", personalityTesterExpanded);
                 return null;
               })()}
@@ -4109,15 +4109,15 @@ export default function NewIntake() {
               <PersonalityTestingBot
                 avatar={generatedAvatar}
                 personalitySummary={personalitySummary}
-                botPersonality={fullBotPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
+                botPersonality={botPersonality || personalitySummary || "A helpful and friendly assistant"} // Use full personality description
                 botName={botName}
                 botJobTitle={botJobTitle}
                 botWelcomeMessage={botWelcomeMessage}
                 sampleDialogue={botSampleDialogue}
                 additionalBoundaries={(() => {
-                  console.log("🚧 ADDITIONAL BOUNDARIES PROP DEBUG - extractedBoundaries state:", extractedBoundaries);
-                  console.log("🚧 ADDITIONAL BOUNDARIES PROP DEBUG - Passing to PersonalityTestingBot:", extractedBoundaries || null);
-                  return extractedBoundaries || null;
+                  console.log("🚧 ADDITIONAL BOUNDARIES PROP DEBUG - additionalBoundaries state:", additionalBoundaries);
+                  console.log("🚧 ADDITIONAL BOUNDARIES PROP DEBUG - Passing to PersonalityTestingBot:", additionalBoundaries || null);
+                  return additionalBoundaries || null;
                 })()} 
                 stageContext={{
                   ...stageContext,

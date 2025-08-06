@@ -7,13 +7,14 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
-- **August 6, 2025**: Fixed critical PersonalityTestingBot data flow issue
-  - Root cause: Bot personality data was extracted asynchronously, causing null values when test button clicked immediately
-  - Solution: Implemented synchronous extraction of bot data (name, job title, personality) from JSON when persona is confirmed
-  - Bot personality data now extracted immediately from confirm_persona JSON and set in state variables
-  - Fixed server-side extract-bot-info endpoint to return proper field names (personality, fullPersonality, personalitySummary)
-  - PersonalityTestingBot now receives actual bot data instead of empty/default values when test button is clicked
-  - GBPAC template correctly populated with bot name, job title, and full personality description
+- **August 6, 2025**: Fixed critical variable naming inconsistencies between GBPAC template and component state
+  - Root cause: GBPAC template uses [botPersonality] and [additionalBoundaries] placeholders, but frontend state variables used different names (fullBotPersonality, extractedBoundaries)
+  - Solution: Updated all frontend state variables to match GBPAC template format as master standard
+  - Changed fullBotPersonality → botPersonality throughout entire codebase  
+  - Changed extractedBoundaries → additionalBoundaries throughout entire codebase
+  - All setter functions updated: setFullBotPersonality → setBotPersonality, setExtractedBoundaries → setAdditionalBoundaries
+  - PersonalityTestingBot now receives correctly named props that align with GBPAC template variable substitution
+  - Template population logic in server/routes.ts already correctly aligned with these variable names
 - **August 6, 2025**: Completed boundaries system architecture overhaul
   - Removed all vestiges of old "combined boundaries" approach
   - Standard school-appropriate boundaries now hard-coded in GBPAC template  
