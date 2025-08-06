@@ -2056,14 +2056,17 @@ function IntakeChat({
 
         // Check for boundaries confirmation button marker in Stage 3
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
-          console.log("🚧 Boundaries confirmation buttons detected in streaming response");
+          console.log("🚧 Boundaries confirmation buttons detected in streaming response for message:", finalMessageId);
+          console.log("🚧 Current boundariesConfirmationMessageId state:", boundariesConfirmationMessageId);
           
           // Set state immediately to hide the marker text
           setBoundariesConfirmationMessageId(finalMessageId);
+          console.log("🚧 Setting boundariesConfirmationMessageId to:", finalMessageId);
           
           // Multiple attempts to ensure buttons appear with same pattern as avatar buttons
           setTimeout(() => {
             console.log("🚧 Force re-render for boundaries confirmation buttons attempt 1");
+            console.log("🚧 Current state check - boundariesConfirmationMessageId:", boundariesConfirmationMessageId);
             setMessages(prev => prev.map(msg => 
               msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
             ));
@@ -2078,6 +2081,7 @@ function IntakeChat({
           setTimeout(() => {
             console.log("🚧 Final attempt to set boundaries confirmation button state");
             setBoundariesConfirmationMessageId(finalMessageId); // Final re-set
+            console.log("🚧 Final state check - boundariesConfirmationMessageId should be:", finalMessageId);
           }, 500);
         }
 
@@ -2521,8 +2525,13 @@ function IntakeChat({
                       );
 
                     } else if (boundariesConfirmationMessageId === message.id) {
-                      // Remove JSON blocks from display since we use JSON detection
-                      const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
+                      console.log("🚧 BOUNDARIES DEBUG - Rendering boundaries confirmation buttons for message:", message.id);
+                      console.log("🚧 BOUNDARIES DEBUG - boundariesConfirmationMessageId state:", boundariesConfirmationMessageId);
+                      // Remove JSON blocks AND text markers from display
+                      const contentWithoutJson = message.content
+                        .replace(/```json\s*\n[\s\S]*?\n```/g, '')
+                        .replace(/\[BOUNDARIES_CONFIRMATION_BUTTONS\]/g, '')
+                        .trim();
                       
                       return (
                         <div className="prose prose-sm max-w-none">
