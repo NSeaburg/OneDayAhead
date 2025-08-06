@@ -333,12 +333,9 @@ function IntakeChat({
                   // Extract and store boundaries immediately
                   console.log('🚧 BOUNDARIES FULL JSON DATA (BUTTON MESSAGE):', JSON.stringify(jsonData, null, 2));
                   if (jsonData.data) {
-                    const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
-                      (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
-                    console.log('🚧 BOUNDARIES EXTRACTION IN SENDBUTTONMESSAGE - Storing boundaries:', combinedBoundaries);
-                    console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
-                    console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
-                    setExtractedBoundaries(combinedBoundaries);
+                    const additionalBoundaries = jsonData.data.additionalBoundaries || '';
+                    console.log('🚧 BOUNDARIES EXTRACTION IN SENDBUTTONMESSAGE - Storing additional boundaries only:', additionalBoundaries);
+                    setExtractedBoundaries(additionalBoundaries);
                   } else {
                     console.log('🚧 BOUNDARIES EXTRACTION (BUTTON MESSAGE) - No data field found in JSON:', jsonData);
                   }
@@ -1488,12 +1485,9 @@ function IntakeChat({
                   // Extract and store boundaries immediately
                   console.log('🚧 BOUNDARIES FULL JSON DATA:', JSON.stringify(jsonData, null, 2));
                   if (jsonData.data) {
-                    const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
-                      (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
-                    console.log('🚧 BOUNDARIES EXTRACTION IN HANDLECONFIRMPERSONA - Storing boundaries:', combinedBoundaries);
-                    console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
-                    console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
-                    setExtractedBoundaries(combinedBoundaries);
+                    const additionalBoundaries = jsonData.data.additionalBoundaries || '';
+                    console.log('🚧 BOUNDARIES EXTRACTION IN HANDLECONFIRMPERSONA - Storing additional boundaries only:', additionalBoundaries);
+                    setExtractedBoundaries(additionalBoundaries);
                   } else {
                     console.log('🚧 BOUNDARIES EXTRACTION - No data field found in JSON:', jsonData);
                   }
@@ -2619,9 +2613,9 @@ function IntakeChat({
                                   console.log("🚧 BOUNDARY EXTRACTION - Checking for 'avoid':", messageText.includes('avoid'));
                                   
                                   if (messageText.includes('horse')) {
-                                    const customBoundaries = "Follow normal school-appropriate standards. Do not mention horses";
-                                    console.log("🚧 MANUAL BOUNDARY EXTRACTION - Setting custom boundaries:", customBoundaries);
-                                    setExtractedBoundaries(customBoundaries);
+                                    const additionalBoundaries = "Do not mention horses";
+                                    console.log("🚧 MANUAL BOUNDARY EXTRACTION - Setting additional boundaries:", additionalBoundaries);
+                                    setExtractedBoundaries(additionalBoundaries);
                                   } else {
                                     console.log("🚧 BOUNDARY EXTRACTION - No horse boundary found in message");
                                   }
@@ -4064,12 +4058,12 @@ export default function NewIntake() {
                   botJobTitle: botJobTitle,
                   botWelcomeMessage: botWelcomeMessage,
                   sampleDialogue: botSampleDialogue,
-                  boundaries: extractedBoundaries || "Follow normal school-appropriate standards",
+                  additionalBoundaries: extractedBoundaries || null,
                   extractedBoundariesState: extractedBoundaries
                 });
-                console.log("🚧 BOUNDARIES DEBUG - extractedBoundaries state value:", extractedBoundaries);
-                console.log("🚧 BOUNDARIES DEBUG - Final boundaries prop:", extractedBoundaries || "Follow normal school-appropriate standards");
-                console.log("🚧 BOUNDARIES DEBUG - Is boundaries custom?", extractedBoundaries && extractedBoundaries !== "Follow normal school-appropriate standards");
+                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - extractedBoundaries state value:", extractedBoundaries);
+                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - Final additional boundaries prop:", extractedBoundaries || null);
+                console.log("🚧 ADDITIONAL BOUNDARIES DEBUG - Has custom boundaries?", !!extractedBoundaries);
                 console.log("🚧 BOUNDARIES DEBUG - Boundaries length:", extractedBoundaries?.length || 0);
                 console.log("🟢 personalityTesterExpanded:", personalityTesterExpanded);
                 return null;
@@ -4083,10 +4077,10 @@ export default function NewIntake() {
                 botJobTitle={botJobTitle}
                 botWelcomeMessage={botWelcomeMessage}
                 sampleDialogue={botSampleDialogue}
-                boundaries={(() => {
-                  console.log("🚧 BOUNDARIES PROP DEBUG - extractedBoundaries state:", extractedBoundaries);
-                  console.log("🚧 BOUNDARIES PROP DEBUG - Passing to PersonalityTestingBot:", extractedBoundaries || 'Follow normal school-appropriate standards');
-                  return extractedBoundaries || 'Follow normal school-appropriate standards';
+                additionalBoundaries={(() => {
+                  console.log("🚧 ADDITIONAL BOUNDARIES PROP DEBUG - extractedBoundaries state:", extractedBoundaries);
+                  console.log("🚧 ADDITIONAL BOUNDARIES PROP DEBUG - Passing to PersonalityTestingBot:", extractedBoundaries || null);
+                  return extractedBoundaries || null;
                 })()} 
                 stageContext={{
                   ...stageContext,

@@ -22,7 +22,7 @@ interface PersonalityTestingBotProps {
   botWelcomeMessage?: string | null;
   sampleDialogue?: string | null;
   // Additional context data
-  boundaries?: string | null;
+  additionalBoundaries?: string | null;
   stageContext?: any;
   uploadedFiles?: any[];
 }
@@ -36,7 +36,7 @@ export function PersonalityTestingBot({
   botJobTitle,
   botWelcomeMessage,
   sampleDialogue,
-  boundaries,
+  additionalBoundaries,
   stageContext,
   uploadedFiles
 }: PersonalityTestingBotProps) {
@@ -49,7 +49,7 @@ export function PersonalityTestingBot({
     botJobTitle: !!botJobTitle,
     botWelcomeMessage: !!botWelcomeMessage,
     sampleDialogue: !!sampleDialogue,
-    boundaries: boundaries,
+    additionalBoundaries: additionalBoundaries,
     stageContext: stageContext,
     uploadedFiles: uploadedFiles?.length || 0
   });
@@ -177,7 +177,7 @@ Feel free to ask me questions or have a conversation to see how I interact with 
           botPersonality: botPersonality,
           botName: botName,
           botJobTitle: botJobTitle,
-          additionalBoundaries: boundaries,
+          additionalBoundaries: additionalBoundaries,
           stageContext: stageContext,
           uploadedFiles: uploadedFiles,
           assessmentTargets: stageContext?.learningTargets || [],

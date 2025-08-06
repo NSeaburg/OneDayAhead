@@ -7,6 +7,13 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **August 6, 2025**: Completed boundaries system architecture overhaul
+  - Removed all vestiges of old "combined boundaries" approach
+  - Standard school-appropriate boundaries now hard-coded in GBPAC template  
+  - Only additional boundaries are configurable and passed to assessment bots
+  - Updated PersonalityTestingBot props: boundaries → additionalBoundaries
+  - Fixed boundary extraction logic to only store additional boundaries, not combined ones
+  - Eliminated redundant "Follow normal school-appropriate standards" references throughout codebase
 - **August 3, 2025**: Fixed assessment targets and persona confirmation button issues
   - Root cause: JSON detection was only in card submission flow, not button message flows
   - Added immediate JSON detection to all 3 streaming completion functions (sendButtonMessage, handleConfirmPersona, handleSend)
