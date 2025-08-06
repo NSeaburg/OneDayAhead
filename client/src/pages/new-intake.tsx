@@ -2573,7 +2573,6 @@ function IntakeChat({
                           >
                             {contentWithoutJson}
                           </ReactMarkdown>
-                          
                           {/* Boundaries confirmation buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
@@ -2604,9 +2603,7 @@ function IntakeChat({
                                 await sendButtonMessage("No additional boundaries needed");
                               }}
                               className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              No additional boundaries
-                            </Button>
+                            >Confirm these boundaries</Button>
                             <Button 
                               onClick={async () => {
                                 console.log("🚧 Add additional boundaries button clicked");
