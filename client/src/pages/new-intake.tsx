@@ -631,20 +631,34 @@ function IntakeChat({
           if (name) {
             setBotName(name);
             console.log("🎯 SYNC - Set botName:", name);
+            console.log("🔍 HANDOFF DEBUG - botName state after setting:", name);
           }
           if (jobTitle) {
             setBotJobTitle(jobTitle);
             console.log("🎯 SYNC - Set botJobTitle:", jobTitle);
+            console.log("🔍 HANDOFF DEBUG - botJobTitle state after setting:", jobTitle);
           }
           if (personality) {
             setBotPersonality(personality);
             setPersonalitySummary(personality); // Also set as summary
             console.log("🎯 SYNC - Set botPersonality:", personality);
+            console.log("🔍 HANDOFF DEBUG - botPersonality state after setting:", personality);
           }
           if (visual) {
             setBotVisualDescription(visual);
             console.log("🎯 SYNC - Set botVisualDescription:", visual);
+            console.log("🔍 HANDOFF DEBUG - botVisualDescription state after setting:", visual);
           }
+          
+          // CRITICAL DEBUGGING - Check state immediately after setting
+          console.log("🔍 HANDOFF DEBUG - All State Variables After Persona Confirmation:");
+          setTimeout(() => {
+            console.log("🔍 HANDOFF DEBUG - State check 100ms after setBotPersonality:");
+            console.log("  - botName:", name);
+            console.log("  - botJobTitle:", jobTitle);  
+            console.log("  - botPersonality:", personality);
+            console.log("  - botVisualDescription:", visual);
+          }, 100);
           
           // Generate welcome message with the extracted values
           generateWelcomeMessageAsync(name, jobTitle, personality);
@@ -4038,6 +4052,19 @@ export default function NewIntake() {
         
         {/* Personality Testing Bot Modal - Full screen overlay */}
         {personalityTesterExpanded && (() => {
+          // COMPREHENSIVE STATE DEBUGGING - Check all state variables at render time
+          console.log("🔍 HANDOFF DEBUG - PersonalityTestingBot Modal Opening");
+          console.log("🔍 HANDOFF DEBUG - All State Variables at Render:");
+          console.log("  - botPersonality:", botPersonality);
+          console.log("  - botName:", botName);
+          console.log("  - botJobTitle:", botJobTitle);
+          console.log("  - botWelcomeMessage:", botWelcomeMessage);
+          console.log("  - botSampleDialogue:", botSampleDialogue);
+          console.log("  - additionalBoundaries:", additionalBoundaries);
+          console.log("  - personalitySummary:", personalitySummary);
+          console.log("  - generatedAvatar:", generatedAvatar);
+          console.log("  - stageContext:", stageContext);
+          
           // Check if boundaries have been confirmed before rendering PersonalityTestingBot
           const boundariesCompleted = stages.find(stage => stage.id === 3)
             ?.components.find(comp => comp.id === "boundaries")?.completed;

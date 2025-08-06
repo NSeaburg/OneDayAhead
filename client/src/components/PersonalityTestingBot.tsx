@@ -40,19 +40,23 @@ export function PersonalityTestingBot({
   stageContext,
   uploadedFiles
 }: PersonalityTestingBotProps) {
-  console.log("🔴 PersonalityTestingBot component rendered with props:", {
-    avatar: !!avatar,
-    personalitySummary: !!personalitySummary,
-    botPersonality: !!botPersonality,
-    onClose: typeof onClose,
-    botName: !!botName,
-    botJobTitle: !!botJobTitle,
-    botWelcomeMessage: !!botWelcomeMessage,
-    sampleDialogue: !!sampleDialogue,
-    additionalBoundaries: additionalBoundaries,
-    stageContext: stageContext,
-    uploadedFiles: uploadedFiles?.length || 0
-  });
+  console.log("🔴 PersonalityTestingBot component rendered with props:");
+  console.log("  - avatar:", avatar);
+  console.log("  - personalitySummary:", personalitySummary);
+  console.log("  - botPersonality:", botPersonality);
+  console.log("  - botName:", botName);
+  console.log("  - botJobTitle:", botJobTitle);
+  console.log("  - botWelcomeMessage:", botWelcomeMessage);
+  console.log("  - sampleDialogue:", sampleDialogue);
+  console.log("  - additionalBoundaries:", additionalBoundaries);
+  console.log("  - stageContext:", stageContext);
+  console.log("  - uploadedFiles:", uploadedFiles?.length || 0);
+  
+  console.log("🔍 CRITICAL HANDOFF CHECK - Received Props Analysis:");
+  console.log("  - Has custom botPersonality?", botPersonality !== "A helpful and friendly assistant");
+  console.log("  - Has botName?", !!botName);
+  console.log("  - Has botJobTitle?", !!botJobTitle);
+  console.log("  - Has additionalBoundaries?", !!additionalBoundaries);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
