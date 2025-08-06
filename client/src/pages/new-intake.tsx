@@ -415,12 +415,6 @@ function IntakeChat({
     // Trigger stage progression to check for avatar completion
     const updatedMessage = messages.find(m => m.id === pendingAvatarMessageId)?.content || "";
     onStageProgression(updatedMessage + `\n\n![Generated Avatar](${selectedImageUrl})`);
-    
-    // Auto-trigger test bot button message after avatar is confirmed
-    setTimeout(() => {
-      console.log('🤖 AUTO-TRIGGER - Sending message to bot to provide test button after avatar confirmation');
-      sendButtonMessage("Perfect! Now show me the test button for this bot.");
-    }, 1000);
   };
 
   const handleAvatarCancel = () => {
