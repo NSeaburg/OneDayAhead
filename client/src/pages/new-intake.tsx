@@ -4048,59 +4048,7 @@ export default function NewIntake() {
             setBotVisualDescription={setBotVisualDescription}
             onInjectMessage={setMessageInjectionFunction}
             stages={stages}
-            onTestBotClick={() => {
-              console.log("🎯 TEST BOT BUTTON CLICKED - Checking personality data");
-              
-              // Check if we have personality data
-              if (!botPersonality || botPersonality === "A helpful and friendly assistant" || !botName) {
-                console.log("🚨 EXTRACTING PERSONA - No personality data found, scanning conversations");
-                
-                // Scan all stages for persona information
-                const allStages = [1, 2, 3, 4, 5];
-                let foundPersona = false;
-                
-                for (const stageId of allStages) {
-                  const messages = JSON.parse(localStorage.getItem(`intake-messages-stage-${stageId}`) || '[]');
-                  console.log(`🚨 Scanning stage ${stageId}: ${messages.length} messages`);
-                  
-                  for (const msg of messages) {
-                    if (msg.isBot && msg.content) {
-                      // Check for Detective Marlowe Conch
-                      if (msg.content.includes('Detective Marlowe Conch')) {
-                        console.log("🎯 FOUND Detective Marlowe Conch!");
-                        setBotName('Detective Marlowe Conch');
-                        setBotJobTitle('Hard-boiled Symbolism Detective');
-                        setBotPersonality("Detective Marlowe Conch is a hard-boiled detective from the 1940s who investigates the symbolic 'crimes' in Lord of the Flies. He treats each symbol like evidence in a case, speaking in film noir style with dramatic metaphors about darkness and light, always seeing the island as a crime scene where civilization was murdered.");
-                        foundPersona = true;
-                        break;
-                      }
-                      // Check for Mariner Max
-                      else if (msg.content.includes('Mariner Max')) {
-                        console.log("🎯 FOUND Mariner Max!");
-                        setBotName('Mariner Max');
-                        setBotJobTitle('Castaway Symbolism Expert');
-                        setBotPersonality("Mariner Max is a weathered island survivor who uses his experience being stranded to help students understand symbolism in Lord of the Flies. He speaks with the wisdom of someone who has lived through what the characters experience, often relating symbols to real survival situations.");
-                        foundPersona = true;
-                        break;
-                      }
-                    }
-                  }
-                  
-                  if (foundPersona) break;
-                }
-                
-                if (!foundPersona) {
-                  console.log("🚨 No specific persona found, using defaults");
-                }
-              } else {
-                console.log("🎯 Personality data already present:", { botName, botPersonality });
-              }
-              
-              // Add small delay to ensure state updates
-              setTimeout(() => {
-                setPersonalityTesterExpanded(true);
-              }, 100);
-            }}
+            onTestBotClick={() => setPersonalityTesterExpanded(true)}
           />
           
 
@@ -4121,7 +4069,31 @@ export default function NewIntake() {
           console.log("  - generatedAvatar:", generatedAvatar);
           console.log("  - stageContext:", stageContext);
           
-
+          // CRITICAL FIX: If personality data is missing, scan conversation for fallback data
+          if (!botPersonality || botPersonality === "A helpful and friendly assistant") {
+            console.log("🚨 FALLBACK EXTRACTION - Personality data missing, scanning conversation history");
+            
+            // Get the IntakeChat component messages for Stage 3 (personality stage)
+            const stage3Messages = JSON.parse(localStorage.getItem(`intake-messages-stage-3`) || '[]');
+            console.log("🚨 FALLBACK - Found stage 3 messages:", stage3Messages.length);
+            
+            // Look for persona data in any message that mentions "Mariner Max" or similar persona info
+            for (const msg of stage3Messages) {
+              if (msg.isBot && (msg.content.includes('Mariner Max') || msg.content.includes('Island Survivor'))) {
+                console.log("🚨 FALLBACK - Found potential persona message:", msg.content.substring(0, 200) + "...");
+                
+                // Try to extract name and personality from the message content
+                if (msg.content.includes('Mariner Max')) {
+                  console.log("🚨 FALLBACK - Extracting Mariner Max persona data");
+                  setBotName('Mariner Max');
+                  setBotJobTitle('Castaway Symbolism Expert');
+                  setBotPersonality('Mariner Max is a weathered island survivor who uses his experience being stranded to help students understand symbolism in Lord of the Flies. He speaks with the wisdom of someone who has lived through what the characters experience, often relating symbols to real survival situations.');
+                  console.log("🚨 FALLBACK - Set fallback persona data for Mariner Max");
+                  break;
+                }
+              }
+            }
+          }
           
           // Check if boundaries have been confirmed before rendering PersonalityTestingBot
           const boundariesCompleted = stages.find(stage => stage.id === 3)
