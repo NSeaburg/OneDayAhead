@@ -2588,7 +2588,10 @@ function IntakeChat({
                                   msg.id === boundariesConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: contentWithoutJson + "\n\n*Perfect! Using standard school-appropriate boundaries.*"
+                                        content: contentWithoutJson + (additionalBoundaries ? 
+                                          "\n\n*Perfect! These boundaries are confirmed.*" : 
+                                          "\n\n*Perfect! Using standard school-appropriate boundaries.*"
+                                        )
                                       }
                                     : msg
                                 ));
@@ -2601,11 +2604,11 @@ function IntakeChat({
                                 console.log("🚧 BOUNDARIES CONFIRMED - Using default boundaries only");
                                 
                                 // Send continuation message to bot
-                                await sendButtonMessage("No additional boundaries needed");
+                                await sendButtonMessage(additionalBoundaries ? "Confirm these boundaries" : "No additional boundaries needed");
                               }}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
-                              No additional boundaries
+                              {additionalBoundaries ? "Confirm these boundaries" : "No additional boundaries"}
                             </Button>
                             <Button 
                               onClick={async () => {
