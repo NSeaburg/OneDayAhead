@@ -624,7 +624,7 @@ function IntakeChat({
             // Extract all possible persona fields with multiple field name attempts
             const data = jsonData.data;
             const name = data.botName || data.name || "";
-            const jobTitle = data.botJobTitle || data.jobTitle || "";
+            const jobTitle = data.botRole || data.botJobTitle || data.jobTitle || "";
             const personality = data.botPersonality || data.personality || data.description || "";
             const visual = data.botVisualDescription || data.visualDescription || data.visual || "";
             
