@@ -3166,7 +3166,7 @@ export default function NewIntake() {
           note: "Visual appearance",
         },
       ],
-      hasTestButton: false,
+      hasTestButton: true,
     },
   ]);
 
