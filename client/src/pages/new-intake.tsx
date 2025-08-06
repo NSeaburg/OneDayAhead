@@ -2645,23 +2645,29 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🚧 Yes, boundaries correct button clicked");
                                 
-                                // Extract boundaries from the current message
+                                // Extract boundaries from the current message's JSON
                                 const currentMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
                                 console.log("🚧 BOUNDARY EXTRACTION - Found message:", currentMessage?.id);
                                 console.log("🚧 BOUNDARY EXTRACTION - Message content preview:", currentMessage?.content?.substring(0, 200));
                                 
                                 if (currentMessage) {
-                                  // Look for any mention of horses in the message
-                                  const messageText = currentMessage.content.toLowerCase();
-                                  console.log("🚧 BOUNDARY EXTRACTION - Checking for 'horse':", messageText.includes('horse'));
-                                  console.log("🚧 BOUNDARY EXTRACTION - Checking for 'avoid':", messageText.includes('avoid'));
+                                  // Look for the JSON block in the message to extract additional boundaries
+                                  const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+                                  let match;
                                   
-                                  if (messageText.includes('horse')) {
-                                    const additionalBoundaries = "Do not mention horses";
-                                    console.log("🚧 MANUAL BOUNDARY EXTRACTION - Setting additional boundaries:", additionalBoundaries);
-                                    setExtractedBoundaries(additionalBoundaries);
-                                  } else {
-                                    console.log("🚧 BOUNDARY EXTRACTION - No horse boundary found in message");
+                                  while ((match = jsonBlockRegex.exec(currentMessage.content)) !== null) {
+                                    try {
+                                      const jsonData = JSON.parse(match[1]);
+                                      console.log("🚧 BOUNDARY EXTRACTION - Found JSON data:", jsonData);
+                                      
+                                      if (jsonData.action === 'confirm_boundaries' && jsonData.data) {
+                                        const additionalBoundaries = jsonData.data.additionalBoundaries || "";
+                                        console.log("🚧 BOUNDARY EXTRACTION - Extracted additional boundaries from JSON:", additionalBoundaries);
+                                        setExtractedBoundaries(additionalBoundaries);
+                                      }
+                                    } catch (error) {
+                                      console.error("🚧 BOUNDARY EXTRACTION - Error parsing JSON:", error);
+                                    }
                                   }
                                 } else {
                                   console.log("🚧 BOUNDARY EXTRACTION - No message found with ID:", boundariesConfirmationMessageId);
