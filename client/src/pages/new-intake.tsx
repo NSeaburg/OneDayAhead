@@ -344,6 +344,12 @@ function IntakeChat({
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting avatar buttons immediately');
                   setAvatarButtonMessageId(finalMessageId);
                   
+                  // Extract and store avatar prompt from JSON data
+                  if (jsonData.data && jsonData.data.prompt) {
+                    console.log('🎨 AVATAR PROMPT EXTRACTION - Setting visual description from JSON:', jsonData.data.prompt);
+                    setBotVisualDescription && setBotVisualDescription(jsonData.data.prompt);
+                  }
+                  
                   // Auto-trigger avatar generation
                   console.log('🎨 AUTO-GENERATION - Triggering automatic avatar generation from button message JSON');
                   setTimeout(() => {
@@ -624,6 +630,32 @@ function IntakeChat({
             } catch (error) {
               console.error("Error generating welcome message:", error);
             }
+          }
+          
+          // Store the extracted bot data in component state for immediate use
+          if (extractionData.name) {
+            setBotName(extractionData.name);
+            console.log("🎯 Set botName from extraction:", extractionData.name);
+          }
+          if (extractionData.jobTitle) {
+            setBotJobTitle(extractionData.jobTitle);
+            console.log("🎯 Set botJobTitle from extraction:", extractionData.jobTitle);
+          }
+          if (extractionData.personalitySummary) {
+            setPersonalitySummary(extractionData.personalitySummary);
+            console.log("🎯 Set personalitySummary from extraction:", extractionData.personalitySummary);
+          }
+          if (extractionData.personality) {
+            setFullBotPersonality(extractionData.personality);
+            console.log("🎯 Set fullBotPersonality from extraction:", extractionData.personality);
+          }
+          if (extractionData.welcomeMessage) {
+            setBotWelcomeMessage(extractionData.welcomeMessage);
+            console.log("🎯 Set botWelcomeMessage from extraction:", extractionData.welcomeMessage);
+          }
+          if (extractionData.sampleDialogue) {
+            setBotSampleDialogue(extractionData.sampleDialogue);
+            console.log("🎯 Set botSampleDialogue from extraction:", extractionData.sampleDialogue);
           }
           
           // Store the confirmed persona data in parent component state
@@ -1495,6 +1527,12 @@ function IntakeChat({
                 case "generate_avatar":
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting avatar buttons immediately');
                   setAvatarButtonMessageId(finalMessageId);
+                  
+                  // Extract and store avatar prompt from JSON data
+                  if (jsonData.data && jsonData.data.prompt) {
+                    console.log('🎨 AVATAR PROMPT EXTRACTION - Setting visual description from JSON:', jsonData.data.prompt);
+                    setBotVisualDescription && setBotVisualDescription(jsonData.data.prompt);
+                  }
                   
                   // Auto-trigger avatar generation
                   console.log('🎨 AUTO-GENERATION - Triggering automatic avatar generation from JSON');
