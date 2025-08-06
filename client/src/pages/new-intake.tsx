@@ -2537,6 +2537,10 @@ function IntakeChat({
                                 // Clear the button state
                                 setBoundariesButtonMessageId(null);
                                 
+                                // Mark boundaries component as completed
+                                handleComponentComplete('boundaries');
+                                console.log("🚧 BOUNDARIES STANDARD - Marked boundaries component as completed");
+                                
                                 // Send continuation message to bot
                                 await sendButtonMessage("No additional boundaries needed. Let's create the avatar.");
                               }}
@@ -2637,6 +2641,10 @@ function IntakeChat({
                                 
                                 // Clear the button state
                                 setBoundariesConfirmationMessageId(null);
+                                
+                                // Mark boundaries component as completed
+                                handleComponentComplete('boundaries');
+                                console.log("🚧 BOUNDARIES CONFIRMED - Marked boundaries component as completed");
                                 
                                 // Send continuation message to bot
                                 await sendButtonMessage("Yes, that's correct");
@@ -3998,7 +4006,34 @@ export default function NewIntake() {
         </div>
         
         {/* Personality Testing Bot Modal - Full screen overlay */}
-        {personalityTesterExpanded && (
+        {personalityTesterExpanded && (() => {
+          // Check if boundaries have been confirmed before rendering PersonalityTestingBot
+          const boundariesCompleted = stages.find(stage => stage.id === 3)
+            ?.components.find(comp => comp.id === "boundaries")?.completed;
+          
+          console.log("🚧 BOUNDARY CHECK - Boundaries completed:", boundariesCompleted);
+          console.log("🚧 BOUNDARY CHECK - ExtractedBoundaries state:", extractedBoundaries);
+          
+          if (!boundariesCompleted) {
+            console.log("🚧 BOUNDARY CHECK - PersonalityTestingBot blocked: boundaries not confirmed yet");
+            return (
+              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-8">
+                <div className="bg-white rounded-lg shadow-xl max-w-md p-6 text-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Complete Boundaries First</h3>
+                  <p className="text-gray-600 mb-4">Please confirm the bot's boundaries before testing.</p>
+                  <button 
+                    onClick={() => setPersonalityTesterExpanded(false)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    Continue Setting Up Bot
+                  </button>
+                </div>
+              </div>
+            );
+          }
+          
+          return true; // Allow normal rendering
+        })() && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-8"
             onClick={(e) => {
