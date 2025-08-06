@@ -570,6 +570,90 @@ function IntakeChat({
     const buttonMessage = messages.find(m => m.id === personaConfirmationMessageId);
     if (!buttonMessage) return;
 
+    // Generate welcome message function (defined inside to have access to state)
+    const generateWelcomeMessageAsync = async (extractedName: string, extractedJobTitle: string, extractedPersonality: string) => {
+      try {
+        // Use the values we just extracted
+        const currentBotName = extractedName || "Assessment Bot";
+        const currentBotJobTitle = extractedJobTitle || "Educational Assistant";
+        const currentBotPersonality = extractedPersonality || "A helpful and friendly assistant";
+        
+        console.log("🎯 ASYNC - Generating welcome message with:", {
+          name: currentBotName,
+          jobTitle: currentBotJobTitle,
+          personality: currentBotPersonality
+        });
+        
+        const welcomeResponse = await fetch("/api/intake/generate-welcome-message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            botName: currentBotName,
+            botJobTitle: currentBotJobTitle,
+            botPersonality: currentBotPersonality,
+            stageContext: stageContext,
+          }),
+        });
+
+        if (welcomeResponse.ok) {
+          const welcomeData = await welcomeResponse.json();
+          console.log("🎯 Generated welcome message (background):", welcomeData.welcomeMessage);
+          setBotWelcomeMessage(welcomeData.welcomeMessage);
+        } else {
+          console.error("🎯 Welcome message generation failed:", welcomeResponse.status);
+        }
+      } catch (error) {
+        console.error("Error generating welcome message:", error);
+      }
+    };
+
+    // Extract bot personality data from the JSON in the message IMMEDIATELY
+    console.log("🎯 SYNC EXTRACTION - Extracting bot data from persona confirmation message");
+    const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+    let match;
+    
+    while ((match = jsonBlockRegex.exec(buttonMessage.content)) !== null) {
+      try {
+        const jsonData = JSON.parse(match[1]);
+        console.log("🎯 SYNC EXTRACTION - Found JSON data:", jsonData);
+        
+        if (jsonData.action === 'confirm_persona' && jsonData.data) {
+          // Extract and set bot data IMMEDIATELY (not in background)
+          const { botName: name, botJobTitle: jobTitle, botPersonality: personality, botVisualDescription: visual } = jsonData.data;
+          
+          console.log("🎯 SYNC EXTRACTION - Setting bot data immediately:");
+          console.log("  - Name:", name);
+          console.log("  - Job Title:", jobTitle);
+          console.log("  - Personality:", personality);
+          
+          // Set the bot data synchronously
+          if (name) {
+            setBotName(name);
+            console.log("🎯 SYNC - Set botName:", name);
+          }
+          if (jobTitle) {
+            setBotJobTitle(jobTitle);
+            console.log("🎯 SYNC - Set botJobTitle:", jobTitle);
+          }
+          if (personality) {
+            setFullBotPersonality(personality);
+            setPersonalitySummary(personality); // Also set as summary
+            console.log("🎯 SYNC - Set fullBotPersonality:", personality);
+          }
+          if (visual) {
+            setBotVisualDescription(visual);
+            console.log("🎯 SYNC - Set botVisualDescription:", visual);
+          }
+          
+          // Generate welcome message with the extracted values
+          generateWelcomeMessageAsync(name, jobTitle, personality);
+        }
+      } catch (error) {
+        console.error("🎯 SYNC EXTRACTION - Error parsing JSON:", error);
+      }
+    }
+
     // Replace the buttons with acceptance message
     setMessages(prev => prev.map(msg => 
       msg.id === personaConfirmationMessageId
@@ -587,97 +671,6 @@ function IntakeChat({
       console.log("🎯 Immediately marking personality component as complete");
       onComponentComplete("personality");
     }
-
-    // Extract and store bot information for later use (in background, non-blocking)
-    const extractBotInfoAsync = async () => {
-      try {
-        const extractResponse = await fetch("/api/intake/extract-bot-info", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ botResponse: buttonMessage.content }),
-        });
-
-        if (extractResponse.ok) {
-          const extractionData = await extractResponse.json();
-          console.log("✅ CONFIRMED PERSONA DATA (background):", extractionData);
-          
-          // Store visual description for avatar generation
-          if (extractionData.visualDescription) {
-            setBotVisualDescription && setBotVisualDescription(extractionData.visualDescription);
-            console.log("🎨 Set confirmed visual description (background):", extractionData.visualDescription);
-          }
-          
-          // Generate welcome message silently in background
-          if (extractionData.name && extractionData.personality) {
-            try {
-              const welcomeResponse = await fetch("/api/intake/generate-welcome-message", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                  botName: extractionData.name,
-                  botJobTitle: extractionData.jobTitle,
-                  botPersonality: extractionData.personality,
-                  stageContext: stageContext,
-                }),
-              });
-
-              if (welcomeResponse.ok) {
-                const welcomeData = await welcomeResponse.json();
-                console.log("🎯 Generated welcome message (background):", welcomeData.welcomeMessage);
-                
-                // Add welcome message to extraction data
-                extractionData.welcomeMessage = welcomeData.welcomeMessage;
-                console.log("🎯 Welcome message added to extractionData:", extractionData.welcomeMessage);
-              } else {
-                console.error("🎯 Welcome message generation failed:", welcomeResponse.status, welcomeResponse.statusText);
-              }
-            } catch (error) {
-              console.error("Error generating welcome message:", error);
-            }
-          }
-          
-          // Store the extracted bot data in component state for immediate use
-          if (extractionData.name) {
-            setBotName(extractionData.name);
-            console.log("🎯 Set botName from extraction:", extractionData.name);
-          }
-          if (extractionData.jobTitle) {
-            setBotJobTitle(extractionData.jobTitle);
-            console.log("🎯 Set botJobTitle from extraction:", extractionData.jobTitle);
-          }
-          if (extractionData.personalitySummary) {
-            setPersonalitySummary(extractionData.personalitySummary);
-            console.log("🎯 Set personalitySummary from extraction:", extractionData.personalitySummary);
-          }
-          if (extractionData.personality) {
-            setFullBotPersonality(extractionData.personality);
-            console.log("🎯 Set fullBotPersonality from extraction:", extractionData.personality);
-          }
-          if (extractionData.welcomeMessage) {
-            setBotWelcomeMessage(extractionData.welcomeMessage);
-            console.log("🎯 Set botWelcomeMessage from extraction:", extractionData.welcomeMessage);
-          }
-          if (extractionData.sampleDialogue) {
-            setBotSampleDialogue(extractionData.sampleDialogue);
-            console.log("🎯 Set botSampleDialogue from extraction:", extractionData.sampleDialogue);
-          }
-          
-          // Store the confirmed persona data in parent component state
-          if (onComponentComplete) {
-            console.log("🎯 About to call onComponentComplete with extractionData:", extractionData);
-            console.log("🎯 extractionData.welcomeMessage:", extractionData.welcomeMessage);
-            onComponentComplete(extractionData);
-          }
-        }
-      } catch (error) {
-        console.error("Error extracting confirmed persona (background):", error);
-      }
-    };
-
-    // Start extraction in background (non-blocking)
-    extractBotInfoAsync();
 
     // Send a user message to continue the conversation
     const confirmationMessage: Message = {

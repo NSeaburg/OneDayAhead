@@ -4151,11 +4151,24 @@ Respond in JSON format:
 
       console.log("✅ Extracted bot info:", extractedInfo);
 
+      // Extract the full personality from the original response
+      // Look for the complete personality description between certain markers
+      let fullPersonality = extractedInfo.description || null;
+      
+      // Try to find a more complete personality description in the original response
+      // Look for text that comes after phrases like "personality:" or "persona:" 
+      const personalityMatch = botResponse.match(/(?:personality|persona|character):\s*([^.!?]+(?:[.!?]\s*[^.!?]+)*)/i);
+      if (personalityMatch && personalityMatch[1].length > 50) {
+        fullPersonality = personalityMatch[1].trim();
+      }
+      
       res.json({
         success: true,
         name: extractedInfo.name || null,
         jobTitle: extractedInfo.jobTitle || null,
-        description: extractedInfo.description || null,
+        personalitySummary: extractedInfo.description || null, // Short summary
+        personality: fullPersonality || extractedInfo.description || null, // Full personality text
+        fullPersonality: fullPersonality || extractedInfo.description || null, // Also send as fullPersonality for compatibility
         sampleDialogue: extractedInfo.sampleDialogue || null,
         visualDescription: extractedInfo.visualDescription || null,
         source: "Claude AI extraction"

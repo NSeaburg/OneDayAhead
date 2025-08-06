@@ -7,6 +7,13 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **August 6, 2025**: Fixed critical PersonalityTestingBot data flow issue
+  - Root cause: Bot personality data was extracted asynchronously, causing null values when test button clicked immediately
+  - Solution: Implemented synchronous extraction of bot data (name, job title, personality) from JSON when persona is confirmed
+  - Bot personality data now extracted immediately from confirm_persona JSON and set in state variables
+  - Fixed server-side extract-bot-info endpoint to return proper field names (personality, fullPersonality, personalitySummary)
+  - PersonalityTestingBot now receives actual bot data instead of empty/default values when test button is clicked
+  - GBPAC template correctly populated with bot name, job title, and full personality description
 - **August 6, 2025**: Completed boundaries system architecture overhaul
   - Removed all vestiges of old "combined boundaries" approach
   - Standard school-appropriate boundaries now hard-coded in GBPAC template  
