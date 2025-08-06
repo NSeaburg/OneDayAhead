@@ -608,64 +608,60 @@ function IntakeChat({
       }
     };
 
-    // Extract bot personality data from the JSON in the message IMMEDIATELY
+    // Extract bot personality data from the correct message (like boundaries extraction)
     console.log("🎯 SYNC EXTRACTION - Extracting bot data from persona confirmation message");
-    const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
-    let match;
+    const currentMessage = messages.find(m => m.id === personaConfirmationMessageId);
+    console.log("🎯 SYNC EXTRACTION - Found message:", currentMessage?.id);
+    console.log("🎯 SYNC EXTRACTION - Message content preview:", currentMessage?.content?.substring(0, 200));
     
-    while ((match = jsonBlockRegex.exec(buttonMessage.content)) !== null) {
-      try {
-        const jsonData = JSON.parse(match[1]);
-        console.log("🎯 SYNC EXTRACTION - Found JSON data:", jsonData);
-        
-        if (jsonData.action === 'confirm_persona' && jsonData.data) {
-          // Extract and set bot data IMMEDIATELY (not in background)
-          const { botName: name, botJobTitle: jobTitle, botPersonality: personality, botVisualDescription: visual } = jsonData.data;
+    if (currentMessage) {
+      // Look for the JSON block in the message to extract persona data (same pattern as boundaries)
+      const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+      let match;
+      
+      while ((match = jsonBlockRegex.exec(currentMessage.content)) !== null) {
+        try {
+          const jsonData = JSON.parse(match[1]);
+          console.log("🎯 SYNC EXTRACTION - Found JSON data:", jsonData);
           
-          console.log("🎯 SYNC EXTRACTION - Setting bot data immediately:");
-          console.log("  - Name:", name);
-          console.log("  - Job Title:", jobTitle);
-          console.log("  - Personality:", personality);
-          
-          // Set the bot data synchronously using onComponentComplete 
-          // Since onComponentComplete expects string but handleComponentComplete handles objects,
-          // we call it with the personality data object
-          const personalityData = {
-            name: name,
-            jobTitle: jobTitle, 
-            description: personality,
-            fullPersonality: personality
-          };
-          
-          console.log("🎯 SYNC - Calling onComponentComplete with persona data:", personalityData);
-          
-          if (onComponentComplete) {
-            // Cast to any since we know handleComponentComplete handles objects
-            (onComponentComplete as any)(personalityData);
+          if (jsonData.action === 'confirm_persona' && jsonData.data) {
+            // Extract all possible persona fields with multiple field name attempts
+            const data = jsonData.data;
+            const name = data.botName || data.name || "";
+            const jobTitle = data.botJobTitle || data.jobTitle || "";
+            const personality = data.botPersonality || data.personality || data.description || "";
+            const visual = data.botVisualDescription || data.visualDescription || data.visual || "";
+            
+            console.log("🎯 SYNC EXTRACTION - Extracted persona data:");
+            console.log("  - Name:", name);
+            console.log("  - Job Title:", jobTitle);
+            console.log("  - Personality:", personality);
+            console.log("  - Visual:", visual);
+            
+            // Set the bot data synchronously using onComponentComplete 
+            const personalityData = {
+              name: name,
+              jobTitle: jobTitle, 
+              description: personality,
+              fullPersonality: personality
+            };
+            
+            console.log("🎯 SYNC - Calling onComponentComplete with persona data:", personalityData);
+            
+            if (onComponentComplete) {
+              // Cast to any since we know handleComponentComplete handles objects
+              (onComponentComplete as any)(personalityData);
+            }
+            
+            // Generate welcome message with the extracted values
+            generateWelcomeMessageAsync(name, jobTitle, personality);
           }
-          
-          console.log("🔍 HANDOFF DEBUG - Persona data sent to parent component");
-          console.log("  - Name:", name);
-          console.log("  - Job Title:", jobTitle);
-          console.log("  - Personality:", personality);
-          console.log("  - Visual Description:", visual);
-          
-          // CRITICAL DEBUGGING - Check state immediately after setting
-          console.log("🔍 HANDOFF DEBUG - All State Variables After Persona Confirmation:");
-          setTimeout(() => {
-            console.log("🔍 HANDOFF DEBUG - State check 100ms after setBotPersonality:");
-            console.log("  - botName:", name);
-            console.log("  - botJobTitle:", jobTitle);  
-            console.log("  - botPersonality:", personality);
-            console.log("  - botVisualDescription:", visual);
-          }, 100);
-          
-          // Generate welcome message with the extracted values
-          generateWelcomeMessageAsync(name, jobTitle, personality);
+        } catch (error) {
+          console.error("🎯 SYNC EXTRACTION - Error parsing JSON:", error);
         }
-      } catch (error) {
-        console.error("🎯 SYNC EXTRACTION - Error parsing JSON:", error);
       }
+    } else {
+      console.log("🎯 SYNC EXTRACTION - No message found with ID:", personaConfirmationMessageId);
     }
 
     // Replace the buttons with acceptance message
