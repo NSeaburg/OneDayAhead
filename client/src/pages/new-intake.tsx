@@ -788,9 +788,6 @@ function IntakeChat({
                   case "confirm_learning_targets":
                     setAssessmentTargetsConfirmationMessageId(finalMessageId);
                     break;
-                  case "set_boundaries":
-                    setBoundariesButtonMessageId(finalMessageId);
-                    break;
                   case "confirm_boundaries":
                     setBoundariesConfirmationMessageId(finalMessageId);
                     // Extract and store boundaries immediately
@@ -1861,9 +1858,6 @@ function IntakeChat({
                     console.log('🔍 USER MESSAGE JSON DETECTION - Setting persona confirmation buttons');
                     setPersonaConfirmationMessageId(finalMessageId);
                     break;
-                  case "set_boundaries":
-                    setBoundariesButtonMessageId(finalMessageId);
-                    break;
                   case "confirm_boundaries":
                     setBoundariesConfirmationMessageId(finalMessageId);
                     // Store the complete boundary data directly
@@ -1914,9 +1908,6 @@ function IntakeChat({
                     case "confirm_persona":
                       console.log('🔍 USER MESSAGE PLAIN JSON DETECTION - Setting persona confirmation buttons');
                       setPersonaConfirmationMessageId(finalMessageId);
-                      break;
-                    case "set_boundaries":
-                      setBoundariesButtonMessageId(finalMessageId);
                       break;
                     case "confirm_boundaries":
                       setBoundariesConfirmationMessageId(finalMessageId);
@@ -2283,15 +2274,15 @@ function IntakeChat({
                       console.log("🎨 AVATAR DEBUG - Current avatarButtonMessageId:", avatarButtonMessageId);
                       console.log("🎨 AVATAR DEBUG - State match:", avatarButtonMessageId === message.id);
                     }
-                    const hasBoundariesButtons = message.content.includes('[BOUNDARIES_BUTTONS]');
-                    
-                    // Debug boundaries button state
-                    if (hasBoundariesButtons) {
-                      console.log("🚧 BOUNDARIES DEBUG - Found BOUNDARIES_BUTTONS in message:", message.id);
-                      console.log("🚧 BOUNDARIES DEBUG - Current boundariesButtonMessageId:", boundariesButtonMessageId);
-                      console.log("🚧 BOUNDARIES DEBUG - State match:", boundariesButtonMessageId === message.id);
-                    }
+
                     const hasBoundariesConfirmationButtons = message.content.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]');
+                    
+                    // Debug boundaries confirmation detection
+                    if (hasBoundariesConfirmationButtons) {
+                      console.log("🚧 BOUNDARIES CONFIRM DEBUG - Found [BOUNDARIES_CONFIRMATION_BUTTONS] in message:", message.id);
+                      console.log("🚧 BOUNDARIES CONFIRM DEBUG - Current boundariesConfirmationMessageId:", boundariesConfirmationMessageId);
+                      console.log("🚧 BOUNDARIES CONFIRM DEBUG - State match:", boundariesConfirmationMessageId === message.id);
+                    }
                     const hasAssessmentTargetsConfirmationButtons = message.content.includes('[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS]');
                     if (hasAssessmentTargetsConfirmationButtons) {
                       console.log("🎯 ASSESSMENT DEBUG - Found ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS in message:", message.id);
