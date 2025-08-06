@@ -169,8 +169,7 @@ function IntakeChat({
   // New state for Intake Card Confirmation
   const [intakeConfirmationMessageId, setIntakeConfirmationMessageId] = useState<string | null>(null);
   
-  // New state for Boundaries Buttons
-  const [boundariesButtonMessageId, setBoundariesButtonMessageId] = useState<string | null>(null);
+  // New state for Boundaries Confirmation Buttons (text marker triggered)
   const [boundariesConfirmationMessageId, setBoundariesConfirmationMessageId] = useState<string | null>(null);
   
   // New state for Assessment Targets Confirmation Buttons
@@ -323,21 +322,18 @@ function IntakeChat({
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting persona confirmation buttons immediately');
                   setPersonaConfirmationMessageId(finalMessageId);
                   break;
-                case "set_boundaries":
-                  console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting boundaries buttons immediately');
-                  setBoundariesButtonMessageId(finalMessageId);
-                  break;
+
                 case "confirm_boundaries":
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting boundaries confirmation buttons immediately');
                   setBoundariesConfirmationMessageId(finalMessageId);
-                  // Extract and store boundaries immediately
+                  // Extract and store additional boundaries only (no empty strings)
                   console.log('🚧 BOUNDARIES FULL JSON DATA (BUTTON MESSAGE):', JSON.stringify(jsonData, null, 2));
-                  if (jsonData.data) {
-                    const additionalBoundaries = jsonData.data.additionalBoundaries || '';
-                    console.log('🚧 BOUNDARIES EXTRACTION IN SENDBUTTONMESSAGE - Storing additional boundaries only:', additionalBoundaries);
+                  if (jsonData.data && jsonData.data.additionalBoundaries) {
+                    const additionalBoundaries = jsonData.data.additionalBoundaries;
+                    console.log('🚧 BOUNDARIES EXTRACTION - Storing additional boundaries:', additionalBoundaries);
                     setAdditionalBoundaries(additionalBoundaries);
                   } else {
-                    console.log('🚧 BOUNDARIES EXTRACTION (BUTTON MESSAGE) - No data field found in JSON:', jsonData);
+                    console.log('🚧 BOUNDARIES EXTRACTION - No additional boundaries found in JSON');
                   }
                   break;
                 case "generate_avatar":
@@ -1204,7 +1200,7 @@ function IntakeChat({
     }, 250);
 
     return () => clearInterval(intervalId);
-  }, [messages, avatarButtonMessageId, boundariesButtonMessageId, boundariesConfirmationMessageId, 
+  }, [messages, avatarButtonMessageId, boundariesConfirmationMessageId, 
       personaConfirmationMessageId, intakeConfirmationMessageId, assessmentTargetsConfirmationMessageId, testBotButtonMessageId]);
 
   useEffect(() => {
@@ -1516,21 +1512,17 @@ function IntakeChat({
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting persona confirmation buttons immediately');
                   setPersonaConfirmationMessageId(finalMessageId);
                   break;
-                case "set_boundaries":
-                  console.log('🔍 IMMEDIATE JSON DETECTION - Setting boundaries buttons immediately');
-                  setBoundariesButtonMessageId(finalMessageId);
-                  break;
                 case "confirm_boundaries":
                   console.log('🔍 IMMEDIATE JSON DETECTION - Setting boundaries confirmation buttons immediately');
                   setBoundariesConfirmationMessageId(finalMessageId);
-                  // Extract and store boundaries immediately
+                  // Extract and store additional boundaries immediately (only when user provides custom boundaries)
                   console.log('🚧 BOUNDARIES FULL JSON DATA:', JSON.stringify(jsonData, null, 2));
-                  if (jsonData.data) {
-                    const additionalBoundaries = jsonData.data.additionalBoundaries || '';
-                    console.log('🚧 BOUNDARIES EXTRACTION IN HANDLECONFIRMPERSONA - Storing additional boundaries only:', additionalBoundaries);
+                  if (jsonData.data && jsonData.data.additionalBoundaries) {
+                    const additionalBoundaries = jsonData.data.additionalBoundaries;
+                    console.log('🚧 BOUNDARIES EXTRACTION - Storing additional boundaries:', additionalBoundaries);
                     setAdditionalBoundaries(additionalBoundaries);
                   } else {
-                    console.log('🚧 BOUNDARIES EXTRACTION - No data field found in JSON:', jsonData);
+                    console.log('🚧 BOUNDARIES EXTRACTION - No additional boundaries found in JSON');
                   }
                   break;
                 case "generate_avatar":
@@ -2527,97 +2519,7 @@ function IntakeChat({
                           )}
                         </div>
                       );
-                    } else if (boundariesButtonMessageId === message.id) {
-                      console.log("🚧 BOUNDARIES DEBUG - Rendering boundaries buttons for message:", message.id);
-                      // Remove JSON blocks from display since we use JSON detection
-                      const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
-                      
-                      return (
-                        <div className="prose prose-sm max-w-none">
-                          {/* Message content */}
-                          <ReactMarkdown
-                            components={{
-                              p: ({ children }) => (
-                                <div className="mb-2 last:mb-0">{children}</div>
-                              ),
-                              strong: ({ children }) => (
-                                <strong className="font-bold text-gray-900">
-                                  {children}
-                                </strong>
-                              ),
-                              em: ({ children }) => (
-                                <em className="italic">{children}</em>
-                              ),
-                              br: () => <br />,
-                              code: () => null,
-                              pre: () => null,
-                            }}
-                          >
-                            {contentWithoutJson}
-                          </ReactMarkdown>
-                          {/* Boundaries buttons */}
-                          <div className="flex flex-col gap-3 my-4 max-w-md">
-                            <Button 
-                              onClick={async () => {
-                                console.log("🚧 Looks good button clicked for boundaries");
-                                
-                                // Replace with confirmation message (remove JSON)
-                                setMessages(prev => prev.map(msg => 
-                                  msg.id === boundariesButtonMessageId
-                                    ? { 
-                                        ...msg, 
-                                        content: contentWithoutJson + "\n\n*Perfect! No additional boundaries needed. Now let's create your bot's visual avatar.*"
-                                      }
-                                    : msg
-                                ));
-                                
-                                // Only set default boundaries if none were already extracted
-                                if (!additionalBoundaries) {
-                                  setAdditionalBoundaries("Follow normal school-appropriate standards");
-                                  console.log('🚧 BOUNDARIES - Setting default boundaries (none extracted)');
-                                } else {
-                                  console.log('🚧 BOUNDARIES - Keeping existing extracted boundaries:', additionalBoundaries);
-                                }
-                                
-                                // Clear the button state
-                                setBoundariesButtonMessageId(null);
-                                
-                                // Mark boundaries component as completed
-                                onComponentComplete('boundaries');
-                                console.log("🚧 BOUNDARIES STANDARD - Marked boundaries component as completed");
-                                
-                                // Send continuation message to bot
-                                await sendButtonMessage("No additional boundaries needed. Let's create the avatar.");
-                              }}
-                              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
-                            >Use Standard Boundaries</Button>
-                            <Button 
-                              onClick={async () => {
-                                console.log("🚧 Add specific boundaries clicked");
-                                
-                                // Replace with revision message (remove JSON)
-                                setMessages(prev => prev.map(msg => 
-                                  msg.id === boundariesButtonMessageId
-                                    ? { 
-                                        ...msg, 
-                                        content: contentWithoutJson + "\n\n*What specific boundaries would you like me to add for your bot? Please describe what topics or approaches it should avoid.*"
-                                      }
-                                    : msg
-                                ));
-                                
-                                // Clear the button state
-                                setBoundariesButtonMessageId(null);
-                                
-                                // Send continuation message to bot
-                                await sendButtonMessage("I want to add specific boundaries for my bot. Please ask me what I'd like to avoid.");
-                              }}
-                              className="w-full hover:bg-orange-200 border border-orange-300 font-medium py-2.5 px-4 rounded-lg transition-colors bg-[#ffffff] text-[#000000]"
-                            >
-                              Add additional boundaries
-                            </Button>
-                          </div>
-                        </div>
-                      );
+
                     } else if (boundariesConfirmationMessageId === message.id) {
                       // Remove JSON blocks from display since we use JSON detection
                       const contentWithoutJson = message.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim();
@@ -2650,42 +2552,17 @@ function IntakeChat({
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
                               onClick={async () => {
-                                console.log("🚧 Yes, boundaries correct button clicked");
+                                console.log("🚧 No additional boundaries - proceeding with defaults");
                                 
-                                // Extract boundaries from the current message's JSON
-                                const currentMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
-                                console.log("🚧 BOUNDARY EXTRACTION - Found message:", currentMessage?.id);
-                                console.log("🚧 BOUNDARY EXTRACTION - Message content preview:", currentMessage?.content?.substring(0, 200));
+                                // No extraction needed - user accepted default boundaries
+                                console.log("🚧 Using standard school-appropriate boundaries only");
                                 
-                                if (currentMessage) {
-                                  // Look for the JSON block in the message to extract additional boundaries
-                                  const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
-                                  let match;
-                                  
-                                  while ((match = jsonBlockRegex.exec(currentMessage.content)) !== null) {
-                                    try {
-                                      const jsonData = JSON.parse(match[1]);
-                                      console.log("🚧 BOUNDARY EXTRACTION - Found JSON data:", jsonData);
-                                      
-                                      if (jsonData.action === 'confirm_boundaries' && jsonData.data) {
-                                        const additionalBoundaries = jsonData.data.additionalBoundaries || "";
-                                        console.log("🚧 BOUNDARY EXTRACTION - Extracted additional boundaries from JSON:", additionalBoundaries);
-                                        setAdditionalBoundaries(additionalBoundaries);
-                                      }
-                                    } catch (error) {
-                                      console.error("🚧 BOUNDARY EXTRACTION - Error parsing JSON:", error);
-                                    }
-                                  }
-                                } else {
-                                  console.log("🚧 BOUNDARY EXTRACTION - No message found with ID:", boundariesConfirmationMessageId);
-                                }
-                                
-                                // Replace with confirmation message (remove JSON)
+                                // Replace with confirmation message
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: contentWithoutJson + "\n\n*Perfect! Those boundaries are confirmed.*"
+                                        content: contentWithoutJson + "\n\n*Perfect! Using standard school-appropriate boundaries.*"
                                       }
                                     : msg
                                 ));
@@ -2695,25 +2572,25 @@ function IntakeChat({
                                 
                                 // Mark boundaries component as completed
                                 onComponentComplete('boundaries');
-                                console.log("🚧 BOUNDARIES CONFIRMED - Marked boundaries component as completed");
+                                console.log("🚧 BOUNDARIES CONFIRMED - Using default boundaries only");
                                 
                                 // Send continuation message to bot
-                                await sendButtonMessage("Yes, that's correct");
+                                await sendButtonMessage("No additional boundaries needed");
                               }}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
-                              Yes, that's correct
+                              No additional boundaries
                             </Button>
                             <Button 
                               onClick={async () => {
-                                console.log("🚧 Let me revise boundaries button clicked");
+                                console.log("🚧 Add additional boundaries button clicked");
                                 
-                                // Replace with revision message (remove JSON)
+                                // Replace with revision message  
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: contentWithoutJson + "\n\n*What changes would you like me to make to the boundaries?*"
+                                        content: contentWithoutJson + "\n\n*What additional boundaries would you like to add for your classroom?*"
                                       }
                                     : msg
                                 ));
@@ -2722,12 +2599,12 @@ function IntakeChat({
                                 setBoundariesConfirmationMessageId(null);
                                 
                                 // Send continuation message to bot
-                                await sendButtonMessage("Let me revise that");
+                                await sendButtonMessage("Add additional boundaries");
                               }}
                               variant="outline"
                               className="border-orange-600 text-orange-600 hover:bg-orange-50"
                             >
-                              Let me revise that
+                              Add additional boundaries
                             </Button>
                           </div>
                         </div>

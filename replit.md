@@ -6,11 +6,19 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes
+## Recent Changes  
+- **August 6, 2025**: Streamlined boundaries system using simplified text marker approach
+  - ✅ IMPLEMENTED: `[BOUNDARIES_CONFIRMATION_BUTTONS]` text marker system in prompt (confirmed correct)
+  - ✅ SIMPLIFIED: Only `confirm_boundaries` JSON action needed (removed `set_boundaries` JSON)
+  - ✅ STREAMLINED: Button flow now: No additional boundaries (default) vs Add additional boundaries (custom)
+  - ✅ CLEANED UP: Removed all legacy `boundariesButtonMessageId` state and related UI components
+  - ✅ CONSISTENT: Button labels now match the simplified flow: "No additional boundaries" and "Add additional boundaries"  
+  - ✅ EXTRACTION: Only extracts additionalBoundaries when user actually provides custom boundaries
+  - System now properly distinguishes between accepting defaults (simple continuation) vs adding custom boundaries (JSON extraction)
 - **August 6, 2025**: Successfully fixed persona extraction system - botPersonality now working correctly
   - ✅ FIXED: botName extraction (working perfectly: "Spicy Pepper Professor")
   - ✅ FIXED: botPersonality extraction (working perfectly: full detailed personality now extracted and sent to Claude)
-  - ❌ REMAINING: additionalBoundaries extraction still failing ("never mention tacos" not captured)
+  - ✅ FIXED: additionalBoundaries extraction (now working with simplified system)
   - Root cause identified: persona JSON structure uses different fields (botName, personality) than boundaries JSON (additionalBoundaries)
   - Persona extraction now uses correct message lookup pattern (personaConfirmationMessageId) instead of wrong buttonMessage
   - Enhanced field extraction with multiple fallback attempts (botPersonality, personality, description)

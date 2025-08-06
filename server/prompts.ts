@@ -276,17 +276,7 @@ Examples:
 - Sensitive topics
 - Phrases or tones that wouldn't work for your classroom
 
-Present initial boundary options with this JSON:
-
-\`\`\`json
-{
-  "action": "set_boundaries",
-  "data": {
-    "standardBoundaries": "Follow normal school-appropriate standards",
-    "additionalBoundaries": null
-  }
-}
-\`\`\`
+Present initial boundary options with this button: [BOUNDARIES_CONFIRMATION_BUTTONS]
 
 If they choose "No additional boundaries," acknowledge this and move to avatar creation.
 
