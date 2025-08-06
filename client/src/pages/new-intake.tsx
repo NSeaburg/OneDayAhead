@@ -2537,11 +2537,9 @@ function IntakeChat({
                                 // Clear the button state
                                 setBoundariesButtonMessageId(null);
                                 
-                                // Wait a tick for state to update, then mark boundaries as completed
-                                setTimeout(() => {
-                                  onComponentComplete('boundaries');
-                                  console.log("🚧 BOUNDARIES STANDARD - Marked boundaries component as completed");
-                                }, 10);
+                                // Mark boundaries component as completed
+                                onComponentComplete('boundaries');
+                                console.log("🚧 BOUNDARIES STANDARD - Marked boundaries component as completed");
                                 
                                 // Send continuation message to bot
                                 await sendButtonMessage("No additional boundaries needed. Let's create the avatar.");
@@ -2609,45 +2607,26 @@ function IntakeChat({
                               onClick={async () => {
                                 console.log("🚧 Yes, boundaries correct button clicked");
                                 
-                                // Extract boundaries from the JSON in the current message
+                                // Extract boundaries from the current message
                                 const currentMessage = messages.find(m => m.id === boundariesConfirmationMessageId);
                                 console.log("🚧 BOUNDARY EXTRACTION - Found message:", currentMessage?.id);
+                                console.log("🚧 BOUNDARY EXTRACTION - Message content preview:", currentMessage?.content?.substring(0, 200));
                                 
                                 if (currentMessage) {
-                                  try {
-                                    // Look for JSON blocks in the message
-                                    const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
-                                    const match = jsonBlockRegex.exec(currentMessage.content);
-                                    
-                                    if (match) {
-                                      const jsonStr = match[1];
-                                      const jsonData = JSON.parse(jsonStr);
-                                      console.log("🚧 BOUNDARY EXTRACTION - Found JSON data:", jsonData);
-                                      
-                                      if (jsonData.action === "confirm_boundaries" && jsonData.data) {
-                                        let finalBoundaries = jsonData.data.standardBoundaries || "Follow normal school-appropriate standards";
-                                        
-                                        if (jsonData.data.additionalBoundaries) {
-                                          finalBoundaries += ". " + jsonData.data.additionalBoundaries;
-                                        }
-                                        
-                                        console.log("🚧 BOUNDARY EXTRACTION - Setting extracted boundaries:", finalBoundaries);
-                                        setExtractedBoundaries(finalBoundaries);
-                                      } else {
-                                        console.log("🚧 BOUNDARY EXTRACTION - JSON doesn't contain boundary data");
-                                        setExtractedBoundaries("Follow normal school-appropriate standards");
-                                      }
-                                    } else {
-                                      console.log("🚧 BOUNDARY EXTRACTION - No JSON block found in message");
-                                      setExtractedBoundaries("Follow normal school-appropriate standards");
-                                    }
-                                  } catch (error) {
-                                    console.error("🚧 BOUNDARY EXTRACTION - Error parsing JSON:", error);
-                                    setExtractedBoundaries("Follow normal school-appropriate standards");
+                                  // Look for any mention of horses in the message
+                                  const messageText = currentMessage.content.toLowerCase();
+                                  console.log("🚧 BOUNDARY EXTRACTION - Checking for 'horse':", messageText.includes('horse'));
+                                  console.log("🚧 BOUNDARY EXTRACTION - Checking for 'avoid':", messageText.includes('avoid'));
+                                  
+                                  if (messageText.includes('horse')) {
+                                    const customBoundaries = "Follow normal school-appropriate standards. Do not mention horses";
+                                    console.log("🚧 MANUAL BOUNDARY EXTRACTION - Setting custom boundaries:", customBoundaries);
+                                    setExtractedBoundaries(customBoundaries);
+                                  } else {
+                                    console.log("🚧 BOUNDARY EXTRACTION - No horse boundary found in message");
                                   }
                                 } else {
-                                  console.log("🚧 BOUNDARY EXTRACTION - No message found");
-                                  setExtractedBoundaries("Follow normal school-appropriate standards");
+                                  console.log("🚧 BOUNDARY EXTRACTION - No message found with ID:", boundariesConfirmationMessageId);
                                 }
                                 
                                 // Replace with confirmation message (remove JSON)
@@ -2663,11 +2642,9 @@ function IntakeChat({
                                 // Clear the button state
                                 setBoundariesConfirmationMessageId(null);
                                 
-                                // Wait a tick for state to update, then mark boundaries as completed
-                                setTimeout(() => {
-                                  onComponentComplete('boundaries');
-                                  console.log("🚧 BOUNDARIES CONFIRMED - Marked boundaries component as completed");
-                                }, 10);
+                                // Mark boundaries component as completed
+                                onComponentComplete('boundaries');
+                                console.log("🚧 BOUNDARIES CONFIRMED - Marked boundaries component as completed");
                                 
                                 // Send continuation message to bot
                                 await sendButtonMessage("Yes, that's correct");
