@@ -819,6 +819,31 @@ function IntakeChat({
           console.log('🔍 PERSONA CONFIRMATION - JSON detection error:', error);
         }
 
+        // Check for boundaries confirmation button marker in the response
+        if (botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
+          console.log("🚧 BOUNDARIES MARKER DETECTED in handleConfirmPersona - setting boundariesConfirmationMessageId to:", finalMessageId);
+          setBoundariesConfirmationMessageId(finalMessageId);
+          
+          // Multiple attempts to ensure buttons appear
+          setTimeout(() => {
+            console.log("🚧 Force re-render for boundaries confirmation buttons attempt 1 (from handleConfirmPersona)");
+            setMessages(prev => prev.map(msg => 
+              msg.id === finalMessageId ? { ...msg, content: msg.content } : msg
+            ));
+            setBoundariesConfirmationMessageId(finalMessageId); // Re-set state
+          }, 50);
+          
+          setTimeout(() => {
+            console.log("🚧 Re-setting boundaries confirmation button state attempt 2 (from handleConfirmPersona)");
+            setBoundariesConfirmationMessageId(finalMessageId); // Re-set state
+          }, 200);
+          
+          setTimeout(() => {
+            console.log("🚧 Final attempt to set boundaries confirmation button state (from handleConfirmPersona)");
+            setBoundariesConfirmationMessageId(finalMessageId); // Final re-set
+          }, 500);
+        }
+
         onStageProgression(botResponse);
       }
     } catch (error) {
