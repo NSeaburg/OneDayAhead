@@ -7,6 +7,14 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **August 6, 2025**: Successfully fixed persona extraction system - botPersonality now working correctly
+  - ✅ FIXED: botName extraction (working perfectly: "Spicy Pepper Professor")
+  - ✅ FIXED: botPersonality extraction (working perfectly: full detailed personality now extracted and sent to Claude)
+  - ❌ REMAINING: additionalBoundaries extraction still failing ("never mention tacos" not captured)
+  - Root cause identified: persona JSON structure uses different fields (botName, personality) than boundaries JSON (additionalBoundaries)
+  - Persona extraction now uses correct message lookup pattern (personaConfirmationMessageId) instead of wrong buttonMessage
+  - Enhanced field extraction with multiple fallback attempts (botPersonality, personality, description)
+  - System prompt now correctly receives extracted personality data instead of default "helpful and friendly assistant"
 - **August 6, 2025**: Fixed critical variable naming inconsistencies between GBPAC template and component state
   - Root cause: GBPAC template uses [botPersonality] and [additionalBoundaries] placeholders, but frontend state variables used different names (fullBotPersonality, extractedBoundaries)
   - Solution: Updated all frontend state variables to match GBPAC template format as master standard

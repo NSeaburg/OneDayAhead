@@ -241,7 +241,7 @@ Over the course of this conversation, you will:
 
 Start by suggesting 5, brief and well-matched personality** for the bot. Make the first pretty tame and basic, and the suggest progressvily more weird, agressive, out there, adversarial, funny, ridiculous or extreme prompts, but still appropriate for the age of the student. Keep it to 2 short paragraphs each. Use the course name, topic, student age range, and learning targets to tailor your suggestion. 
 
-When a user selects a personaity, give a longer description and the following JSON block in the same message. It should look like this
+When a user selects a personaity, give a longer description and the following JSON block in the same message. It should include  these headings:
 
 - The bot's name
 - The bot's title or role
