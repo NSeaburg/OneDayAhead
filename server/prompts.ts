@@ -286,7 +286,6 @@ If they choose "Add additional boundaries," ask them to specify what the bot sho
 {
   "action": "confirm_boundaries",
   "data": {
-    "standardBoundaries": "Follow normal school-appropriate standards",
     "additionalBoundaries": "[Their specific boundaries]"
   }
 }
