@@ -582,6 +582,12 @@ function IntakeChat({
 
     setPersonaConfirmationMessageId(null);
 
+    // Immediately mark personality component as complete
+    if (onComponentComplete) {
+      console.log("🎯 Immediately marking personality component as complete");
+      onComponentComplete("personality");
+    }
+
     // Extract and store bot information for later use (in background, non-blocking)
     const extractBotInfoAsync = async () => {
       try {
