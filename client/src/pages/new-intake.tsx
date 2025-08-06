@@ -2046,6 +2046,7 @@ function IntakeChat({
         // REMOVED: Legacy [BOUNDARIES_BUTTONS] marker detection - now using JSON-only detection
 
         // Check for boundaries confirmation button marker in Stage 3
+        console.log("🔍 BOUNDARIES DETECTION CHECK - currentStageId:", currentStageId, "botType:", botType, "has marker:", botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]'));
         if (currentStageId === 3 && botType === "intake-assessment-bot" && botResponse.includes('[BOUNDARIES_CONFIRMATION_BUTTONS]')) {
           console.log("🚧 Boundaries confirmation buttons detected in streaming response for message:", finalMessageId);
           console.log("🚧 Current boundariesConfirmationMessageId state:", boundariesConfirmationMessageId);
