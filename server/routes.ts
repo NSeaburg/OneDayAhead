@@ -3914,7 +3914,9 @@ ${fileContent}`;
       const testPrompt = "A friendly cartoon teacher with glasses and a warm smile";
       const actualPrompt = isTestMode ? testPrompt : prompt;
       
-      const fullPrompt = `${actualPrompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`;
+      // Optimize prompt structure to minimize DALL-E 3 revisions while preserving details
+      const cleanedPrompt = actualPrompt.replace(/\. Style:.*$/i, ''); // Remove any existing style suffixes
+      const fullPrompt = `Professional character illustration: ${cleanedPrompt}. Art style: ${style}, educational children's book illustration, square composition, single character only, centered and facing forward.`;
       console.log("  - Test mode active:", isTestMode);
       console.log("  - Actual prompt used:", actualPrompt);
       console.log("  - Full DALL-E prompt being sent:", fullPrompt);
