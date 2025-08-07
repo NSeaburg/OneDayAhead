@@ -3812,27 +3812,42 @@ ${fileContent}`;
   // Multiple avatar options generation endpoint
   app.post("/api/intake/generate-avatars", async (req, res) => {
     try {
+      console.log("🎨 AVATAR SERVER DEBUG - Avatar generation endpoint called");
+      console.log("🎨 AVATAR SERVER DEBUG - Request body keys:", Object.keys(req.body));
+      
       const { prompt, style = "digital art", count = 3 } = req.body;
 
+      console.log("🎨 AVATAR SERVER DEBUG - Extracted prompt:", prompt);
+      console.log("🎨 AVATAR SERVER DEBUG - Prompt length:", prompt?.length || 0);
+      console.log("🎨 AVATAR SERVER DEBUG - Style:", style);
+      console.log("🎨 AVATAR SERVER DEBUG - Count:", count);
+
       if (!prompt) {
+        console.log("🎨 AVATAR SERVER DEBUG - No prompt provided, returning error");
         return res.status(400).json({ error: "Image prompt is required" });
       }
 
       if (!openai) {
+        console.log("🎨 AVATAR SERVER DEBUG - OpenAI client not configured, returning error");
         return res.status(500).json({ 
           error: "OpenAI API key not configured",
           details: "Image generation is not available - please provide OPENAI_API_KEY" 
         });
       }
 
-      console.log(`🎨 Generating ${count} avatar options with OpenAI DALL-E 3 for prompt:`, prompt);
+      console.log(`🎨 AVATAR SERVER DEBUG - About to generate ${count} avatar options with OpenAI DALL-E 3`);
+      console.log(`🎨 AVATAR SERVER DEBUG - Full prompt being sent:`, prompt);
       
       // Generate multiple images with slight variations
       const avatarPromises = Array.from({ length: count }, (_, i) => {
         const variation = i === 0 ? "" : `, variation ${i + 1}`;
+        const fullPrompt = `${prompt}${variation}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration, professional character design. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`;
+        
+        console.log(`🎨 AVATAR SERVER DEBUG - DALL-E Prompt ${i + 1}:`, fullPrompt);
+        
         return openai.images.generate({
           model: "dall-e-3",
-          prompt: `${prompt}${variation}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration, professional character design. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`,
+          prompt: fullPrompt,
           size: "1024x1024",
           quality: "standard",
           n: 1,
@@ -3840,7 +3855,8 @@ ${fileContent}`;
       });
 
       const responses = await Promise.all(avatarPromises);
-      console.log(`🎨 OpenAI responses received:`, responses.length);
+      console.log(`🎨 AVATAR SERVER DEBUG - OpenAI responses received:`, responses.length);
+      console.log(`🎨 AVATAR SERVER DEBUG - Response statuses:`, responses.map((r, i) => `Response ${i + 1}: ${r.data?.[0]?.url ? 'SUCCESS' : 'FAILED'}`));
       
       const avatars = responses.map((response, index) => ({
         id: `avatar_${index + 1}`,
@@ -3848,8 +3864,9 @@ ${fileContent}`;
         description: `${prompt} - Option ${index + 1}`
       })).filter(avatar => avatar.imageUrl);
 
-      console.log(`✅ Generated ${avatars.length} avatar options successfully`);
-      console.log(`🎨 Avatar URLs:`, avatars.map(a => a.imageUrl ? '✓' : '✗'));
+      console.log(`🎨 AVATAR SERVER DEBUG - Generated ${avatars.length} avatar options successfully`);
+      console.log(`🎨 AVATAR SERVER DEBUG - Avatar URLs present:`, avatars.map(a => a.imageUrl ? '✓' : '✗'));
+      console.log(`🎨 AVATAR SERVER DEBUG - First avatar URL (first 50 chars):`, avatars[0]?.imageUrl?.substring(0, 50) || 'None');
 
       res.json({
         success: true,

@@ -35,11 +35,16 @@ export function AvatarSelection({ prompt, onSelect, onCancel }: AvatarSelectionP
       return;
     }
 
+    console.log("🎨 AVATAR DEBUG - Starting avatar generation");
+    console.log("🎨 AVATAR DEBUG - Prompt:", prompt);
+    console.log("🎨 AVATAR DEBUG - Prompt length:", prompt?.length || 0);
+
     setLoading(true);
     setError(null);
     setHasGenerated(true);
 
     try {
+      console.log("🎨 AVATAR DEBUG - Making API call to /api/intake/generate-avatars");
       const response = await fetch('/api/intake/generate-avatars', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,22 +56,32 @@ export function AvatarSelection({ prompt, onSelect, onCancel }: AvatarSelectionP
         })
       });
 
+      console.log("🎨 AVATAR DEBUG - API response status:", response.status);
+      console.log("🎨 AVATAR DEBUG - API response ok:", response.ok);
+
       if (!response.ok) {
+        console.log("🎨 AVATAR DEBUG - API call failed, reading error data");
         const errorData = await response.json();
+        console.log("🎨 AVATAR DEBUG - Error data:", errorData);
         throw new Error(errorData.details || 'Failed to generate avatars');
       }
 
       const data = await response.json();
-      console.log("🎨 Avatar generation response:", data);
+      console.log("🎨 AVATAR DEBUG - Avatar generation response:", data);
+      console.log("🎨 AVATAR DEBUG - Response success:", data.success);
+      console.log("🎨 AVATAR DEBUG - Avatars array length:", data.avatars?.length || 0);
+      console.log("🎨 AVATAR DEBUG - Source:", data.source);
       
       if (data.avatars && data.avatars.length > 0) {
         setAvatars(data.avatars);
-        console.log("✅ Set avatars:", data.avatars.length, "images");
+        console.log("✅ AVATAR DEBUG - Set avatars:", data.avatars.length, "images");
+        console.log("🎨 AVATAR DEBUG - First avatar URL:", data.avatars[0]?.imageUrl ? "Present" : "Missing");
       } else {
+        console.log("🎨 AVATAR DEBUG - No avatars in response, throwing error");
         throw new Error('No avatars generated');
       }
     } catch (error: any) {
-      console.error('Avatar generation error:', error);
+      console.error('🎨 AVATAR DEBUG - Avatar generation error:', error);
       
       // Handle rate limiting specifically
       if (error.message.includes('Rate limit exceeded') || error.message.includes('429')) {
