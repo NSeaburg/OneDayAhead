@@ -1885,16 +1885,14 @@ function IntakeChat({
                     break;
                   case "confirm_boundaries":
                     setBoundariesConfirmationMessageId(finalMessageId);
-                    // Store the complete boundary data directly
-                    if (jsonData.data) {
-                      const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
-                        (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
-                      console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing combined boundaries from JSON (markdown):', combinedBoundaries);
-                      console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
-                      console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
-                      setAdditionalBoundaries(combinedBoundaries);
+                    // Store ONLY the additional boundaries (not combined)
+                    if (jsonData.data && jsonData.data.additionalBoundaries) {
+                      const additionalBoundaries = jsonData.data.additionalBoundaries;
+                      console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing additional boundaries from JSON (markdown):', additionalBoundaries);
+                      setAdditionalBoundaries(additionalBoundaries);
                     } else {
-                      console.log('🚧 BOUNDARIES EXTRACTION ERROR - No data field in JSON');
+                      console.log('🚧 BOUNDARIES EXTRACTION - No additional boundaries in JSON (using defaults only)');
+                      // Don't set anything - leave additionalBoundaries empty
                     }
                     break;
                   case "generate_avatar":
@@ -1936,16 +1934,14 @@ function IntakeChat({
                       break;
                     case "confirm_boundaries":
                       setBoundariesConfirmationMessageId(finalMessageId);
-                      // Store the complete boundary data directly
-                      if (jsonData.data) {
-                        const combinedBoundaries = (jsonData.data.standardBoundaries || 'Follow normal school-appropriate standards') + 
-                          (jsonData.data.additionalBoundaries ? `. ${jsonData.data.additionalBoundaries}` : '');
-                        console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing combined boundaries from JSON (plain):', combinedBoundaries);
-                        console.log('🚧 BOUNDARIES EXTRACTION - standardBoundaries:', jsonData.data.standardBoundaries);
-                        console.log('🚧 BOUNDARIES EXTRACTION - additionalBoundaries:', jsonData.data.additionalBoundaries);
-                        setAdditionalBoundaries(combinedBoundaries);
+                      // Store ONLY the additional boundaries (not combined)
+                      if (jsonData.data && jsonData.data.additionalBoundaries) {
+                        const additionalBoundaries = jsonData.data.additionalBoundaries;
+                        console.log('🚧 BOUNDARIES EXTRACTION SUCCESS - Storing additional boundaries from JSON (plain):', additionalBoundaries);
+                        setAdditionalBoundaries(additionalBoundaries);
                       } else {
-                        console.log('🚧 BOUNDARIES EXTRACTION ERROR - No data field in JSON');
+                        console.log('🚧 BOUNDARIES EXTRACTION - No additional boundaries in JSON (using defaults only)');
+                        // Don't set anything - leave additionalBoundaries empty
                       }
                       break;
                     case "generate_avatar":

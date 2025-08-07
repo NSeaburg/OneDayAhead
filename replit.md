@@ -7,6 +7,12 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes  
+- **August 7, 2025**: Fixed boundaries extraction and contextual button text
+  - ✅ FIXED: Boundaries extraction now correctly captures only `additionalBoundaries` field (not combined with standard)
+  - ✅ FIXED: Contextual button text now changes from "No additional boundaries" to "Confirm these boundaries" after user adds custom boundaries
+  - ✅ SIMPLIFIED: JSON structure now only contains `additionalBoundaries` field (removed `standardBoundaries`)
+  - ✅ CLEANED UP: Removed combinedBoundaries logic that was incorrectly merging standard and additional boundaries
+  - Extraction logic updated in all three message handlers (handleSend, sendButtonMessage, handleConfirmPersona)
 - **August 6, 2025**: Streamlined boundaries system using simplified text marker approach
   - ✅ IMPLEMENTED: `[BOUNDARIES_CONFIRMATION_BUTTONS]` text marker system in prompt (confirmed correct)
   - ✅ SIMPLIFIED: Only `confirm_boundaries` JSON action needed (removed `set_boundaries` JSON)
