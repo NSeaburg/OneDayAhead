@@ -2834,13 +2834,6 @@ export default function NewIntake() {
           note: "Character and teaching style",
         },
         {
-          id: "boundaries",
-          title: "Boundaries",
-          completed: false,
-          type: "bot-assisted",
-          note: "Rules and limitations",
-        },
-        {
           id: "avatar",
           title: "Avatar",
           completed: false,
