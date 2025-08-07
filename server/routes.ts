@@ -3900,6 +3900,25 @@ ${fileContent}`;
   app.post("/api/intake/generate-image", async (req, res) => {
     try {
       const { prompt, style = "digital art" } = req.body;
+      
+      // ADD DETAILED LOGGING AS SUGGESTED BY OTHER BOT
+      console.log("🎨 DALL-E API REQUEST DEBUG:");
+      console.log("  - Raw prompt received:", prompt);
+      console.log("  - Prompt length:", prompt?.length || 0);
+      console.log("  - Style:", style);
+      console.log("  - OpenAI client exists:", !!openai);
+      console.log("  - OPENAI_API_KEY exists:", !!process.env.OPENAI_API_KEY);
+      
+      // TEST WITH HARDCODED PROMPT TO ISOLATE ISSUE (as suggested by other bot)
+      const isTestMode = prompt.includes("__TEST_PROMPT__");
+      const testPrompt = "A friendly cartoon teacher with glasses and a warm smile";
+      const actualPrompt = isTestMode ? testPrompt : prompt;
+      
+      const fullPrompt = `${actualPrompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`;
+      console.log("  - Test mode active:", isTestMode);
+      console.log("  - Actual prompt used:", actualPrompt);
+      console.log("  - Full DALL-E prompt being sent:", fullPrompt);
+      console.log("  - Full prompt length:", fullPrompt.length);
 
       if (!prompt) {
         return res.status(400).json({ error: "Image prompt is required" });
@@ -3911,21 +3930,24 @@ ${fileContent}`;
           details: "Image generation is not available - please provide OPENAI_API_KEY" 
         });
       }
-
-      console.log("🎨 Generating image with OpenAI DALL-E 3 for prompt:", prompt);
       
       // Generate image using OpenAI DALL-E
       const response = await openai.images.generate({
         model: "dall-e-3",
-        prompt: `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`,
+        prompt: fullPrompt,
         size: "1024x1024",
         quality: "standard",
         n: 1,
       });
 
+      // ADD RESPONSE LOGGING AS SUGGESTED BY OTHER BOT
+      console.log("🎨 DALL-E API RESPONSE DEBUG:");
+      console.log("  - Response received:", !!response);
+      console.log("  - Image URL exists:", !!response.data[0]?.url);
+      console.log("  - Revised prompt from DALL-E:", response.data[0]?.revised_prompt);
+      console.log("  - Full response data:", JSON.stringify(response.data[0], null, 2));
+
       const imageUrl = response.data[0]?.url;
-      
-      console.log("✅ OpenAI DALL-E 3 response received, image URL:", imageUrl ? "✓" : "✗");
       
       if (!imageUrl) {
         console.error("❌ No image URL returned from OpenAI");
@@ -3940,11 +3962,18 @@ ${fileContent}`;
         imageUrl,
         prompt: prompt,
         style: style,
-        source: "OpenAI DALL-E 3"
+        source: "OpenAI DALL-E 3",
+        revisedPrompt: response.data[0]?.revised_prompt || null
       });
 
     } catch (error: any) {
-      console.error('Image generation error:', error);
+      // ADD ERROR DETAILS AS SUGGESTED BY OTHER BOT
+      console.error('Image generation error - Full details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
       
       let errorMessage = 'Failed to generate image';
       if (error.response?.status === 401) {
@@ -3955,9 +3984,11 @@ ${fileContent}`;
         errorMessage = error.message;
       }
 
+      // Return more detailed error info
       res.status(500).json({
         error: "Image generation failed",
-        details: errorMessage
+        details: errorMessage,
+        apiError: error.response?.data?.error || null
       });
     }
   });

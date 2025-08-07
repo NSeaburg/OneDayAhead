@@ -541,13 +541,16 @@ function IntakeChat({
       if (!buttonMessage) return;
 
       // Use the already confirmed visual description instead of re-extracting
-      console.log("🎨 HANDLE CREATE AVATAR - Using confirmed visual description for avatar generation");
-      console.log("🎨 HANDLE CREATE AVATAR - botVisualDescription value:", botVisualDescription);
-      console.log("🎨 HANDLE CREATE AVATAR - botVisualDescription length:", botVisualDescription?.length || 0);
-      console.log("🎨 HANDLE CREATE AVATAR - botName value:", botName);
+      // ADD FRONTEND LOGGING AS SUGGESTED BY OTHER BOT
+      console.log("🎨 FRONTEND - Sending to DALL-E API:");
+      console.log("  - botVisualDescription:", botVisualDescription);
+      console.log("  - botVisualDescription length:", botVisualDescription?.length || 0);
+      console.log("  - botName:", botName);
       const avatarPrompt = botVisualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
-      console.log("🎨 HANDLE CREATE AVATAR - Final avatar prompt being sent:", avatarPrompt);
-      console.log("🎨 HANDLE CREATE AVATAR - Final prompt length:", avatarPrompt.length);
+      console.log("  - avatarPrompt being sent:", avatarPrompt);
+      console.log("  - avatarPrompt length:", avatarPrompt.length);
+      console.log("  - API endpoint:", "/api/intake/generate-image");
+      console.log("  - Style being sent:", "cartoon illustration");
 
       // Generate single image
       const imageResponse = await fetch("/api/intake/generate-image", {
