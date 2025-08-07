@@ -1769,16 +1769,19 @@ function IntakeChat({
                               console.log('🚀 REAL-TIME - Setting avatar buttons during streaming');
                               setAvatarButtonMessageId(streamingMessageId);
                               
-                              // Extract visual description from streamed content
-                              const beforeJsonStream = botResponse.split('```json')[0];
-                              let visualDesc = "";
-                              
-                              // Look for visual details section
-                              const visualMatch = beforeJsonStream.match(/(?:###\s*)?Visual Details for .+?\n([\s\S]*?)(?:\n\n|$)/i);
-                              if (visualMatch) {
-                                visualDesc = visualMatch[1].trim();
-                                console.log('🎨 REAL-TIME AVATAR - Extracted visual description during streaming:', visualDesc);
-                                setBotVisualDescription && setBotVisualDescription(visualDesc);
+                              // Extract visual description from JSON data (priority)
+                              if (jsonData.data && jsonData.data.prompt) {
+                                console.log('🎨 REAL-TIME AVATAR JSON - Found detailed prompt in streaming JSON:', jsonData.data.prompt);
+                                setBotVisualDescription && setBotVisualDescription(jsonData.data.prompt);
+                              } else {
+                                // Fallback to text extraction
+                                const beforeJsonStream = botResponse.split('```json')[0];
+                                const visualMatch = beforeJsonStream.match(/(?:###\s*)?Visual Details for .+?\n([\s\S]*?)(?:\n\n|$)/i);
+                                if (visualMatch) {
+                                  const visualDesc = visualMatch[1].trim();
+                                  console.log('🎨 REAL-TIME AVATAR FALLBACK - Extracted from text during streaming:', visualDesc);
+                                  setBotVisualDescription && setBotVisualDescription(visualDesc);
+                                }
                               }
                             }
                             break;
@@ -1902,16 +1905,18 @@ function IntakeChat({
                     }
                   }
                   
-                  // If we found a full visual description, use it; otherwise fall back to JSON prompt
-                  if (fullVisualDescription) {
-                    console.log('🎨 AVATAR STORAGE - Storing FULL visual description:');
-                    console.log(fullVisualDescription);
-                    console.log('🎨 AVATAR STORAGE - Description length:', fullVisualDescription.length);
-                    setBotVisualDescription && setBotVisualDescription(fullVisualDescription);
-                  } else if (jsonData.data && jsonData.data.prompt) {
-                    // Fallback to JSON prompt if no visual description found in text
-                    console.log('🎨 AVATAR FALLBACK - Using JSON prompt as fallback:', jsonData.data.prompt);
+                  // PRIORITY: Use the JSON prompt field first (Bot 3's new detailed description)
+                  if (jsonData.data && jsonData.data.prompt) {
+                    console.log('🎨 AVATAR JSON PRIORITY - Using detailed JSON prompt from Bot 3:', jsonData.data.prompt);
+                    console.log('🎨 AVATAR JSON PRIORITY - JSON prompt length:', jsonData.data.prompt.length);
                     setBotVisualDescription && setBotVisualDescription(jsonData.data.prompt);
+                  } else if (fullVisualDescription) {
+                    console.log('🎨 AVATAR FALLBACK - Using extracted visual description:');
+                    console.log(fullVisualDescription);
+                    console.log('🎨 AVATAR FALLBACK - Description length:', fullVisualDescription.length);
+                    setBotVisualDescription && setBotVisualDescription(fullVisualDescription);
+                  } else {
+                    console.log('🎨 AVATAR ERROR - No detailed description found in JSON or message text');
                   }
                   
                   // Don't auto-trigger - let user click the button

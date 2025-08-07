@@ -3909,18 +3909,9 @@ ${fileContent}`;
       console.log("  - OpenAI client exists:", !!openai);
       console.log("  - OPENAI_API_KEY exists:", !!process.env.OPENAI_API_KEY);
       
-      // TEST WITH HARDCODED PROMPT TO ISOLATE ISSUE (as suggested by other bot)
-      const isTestMode = prompt.includes("__TEST_PROMPT__");
-      const testPrompt = "A friendly cartoon teacher with glasses and a warm smile";
-      const actualPrompt = isTestMode ? testPrompt : prompt;
-      
-      // Optimize prompt structure to minimize DALL-E 3 revisions while preserving details
-      const cleanedPrompt = actualPrompt.replace(/\. Style:.*$/i, ''); // Remove any existing style suffixes
-      const fullPrompt = `Professional character illustration: ${cleanedPrompt}. Art style: ${style}, educational children's book illustration, square composition, single character only, centered and facing forward.`;
-      console.log("  - Test mode active:", isTestMode);
-      console.log("  - Actual prompt used:", actualPrompt);
-      console.log("  - Full DALL-E prompt being sent:", fullPrompt);
-      console.log("  - Full prompt length:", fullPrompt.length);
+      // Send the prompt directly to DALL-E without manipulation
+      // Bot 3 now provides complete, detailed prompts that don't need enhancement
+      console.log("  - Direct prompt being sent to DALL-E:", prompt);
 
       if (!prompt) {
         return res.status(400).json({ error: "Image prompt is required" });
@@ -3936,7 +3927,7 @@ ${fileContent}`;
       // Generate image using OpenAI DALL-E
       const response = await openai.images.generate({
         model: "dall-e-3",
-        prompt: fullPrompt,
+        prompt: prompt,
         size: "1024x1024",
         quality: "standard",
         n: 1,
