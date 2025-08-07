@@ -540,13 +540,40 @@ function IntakeChat({
       const buttonMessage = messages.find(m => m.id === avatarButtonMessageId);
       if (!buttonMessage) return;
 
-      // Use the already confirmed visual description instead of re-extracting
-      // ADD FRONTEND LOGGING AS SUGGESTED BY OTHER BOT
+      // CRITICAL DEBUG: Check what's actually in the message with JSON
+      console.log("🎨 AVATAR BUTTON CLICK - Button message content length:", buttonMessage.content.length);
+      console.log("🎨 AVATAR BUTTON CLICK - Message contains json marker:", buttonMessage.content.includes('```json'));
+      
+      // Try to extract JSON from the button message itself and use it immediately if not already stored
+      let finalPrompt = botVisualDescription; // Start with what we have
+      
+      if (buttonMessage.content.includes('```json')) {
+        const jsonMatch = buttonMessage.content.match(/```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/);
+        if (jsonMatch) {
+          try {
+            const extractedJson = JSON.parse(jsonMatch[1]);
+            console.log("🎨 AVATAR BUTTON CLICK - Found JSON in message:", extractedJson);
+            console.log("🎨 AVATAR BUTTON CLICK - JSON has data.prompt:", !!(extractedJson.data && extractedJson.data.prompt));
+            if (extractedJson.data && extractedJson.data.prompt) {
+              console.log("🎨 AVATAR BUTTON CLICK - Using JSON prompt:", extractedJson.data.prompt);
+              console.log("🎨 AVATAR BUTTON CLICK - JSON prompt length:", extractedJson.data.prompt.length);
+              // USE THE JSON PROMPT DIRECTLY IF FOUND
+              finalPrompt = extractedJson.data.prompt;
+              // Also update the state for consistency
+              setBotVisualDescription && setBotVisualDescription(extractedJson.data.prompt);
+            }
+          } catch (e) {
+            console.log("🎨 AVATAR BUTTON CLICK - Failed to parse JSON from message:", e);
+          }
+        }
+      }
+
+      // Use the extracted prompt or fall back to default
       console.log("🎨 FRONTEND - Sending to DALL-E API:");
-      console.log("  - botVisualDescription:", botVisualDescription);
-      console.log("  - botVisualDescription length:", botVisualDescription?.length || 0);
-      console.log("  - botName:", botName);
-      const avatarPrompt = botVisualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
+      console.log("  - finalPrompt to be sent:", finalPrompt);
+      console.log("  - finalPrompt length:", finalPrompt?.length || 0);
+      console.log("  - botName (fallback):", botName);
+      const avatarPrompt = finalPrompt || `${botName || "educational assessment bot"}, friendly cartoon character`;
       console.log("  - avatarPrompt being sent:", avatarPrompt);
       console.log("  - avatarPrompt length:", avatarPrompt.length);
       console.log("  - API endpoint:", "/api/intake/generate-image");
@@ -1739,6 +1766,18 @@ function IntakeChat({
                     try {
                       const jsonStr = match[1];
                       console.log('🚀 REAL-TIME - Extracted JSON during streaming:', jsonStr);
+                      console.log('🚀 REAL-TIME - JSON string length:', jsonStr.length);
+                      
+                      // Log what we're actually seeing in the JSON
+                      if (jsonStr.includes('generate_avatar')) {
+                        console.log('🎨 AVATAR JSON DEBUG - Full JSON for avatar:', jsonStr);
+                        // Check if it has data.prompt
+                        const tempParse = JSON.parse(jsonStr);
+                        console.log('🎨 AVATAR JSON DEBUG - Has data?', !!tempParse.data);
+                        console.log('🎨 AVATAR JSON DEBUG - Has data.prompt?', !!(tempParse.data && tempParse.data.prompt));
+                        console.log('🎨 AVATAR JSON DEBUG - data.prompt value:', tempParse.data?.prompt);
+                      }
+                      
                       const jsonData = JSON.parse(jsonStr);
                       
                       if (jsonData.action) {
@@ -1836,6 +1875,21 @@ function IntakeChat({
           try {
             const jsonStr = match[1];
             console.log('🔍 IMMEDIATE JSON DETECTION - Extracted JSON string:', jsonStr);
+            
+            // Debug avatar JSON specifically
+            if (jsonStr.includes('generate_avatar')) {
+              console.log('🎨 IMMEDIATE AVATAR DEBUG - Full JSON for avatar:', jsonStr);
+              try {
+                const tempParse = JSON.parse(jsonStr);
+                console.log('🎨 IMMEDIATE AVATAR DEBUG - Has data?', !!tempParse.data);
+                console.log('🎨 IMMEDIATE AVATAR DEBUG - Has data.prompt?', !!(tempParse.data && tempParse.data.prompt));
+                console.log('🎨 IMMEDIATE AVATAR DEBUG - data.prompt value:', tempParse.data?.prompt);
+                console.log('🎨 IMMEDIATE AVATAR DEBUG - data.prompt length:', tempParse.data?.prompt?.length || 0);
+              } catch (e) {
+                console.log('🎨 IMMEDIATE AVATAR DEBUG - Failed to parse for debugging:', e);
+              }
+            }
+            
             const jsonData = JSON.parse(jsonStr);
             console.log('🔍 IMMEDIATE JSON DETECTION - Found valid JSON:', jsonData);
             
