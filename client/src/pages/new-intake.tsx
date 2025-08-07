@@ -321,11 +321,13 @@ function IntakeChat({
                   setAvatarButtonMessageId(finalMessageId);
                   
                   // Extract and store avatar prompt from JSON data
+                  let extractedPrompt: string | null = null;
                   if (jsonData.data && jsonData.data.prompt) {
-                    console.log('🎨 AVATAR PROMPT EXTRACTION - Setting visual description from JSON:', jsonData.data.prompt);
+                    extractedPrompt = jsonData.data.prompt;
+                    console.log('🎨 AVATAR PROMPT EXTRACTION - Setting visual description from JSON:', extractedPrompt);
                     console.log('🎨 AVATAR PROMPT EXTRACTION - setBotVisualDescription function exists:', !!setBotVisualDescription);
                     if (setBotVisualDescription) {
-                      setBotVisualDescription(jsonData.data.prompt);
+                      setBotVisualDescription(extractedPrompt);
                       console.log('🎨 AVATAR PROMPT EXTRACTION - Successfully set visual description');
                     } else {
                       console.log('🎨 AVATAR PROMPT EXTRACTION - ERROR: setBotVisualDescription function not provided');
@@ -334,14 +336,23 @@ function IntakeChat({
                     console.log('🎨 AVATAR PROMPT EXTRACTION - ERROR: No prompt data found in JSON:', jsonData);
                   }
                   
-                  // Auto-trigger avatar generation
+                  // Auto-trigger avatar generation with the extracted prompt
                   console.log('🎨 AUTO-GENERATION - Triggering automatic avatar generation from button message JSON');
-                  setTimeout(() => {
-                    if (finalMessageId) {
-                      console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar automatically');
-                      handleCreateAvatar();
-                    }
-                  }, 500);
+                  if (extractedPrompt) {
+                    setTimeout(() => {
+                      if (finalMessageId) {
+                        console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar with prompt:', extractedPrompt);
+                        handleCreateAvatarWithPrompt(extractedPrompt);
+                      }
+                    }, 500);
+                  } else {
+                    setTimeout(() => {
+                      if (finalMessageId) {
+                        console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar without explicit prompt');
+                        handleCreateAvatar();
+                      }
+                    }, 500);
+                  }
                   break;
                 case "test_bot":
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting test bot button immediately');
@@ -417,6 +428,97 @@ function IntakeChat({
     setShowAvatarSelection(false);
     setAvatarPrompt("");
     setPendingAvatarMessageId(null);
+  };
+
+  // Handle avatar button actions with explicit prompt
+  const handleCreateAvatarWithPrompt = async (explicitPrompt: string) => {
+    if (!avatarButtonMessageId) return;
+
+    setIsGeneratingAvatar(true);
+    
+    // Add loading message to user
+    setMessages(prev => prev.map(msg => 
+      msg.id === avatarButtonMessageId
+        ? { 
+            ...msg, 
+            content: msg.content + "\n\n*Generating your avatar... this may take a moment.*"
+          }
+        : msg
+    ));
+    
+    try {
+      console.log("🎨 HANDLE CREATE AVATAR WITH PROMPT - Using explicit prompt:", explicitPrompt);
+      console.log("🎨 HANDLE CREATE AVATAR WITH PROMPT - Prompt length:", explicitPrompt.length);
+      const avatarPrompt = explicitPrompt;
+
+      // Generate single image
+      const imageResponse = await fetch("/api/intake/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          prompt: avatarPrompt,
+          style: "cartoon illustration"
+        })
+      });
+
+      if (imageResponse.ok) {
+        const imageData = await imageResponse.json();
+        
+        // Replace the loading message with the generated image
+        console.log("🖼️ AVATAR DEBUG - About to update message with avatar");
+        console.log("🖼️ AVATAR DEBUG - avatarButtonMessageId:", avatarButtonMessageId);
+        console.log("🖼️ AVATAR DEBUG - imageData.imageUrl:", imageData.imageUrl);
+        
+        setMessages(prev => {
+          const updatedMessages = prev.map(msg => {
+            if (msg.id === avatarButtonMessageId) {
+              const originalContent = msg.content;
+              // Remove the loading message and append the avatar image
+              let newContent = msg.content.replace('*Generating your avatar... this may take a moment.*', '');
+              // Trim any trailing whitespace
+              newContent = newContent.trimEnd();
+              // Add the avatar image
+              newContent += `\n\n![Generated Avatar](${imageData.imageUrl})\n\n*Here's your assessment bot avatar! This visual representation captures the personality we've designed.*`;
+              
+              console.log("🖼️ AVATAR DEBUG - Message found, ID:", msg.id);
+              console.log("🖼️ AVATAR DEBUG - Content changed:", originalContent !== newContent);
+              
+              return { ...msg, content: newContent };
+            }
+            return msg;
+          });
+          
+          return updatedMessages;
+        });
+        
+        // Store avatar in state
+        if (onAvatarGenerated) {
+          onAvatarGenerated(imageData.imageUrl);
+        }
+        
+        // Clear avatar button state
+        setAvatarButtonMessageId(null);
+      } else {
+        const errorData = await imageResponse.json();
+        throw new Error(errorData.details || "Failed to generate avatar");
+      }
+    } catch (error: any) {
+      console.error('Avatar generation error:', error);
+      
+      // Update the message with error
+      setMessages(prev => prev.map(msg => 
+        msg.id === avatarButtonMessageId
+          ? { 
+              ...msg, 
+              content: msg.content.replace('*Generating your avatar... this may take a moment.*', 
+                `*Error generating avatar: ${error.message}. Please try again.*`)
+            }
+          : msg
+      ));
+    } finally {
+      setIsGeneratingAvatar(false);
+    }
   };
 
   // Handle avatar button actions
