@@ -282,8 +282,7 @@ After providing a detailed character description, include this JSON to trigger a
 {
   "action": "generate_avatar",
   "data": {
-    "prompt": "[Detailed visual description for image generation]",
-    "botName": "[The bot's name]"
+    "prompt": "[Copy the entire detailed visual description from above - include ALL appearance details, clothing,   accessories, colors, pose, style specifications]",
   }
 }
 \`\`\`
