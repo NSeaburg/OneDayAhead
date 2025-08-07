@@ -3363,7 +3363,7 @@ ${fileContent}`;
         console.log(`🎯 DEBUG - Assessment Targets: ${Array.isArray(assessmentTargets) ? assessmentTargets.join(', ') : assessmentTargets}`);
         console.log(`🎯 DEBUG - Uploaded Files: ${uploadedFiles?.length || 0} files`);
         console.log(`🎯 DEBUG - Welcome Message: ${botWelcomeMessage ? 'Yes' : 'No'}`);
-        console.log("🔥 FINAL SYSTEM PROMPT (first 500 chars):", systemPrompt.substring(0, 500));
+        console.log("🔥 FINAL SYSTEM PROMPT (first 4000 chars):", systemPrompt.substring(0, 4000));
         console.log("🔥 FINAL SYSTEM PROMPT (length):", systemPrompt.length);
       }
       
