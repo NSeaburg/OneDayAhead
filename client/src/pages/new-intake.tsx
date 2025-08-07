@@ -338,21 +338,17 @@ function IntakeChat({
                   
                   // Auto-trigger avatar generation with the extracted prompt
                   console.log('🎨 AUTO-GENERATION - Triggering automatic avatar generation from button message JSON');
-                  if (extractedPrompt) {
-                    setTimeout(() => {
-                      if (finalMessageId) {
-                        console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar with prompt:', extractedPrompt);
+                  setTimeout(() => {
+                    if (finalMessageId) {
+                      if (extractedPrompt) {
+                        console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar with extracted prompt:', extractedPrompt);
                         handleCreateAvatarWithPrompt(extractedPrompt);
-                      }
-                    }, 500);
-                  } else {
-                    setTimeout(() => {
-                      if (finalMessageId) {
-                        console.log('🎨 AUTO-GENERATION - Calling handleCreateAvatar without explicit prompt');
+                      } else {
+                        console.log('🎨 AUTO-GENERATION - No extracted prompt, calling handleCreateAvatar');
                         handleCreateAvatar();
                       }
-                    }, 500);
-                  }
+                    }
+                  }, 500);
                   break;
                 case "test_bot":
                   console.log('🔍 BUTTON MESSAGE JSON DETECTION - Setting test bot button immediately');
