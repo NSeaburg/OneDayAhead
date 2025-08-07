@@ -3314,7 +3314,6 @@ ${fileContent}`;
         const botPersonality = (req.body as any).botPersonality || "";
         const botName = (req.body as any).botName || "";
         const botJobTitle = (req.body as any).botJobTitle || "";
-        const additionalBoundaries = (req.body as any).additionalBoundaries || "";
         const botWelcomeMessage = (req.body as any).botWelcomeMessage || "";
         const assessmentTargets = (req.body as any).assessmentTargets || (req.body as any).stageContext?.learningTargets || [];
         const stageContext = (req.body as any).stageContext || {};
@@ -3325,7 +3324,6 @@ ${fileContent}`;
         console.log("🔥 PERSONALITY-TESTING DEBUG - botPersonality:", botPersonality);
         console.log("🔥 PERSONALITY-TESTING DEBUG - botName:", botName);
         console.log("🔥 PERSONALITY-TESTING DEBUG - botJobTitle:", botJobTitle);
-        console.log("🔥 PERSONALITY-TESTING DEBUG - additionalBoundaries:", additionalBoundaries);
         console.log("🔥 PERSONALITY-TESTING DEBUG - botWelcomeMessage:", botWelcomeMessage);
         console.log("🔥 PERSONALITY-TESTING DEBUG - assessmentTargets:", assessmentTargets);
         console.log("🔥 PERSONALITY-TESTING DEBUG - stageContext:", JSON.stringify(stageContext, null, 2));
@@ -3356,7 +3354,7 @@ ${fileContent}`;
           .replace('[topic]', stageContext.topic || 'the topic')
           .replace('[uploadedFiles]', uploadedFilesContext)
           .replace('[botWelcomeMessage]', botWelcomeMessage || 'Welcome! Let\'s assess your understanding.')
-          .replace('[additionalBoundaries]', additionalBoundaries ? `- Additional rules: ${additionalBoundaries}` : '');
+          .replace('[additionalBoundaries]', ''); // Boundaries are now hardcoded in the template
         
         console.log(`✅ DEBUG Claude Chat - Using GBPAC template for personality testing`);
         console.log(`🎯 DEBUG - Bot Identity: ${botName} (${botJobTitle})`);
@@ -3364,7 +3362,6 @@ ${fileContent}`;
         console.log(`🎯 DEBUG - Assessment Targets: ${Array.isArray(assessmentTargets) ? assessmentTargets.join(', ') : assessmentTargets}`);
         console.log(`🎯 DEBUG - Uploaded Files: ${uploadedFiles?.length || 0} files`);
         console.log(`🎯 DEBUG - Welcome Message: ${botWelcomeMessage ? 'Yes' : 'No'}`);
-        console.log(`🎯 DEBUG - Additional Boundaries: ${additionalBoundaries}`);
         console.log("🔥 FINAL SYSTEM PROMPT (first 500 chars):", systemPrompt.substring(0, 500));
         console.log("🔥 FINAL SYSTEM PROMPT (length):", systemPrompt.length);
       }

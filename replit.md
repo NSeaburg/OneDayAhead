@@ -7,43 +7,28 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes  
-- **August 7, 2025**: Fixed boundaries extraction and contextual button text
-  - ✅ FIXED: Boundaries extraction now correctly captures only `additionalBoundaries` field (not combined with standard)
-  - ✅ FIXED: Contextual button text now changes from "No additional boundaries" to "Confirm these boundaries" after user adds custom boundaries
-  - ✅ SIMPLIFIED: JSON structure now only contains `additionalBoundaries` field (removed `standardBoundaries`)
-  - ✅ CLEANED UP: Removed combinedBoundaries logic that was incorrectly merging standard and additional boundaries
-  - Extraction logic updated in all three message handlers (handleSend, sendButtonMessage, handleConfirmPersona)
-- **August 6, 2025**: Streamlined boundaries system using simplified text marker approach
-  - ✅ IMPLEMENTED: `[BOUNDARIES_CONFIRMATION_BUTTONS]` text marker system in prompt (confirmed correct)
-  - ✅ SIMPLIFIED: Only `confirm_boundaries` JSON action needed (removed `set_boundaries` JSON)
-  - ✅ STREAMLINED: Button flow now: No additional boundaries (default) vs Add additional boundaries (custom)
-  - ✅ CLEANED UP: Removed all legacy `boundariesButtonMessageId` state and related UI components
-  - ✅ CONSISTENT: Button labels now match the simplified flow: "No additional boundaries" and "Add additional boundaries"  
-  - ✅ EXTRACTION: Only extracts additionalBoundaries when user actually provides custom boundaries
-  - System now properly distinguishes between accepting defaults (simple continuation) vs adding custom boundaries (JSON extraction)
+- **August 7, 2025**: Complete removal of boundaries customization functionality
+  - ✅ REMOVED: All boundary-related state variables, hooks, and UI components from new-intake.tsx
+  - ✅ REMOVED: Boundary confirmation buttons and message handling logic
+  - ✅ REMOVED: additionalBoundaries prop from PersonalityTestingBot component
+  - ✅ REMOVED: All boundary extraction and progression logic
+  - ✅ SIMPLIFIED: System now uses only hardcoded standard boundaries for all assessment bots
+  - Decision made due to excessive time and cost spent on boundary extraction issues
+  - NOTE: server/prompts.ts was not modified per user request
 - **August 6, 2025**: Successfully fixed persona extraction system - botPersonality now working correctly
   - ✅ FIXED: botName extraction (working perfectly: "Spicy Pepper Professor")
   - ✅ FIXED: botPersonality extraction (working perfectly: full detailed personality now extracted and sent to Claude)
-  - ✅ FIXED: additionalBoundaries extraction (now working with simplified system)
-  - Root cause identified: persona JSON structure uses different fields (botName, personality) than boundaries JSON (additionalBoundaries)
+  - Root cause identified: persona JSON structure uses different fields (botName, personality)
   - Persona extraction now uses correct message lookup pattern (personaConfirmationMessageId) instead of wrong buttonMessage
   - Enhanced field extraction with multiple fallback attempts (botPersonality, personality, description)
   - System prompt now correctly receives extracted personality data instead of default "helpful and friendly assistant"
 - **August 6, 2025**: Fixed critical variable naming inconsistencies between GBPAC template and component state
-  - Root cause: GBPAC template uses [botPersonality] and [additionalBoundaries] placeholders, but frontend state variables used different names (fullBotPersonality, extractedBoundaries)
+  - Root cause: GBPAC template uses [botPersonality] placeholder, but frontend state variables used different names (fullBotPersonality)
   - Solution: Updated all frontend state variables to match GBPAC template format as master standard
   - Changed fullBotPersonality → botPersonality throughout entire codebase  
-  - Changed extractedBoundaries → additionalBoundaries throughout entire codebase
-  - All setter functions updated: setFullBotPersonality → setBotPersonality, setExtractedBoundaries → setAdditionalBoundaries
+  - All setter functions updated: setFullBotPersonality → setBotPersonality
   - PersonalityTestingBot now receives correctly named props that align with GBPAC template variable substitution
   - Template population logic in server/routes.ts already correctly aligned with these variable names
-- **August 6, 2025**: Completed boundaries system architecture overhaul
-  - Removed all vestiges of old "combined boundaries" approach
-  - Standard school-appropriate boundaries now hard-coded in GBPAC template  
-  - Only additional boundaries are configurable and passed to assessment bots
-  - Updated PersonalityTestingBot props: boundaries → additionalBoundaries
-  - Fixed boundary extraction logic to only store additional boundaries, not combined ones
-  - Eliminated redundant "Follow normal school-appropriate standards" references throughout codebase
 - **August 3, 2025**: Fixed assessment targets and persona confirmation button issues
   - Root cause: JSON detection was only in card submission flow, not button message flows
   - Added immediate JSON detection to all 3 streaming completion functions (sendButtonMessage, handleConfirmPersona, handleSend)

@@ -22,7 +22,6 @@ interface PersonalityTestingBotProps {
   botWelcomeMessage?: string | null;
   sampleDialogue?: string | null;
   // Additional context data
-  additionalBoundaries?: string | null;
   stageContext?: any;
   uploadedFiles?: any[];
 }
@@ -36,7 +35,6 @@ export function PersonalityTestingBot({
   botJobTitle,
   botWelcomeMessage,
   sampleDialogue,
-  additionalBoundaries,
   stageContext,
   uploadedFiles
 }: PersonalityTestingBotProps) {
@@ -48,7 +46,6 @@ export function PersonalityTestingBot({
   console.log("  - botJobTitle:", botJobTitle);
   console.log("  - botWelcomeMessage:", botWelcomeMessage);
   console.log("  - sampleDialogue:", sampleDialogue);
-  console.log("  - additionalBoundaries:", additionalBoundaries);
   console.log("  - stageContext:", stageContext);
   console.log("  - uploadedFiles:", uploadedFiles?.length || 0);
   
@@ -56,7 +53,6 @@ export function PersonalityTestingBot({
   console.log("  - Has custom botPersonality?", botPersonality !== "A helpful and friendly assistant");
   console.log("  - Has botName?", !!botName);
   console.log("  - Has botJobTitle?", !!botJobTitle);
-  console.log("  - Has additionalBoundaries?", !!additionalBoundaries);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -181,7 +177,6 @@ Feel free to ask me questions or have a conversation to see how I interact with 
           botPersonality: botPersonality,
           botName: botName,
           botJobTitle: botJobTitle,
-          additionalBoundaries: additionalBoundaries,
           stageContext: stageContext,
           uploadedFiles: uploadedFiles,
           assessmentTargets: stageContext?.learningTargets || [],
