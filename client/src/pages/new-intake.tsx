@@ -323,7 +323,15 @@ function IntakeChat({
                   // Extract and store avatar prompt from JSON data
                   if (jsonData.data && jsonData.data.prompt) {
                     console.log('🎨 AVATAR PROMPT EXTRACTION - Setting visual description from JSON:', jsonData.data.prompt);
-                    setBotVisualDescription && setBotVisualDescription(jsonData.data.prompt);
+                    console.log('🎨 AVATAR PROMPT EXTRACTION - setBotVisualDescription function exists:', !!setBotVisualDescription);
+                    if (setBotVisualDescription) {
+                      setBotVisualDescription(jsonData.data.prompt);
+                      console.log('🎨 AVATAR PROMPT EXTRACTION - Successfully set visual description');
+                    } else {
+                      console.log('🎨 AVATAR PROMPT EXTRACTION - ERROR: setBotVisualDescription function not provided');
+                    }
+                  } else {
+                    console.log('🎨 AVATAR PROMPT EXTRACTION - ERROR: No prompt data found in JSON:', jsonData);
                   }
                   
                   // Auto-trigger avatar generation
@@ -433,8 +441,13 @@ function IntakeChat({
       if (!buttonMessage) return;
 
       // Use the already confirmed visual description instead of re-extracting
-      console.log("🎨 Using confirmed visual description for avatar generation");
+      console.log("🎨 HANDLE CREATE AVATAR - Using confirmed visual description for avatar generation");
+      console.log("🎨 HANDLE CREATE AVATAR - botVisualDescription value:", botVisualDescription);
+      console.log("🎨 HANDLE CREATE AVATAR - botVisualDescription length:", botVisualDescription?.length || 0);
+      console.log("🎨 HANDLE CREATE AVATAR - botName value:", botName);
       const avatarPrompt = botVisualDescription || `${botName || "educational assessment bot"}, friendly cartoon character`;
+      console.log("🎨 HANDLE CREATE AVATAR - Final avatar prompt being sent:", avatarPrompt);
+      console.log("🎨 HANDLE CREATE AVATAR - Final prompt length:", avatarPrompt.length);
 
       // Generate single image
       const imageResponse = await fetch("/api/intake/generate-image", {
