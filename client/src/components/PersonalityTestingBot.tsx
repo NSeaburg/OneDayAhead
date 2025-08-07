@@ -160,6 +160,10 @@ Feel free to ask me questions or have a conversation to see how I interact with 
     setInput("");
     setIsLoading(true);
 
+    console.log("🔍 DEBUGGING - stageContext:", stageContext);
+    console.log("🔍 DEBUGGING - stageContext.learningTargets:", stageContext?.learningTargets);
+    console.log("🔍 DEBUGGING - assessmentTargets being sent:", stageContext?.learningTargets || []);
+
     try {
       const response = await fetch("/api/claude/chat", {
         method: "POST",

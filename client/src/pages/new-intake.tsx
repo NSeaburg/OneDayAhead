@@ -46,6 +46,7 @@ interface IntakeChatProps {
   onInjectMessage?: (injectFunction: (message: string) => void) => void;
   stages?: Stage[];
   onTestBotClick?: () => void;
+  onLearningTargetsUpdate?: (learningTargets: string) => void;
 }
 
 interface UploadedFile {
@@ -125,6 +126,7 @@ function IntakeChat({
   onInjectMessage,
   stages,
   onTestBotClick,
+  onLearningTargetsUpdate,
 }: IntakeChatProps) {
   // Generate initial message based on bot type and context
   const getInitialMessage = (): Message => {
@@ -901,6 +903,255 @@ function IntakeChat({
       }
     } catch (error) {
       console.error("Chat error after persona confirmation:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle assessment targets confirmation
+  const handleConfirmAssessmentTargets = async () => {
+    if (!assessmentTargetsConfirmationMessageId) return;
+
+    // Find the message that contains the learning targets
+    const targetsMessage = messages.find(msg => msg.id === assessmentTargetsConfirmationMessageId);
+    if (!targetsMessage) return;
+
+    console.log("📚 ASSESSMENT TARGETS - Extracting learning targets from message");
+    console.log("📚 ASSESSMENT TARGETS - Message content preview:", targetsMessage.content.substring(0, 300));
+
+    let extractedLearningTargets = "";
+
+    // First, try to extract from JSON blocks (like persona and boundaries extraction)
+    const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+    let jsonMatch;
+    
+    while ((jsonMatch = jsonBlockRegex.exec(targetsMessage.content)) !== null) {
+      try {
+        const jsonData = JSON.parse(jsonMatch[1]);
+        console.log("📚 ASSESSMENT TARGETS - Found JSON data:", jsonData);
+        
+        if (jsonData.action === 'confirm_learning_targets' && jsonData.data) {
+          const data = jsonData.data;
+          extractedLearningTargets = data.learningTargets || data.assessmentTargets || data.targets || "";
+          console.log("📚 ASSESSMENT TARGETS - Extracted from JSON:", extractedLearningTargets);
+          break;
+        }
+      } catch (error) {
+        console.error("📚 ASSESSMENT TARGETS - Error parsing JSON:", error);
+      }
+    }
+
+    // If no JSON extraction, fall back to text pattern matching for learning targets
+    if (!extractedLearningTargets) {
+      console.log("📚 ASSESSMENT TARGETS - No JSON found, trying text extraction");
+      
+      // Look for common patterns in the text content
+      const content = targetsMessage.content;
+      const lines = content.split('\n');
+      let targetsSection = [];
+      let inTargetsSection = false;
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        
+        // Look for section headers that indicate learning targets
+        if (trimmedLine.toLowerCase().includes('learning target') || 
+            trimmedLine.toLowerCase().includes('assessment target') ||
+            trimmedLine.toLowerCase().includes('objectives') ||
+            trimmedLine.toLowerCase().includes('goals') ||
+            (trimmedLine.startsWith('**') && trimmedLine.toLowerCase().includes('target'))) {
+          inTargetsSection = true;
+          continue;
+        }
+
+        // Stop at next section or empty line after targets
+        if (inTargetsSection && (trimmedLine.startsWith('**') || trimmedLine === '' || trimmedLine.startsWith('```'))) {
+          if (trimmedLine.startsWith('**') || trimmedLine.startsWith('```')) {
+            break;
+          }
+          continue;
+        }
+
+        // Collect target lines (typically bulleted or numbered)
+        if (inTargetsSection && (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || 
+                                trimmedLine.startsWith('*') || /^\d+\./.test(trimmedLine))) {
+          targetsSection.push(trimmedLine);
+        }
+      }
+
+      if (targetsSection.length > 0) {
+        extractedLearningTargets = targetsSection.join('\n');
+        console.log("📚 ASSESSMENT TARGETS - Extracted from text patterns:", extractedLearningTargets);
+      }
+    }
+
+    // If still nothing found, try to extract the entire relevant section
+    if (!extractedLearningTargets) {
+      console.log("📚 ASSESSMENT TARGETS - No specific extraction, using full content");
+      extractedLearningTargets = targetsMessage.content
+        .replace(/```json\s*\n[\s\S]*?\n```/g, '') // Remove JSON blocks
+        .replace(/\[ASSESSMENT_TARGETS_CONFIRMATION_BUTTONS\]/g, '') // Remove button markers
+        .trim();
+    }
+
+    console.log("📚 ASSESSMENT TARGETS - Final extracted learning targets:", extractedLearningTargets);
+
+    // Update stageContext with the learning targets using the learningTargets callback
+    if (onLearningTargetsUpdate && extractedLearningTargets) {
+      onLearningTargetsUpdate(extractedLearningTargets);
+      console.log("📚 ASSESSMENT TARGETS - Updated stageContext.learningTargets");
+    } else {
+      console.warn("📚 ASSESSMENT TARGETS - No onLearningTargetsUpdate callback or no targets extracted");
+    }
+
+    // Remove JSON from display and replace with confirmation message
+    setMessages(prev => prev.map(msg => 
+      msg.id === assessmentTargetsConfirmationMessageId
+        ? { 
+            ...msg, 
+            content: msg.content.replace(/```json\s*\n[\s\S]*?\n```/g, '').trim() + "\n\n*Perfect! Those assessment targets look great.*"
+          }
+        : msg
+    ));
+
+    // Clear the button state
+    setAssessmentTargetsConfirmationMessageId(null);
+
+    // Mark assessment targets component as complete
+    if (onComponentComplete) {
+      console.log("📚 ASSESSMENT TARGETS - Marking assessment-targets component as complete");
+      onComponentComplete("assessment-targets");
+    }
+
+    // Send confirmation message to continue conversation
+    const confirmationMessage: Message = {
+      id: Date.now().toString(),
+      content: "Yes, those targets work perfectly!",
+      isBot: false,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, confirmationMessage]);
+    setIsLoading(true);
+
+    // Continue conversation with bot
+    try {
+      const response = await fetch("/api/claude/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          messages: [
+            ...messages.map((msg) => ({
+              role: msg.isBot ? "assistant" : "user",
+              content: msg.content.replace(/```json\s*\n[\s\S]*?\n```/g, ''),
+            })),
+            { role: "user", content: confirmationMessage.content },
+          ],
+          assistantType: botType,
+          stageContext: stageContext,
+          uploadedFiles: uploadedFiles,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to get response");
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      let botResponse = "";
+      let streamingMessageId = `streaming-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      setMessages(prev => [...prev, {
+        id: streamingMessageId,
+        content: "",
+        isBot: true,
+        timestamp: new Date(),
+      }]);
+
+      let hasStartedStreaming = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split("\n").filter((line) => line.trim());
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                if (!hasStartedStreaming) {
+                  setIsLoading(false);
+                  hasStartedStreaming = true;
+                }
+                
+                botResponse += parsed.content;
+
+                setMessages((prev) => 
+                  prev.map((msg) => 
+                    msg.id === streamingMessageId 
+                      ? { ...msg, content: botResponse }
+                      : msg
+                  )
+                );
+              }
+            } catch (e) {
+              // Ignore JSON parsing errors for streaming
+            }
+          }
+        }
+      }
+
+      // Replace streaming message with final message
+      if (botResponse) {
+        const finalMessageId = `final-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        setMessages((prev) => 
+          prev.map((msg) => 
+            msg.id === streamingMessageId 
+              ? { ...msg, id: finalMessageId }
+              : msg
+          )
+        );
+
+        // Add immediate JSON detection for further progression
+        console.log('🔍 ASSESSMENT TARGETS CONFIRMATION - Processing JSON detection');
+        try {
+          const jsonBlockRegex = /```json\s*[\r\n]+([\s\S]*?)[\r\n]+```/g;
+          let match;
+          while ((match = jsonBlockRegex.exec(botResponse)) !== null) {
+            try {
+              const jsonData = JSON.parse(match[1]);
+              if (jsonData.action) {
+                switch (jsonData.action) {
+                  case "confirm_persona":
+                    setPersonaConfirmationMessageId(finalMessageId);
+                    break;
+                  case "generate_avatar":
+                    setAvatarButtonMessageId(finalMessageId);
+                    break;
+                  case "test_bot":
+                    setTestBotButtonMessageId(finalMessageId);
+                    break;
+                }
+              }
+            } catch (parseError) {
+              console.log('🔍 ASSESSMENT TARGETS CONFIRMATION - JSON parse error:', parseError);
+            }
+          }
+        } catch (error) {
+          console.log('🔍 ASSESSMENT TARGETS CONFIRMATION - JSON detection error:', error);
+        }
+
+        onStageProgression(botResponse);
+      }
+    } catch (error) {
+      console.error("Chat error after assessment targets confirmation:", error);
     } finally {
       setIsLoading(false);
     }
@@ -2545,25 +2796,7 @@ function IntakeChat({
                           {/* Assessment targets confirmation buttons */}
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
-                              onClick={async () => {
-                                console.log("🎯 Yes, those targets work button clicked");
-                                
-                                // Replace with confirmation message (remove JSON)
-                                setMessages(prev => prev.map(msg => 
-                                  msg.id === assessmentTargetsConfirmationMessageId
-                                    ? { 
-                                        ...msg, 
-                                        content: contentWithoutJson + "\n\n*Perfect! Those assessment targets look great.*"
-                                      }
-                                    : msg
-                                ));
-                                
-                                // Clear the button state
-                                setAssessmentTargetsConfirmationMessageId(null);
-                                
-                                // Send continuation message to bot
-                                await sendButtonMessage("Yes, those targets work");
-                              }}
+                              onClick={handleConfirmAssessmentTargets}
                               className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
                             >
                               Yes, those targets work
@@ -3031,6 +3264,16 @@ export default function NewIntake() {
     updater: (prev: CriteriaState) => CriteriaState,
   ) => {
     setCriteria(updater);
+  };
+
+  // Handle learning targets update from Stage 2 assessment targets confirmation
+  const handleLearningTargetsUpdate = (learningTargets: string) => {
+    console.log("📚 PARENT - Updating stageContext with learning targets:", learningTargets);
+    setStageContext(prev => ({
+      ...prev,
+      learningTargets: learningTargets
+    }));
+    console.log("📚 PARENT - stageContext.learningTargets updated successfully");
   };
 
   const handleFileUpload = (file: UploadedFile) => {
@@ -3812,6 +4055,7 @@ export default function NewIntake() {
             onInjectMessage={setMessageInjectionFunction}
             stages={stages}
             onTestBotClick={() => setPersonalityTesterExpanded(true)}
+            onLearningTargetsUpdate={handleLearningTargetsUpdate}
           />
           
 
@@ -3928,14 +4172,7 @@ export default function NewIntake() {
                 botJobTitle={botJobTitle}
                 botWelcomeMessage={botWelcomeMessage}
                 sampleDialogue={botSampleDialogue}
-                stageContext={{
-                  ...stageContext,
-                  learningTargets: stageContext?.learningTargets || [
-                    "Understanding of the conch shell as a symbol of democracy and order",
-                    "Recognition of Piggy's glasses as a symbol of knowledge and intelligence", 
-                    "Analysis of how these symbols develop throughout Lord of the Flies"
-                  ]
-                }} // Enhanced context with learning targets
+                stageContext={stageContext} // Enhanced context with learning targets
                 uploadedFiles={uploadedFiles} // Pass Stage 2 uploaded files
                 onClose={() => {
                   console.log("🟡 PersonalityTestingBot onClose callback triggered");
