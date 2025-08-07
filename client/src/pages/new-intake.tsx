@@ -700,57 +700,127 @@ function IntakeChat({
       }
     };
 
-    // Extract bot personality data from the correct message (like boundaries extraction)
+    // Extract FULL persona and visual description data from the message
     console.log("🎯 SYNC EXTRACTION - Extracting bot data from persona confirmation message");
     const currentMessage = messages.find(m => m.id === personaConfirmationMessageId);
     console.log("🎯 SYNC EXTRACTION - Found message:", currentMessage?.id);
     console.log("🎯 SYNC EXTRACTION - Message content preview:", currentMessage?.content?.substring(0, 200));
     
     if (currentMessage) {
-      // Look for the JSON block in the message to extract persona data (same pattern as boundaries)
+      // First, try to extract from JSON block (if present)
       const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
-      let match;
+      let jsonMatch;
+      let extractedFromJson = false;
       
-      while ((match = jsonBlockRegex.exec(currentMessage.content)) !== null) {
+      while ((jsonMatch = jsonBlockRegex.exec(currentMessage.content)) !== null) {
         try {
-          const jsonData = JSON.parse(match[1]);
+          const jsonData = JSON.parse(jsonMatch[1]);
           console.log("🎯 SYNC EXTRACTION - Found JSON data:", jsonData);
           
           if (jsonData.action === 'confirm_persona' && jsonData.data) {
-            // Extract all possible persona fields with multiple field name attempts
             const data = jsonData.data;
             const name = data.botName || data.name || "";
             const jobTitle = data.botRole || data.botJobTitle || data.jobTitle || "";
             const personality = data.botPersonality || data.personality || data.description || "";
-            const visual = data.botVisualDescription || data.visualDescription || data.visual || "";
             
-            console.log("🎯 SYNC EXTRACTION - Extracted persona data:");
-            console.log("  - Name:", name);
-            console.log("  - Job Title:", jobTitle);
-            console.log("  - Personality:", personality);
-            console.log("  - Visual:", visual);
+            // Set these values immediately to state
+            if (setBotName) setBotName(name);
+            if (setBotJobTitle) setBotJobTitle(jobTitle);
+            if (setBotPersonality) setBotPersonality(personality);
             
-            // Set the bot data synchronously using onComponentComplete 
-            const personalityData = {
-              name: name,
-              jobTitle: jobTitle, 
-              description: personality,
-              fullPersonality: personality
-            };
+            extractedFromJson = true;
             
-            console.log("🎯 SYNC - Calling onComponentComplete with persona data:", personalityData);
-            
-            if (onComponentComplete) {
-              // Cast to any since we know handleComponentComplete handles objects
-              (onComponentComplete as any)(personalityData);
-            }
-            
-            // Generate welcome message with the extracted values
+            // Generate welcome message with extracted values
             generateWelcomeMessageAsync(name, jobTitle, personality);
           }
         } catch (error) {
           console.error("🎯 SYNC EXTRACTION - Error parsing JSON:", error);
         }
+      }
+      
+      // NOW EXTRACT THE FULL VISUAL DESCRIPTION FROM THE MESSAGE TEXT
+      // Look for the visual details section in the message content
+      const content = currentMessage.content;
+      let fullVisualDescription = "";
+      
+      // Pattern 1: Look for "Visual Details for [BotName]" section
+      const visualDetailsMatch = content.match(/(?:Visual Details for .+?|###\s*Visual Details.*?)\n([\s\S]*?)(?:\n\n\[|```json|$)/i);
+      if (visualDetailsMatch) {
+        fullVisualDescription = visualDetailsMatch[1].trim();
+        console.log("🎨 VISUAL EXTRACTION - Found visual details section:", fullVisualDescription);
+      }
+      
+      // Pattern 2: Extract bullet points about visual appearance
+      if (!fullVisualDescription) {
+        const lines = content.split('\n');
+        let inVisualSection = false;
+        let visualLines = [];
+        
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          
+          // Start collecting when we see visual-related headers
+          if (trimmedLine.match(/^(###\s*)?Visual Details|Physical appearance:|Clothing\/Features:|Expression:|Style:|Background:/i)) {
+            inVisualSection = true;
+            visualLines.push(line);
+          } else if (inVisualSection) {
+            // Continue collecting bullet points and descriptions
+            if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•') || trimmedLine.startsWith('*') || 
+                trimmedLine.match(/^(Physical appearance|Clothing|Expression|Style|Background):/i)) {
+              visualLines.push(line);
+            } else if (trimmedLine === '' || trimmedLine.startsWith('#') || trimmedLine.includes('[') || trimmedLine.includes('```')) {
+              // Stop at next section or button marker
+              break;
+            } else if (inVisualSection && !trimmedLine.startsWith('{')) {
+              // Include continuation text
+              visualLines.push(line);
+            }
+          }
+        }
+        
+        if (visualLines.length > 0) {
+          fullVisualDescription = visualLines.join('\n').trim();
+          console.log("🎨 VISUAL EXTRACTION - Extracted from bullet points:", fullVisualDescription);
+        }
+      }
+      
+      // Pattern 3: If still no visual description, try to extract everything between persona name and buttons/JSON
+      if (!fullVisualDescription) {
+        const beforeJsonOrButtons = content.split(/(\[PERSONA_CONFIRMATION_BUTTONS\]|```json)/)[0];
+        const visualMatch = beforeJsonOrButtons.match(/(?:appearance|visual|looks?|wearing|costume|outfit|expression|style).*?:(.*?)(?:\n[A-Z]|\n\*|\n-|\n#|$)/gis);
+        if (visualMatch) {
+          fullVisualDescription = visualMatch.map(m => m.trim()).join('\n');
+          console.log("🎨 VISUAL EXTRACTION - Extracted from pattern matching:", fullVisualDescription);
+        }
+      }
+      
+      // Store the FULL visual description
+      if (fullVisualDescription) {
+        console.log("🎨 VISUAL STORAGE - Storing full visual description:");
+        console.log(fullVisualDescription);
+        console.log("🎨 VISUAL STORAGE - Description length:", fullVisualDescription.length);
+        
+        // Store in the botVisualDescription state
+        if (setBotVisualDescription) {
+          setBotVisualDescription(fullVisualDescription);
+          console.log("🎨 VISUAL STORAGE - Set botVisualDescription with full description");
+        }
+      } else {
+        console.warn("🎨 VISUAL EXTRACTION - Could not extract visual description from message");
+      }
+      
+      // Also pass all data to onComponentComplete
+      if (onComponentComplete) {
+        const personalityData = {
+          name: botName,
+          jobTitle: botJobTitle,
+          description: botPersonality,
+          fullPersonality: botPersonality,
+          visualDescription: fullVisualDescription // Include the full visual description
+        };
+        
+        console.log("🎯 SYNC - Calling onComponentComplete with complete persona data:", personalityData);
+        (onComponentComplete as any)(personalityData);
       }
     } else {
       console.log("🎯 SYNC EXTRACTION - No message found with ID:", personaConfirmationMessageId);
