@@ -3174,9 +3174,10 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
       // Generate a thread ID
       const messageId = `claude-${assistantType || "general"}-${Date.now()}`;
 
-      // Convert messages to Anthropic format
+      // Convert messages to Anthropic format and filter out empty messages
       const anthropicMessages = messages
         .filter((msg: any) => msg.role !== "system")
+        .filter((msg: any) => msg.content && msg.content.trim().length > 0)
         .map((msg: any) => ({
           role: msg.role as "user" | "assistant",
           content: msg.content,
