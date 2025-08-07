@@ -2574,17 +2574,67 @@ function IntakeChat({
                           <div className="flex flex-col gap-3 my-4 max-w-md">
                             <Button 
                               onClick={async () => {
-                                console.log("🚧 No additional boundaries - proceeding with defaults");
+                                console.log("🚧 Boundaries confirmation button clicked");
+                                console.log("🚧 Current additionalBoundaries state:", additionalBoundaries);
                                 
-                                // No extraction needed - user accepted default boundaries
-                                console.log("🚧 Using standard school-appropriate boundaries only");
+                                // Check if we need to extract boundaries from the message text
+                                let finalBoundaries = additionalBoundaries;
+                                
+                                // If we don't have boundaries extracted yet, try to extract from the current message
+                                if (!finalBoundaries && boundariesConfirmationMessageId) {
+                                  const boundariesMessage = messages.find(msg => msg.id === boundariesConfirmationMessageId);
+                                  if (boundariesMessage) {
+                                    console.log("🚧 Attempting to extract boundaries from message content");
+                                    
+                                    // Look for boundary description in the message - check the previous user message too
+                                    const userMessageIndex = messages.findIndex(msg => msg.id === boundariesConfirmationMessageId) - 1;
+                                    const userMessage = userMessageIndex >= 0 ? messages[userMessageIndex] : null;
+                                    
+                                    console.log("🚧 Looking for boundaries in user message:", userMessage?.content);
+                                    
+                                    // If the user's message looks like a boundary specification, use it
+                                    if (userMessage && !userMessage.isBot) {
+                                      const userContent = userMessage.content.toLowerCase();
+                                      if (userContent.includes("don't") || userContent.includes("avoid") || 
+                                          userContent.includes("never") || userContent.includes("shouldn't")) {
+                                        console.log("🚧 BOUNDARIES EXTRACTION - Using user's original boundary text:", userMessage.content);
+                                        finalBoundaries = userMessage.content;
+                                        setAdditionalBoundaries(finalBoundaries);
+                                      }
+                                    }
+                                    
+                                    // Otherwise try to extract from bot's confirmation message
+                                    if (!finalBoundaries) {
+                                      const boundaryPatterns = [
+                                        /should never discuss (.+?)\./i,
+                                        /should avoid (.+?)\./i,
+                                        /won't talk about (.+?)\./i,
+                                        /can't talk about (.+?)/i,
+                                        /specifically avoid (.+?)\./i
+                                      ];
+                                    
+                                      for (const pattern of boundaryPatterns) {
+                                        const match = boundariesMessage.content.match(pattern);
+                                        if (match) {
+                                          const extractedBoundary = match[1].trim();
+                                          console.log("🚧 BOUNDARIES EXTRACTION - Found boundary in message text:", extractedBoundary);
+                                          finalBoundaries = `Don't talk about ${extractedBoundary}`;
+                                          setAdditionalBoundaries(finalBoundaries);
+                                          break;
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                                
+                                console.log("🚧 Final additionalBoundaries being confirmed:", finalBoundaries);
                                 
                                 // Replace with confirmation message
                                 setMessages(prev => prev.map(msg => 
                                   msg.id === boundariesConfirmationMessageId
                                     ? { 
                                         ...msg, 
-                                        content: contentWithoutJson + (additionalBoundaries ? 
+                                        content: contentWithoutJson + (finalBoundaries ? 
                                           "\n\n*Perfect! These boundaries are confirmed.*" : 
                                           "\n\n*Perfect! Using standard school-appropriate boundaries.*"
                                         )
@@ -2597,10 +2647,10 @@ function IntakeChat({
                                 
                                 // Mark boundaries component as completed
                                 onComponentComplete('boundaries');
-                                console.log("🚧 BOUNDARIES CONFIRMED - Using default boundaries only");
+                                console.log("🚧 BOUNDARIES CONFIRMED - additionalBoundaries:", finalBoundaries || "none");
                                 
                                 // Send continuation message to bot
-                                await sendButtonMessage(additionalBoundaries ? "Confirm these boundaries" : "No additional boundaries needed");
+                                await sendButtonMessage(finalBoundaries ? "Confirm these boundaries" : "No additional boundaries needed");
                               }}
                               className="bg-green-600 hover:bg-green-700 text-white"
                             >
