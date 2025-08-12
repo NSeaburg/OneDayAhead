@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { flushSync } from "react-dom";
+import { useDirectStreamingChat } from "@/hooks/useDirectStreamingChat";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, Check, Circle, Send, User, Upload, X } from "lucide-react";
@@ -2271,16 +2272,23 @@ function IntakeChat({
                 botResponse += parsed.content;
                 console.log('🎬 STREAMING - New chunk received:', parsed.content.length, 'chars. Total:', botResponse.length);
 
-                // Force immediate render with flushSync to prevent batching
-                flushSync(() => {
-                  setMessages((prev) => 
-                    prev.map((msg) => 
-                      msg.id === streamingMessageId 
-                        ? { ...msg, content: botResponse }
-                        : msg
-                    )
-                  );
-                });
+                // Direct DOM manipulation to bypass React batching
+                const messageElement = document.getElementById(`message-content-${streamingMessageId}`);
+                if (messageElement) {
+                  messageElement.textContent = botResponse;
+                  console.log('🎬 DIRECT DOM - Updated element with', botResponse.length, 'chars');
+                } else {
+                  // Fallback to React state if DOM element not found
+                  flushSync(() => {
+                    setMessages((prev) => 
+                      prev.map((msg) => 
+                        msg.id === streamingMessageId 
+                          ? { ...msg, content: botResponse }
+                          : msg
+                      )
+                    );
+                  });
+                }
               }
             } catch (e) {
               // Ignore JSON parsing errors for streaming
@@ -3042,8 +3050,9 @@ function IntakeChat({
                       
                       return (
                         <div className="prose prose-sm max-w-none">
-                          <ReactMarkdown
-                            components={{
+                          <div id={`message-content-${message.id}`}>
+                            <ReactMarkdown
+                              components={{
                               p: ({ children }) => (
                                 <div className="mb-2 last:mb-0">{children}</div>
                               ),
@@ -3079,7 +3088,8 @@ function IntakeChat({
                             }}
                           >
                             {displayContent}
-                          </ReactMarkdown>
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       );
                     }

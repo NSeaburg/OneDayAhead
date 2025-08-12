@@ -208,7 +208,14 @@ export default function AssessmentBotScreen({
               const parsed = JSON.parse(data);
               if (parsed.content) {
                 accumulatedContent += parsed.content;
-                setCurrentStreamingMessage(accumulatedContent);
+                // Direct DOM manipulation to bypass React batching
+                const streamingElement = document.getElementById('streaming-message-content');
+                if (streamingElement) {
+                  streamingElement.textContent = accumulatedContent;
+                } else {
+                  // Fallback to React state if DOM element not found
+                  setCurrentStreamingMessage(accumulatedContent);
+                }
               }
             } catch (e) {
               // Ignore parsing errors for incomplete chunks
@@ -735,7 +742,7 @@ export default function AssessmentBotScreen({
                   </span>
                 </div>
                 <div className="ml-10 bg-red-50 border border-red-100 rounded-lg p-3 text-gray-700">
-                  <div className="typing-text markdown-content">
+                  <div className="typing-text markdown-content" id="streaming-message-content">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentStreamingMessage}</ReactMarkdown>
                   </div>
                 </div>

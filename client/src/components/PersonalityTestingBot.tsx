@@ -228,13 +228,20 @@ Feel free to ask me questions or have a conversation to see how I interact with 
                 
                 botResponse += parsed.content;
 
-                setMessages((prev) => 
-                  prev.map((msg) => 
-                    msg.id === streamingMessageId 
-                      ? { ...msg, content: botResponse }
-                      : msg
-                  )
-                );
+                // Direct DOM manipulation to bypass React batching
+                const messageElement = document.getElementById(`message-content-${streamingMessageId}`);
+                if (messageElement) {
+                  messageElement.textContent = botResponse;
+                } else {
+                  // Fallback to React state if DOM element not found
+                  setMessages((prev) => 
+                    prev.map((msg) => 
+                      msg.id === streamingMessageId 
+                        ? { ...msg, content: botResponse }
+                        : msg
+                    )
+                  );
+                }
               }
             } catch (e) {
               // Ignore JSON parsing errors for streaming
@@ -359,15 +366,17 @@ Feel free to ask me questions or have a conversation to see how I interact with 
                     : "bg-gray-100 text-gray-900"
                 }`}>
                   {message.isBot ? (
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => <div className="mb-2 last:mb-0">{children}</div>,
-                        strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-                        em: ({ children }) => <em className="italic">{children}</em>,
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
+                    <div id={`message-content-${message.id}`}>
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <div className="mb-2 last:mb-0">{children}</div>,
+                          strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                          em: ({ children }) => <em className="italic">{children}</em>,
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
                   ) : (
                     <div>{message.content}</div>
                   )}
