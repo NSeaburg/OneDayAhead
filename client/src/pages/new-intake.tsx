@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, Check, Circle, Send, User, Upload, X } from "lucide-react";
@@ -261,14 +262,16 @@ function IntakeChat({
               if (parsed.content) {
                 botResponse += parsed.content;
                 console.log('🎬 BUTTON STREAMING - New chunk:', parsed.content.length, 'chars. Total:', botResponse.length);
-                setMessages(prev => {
-                  const updated = prev.map(msg => 
-                    msg.id === streamingMessageId 
-                      ? { ...msg, content: botResponse }
-                      : msg
+                
+                // Force immediate render with flushSync to prevent batching
+                flushSync(() => {
+                  setMessages(prev => 
+                    prev.map(msg => 
+                      msg.id === streamingMessageId 
+                        ? { ...msg, content: botResponse }
+                        : msg
+                    )
                   );
-                  console.log('🎬 BUTTON STREAMING - Updated content length:', botResponse.length);
-                  return updated;
                 });
               }
             } catch (e) {
@@ -2268,15 +2271,15 @@ function IntakeChat({
                 botResponse += parsed.content;
                 console.log('🎬 STREAMING - New chunk received:', parsed.content.length, 'chars. Total:', botResponse.length);
 
-                // Update the specific streaming message in real time
-                setMessages((prev) => {
-                  const updated = prev.map((msg) => 
-                    msg.id === streamingMessageId 
-                      ? { ...msg, content: botResponse }
-                      : msg
+                // Force immediate render with flushSync to prevent batching
+                flushSync(() => {
+                  setMessages((prev) => 
+                    prev.map((msg) => 
+                      msg.id === streamingMessageId 
+                        ? { ...msg, content: botResponse }
+                        : msg
+                    )
                   );
-                  console.log('🎬 STREAMING - Updated message content length:', botResponse.length);
-                  return updated;
                 });
               }
             } catch (e) {

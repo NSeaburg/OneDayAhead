@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { Message } from '@/lib/openai';
 import { streamChatCompletionWithClaude } from '@/lib/anthropic';
 
@@ -74,14 +75,16 @@ export function useStreamingChat(assistantType?: string) {
                 const parsed = JSON.parse(data);
                 if (parsed.content) {
                   assistantContent += parsed.content;
-                  // Update the streaming message properly
-                  setMessages(prev => 
-                    prev.map((msg, index) => 
-                      index === prev.length - 1 && msg.role === 'assistant'
-                        ? { ...msg, content: assistantContent }
-                        : msg
-                    )
-                  );
+                  // Force immediate render with flushSync to prevent batching
+                  flushSync(() => {
+                    setMessages(prev => 
+                      prev.map((msg, index) => 
+                        index === prev.length - 1 && msg.role === 'assistant'
+                          ? { ...msg, content: assistantContent }
+                          : msg
+                      )
+                    );
+                  });
                 }
               } catch (e) {
                 // Ignore parsing errors for malformed chunks
