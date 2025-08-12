@@ -74,7 +74,14 @@ export function useStreamingChat(assistantType?: string) {
                 const parsed = JSON.parse(data);
                 if (parsed.content) {
                   assistantContent += parsed.content;
-                  setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+                  // Update the streaming message properly
+                  setMessages(prev => 
+                    prev.map((msg, index) => 
+                      index === prev.length - 1 && msg.role === 'assistant'
+                        ? { ...msg, content: assistantContent }
+                        : msg
+                    )
+                  );
                 }
               } catch (e) {
                 // Ignore parsing errors for malformed chunks
