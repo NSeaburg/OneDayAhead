@@ -663,6 +663,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               fullContent += content;
               // Send the content chunk to the client
               res.write(`data: ${JSON.stringify({ content })}\n\n`);
+              // Force flush to send immediately
+              if (res.flush) res.flush();
             }
           }
         }
@@ -2252,6 +2254,8 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
           if (content) {
             fullContent += content;
             res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            // Force flush to send immediately
+            if (res.flush) res.flush();
           }
         }
       }
@@ -3404,6 +3408,8 @@ ${fileContent}`;
             if (content) {
               fullContent += content;
               // Send the content chunk to the client
+              // Force flush to send immediately
+              if (res.flush) res.flush();
               res.write(`data: ${JSON.stringify({ content })}\n\n`);
             }
           }
