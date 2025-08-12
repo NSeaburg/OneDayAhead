@@ -3156,7 +3156,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
   // Content creation assistant chat endpoint
   app.post("/api/claude/chat", async (req, res) => {
     try {
-      const { messages, assistantType, stageContext, uploadedFiles, silent } = req.body;
+      const { messages, assistantType, stageContext, uploadedFiles } = req.body;
 
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({
@@ -3406,9 +3406,9 @@ ${fileContent}`;
           }
         }
 
-        // Store the conversation if we have a session ID (unless it's a silent message)
+        // Store the conversation if we have a session ID
         const sessionId = req.sessionId;
-        if (sessionId && !silent) {
+        if (sessionId) {
           try {
             const allMessages = [
               ...anthropicMessages,
@@ -3425,8 +3425,6 @@ ${fileContent}`;
           } catch (err) {
             console.error("Error storing conversation:", err);
           }
-        } else if (silent) {
-          console.log(`Silent message processed - not storing in conversation history`);
         }
 
         // 🔍 LOG: Capture the exact JSON format Claude is sending

@@ -2134,8 +2134,6 @@ function IntakeChat({
     }
   }, [messages, isLoading]);
 
-
-
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -3144,86 +3142,6 @@ export default function NewIntake() {
   const [botVisualDescription, setBotVisualDescription] = useState<string | null>(null);
   const [showPersonalityTester, setShowPersonalityTester] = useState(false);
   const [personalityTesterExpanded, setPersonalityTesterExpanded] = useState(false);
-
-  // Send silent message function (available throughout the component)
-  const sendSilentMessage = async (content: string) => {
-    console.log("🤫 Sending silent message:", content);
-    
-    try {
-      const response = await fetch("/api/claude/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          messages: [
-            { role: "user", content: content },
-          ],
-          assistantType: `intake-assessment-bot`,
-          stageContext: stageContext,
-          uploadedFiles: uploadedFiles,
-          silent: true, // This prevents the message from being stored in conversation history
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to send silent message");
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No response body");
-
-      let botResponse = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim());
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                botResponse += parsed.content;
-              }
-            } catch (e) {
-              // Ignore JSON parsing errors
-            }
-          }
-        }
-      }
-
-      // Process any bot response - add to visible messages if it contains meaningful content
-      console.log("🤫 Silent response received:", botResponse.substring(0, 100));
-      
-      // If the bot responds with actual content (not just an acknowledgment), make it visible
-      if (botResponse.trim() && 
-          !botResponse.toLowerCase().includes('acknowledged') && 
-          !botResponse.toLowerCase().includes('understanding') &&
-          botResponse.length > 20) {
-        
-        console.log("🤫 Silent message triggered meaningful response, adding to chat");
-        
-        // Add the bot response to visible messages
-        const botMessage: Message = {
-          id: Date.now().toString(),
-          content: botResponse,
-          isBot: true,
-          timestamp: new Date(),
-        };
-        
-        setMessages((prev) => [...prev, botMessage]);
-      }
-      
-      return botResponse;
-    } catch (error) {
-      console.error("Error sending silent message:", error);
-      return null;
-    }
-  };
   const [messageInjectionFunction, setMessageInjectionFunction] = useState<((message: string) => void) | null>(null);
   const [criteria, setCriteria] = useState<CriteriaState>({
     schoolDistrict: {
@@ -4337,10 +4255,10 @@ export default function NewIntake() {
               if (e.target === e.currentTarget) {
                 console.log("🟠 Closing modal via backdrop click");
                 setPersonalityTesterExpanded(false);
-                // Send silent trigger message instead of visible injection
-                if (currentStageId === 3) {
+                // Inject the return from testing trigger message
+                if (messageInjectionFunction && currentStageId === 3) {
                   setTimeout(() => {
-                    sendSilentMessage("[USER_RETURNED_FROM_TESTING]");
+                    messageInjectionFunction("[USER_RETURNED_FROM_TESTING]");
                   }, 100);
                 }
               }
@@ -4378,10 +4296,21 @@ export default function NewIntake() {
                   console.log("🟡 PersonalityTestingBot onClose callback triggered");
                   setPersonalityTesterExpanded(false);
                   
-                  // Send silent trigger message instead of visible injection
+                  // Direct trigger: find the current Stage 3 chat and manually add the trigger message
                   if (currentStageId === 3) {
+                    console.log("🟡 Directly triggering return-from-testing message for Stage 3");
+                    
                     setTimeout(() => {
-                      sendSilentMessage("[USER_RETURNED_FROM_TESTING]");
+                      // Find the IntakeChat component and trigger message directly
+                      const triggerMessage = "[USER_RETURNED_FROM_TESTING]";
+                      console.log("🟡 Adding trigger message directly to chat");
+                      
+                      // Create a custom event to communicate with the active chat
+                      const event = new CustomEvent('inject-message', { 
+                        detail: { message: triggerMessage, stageId: 3 }
+                      });
+                      window.dispatchEvent(event);
+                      console.log("🟡 Dispatched inject-message event");
                     }, 100);
                   }
                 }}
