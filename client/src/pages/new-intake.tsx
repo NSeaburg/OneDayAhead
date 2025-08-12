@@ -690,38 +690,7 @@ function IntakeChat({
     setAvatarButtonMessageId(null);
   };
 
-  // Handle persona confirmation actions
-  // Generate short display description for bot (called in background after persona confirmation)
-  const generateDisplayDescription = async (fullPersonality: string, botName: string) => {
-    try {
-      console.log("🎭 DISPLAY DESCRIPTION - Starting generation for:", botName);
-      
-      const response = await fetch("/api/intake/generate-display-description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          fullPersonality,
-          botName
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("🎭 DISPLAY DESCRIPTION - Generated:", data.shortDescription);
-        console.log("🎭 DISPLAY DESCRIPTION - Length reduction:", data.originalLength, "→", data.newLength);
-        
-        // Update the display description state
-        setBotDisplayDescription(data.shortDescription);
-      } else {
-        console.error("🎭 DISPLAY DESCRIPTION - Generation failed:", response.status);
-        // Don't set anything - will fallback to personalitySummary in display
-      }
-    } catch (error) {
-      console.error("🎭 DISPLAY DESCRIPTION - Error generating:", error);
-      // Don't set anything - will fallback to personalitySummary in display
-    }
-  };
+  // Handle persona confirmation actions will be defined inside NewIntake component
 
   const handleConfirmPersona = async () => {
     if (!personaConfirmationMessageId) return;
@@ -796,11 +765,8 @@ function IntakeChat({
             console.log("  - Job Title:", jobTitle);
             console.log("  - Personality:", personality);
             
-            // Generate short display description in background (non-blocking)
-            if (personality && name) {
-              console.log("🎭 BACKGROUND - Generating display description for:", name);
-              generateDisplayDescription(personality, name);
-            }
+            // NOTE: Display description generation removed - will use personalitySummary as fallback
+            // generateDisplayDescription is only available in NewIntake component scope
             
             // Set the bot data synchronously using onComponentComplete 
             const personalityData = {
@@ -2272,12 +2238,17 @@ function IntakeChat({
                 botResponse += parsed.content;
                 console.log('🎬 STREAMING - New chunk received:', parsed.content.length, 'chars. Total:', botResponse.length);
 
-                // Direct DOM manipulation to bypass React batching
+                // Force immediate DOM update with innerHTML for markdown
                 const messageElement = document.getElementById(`message-content-${streamingMessageId}`);
                 if (messageElement) {
-                  messageElement.textContent = botResponse;
-                  console.log('🎬 DIRECT DOM - Updated element with', botResponse.length, 'chars');
+                  // Use innerHTML to render markdown-like content immediately
+                  messageElement.innerHTML = botResponse
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+                  console.log(`📝 Intake DOM Update - Character ${botResponse.length}: "${parsed.content}"`);
                 } else {
+                  console.log('⚠️ Intake DOM element not found, falling back to React state');
                   // Fallback to React state if DOM element not found
                   flushSync(() => {
                     setMessages((prev) => 
@@ -3754,6 +3725,38 @@ export default function NewIntake() {
     }
 
     setProcessingYoutube(false);
+  };
+
+  // Generate short display description for bot (called in background after persona confirmation)
+  const generateDisplayDescription = async (fullPersonality: string, botName: string) => {
+    try {
+      console.log("🎭 DISPLAY DESCRIPTION - Starting generation for:", botName);
+      
+      const response = await fetch("/api/intake/generate-display-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          fullPersonality,
+          botName
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("🎭 DISPLAY DESCRIPTION - Generated:", data.shortDescription);
+        console.log("🎭 DISPLAY DESCRIPTION - Length reduction:", data.originalLength, "→", data.newLength);
+        
+        // Update the display description state
+        setBotDisplayDescription(data.shortDescription);
+      } else {
+        console.error("🎭 DISPLAY DESCRIPTION - Generation failed:", response.status);
+        // Don't set anything - will fallback to personalitySummary in display
+      }
+    } catch (error) {
+      console.error("🎭 DISPLAY DESCRIPTION - Error generating:", error);
+      // Don't set anything - will fallback to personalitySummary in display
+    }
   };
 
   const handleStageProgression = async (completionMessage: string) => {

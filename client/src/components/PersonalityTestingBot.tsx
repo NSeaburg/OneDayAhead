@@ -228,12 +228,17 @@ Feel free to ask me questions or have a conversation to see how I interact with 
                 
                 botResponse += parsed.content;
 
-                // Direct DOM manipulation to bypass React batching
+                // Force immediate DOM update with innerHTML for markdown
                 const messageElement = document.getElementById(`message-content-${streamingMessageId}`);
                 if (messageElement) {
-                  messageElement.textContent = botResponse;
+                  // Use innerHTML to render markdown-like content immediately
+                  messageElement.innerHTML = botResponse
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+                  console.log(`📝 PersonalityBot DOM Update - Character ${botResponse.length}: "${parsed.content}"`);
                 } else {
-                  // Fallback to React state if DOM element not found
+                  console.log('⚠️ PersonalityBot DOM element not found, falling back to React state');
                   setMessages((prev) => 
                     prev.map((msg) => 
                       msg.id === streamingMessageId 

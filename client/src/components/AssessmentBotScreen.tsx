@@ -208,12 +208,18 @@ export default function AssessmentBotScreen({
               const parsed = JSON.parse(data);
               if (parsed.content) {
                 accumulatedContent += parsed.content;
-                // Direct DOM manipulation to bypass React batching
+                
+                // Force immediate DOM update with innerHTML for markdown
                 const streamingElement = document.getElementById('streaming-message-content');
                 if (streamingElement) {
-                  streamingElement.textContent = accumulatedContent;
+                  // Use innerHTML to render markdown-like content immediately
+                  streamingElement.innerHTML = accumulatedContent
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+                  console.log(`📝 DOM Update - Character ${accumulatedContent.length}: "${parsed.content}"`);
                 } else {
-                  // Fallback to React state if DOM element not found
+                  console.log('⚠️ DOM element not found, falling back to React state');
                   setCurrentStreamingMessage(accumulatedContent);
                 }
               }
