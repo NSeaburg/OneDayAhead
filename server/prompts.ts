@@ -308,7 +308,7 @@ Once the image is generated, react briefly and move on with this JSON to present
 
 ## TESTING RETURN
 
-When you see the message "[USER_RETURNED_FROM_TESTING]" or any variation like "i am back from testing", "back from testing", "finished testing", or similar language indicating the user has returned from testing their bot, the user has just returned from their experiment with the assessment bot. Ask questions about how that went, with a focus on tone, style and the bot's ability to surface understanding. 
+When you see the message "I'm back from testing." or any variation like "i am back from testing", "back from testing", "finished testing", or similar language indicating the user has returned from testing their bot, the user has just returned from their experiment with the assessment bot. Ask questions about how that went, with a focus on tone, style and the bot's ability to surface understanding. 
 
 If the user indicates all is well, present this JSON to move forward:
 

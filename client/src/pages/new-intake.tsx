@@ -4258,7 +4258,7 @@ export default function NewIntake() {
                 // Inject the return from testing trigger message
                 if (messageInjectionFunction && currentStageId === 3) {
                   setTimeout(() => {
-                    messageInjectionFunction("[USER_RETURNED_FROM_TESTING]");
+                    messageInjectionFunction("I'm back from testing.");
                   }, 100);
                 }
               }
@@ -4302,7 +4302,7 @@ export default function NewIntake() {
                     
                     setTimeout(() => {
                       // Find the IntakeChat component and trigger message directly
-                      const triggerMessage = "[USER_RETURNED_FROM_TESTING]";
+                      const triggerMessage = "I'm back from testing.";
                       console.log("🟡 Adding trigger message directly to chat");
                       
                       // Create a custom event to communicate with the active chat

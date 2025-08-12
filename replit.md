@@ -7,6 +7,11 @@ This project is an LTI 1.3 compliant learning platform for EdTech, providing an 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes  
+- **August 12, 2025**: Improved user experience for assessment bot testing return message
+  - ✅ CHANGED: "[User Returned From Testing]" message replaced with natural "I'm back from testing."
+  - ✅ UPDATED: Trigger detection in server/prompts.ts to recognize new natural message format
+  - ✅ UPDATED: Both injection points in new-intake.tsx to use professional message
+  - System now displays natural, conversational message when users return from bot testing instead of awkward bracketed text
 - **August 7, 2025**: Complete removal of boundaries customization functionality
   - ✅ REMOVED: All boundary-related state variables, hooks, and UI components from new-intake.tsx
   - ✅ REMOVED: Boundary confirmation buttons and message handling logic
