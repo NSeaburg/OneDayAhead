@@ -3164,11 +3164,13 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
         });
       }
 
-      // Set up SSE headers for streaming
+      // Set up SSE headers for streaming with anti-buffering
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no", // Disable nginx buffering
+        "Access-Control-Allow-Origin": "*",
       });
 
       // Generate a thread ID
@@ -3376,8 +3378,9 @@ ${fileContent}`;
       console.log(`🎯 DEBUG Claude Chat - First user message: "${anthropicMessages.length > 0 ? anthropicMessages[anthropicMessages.length - 1]?.content?.substring(0, 50) + '...' : 'None'}"`);
 
       try {
-        // Send the initial thread ID
+        // Send the initial thread ID and flush immediately to establish connection
         res.write(`data: ${JSON.stringify({ threadId: messageId })}\n\n`);
+        res.flushHeaders?.();
 
         // Create streaming response from Anthropic
         const stream = await anthropic.messages.stream({
