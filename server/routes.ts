@@ -4368,6 +4368,84 @@ ${boundaries ? boundaries : "Maintain appropriate classroom standards and stay f
     }
   });
 
+  // Generate short display description for bot personality
+  app.post("/api/intake/generate-display-description", async (req, res) => {
+    try {
+      const { fullPersonality, botName } = req.body;
+
+      console.log("🎭 DISPLAY DESCRIPTION - Generating short description for:", botName);
+      console.log("🎭 DISPLAY DESCRIPTION - Full personality length:", fullPersonality?.length || 0);
+
+      if (!fullPersonality) {
+        return res.status(400).json({ error: "Full personality description is required" });
+      }
+
+      if (!anthropic) {
+        return res.status(500).json({ 
+          error: "Anthropic API not configured",
+          details: "AI description generation is not available" 
+        });
+      }
+
+      // Create a prompt to generate a short, pithy description
+      const shortDescriptionPrompt = `Given this full personality description for an educational assessment bot:
+
+"${fullPersonality}"
+
+Create a concise, engaging 2-3 sentence description suitable for display under the bot's name and title. This should capture the essence of their personality and role without being verbose. Focus on what makes them unique and interesting to students.
+
+Examples of good short descriptions:
+- "A stranded researcher who discovered the Lord of the Flies island. Expert in survival symbolism and artifact analysis."
+- "A retired civics teacher with 35 years of experience. Known for her dry wit and ability to make government accessible."
+- "An enthusiastic superhero dedicated to proper punctuation. Uses dramatic flair to teach grammar rules."
+
+Respond with only the short description, no additional text or formatting.`;
+
+      // Generate the short description using Claude
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 150,
+        messages: [
+          {
+            role: "user",
+            content: shortDescriptionPrompt
+          }
+        ]
+      });
+
+      const shortDescription = response.content[0]?.text?.trim() || "";
+
+      console.log("🎭 DISPLAY DESCRIPTION - Generated description:", shortDescription);
+      console.log("🎭 DISPLAY DESCRIPTION - Description length:", shortDescription.length);
+
+      if (!shortDescription) {
+        return res.status(500).json({ 
+          error: "Failed to generate description",
+          details: "No description returned from AI" 
+        });
+      }
+
+      res.json({
+        success: true,
+        shortDescription,
+        originalLength: fullPersonality.length,
+        newLength: shortDescription.length
+      });
+
+    } catch (error: any) {
+      console.error('Display description generation error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      res.status(500).json({
+        error: "Failed to generate display description",
+        details: error.message
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

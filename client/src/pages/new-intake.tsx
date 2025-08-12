@@ -682,6 +682,38 @@ function IntakeChat({
   };
 
   // Handle persona confirmation actions
+  // Generate short display description for bot (called in background after persona confirmation)
+  const generateDisplayDescription = async (fullPersonality: string, botName: string) => {
+    try {
+      console.log("🎭 DISPLAY DESCRIPTION - Starting generation for:", botName);
+      
+      const response = await fetch("/api/intake/generate-display-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          fullPersonality,
+          botName
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("🎭 DISPLAY DESCRIPTION - Generated:", data.shortDescription);
+        console.log("🎭 DISPLAY DESCRIPTION - Length reduction:", data.originalLength, "→", data.newLength);
+        
+        // Update the display description state
+        setBotDisplayDescription(data.shortDescription);
+      } else {
+        console.error("🎭 DISPLAY DESCRIPTION - Generation failed:", response.status);
+        // Don't set anything - will fallback to personalitySummary in display
+      }
+    } catch (error) {
+      console.error("🎭 DISPLAY DESCRIPTION - Error generating:", error);
+      // Don't set anything - will fallback to personalitySummary in display
+    }
+  };
+
   const handleConfirmPersona = async () => {
     if (!personaConfirmationMessageId) return;
 
@@ -754,6 +786,12 @@ function IntakeChat({
             console.log("  - Name:", name);
             console.log("  - Job Title:", jobTitle);
             console.log("  - Personality:", personality);
+            
+            // Generate short display description in background (non-blocking)
+            if (personality && name) {
+              console.log("🎭 BACKGROUND - Generating display description for:", name);
+              generateDisplayDescription(personality, name);
+            }
             
             // Set the bot data synchronously using onComponentComplete 
             const personalityData = {
@@ -3135,6 +3173,7 @@ export default function NewIntake() {
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null);
   const [personalitySummary, setPersonalitySummary] = useState<string | null>(null);
   const [botPersonality, setBotPersonality] = useState<string | null>(null);
+  const [botDisplayDescription, setBotDisplayDescription] = useState<string | null>(null);
   const [botName, setBotName] = useState<string | null>(null);
   const [botJobTitle, setBotJobTitle] = useState<string | null>(null);
   const [botWelcomeMessage, setBotWelcomeMessage] = useState<string | null>(null);
@@ -4132,7 +4171,7 @@ export default function NewIntake() {
                               
                               {/* Description spans full width */}
                               <div className="text-xs text-gray-500 leading-relaxed">
-                                {personalitySummary || "Your newly designed assessment bot"}
+                                {botDisplayDescription || personalitySummary || "Your newly designed assessment bot"}
                               </div>
                             </div>
                             <Button 
