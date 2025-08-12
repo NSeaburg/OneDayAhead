@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import html2pdf from 'html2pdf.js';
-import { notifyCourseCompleted } from "@/lib/embedding";
+// Removed notifyCourseCompleted - not needed in current implementation
 import { Message } from "@/lib/openai";
 import globalStorage from "@/lib/globalStorage";
 import DOMPurify from 'dompurify';
@@ -306,17 +306,11 @@ export default function NewFeedbackScreen({
       </div>
       
       <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
-        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Three Branches of Government - Learning Content</h2>
-        <p><strong>Objective:</strong> Understand the three branches of government and how they work together.</p>
+        <h2 style="color: #4B5563; font-size: 18px; margin-bottom: 10px;">Learning Content Summary</h2>
+        <p><strong>Objective:</strong> Complete understanding of the lesson material.</p>
         
-        <h3 style="margin-top: 15px;">Key Concepts</h3>
-        <ul>
-          <li><strong>Executive Branch:</strong> Enforces laws, led by the President.</li>
-          <li><strong>Legislative Branch:</strong> Makes laws, consisting of Congress (House and Senate).</li>
-          <li><strong>Judicial Branch:</strong> Interprets laws, with the Supreme Court at the top.</li>
-          <li><strong>Checks and Balances:</strong> System where each branch limits the power of the others.</li>
-          <li><strong>Separation of Powers:</strong> Division of government responsibilities into distinct branches.</li>
-        </ul>
+        <h3 style="margin-top: 15px;">Key Concepts Covered</h3>
+        <p style="color: #4B5563;">The key learning concepts from this session have been reviewed and assessed.</p>
       </div>
       
       <!-- Assessment Conversation Transcript -->

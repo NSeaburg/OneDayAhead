@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2, Play, BarChart3 } from "lucide-react";
+import { Folder, Plus, Settings, Users, BookOpen, LogOut, Edit, Trash2, Play, BarChart3, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ContentPackage {
@@ -59,6 +59,10 @@ export default function AdminDashboard() {
 
   const handleCreateNew = () => {
     setLocation("/admin/create");
+  };
+
+  const handleNewIntake = () => {
+    setLocation("/admin/new-intake");
   };
 
   const handleEditPackage = (pkg: ContentPackage) => {
@@ -140,7 +144,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
@@ -210,9 +214,13 @@ export default function AdminDashboard() {
 
         {/* Action Buttons */}
         <div className="mb-6 flex gap-4">
-          <Button onClick={handleCreateNew} size="lg" className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleNewIntake} size="lg" className="bg-green-600 hover:bg-green-700">
             <Plus className="h-5 w-5 mr-2" />
-            Create New Learning Experience
+            New Intake (Conversational)
+          </Button>
+          <Button onClick={handleCreateNew} variant="outline" size="lg">
+            <Plus className="h-5 w-5 mr-2" />
+            Old Intake (Form-based)
           </Button>
           <Button onClick={() => setLocation("/admin/ai-usage")} variant="outline" size="lg">
             <BarChart3 className="h-5 w-5 mr-2" />
@@ -301,6 +309,18 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Quick Navigation Back to New Intake */}
+      <div className="fixed bottom-6 right-6">
+        <Button
+          onClick={() => setLocation('/admin/new-intake')}
+          className="bg-green-600 hover:bg-green-700 shadow-lg"
+          size="sm"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to New Intake
+        </Button>
       </div>
     </div>
   );

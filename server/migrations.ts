@@ -159,6 +159,70 @@ async function runMigrations() {
     `);
     console.log("LTI grades table created or already exists");
 
+    // Create content packages table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS content_packages (
+        id SERIAL PRIMARY KEY,
+        package_id TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        description TEXT,
+        district TEXT NOT NULL,
+        course TEXT NOT NULL,
+        topic TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        published_at TIMESTAMP,
+        version INTEGER NOT NULL DEFAULT 1
+      )
+    `);
+    console.log("Content packages table created or already exists");
+
+    // Create content components table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS content_components (
+        id SERIAL PRIMARY KEY,
+        package_id INTEGER NOT NULL REFERENCES content_packages(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        data JSONB NOT NULL,
+        ordering INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("Content components table created or already exists");
+
+    // Create content creation sessions table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS content_creation_sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        package_id INTEGER REFERENCES content_packages(id) ON DELETE CASCADE,
+        current_step INTEGER NOT NULL DEFAULT 1,
+        wizard_data JSONB NOT NULL DEFAULT '{}',
+        conversation_history JSONB NOT NULL DEFAULT '[]',
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP
+      )
+    `);
+    console.log("Content creation sessions table created or already exists");
+
+    // Create content permissions table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS content_permissions (
+        id SERIAL PRIMARY KEY,
+        package_id INTEGER NOT NULL REFERENCES content_packages(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        permission TEXT NOT NULL DEFAULT 'view',
+        granted_by INTEGER REFERENCES users(id),
+        granted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("Content permissions table created or already exists");
+
     console.log("All migrations completed successfully");
   } catch (error) {
     console.error("Error running migrations:", error);

@@ -5,6 +5,7 @@ import { ltiAuthMiddleware } from "./lti/auth";
 import ltiRoutes from "./lti/routes";
 import { ltiServices } from "./lti/services";
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import axios from "axios";
 import path from "path";
 import fs from "fs";
@@ -36,16 +37,37 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Initialize OpenAI client for image generation (optional)
+let openai: OpenAI | null = null;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    console.log("✅ OpenAI client initialized for image generation");
+  } else {
+    console.log("⚠️ OpenAI API key not found - image generation will be unavailable");
+  }
+} catch (error) {
+  console.error("❌ Failed to initialize OpenAI client:", error);
+  openai = null;
+}
+
 // N8N Webhook URLs
 const ASSESSMENT_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 const DYNAMIC_ASSISTANT_WEBHOOK_URL = process.env.N8N_DYNAMIC_WEBHOOK_URL; // New webhook URL for the dynamic assistant
 
 // Import system prompts from configuration file
 import {
-  ARTICLE_ASSISTANT_SYSTEM_PROMPT,
   ASSESSMENT_ASSISTANT_PROMPT,
+  ARTICLE_ASSISTANT_SYSTEM_PROMPT,
   TEACHING_ASSISTANT_FALLBACK_PROMPT,
   ASSESSMENT_EVALUATION_PROMPT,
+  INTAKE_BASICS_PROMPT,
+  INTAKE_CONTEXT_PROMPT,
+  INTAKE_ASSESSMENT_BOT_PROMPT,
+  PERSONALITY_TESTING_PROMPT,
+  ASSESSMENT_BOT_GBPAC_TEMPLATE,
 } from "./prompts";
 
 import { contentManager } from "./contentManager";
@@ -54,13 +76,7 @@ import { contentManager } from "./contentManager";
 console.log("Assessment Webhook URL:", ASSESSMENT_WEBHOOK_URL);
 console.log("Dynamic Assistant Webhook URL:", DYNAMIC_ASSISTANT_WEBHOOK_URL);
 
-// Log information about the article assistant system prompt
-console.log(
-  `Article Assistant System Prompt Length: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.length} characters`,
-);
-console.log(
-  `Article Assistant System Prompt Preview: ${ARTICLE_ASSISTANT_SYSTEM_PROMPT.substring(0, 100)}...`,
-);
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -151,8 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Only require LTI auth if no session exists
     if (
       req.path.includes("/claude-chat") ||
-      req.path.includes("/article-chat") ||
-      req.path.includes("/article-chat-stream") ||
+
       req.path.includes("/send-to-n8n") ||
       req.path.includes("/conversations") ||
       req.path.includes("/feedback")
@@ -498,11 +513,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use content package data if available, otherwise fall back to defaults
       const response = {
-        discussionAssistantId: "claude-discussion",
         assessmentAssistantId: contentPackage?.assessmentBot ? "claude-assessment-dynamic" : "claude-assessment",
         contentPackage: contentPackage,
         systemPrompts: {
-          discussion: ARTICLE_ASSISTANT_SYSTEM_PROMPT,
           assessment: contentPackage?.assessmentBot?.personality || ASSESSMENT_ASSISTANT_PROMPT,
           teachingFallback: TEACHING_ASSISTANT_FALLBACK_PROMPT,
         },
@@ -584,106 +597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Special endpoint for the article assistant chat using Claude 3.7 Sonnet (non-streaming)
-  app.post("/api/article-chat", 
-    requireLtiSession,
-    aiRateLimit,
-    aiRateLimit10Min,
-    validateMessage,
-    checkDailyUsage,
-    async (req, res) => {
-    try {
-      const { messages } = req.body;
 
-      // This endpoint handles only non-streaming requests
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({
-          error: "Invalid message data. Expected an array of messages.",
-        });
-      }
-
-      console.log(
-        "Article chat endpoint using exact Python code configuration",
-      );
-
-      // Convert OpenAI-style messages to Anthropic format
-      const anthropicMessages = messages
-        .filter((msg: any) => msg.role !== "system")
-        .map((msg: any) => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        }));
-
-      // Create completion with Anthropic exactly like the Python code
-      const completion = await anthropic.messages.create({
-        messages: anthropicMessages,
-        system: ARTICLE_ASSISTANT_SYSTEM_PROMPT, // Use our hardcoded prompt
-        model: "claude-3-7-sonnet-20250219",
-        max_tokens: 4096,
-        temperature: 1.0,
-      });
-
-      // Extract the response content
-      const content =
-        completion.content[0]?.type === "text"
-          ? completion.content[0].text
-          : "No response content available";
-
-      // Generate a thread ID
-      const messageId = "claude-article-" + Date.now();
-
-      // Store the conversation and track AI usage
-      const sessionId = req.sessionId;
-      if (sessionId) {
-        try {
-          // Limit conversation length for AI context
-          const limitedMessages = limitConversationLength(anthropicMessages);
-          const allMessages = [
-            ...limitedMessages,
-            { role: "assistant", content },
-          ];
-
-          // Store the conversation
-          await storage.createConversation({
-            sessionId,
-            threadId: messageId,
-            assistantType: "article",
-            messages: allMessages,
-          });
-          
-          // Track AI usage for cost monitoring
-          const inputText = anthropicMessages.map(m => m.content).join(' ');
-          await trackAiUsage(sessionId, "/api/article-chat", inputText, content, req.ip);
-          
-          console.log(
-            `Stored article conversation for session ${sessionId}, thread ${messageId}`,
-          );
-        } catch (err) {
-          console.error("Error storing article conversation:", err);
-          // Continue with response even if storage fails
-        }
-      }
-
-      // Return in OpenAI format for compatibility
-      res.json({
-        choices: [
-          {
-            message: {
-              content,
-              role: "assistant",
-            },
-          },
-        ],
-        threadId: messageId,
-      });
-    } catch (error: any) {
-      console.error("Error in article chat endpoint:", error);
-      res.status(500).json({
-        error: "article_chat_error",
-        message: error.message || "An error occurred with the article chat",
-      });
-    }
-  });
 
   // Streaming endpoint for the article assistant chat
   app.post("/api/article-chat-stream", 
@@ -749,6 +663,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               fullContent += content;
               // Send the content chunk to the client
               res.write(`data: ${JSON.stringify({ content })}\n\n`);
+              // Force flush to send immediately
+              if (res.flush) res.flush();
             }
           }
         }
@@ -2338,6 +2254,8 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
           if (content) {
             fullContent += content;
             res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            // Force flush to send immediately
+            if (res.flush) res.flush();
           }
         }
       }
@@ -3242,7 +3160,7 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
   // Content creation assistant chat endpoint
   app.post("/api/claude/chat", async (req, res) => {
     try {
-      const { messages, assistantType } = req.body;
+      const { messages, assistantType, stageContext, uploadedFiles } = req.body;
 
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({
@@ -3250,54 +3168,223 @@ Format your response as JSON with these exact fields: summary, contentKnowledgeS
         });
       }
 
-      // Set up SSE headers for streaming
+      // Set up SSE headers for streaming with anti-buffering
       res.writeHead(200, {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no", // Disable nginx buffering
+        "Access-Control-Allow-Origin": "*",
       });
 
       // Generate a thread ID
       const messageId = `claude-${assistantType || "general"}-${Date.now()}`;
 
-      // Convert messages to Anthropic format
+      // Convert messages to Anthropic format and filter out empty messages
       const anthropicMessages = messages
         .filter((msg: any) => msg.role !== "system")
+        .filter((msg: any) => msg.content && msg.content.trim().length > 0)
         .map((msg: any) => ({
           role: msg.role as "user" | "assistant",
           content: msg.content,
         }));
 
       // Choose system prompt based on assistant type
-      let systemPrompt = ARTICLE_ASSISTANT_SYSTEM_PROMPT;
+      let systemPrompt = "";
       
-      if (assistantType === "content-creation") {
-        systemPrompt = `You are a Content Creation Assistant specializing in educational experience design. You help educators create effective learning experiences by:
-
-1. Understanding learning objectives and outcomes
-2. Designing engaging content and assessments  
-3. Creating character-based AI personalities that motivate students
-4. Developing differentiated instruction for different ability levels
-5. Thinking through assessment strategies that reveal true understanding
-
-You are knowledgeable about:
-- Pedagogical best practices and learning theory
-- Student engagement strategies
-- Assessment design and rubric development
-- Differentiated instruction techniques
-- Character development for educational AI assistants
-- Cognitive load theory and effective content design
-
-When creating content, you can reference existing successful experiences as examples. For instance, the "three-branches" civics experience demonstrates effective character-based assessment (Reginald) and differentiated teaching assistants (Whitaker, Bannerman, Parton) with activities tailored to different proficiency levels.
-
-You ask probing questions to help educators think deeply about their learning design choices. You provide specific, actionable advice and help workshop ideas to make them more effective.
-
-Keep responses concise and practical. Focus on helping the educator make their learning experience as effective as possible for students.`;
+      // Debug logging to see what's happening
+      console.log(`🔍 DEBUG Claude Chat - assistantType: "${assistantType}"`);
+      console.log(`🔍 DEBUG Claude Chat - stageContext:`, stageContext);
+      
+      // 🔍 DEBUG: Log what uploadedFiles we received from frontend
+      console.log("🔍 BACKEND DEBUG - Received uploadedFiles:", uploadedFiles);
+      console.log("🔍 BACKEND DEBUG - uploadedFiles type:", typeof uploadedFiles);
+      console.log("🔍 BACKEND DEBUG - uploadedFiles is array:", Array.isArray(uploadedFiles));
+      console.log("🔍 BACKEND DEBUG - uploadedFiles length:", uploadedFiles?.length || 0);
+      
+      if (uploadedFiles && Array.isArray(uploadedFiles)) {
+        uploadedFiles.forEach((file, index) => {
+          console.log(`🔍 BACKEND DEBUG - File ${index + 1} received:`, {
+            id: file.id,
+            name: file.name,
+            type: file.type,
+            processingStatus: file.processingStatus,
+            hasExtractedContent: !!file.extractedContent,
+            contentLength: file.extractedContent?.length || 0,
+            contentPreview: file.extractedContent?.substring(0, 100) || 'No content',
+            interpretation: file.interpretation
+          });
+        });
+      } else {
+        console.log("🔍 BACKEND DEBUG - No uploaded files or not an array");
       }
+      
+      if (assistantType === "intake-basics") {
+        systemPrompt = INTAKE_BASICS_PROMPT;
+        console.log(`✅ DEBUG Claude Chat - Using INTAKE_BASICS_PROMPT`);
+      } else if (assistantType === "intake-context") {
+        // Build context-aware prompt for Stage 2
+        let contextPrompt = INTAKE_CONTEXT_PROMPT;
+        
+        if (stageContext) {
+          const contextInfo = `
+
+## Stage 1 Context From Previous Conversation:
+- School District: ${stageContext.schoolDistrict}
+- School: ${stageContext.school}
+- Subject: ${stageContext.subject}
+- Topic: ${stageContext.topic}
+- Grade Level: ${stageContext.gradeLevel}
+- Learning Objectives: ${stageContext.learningObjectives}
+
+Continue seamlessly from where Stage 1 left off. The teacher is now ready to provide course context and content materials.`;
+          
+          contextPrompt = INTAKE_CONTEXT_PROMPT + contextInfo;
+        }
+        
+        // Add uploaded file content to the Stage 2 bot's context
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          console.log(`📁 DEBUG Claude Chat - Processing ${uploadedFiles.length} uploaded files for context`);
+          
+          const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
+          console.log(`📁 DEBUG Claude Chat - Found ${completedFiles.length} completed files with content`);
+          
+          const fileContent = completedFiles
+            .map((file: any) => `## ${file.name}:\n${file.extractedContent}`)
+            .join('\n\n');
+          
+          console.log(`📁 DEBUG Claude Chat - Generated file content length: ${fileContent.length} characters`);
+          
+          if (fileContent) {
+            contextPrompt += `
+
+## Uploaded Content for Analysis:
+The teacher has uploaded the following materials for you to analyze and interpret:
+
+${fileContent}
+
+Use this content to help the teacher understand how their materials align with their teaching goals and to provide specific suggestions for their assessment bot design.`;
+            console.log(`📁 DEBUG Claude Chat - Added ${uploadedFiles.length} uploaded files to context`);
+            console.log(`📁 DEBUG Claude Chat - Final contextPrompt includes file content: ${contextPrompt.includes('Uploaded Content for Analysis')}`);
+          } else {
+            console.log(`📁 DEBUG Claude Chat - No file content to add (fileContent is empty)`);
+          }
+        } else {
+          console.log(`📁 DEBUG Claude Chat - No uploaded files to process`);
+        }
+        
+        systemPrompt = contextPrompt;
+        console.log(`✅ DEBUG Claude Chat - Using INTAKE_CONTEXT_PROMPT with context`);
+      } else if (assistantType === "intake-assessment-bot") {
+        // Build context-aware prompt for Stage 3 (Assessment Bot Design)
+        let assessmentBotPrompt = INTAKE_ASSESSMENT_BOT_PROMPT;
+        
+        if (stageContext) {
+          const contextInfo = `
+
+## Context From Previous Stages:
+- School District: ${stageContext.schoolDistrict}
+- School: ${stageContext.school}
+- Subject: ${stageContext.subject}
+- Topic: ${stageContext.topic}
+- Grade Level: ${stageContext.gradeLevel}
+- Learning Objectives: ${stageContext.learningObjectives}
+
+## Course Materials Collected:
+The teacher has already provided course context and materials in Stage 2. Use this background to help design an assessment bot that fits perfectly with their course content and student needs.`;
+          
+          assessmentBotPrompt = INTAKE_ASSESSMENT_BOT_PROMPT + contextInfo;
+        }
+        
+        // Add uploaded file content to help inform bot design
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
+          
+          if (completedFiles.length > 0) {
+            const fileContent = completedFiles
+              .map((file: any) => `## ${file.name}:\n${file.extractedContent.substring(0, 1000)}...`)
+              .join('\n\n');
+            
+            assessmentBotPrompt += `
+
+## Course Content Reference:
+Here's a sample of the materials the teacher provided for context (use this to inform personality and assessment approach):
+
+${fileContent}`;
+          }
+        }
+        
+        systemPrompt = assessmentBotPrompt;
+        console.log(`✅ DEBUG Claude Chat - Using INTAKE_ASSESSMENT_BOT_PROMPT with context`);
+      } else if (assistantType === "personality-testing") {
+        // Handle personality testing bot using GBPAC template
+        const botPersonality = (req.body as any).botPersonality || "";
+        const botName = (req.body as any).botName || "";
+        const botJobTitle = (req.body as any).botJobTitle || "";
+        const botWelcomeMessage = (req.body as any).botWelcomeMessage || "";
+        const assessmentTargets = (req.body as any).assessmentTargets || (req.body as any).stageContext?.learningTargets || [];
+        const stageContext = (req.body as any).stageContext || {};
+        const uploadedFiles = (req.body as any).uploadedFiles || [];
+        
+        // 🔍 DETAILED DEBUG LOGGING
+        console.log("🔥 PERSONALITY-TESTING DEBUG - Full request body keys:", Object.keys(req.body));
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botPersonality:", botPersonality);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botName:", botName);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botJobTitle:", botJobTitle);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - botWelcomeMessage:", botWelcomeMessage);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - assessmentTargets:", assessmentTargets);
+        console.log("🔥 PERSONALITY-TESTING DEBUG - stageContext:", JSON.stringify(stageContext, null, 2));
+        console.log("🔥 PERSONALITY-TESTING DEBUG - uploadedFiles length:", uploadedFiles?.length || 0);
+        
+        // Build uploaded files context from summaries
+        let uploadedFilesContext = "No additional materials provided";
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          const completedFiles = uploadedFiles.filter((file: any) => file.extractedContent && file.processingStatus === 'completed');
+          
+          if (completedFiles.length > 0) {
+            uploadedFilesContext = completedFiles
+              .map((file: any) => `${file.name}: ${file.extractedContent}`) // Use full summary (no truncation)
+              .join('\n\n');
+          }
+        }
+        
+        // Use GBPAC template with variable substitution
+        systemPrompt = PERSONALITY_TESTING_PROMPT
+          .replace('[botName]', botName || 'Assessment Bot')
+          .replace('[botJobTitle]', botJobTitle || 'Educational Assistant')
+          .replace('[assessmentTargets]', Array.isArray(assessmentTargets) ? assessmentTargets.join(', ') : assessmentTargets || 'general understanding')
+          .replace('[botPersonality]', botPersonality)
+          .replace('[gradeLevel]', stageContext.gradeLevel || 'appropriate grade level')
+          .replace(/\[gradeLevel\]/g, stageContext.gradeLevel || 'appropriate grade level') // Replace all instances
+          .replace('[subject]', stageContext.subject || 'this subject')
+          .replace(/\[subject\]/g, stageContext.subject || 'this subject') // Replace all instances
+          .replace('[topic]', stageContext.topic || 'the topic')
+          .replace('[uploadedFiles]', uploadedFilesContext)
+          .replace('[botWelcomeMessage]', botWelcomeMessage || 'Welcome! Let\'s assess your understanding.')
+          .replace('[additionalBoundaries]', ''); // Boundaries are now hardcoded in the template
+        
+        console.log(`✅ DEBUG Claude Chat - Using GBPAC template for personality testing`);
+        console.log(`🎯 DEBUG - Bot Identity: ${botName} (${botJobTitle})`);
+        console.log(`🎯 DEBUG - Course Context: ${stageContext.subject} - ${stageContext.topic} (Grade ${stageContext.gradeLevel})`);
+        console.log(`🎯 DEBUG - Assessment Targets: ${Array.isArray(assessmentTargets) ? assessmentTargets.join(', ') : assessmentTargets}`);
+        console.log(`🎯 DEBUG - Uploaded Files: ${uploadedFiles?.length || 0} files`);
+        console.log(`🎯 DEBUG - Welcome Message: ${botWelcomeMessage ? 'Yes' : 'No'}`);
+        console.log("🔥 FINAL SYSTEM PROMPT (first 4000 chars):", systemPrompt.substring(0, 4000));
+        console.log("🔥 FINAL SYSTEM PROMPT (length):", systemPrompt.length);
+      }
+      
+      // Final debug log to see what system prompt is actually being sent to Claude
+      console.log(`🎯 DEBUG Claude Chat - Final systemPrompt (first 100 chars): "${systemPrompt.substring(0, 100)}..."`);
+      console.log(`🎯 DEBUG Claude Chat - systemPrompt length: ${systemPrompt.length}`);
+      console.log(`🎯 DEBUG Claude Chat - Is it the joke prompt? ${systemPrompt === INTAKE_BASICS_PROMPT}`);
+      console.log(`🎯 DEBUG Claude Chat - System prompt assigned: ${systemPrompt ? 'Yes' : 'No'}`);
+      console.log(`🎯 DEBUG Claude Chat - Messages count: ${anthropicMessages.length}`);
+      console.log(`🎯 DEBUG Claude Chat - First user message: "${anthropicMessages.length > 0 ? anthropicMessages[anthropicMessages.length - 1]?.content?.substring(0, 50) + '...' : 'None'}"`);
 
       try {
-        // Send the initial thread ID
+        // Send the initial thread ID and flush immediately to establish connection
         res.write(`data: ${JSON.stringify({ threadId: messageId })}\n\n`);
+        res.flushHeaders?.();
 
         // Create streaming response from Anthropic
         const stream = await anthropic.messages.stream({
@@ -3321,6 +3408,8 @@ Keep responses concise and practical. Focus on helping the educator make their l
             if (content) {
               fullContent += content;
               // Send the content chunk to the client
+              // Force flush to send immediately
+              if (res.flush) res.flush();
               res.write(`data: ${JSON.stringify({ content })}\n\n`);
             }
           }
@@ -3347,6 +3436,29 @@ Keep responses concise and practical. Focus on helping the educator make their l
           }
         }
 
+        // 🔍 LOG: Capture the exact JSON format Claude is sending
+        console.log('🔥 STREAMING COMPLETION - Full content length:', fullContent.length);
+        console.log('🔥 STREAMING COMPLETION - Last 500 chars:', fullContent.substring(fullContent.length - 500));
+        
+        // Check for JSON patterns in Claude's response
+        if (fullContent.includes('confirm_persona')) {
+          console.log('🔥 STREAMING COMPLETION - Contains confirm_persona, extracting JSON patterns:');
+          
+          // Check for markdown JSON blocks
+          const markdownJsonRegex = /```json\s*\n([\s\S]*?)\n```/g;
+          let match;
+          while ((match = markdownJsonRegex.exec(fullContent)) !== null) {
+            console.log('🔥 STREAMING COMPLETION - Found markdown JSON:', match[1]);
+          }
+          
+          // Check for plain JSON objects
+          const plainJsonRegex = /\{\s*"action":\s*"[^"]+"\s*,[\s\S]*?\}/g;
+          let plainMatch;
+          while ((plainMatch = plainJsonRegex.exec(fullContent)) !== null) {
+            console.log('🔥 STREAMING COMPLETION - Found plain JSON:', plainMatch[0]);
+          }
+        }
+
         // Send the [DONE] event
         res.write("data: [DONE]\n\n");
         res.end();
@@ -3364,6 +3476,8 @@ Keep responses concise and practical. Focus on helping the educator make their l
       }
     }
   });
+
+
 
   // Production Deep Linking Test Route
   app.get('/test-deep-linking', async (req, res) => {
@@ -3483,6 +3597,860 @@ Keep responses concise and practical. Focus on helping the educator make their l
       console.error("Error fetching AI usage stats:", error);
       res.status(500).json({
         error: "Failed to fetch AI usage statistics"
+      });
+    }
+  });
+
+  // File processing endpoints for Stage 2 content collection
+  
+  // YouTube transcript extraction endpoint using RapidAPI
+  app.post("/api/intake/extract-youtube", async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: "YouTube URL is required" });
+      }
+
+      console.log(`🎥 RAPIDAPI YOUTUBE - Processing URL: ${url}`);
+
+      // Extract video ID from YouTube URL
+      const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+      const videoId = videoIdMatch ? videoIdMatch[1] : null;
+
+      if (!videoId) {
+        return res.status(400).json({ error: "Invalid YouTube URL" });
+      }
+
+      // Get video title using oEmbed API
+      let title = "YouTube Video";
+      try {
+        const titleResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+        if (titleResponse.ok) {
+          const titleData = await titleResponse.json();
+          title = titleData.title || "YouTube Video";
+          console.log(`🎥 RAPIDAPI YOUTUBE - Retrieved title: ${title}`);
+        }
+      } catch (titleError) {
+        console.log(`🎥 RAPIDAPI YOUTUBE - Could not retrieve title: ${titleError.message}`);
+      }
+
+      // Get transcript using RapidAPI directly
+      console.log(`🎥 RAPIDAPI YOUTUBE - Fetching transcript via RapidAPI...`);
+      
+      const options = {
+        method: 'GET',
+        url: 'https://youtube-transcriptor.p.rapidapi.com/transcript',
+        params: {
+          video_id: videoId,
+          lang: 'en'
+        },
+        headers: {
+          'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+          'X-RapidAPI-Host': 'youtube-transcriptor.p.rapidapi.com'
+        }
+      };
+
+      try {
+        const response = await axios.request(options);
+        
+        console.log(`🎥 RAPIDAPI - Response status: ${response.status}`);
+        
+        // Check if we got a valid response with video data
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const videoData = response.data[0];
+          
+          // Check if transcription exists
+          if (videoData.transcription && Array.isArray(videoData.transcription)) {
+            // Convert RapidAPI format to our expected format and create full text
+            const fullText = videoData.transcription
+              .map(segment => segment.subtitle)
+              .join(' ');
+            
+            console.log(`🎥 RAPIDAPI YOUTUBE - Success! Retrieved ${videoData.transcription.length} segments, ${fullText.length} characters`);
+            
+            const responseData = {
+              success: true,
+              videoId,
+              title,
+              transcript: fullText,
+              transcriptError: null,
+              chunks: videoData.transcription.length,
+              duration: 0
+            };
+
+            res.json(responseData);
+          } else if (videoData.transcriptionAsText) {
+            // If no segment data but we have full text, use that
+            console.log(`🎥 RAPIDAPI YOUTUBE - Using transcriptionAsText fallback`);
+            
+            const responseData = {
+              success: true,
+              videoId,
+              title,
+              transcript: videoData.transcriptionAsText,
+              transcriptError: null,
+              chunks: 1,
+              duration: 0
+            };
+
+            res.json(responseData);
+          } else {
+            throw new Error('No transcript data found in response');
+          }
+        } else {
+          throw new Error('Empty or invalid response from API');
+        }
+      } catch (apiError: any) {
+        console.error('🎥 RAPIDAPI YOUTUBE - API Error:', apiError.response?.data || apiError.message);
+        
+        // Provide user-friendly error messages
+        let errorMessage = 'Failed to extract transcript';
+        
+        if (apiError.response?.status === 401) {
+          errorMessage = 'Invalid API key - please check RAPIDAPI_KEY configuration';
+        } else if (apiError.response?.status === 403) {
+          errorMessage = 'API access forbidden - check subscription and quotas';
+        } else if (apiError.response?.status === 429) {
+          errorMessage = 'Rate limit exceeded - too many requests';
+        } else if (apiError.response?.data?.message) {
+          errorMessage = apiError.response.data.message;
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
+        }
+        
+        const responseData = {
+          success: true,
+          videoId,
+          title,
+          transcript: "",
+          transcriptError: errorMessage,
+          chunks: 0,
+          duration: 0
+        };
+
+        res.json(responseData);
+      }
+      
+    } catch (error: any) {
+      console.error('🎥 RAPIDAPI YOUTUBE - Error:', error);
+      res.status(500).json({
+        error: "Failed to extract YouTube transcript",
+        details: error.message
+      });
+    }
+  });
+
+  // Canvas .imscc file upload and parsing endpoint
+  app.post("/api/intake/upload-imscc", upload.single('imscc'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "IMSCC file is required" });
+      }
+
+      // Validate file type (should be .imscc or .zip)
+      const fileName = req.file.originalname.toLowerCase();
+      if (!fileName.endsWith('.imscc') && !fileName.endsWith('.zip')) {
+        return res.status(400).json({ 
+          error: "File must be a Canvas .imscc export file" 
+        });
+      }
+
+      // Import the IMSCC parser
+      const IMSCCParser = require('./imscc-parser');
+      const parser = new IMSCCParser();
+
+      // Save uploaded file temporarily
+      const fs = require('fs');
+      const path = require('path');
+      const tempDir = path.join(__dirname, 'temp');
+      
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const tempFilePath = path.join(tempDir, `${Date.now()}-${req.file.originalname}`);
+      fs.writeFileSync(tempFilePath, req.file.buffer);
+
+      try {
+        // Parse the .imscc file
+        const courseData = await parser.parseIMSCC(tempFilePath);
+        
+        // Generate course summary for AI assistant
+        const courseSummary = parser.generateCourseSummary(courseData);
+        
+        // Clean up temp file
+        fs.unlinkSync(tempFilePath);
+
+        res.json({
+          success: true,
+          filename: req.file.originalname,
+          courseName: courseData.title,
+          summary: courseSummary,
+          // Include detailed data for debugging (can be removed in production)
+          fullData: {
+            moduleCount: courseData.modules.length,
+            pagesCount: courseData.pages.length,
+            quizzesCount: courseData.quizzes.length,
+            filesCount: courseData.files.length,
+            totalWords: courseSummary.content.totalWords
+          }
+        });
+        
+      } catch (parseError: any) {
+        // Clean up temp file on error
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        
+        console.error('IMSCC parsing error:', parseError);
+        res.status(500).json({
+          error: "Failed to parse Canvas course file",
+          details: parseError.message
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('IMSCC upload error:', error);
+      res.status(500).json({
+        error: "Failed to process Canvas course upload",
+        details: error.message
+      });
+    }
+  });
+
+  // Multiple avatar options generation endpoint
+  app.post("/api/intake/generate-avatars", async (req, res) => {
+    try {
+      console.log("🎨 AVATAR SERVER DEBUG - Avatar generation endpoint called");
+      console.log("🎨 AVATAR SERVER DEBUG - Request body keys:", Object.keys(req.body));
+      
+      const { prompt, style = "digital art", count = 3 } = req.body;
+
+      console.log("🎨 AVATAR SERVER DEBUG - Extracted prompt:", prompt);
+      console.log("🎨 AVATAR SERVER DEBUG - Prompt length:", prompt?.length || 0);
+      console.log("🎨 AVATAR SERVER DEBUG - Style:", style);
+      console.log("🎨 AVATAR SERVER DEBUG - Count:", count);
+
+      if (!prompt) {
+        console.log("🎨 AVATAR SERVER DEBUG - No prompt provided, returning error");
+        return res.status(400).json({ error: "Image prompt is required" });
+      }
+
+      if (!openai) {
+        console.log("🎨 AVATAR SERVER DEBUG - OpenAI client not configured, returning error");
+        return res.status(500).json({ 
+          error: "OpenAI API key not configured",
+          details: "Image generation is not available - please provide OPENAI_API_KEY" 
+        });
+      }
+
+      console.log(`🎨 AVATAR SERVER DEBUG - About to generate ${count} avatar options with OpenAI DALL-E 3`);
+      console.log(`🎨 AVATAR SERVER DEBUG - Full prompt being sent:`, prompt);
+      
+      // Generate multiple images with slight variations
+      const avatarPromises = Array.from({ length: count }, (_, i) => {
+        const variation = i === 0 ? "" : `, variation ${i + 1}`;
+        const fullPrompt = `${prompt}${variation}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration, professional character design. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`;
+        
+        console.log(`🎨 AVATAR SERVER DEBUG - DALL-E Prompt ${i + 1}:`, fullPrompt);
+        
+        return openai.images.generate({
+          model: "dall-e-3",
+          prompt: fullPrompt,
+          size: "1024x1024",
+          quality: "standard",
+          n: 1,
+        });
+      });
+
+      const responses = await Promise.all(avatarPromises);
+      console.log(`🎨 AVATAR SERVER DEBUG - OpenAI responses received:`, responses.length);
+      console.log(`🎨 AVATAR SERVER DEBUG - Response statuses:`, responses.map((r, i) => `Response ${i + 1}: ${r.data?.[0]?.url ? 'SUCCESS' : 'FAILED'}`));
+      
+      const avatars = responses.map((response, index) => ({
+        id: `avatar_${index + 1}`,
+        imageUrl: response.data[0]?.url,
+        description: `${prompt} - Option ${index + 1}`
+      })).filter(avatar => avatar.imageUrl);
+
+      console.log(`🎨 AVATAR SERVER DEBUG - Generated ${avatars.length} avatar options successfully`);
+      console.log(`🎨 AVATAR SERVER DEBUG - Avatar URLs present:`, avatars.map(a => a.imageUrl ? '✓' : '✗'));
+      console.log(`🎨 AVATAR SERVER DEBUG - First avatar URL (first 50 chars):`, avatars[0]?.imageUrl?.substring(0, 50) || 'None');
+
+      res.json({
+        success: true,
+        avatars,
+        prompt: prompt,
+        style: style,
+        source: "OpenAI DALL-E 3"
+      });
+
+    } catch (error: any) {
+      console.error('Multiple avatar generation error:', error);
+      
+      let errorMessage = 'Failed to generate avatars';
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid OpenAI API key';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded - too many image generation requests';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      res.status(500).json({
+        error: "Avatar generation failed",
+        details: errorMessage
+      });
+    }
+  });
+
+  // Single image generation endpoint for Stage 3 Assessment Bot design  
+  app.post("/api/intake/generate-image", async (req, res) => {
+    try {
+      const { prompt, style = "digital art" } = req.body;
+      
+      // ADD DETAILED LOGGING AS SUGGESTED BY OTHER BOT
+      console.log("🎨 DALL-E API REQUEST DEBUG:");
+      console.log("  - Raw prompt received:", prompt);
+      console.log("  - Prompt length:", prompt?.length || 0);
+      console.log("  - Style:", style);
+      console.log("  - OpenAI client exists:", !!openai);
+      console.log("  - OPENAI_API_KEY exists:", !!process.env.OPENAI_API_KEY);
+      
+      // Send the prompt directly to DALL-E without manipulation
+      // Bot 3 now provides complete, detailed prompts that don't need enhancement
+      console.log("  - Direct prompt being sent to DALL-E:", prompt);
+
+      if (!prompt) {
+        return res.status(400).json({ error: "Image prompt is required" });
+      }
+
+      if (!openai) {
+        return res.status(500).json({ 
+          error: "OpenAI API key not configured",
+          details: "Image generation is not available - please provide OPENAI_API_KEY" 
+        });
+      }
+      
+      // Generate image using OpenAI DALL-E
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: prompt,
+        size: "1024x1024",
+        quality: "standard",
+        n: 1,
+      });
+
+      // ADD RESPONSE LOGGING AS SUGGESTED BY OTHER BOT
+      console.log("🎨 DALL-E API RESPONSE DEBUG:");
+      console.log("  - Response received:", !!response);
+      console.log("  - Image URL exists:", !!response.data[0]?.url);
+      console.log("  - Revised prompt from DALL-E:", response.data[0]?.revised_prompt);
+      console.log("  - Full response data:", JSON.stringify(response.data[0], null, 2));
+
+      const imageUrl = response.data[0]?.url;
+      
+      if (!imageUrl) {
+        console.error("❌ No image URL returned from OpenAI");
+        return res.status(500).json({ 
+          error: "Failed to generate image",
+          details: "No image URL returned from OpenAI" 
+        });
+      }
+
+      res.json({
+        success: true,
+        imageUrl,
+        prompt: prompt,
+        style: style,
+        source: "OpenAI DALL-E 3",
+        revisedPrompt: response.data[0]?.revised_prompt || null
+      });
+
+    } catch (error: any) {
+      // ADD ERROR DETAILS AS SUGGESTED BY OTHER BOT
+      console.error('Image generation error - Full details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
+      });
+      
+      let errorMessage = 'Failed to generate image';
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid OpenAI API key';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded - too many image generation requests';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Return more detailed error info
+      res.status(500).json({
+        error: "Image generation failed",
+        details: errorMessage,
+        apiError: error.response?.data?.error || null
+      });
+    }
+  });
+
+  // AI-powered bot name and description extraction endpoint
+  app.post("/api/intake/generate-welcome-message", async (req, res) => {
+    try {
+      const { botName, botJobTitle, botPersonality, stageContext } = req.body;
+
+      if (!botName || !botPersonality) {
+        return res.status(400).json({ error: "Bot name and personality are required" });
+      }
+
+      const welcomePrompt = `Generate a warm, engaging welcome message for students who are about to interact with an assessment bot. This message will appear on the page before they start chatting with the bot.
+
+## Bot Details:
+- Name: ${botName}
+- Role: ${botJobTitle || 'Assessment Bot'}
+- Personality: ${botPersonality}
+
+## Course Context:
+- Subject: ${stageContext?.subject || 'N/A'}
+- Topic: ${stageContext?.topic || 'N/A'} 
+- Grade Level: ${stageContext?.gradeLevel || 'N/A'}
+
+## Requirements:
+- Introduce who the bot is with personality
+- Explain that this is an assessment conversation
+- Be encouraging and welcoming
+- Stay true to the bot's character
+- Keep it concise (2-3 sentences max)
+- Age-appropriate for the grade level
+- Don't mention specific learning targets
+
+Generate only the welcome message text, nothing else.`;
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 200,
+        temperature: 0.7,
+        messages: [
+          {
+            role: "user",
+            content: welcomePrompt
+          }
+        ]
+      });
+
+      const welcomeMessage = response.content[0].type === 'text' ? response.content[0].text.trim() : 'Welcome! Let\'s assess your understanding.';
+
+      res.json({
+        success: true,
+        welcomeMessage: welcomeMessage
+      });
+
+    } catch (error: any) {
+      console.error('Welcome message generation error:', error);
+      res.status(500).json({
+        error: "Failed to generate welcome message",
+        details: error.message
+      });
+    }
+  });
+
+  // Content summarization endpoint
+  app.post("/api/intake/summarize-content", async (req, res) => {
+    try {
+      const { content, fileName, fileType, subject, topic, gradeLevel } = req.body;
+
+      if (!content) {
+        return res.status(400).json({ error: "Content is required" });
+      }
+
+      const summarizationPrompt = `You are analyzing course materials to create a concise summary for an AI assessment bot. The bot needs to understand what students just learned.
+
+## Course Context:
+- Subject: ${subject || 'Not specified'}
+- Topic: ${topic || 'Not specified'}
+- Grade Level: ${gradeLevel || 'Not specified'}
+- File: ${fileName || 'Unknown file'}
+- Type: ${fileType || 'Unknown type'}
+
+## Content to Summarize:
+${content}
+
+## Instructions:
+Create a brief, focused summary (2-3 sentences max) that captures:
+1. The main learning concepts presented
+2. Key facts or skills students should have gained
+3. Any specific examples or cases mentioned
+
+Focus on what students were supposed to learn, not implementation details. Be concise but informative.
+
+Generate only the summary text, nothing else.`;
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        max_tokens: 150,
+        temperature: 0.3,
+        messages: [
+          {
+            role: "user",
+            content: summarizationPrompt
+          }
+        ]
+      });
+
+      const summary = response.content[0].type === 'text' ? response.content[0].text.trim() : 'Content uploaded and processed.';
+
+      res.json({
+        success: true,
+        summary: summary
+      });
+
+    } catch (error: any) {
+      console.error('Content summarization error:', error);
+      res.status(500).json({
+        error: "Failed to summarize content",
+        details: error.message
+      });
+    }
+  });
+
+  app.post("/api/intake/extract-bot-info", async (req, res) => {
+    try {
+      const { botResponse } = req.body;
+
+      if (!botResponse) {
+        return res.status(400).json({ error: "Bot response is required" });
+      }
+
+      console.log("🤖 Extracting bot info from response using Claude...");
+
+      const extractionPrompt = `Please analyze this AI assistant's response and extract ONLY information about the bot personality being confirmed.
+
+The assistant is introducing a character/bot personality that the user has chosen to confirm. Extract:
+1. The bot's name (if mentioned)
+2. The bot's role or title/job title (e.g., "Literature Professor", "Island Guide")
+3. A SHORT personality description (maximum 2-3 sentences focusing on key traits)
+4. A few lines of sample dialogue showing how this bot would speak to students (2-3 example sentences)
+5. Create a visual description suitable for image generation (appearance, clothing, props, expression)
+
+Response to analyze:
+"${botResponse}"
+
+Respond in JSON format:
+{
+  "name": "extracted name or null",
+  "jobTitle": "role or title for this character",
+  "description": "SHORT 2-3 sentence personality description",
+  "sampleDialogue": "2-3 example sentences showing how the bot speaks",
+  "visualDescription": "detailed physical appearance for image generation"
+}`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 1000,
+        messages: [
+          {
+            role: "user",
+            content: extractionPrompt,
+          },
+        ],
+      });
+
+      const content = message.content[0].type === 'text' ? message.content[0].text : '';
+      console.log("🤖 Claude extraction response:", content);
+
+      // Parse the JSON response
+      let extractedInfo;
+      try {
+        // Handle potential markdown code blocks and extra text
+        let jsonString;
+        
+        // Try to extract JSON from code blocks first
+        const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          jsonString = codeBlockMatch[1];
+        } else {
+          // Look for JSON object pattern
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            jsonString = jsonMatch[0];
+          } else {
+            jsonString = content;
+          }
+        }
+        
+        extractedInfo = JSON.parse(jsonString.trim());
+        console.log("✅ Successfully parsed JSON:", extractedInfo);
+        
+      } catch (parseError) {
+        console.error("Failed to parse Claude response as JSON:", parseError);
+        console.error("Raw Claude response:", content);
+        
+        // Return a fallback extraction with basic info
+        extractedInfo = {
+          name: null,
+          jobTitle: "Educational Character",
+          description: "A friendly educational assistant",
+          sampleDialogue: "Hello! I'm here to help with your learning. What would you like to explore today?",
+          visualDescription: "A friendly cartoon character appropriate for educational settings"
+        };
+        console.log("🔄 Using fallback extraction due to parse error");
+      }
+
+      console.log("✅ Extracted bot info:", extractedInfo);
+
+      // Extract the full personality from the original response
+      // Look for the complete personality description between certain markers
+      let fullPersonality = extractedInfo.description || null;
+      
+      // Try to find a more complete personality description in the original response
+      // Look for text that comes after phrases like "personality:" or "persona:" 
+      const personalityMatch = botResponse.match(/(?:personality|persona|character):\s*([^.!?]+(?:[.!?]\s*[^.!?]+)*)/i);
+      if (personalityMatch && personalityMatch[1].length > 50) {
+        fullPersonality = personalityMatch[1].trim();
+      }
+      
+      res.json({
+        success: true,
+        name: extractedInfo.name || null,
+        jobTitle: extractedInfo.jobTitle || null,
+        personalitySummary: extractedInfo.description || null, // Short summary
+        personality: fullPersonality || extractedInfo.description || null, // Full personality text
+        fullPersonality: fullPersonality || extractedInfo.description || null, // Also send as fullPersonality for compatibility
+        sampleDialogue: extractedInfo.sampleDialogue || null,
+        visualDescription: extractedInfo.visualDescription || null,
+        source: "Claude AI extraction"
+      });
+
+    } catch (error: any) {
+      console.error('Bot info extraction error:', error);
+      res.status(500).json({
+        error: "Failed to extract bot information",
+        details: error.message
+      });
+    }
+  });
+
+  // System prompt generation endpoint - wraps personality, avatar, boundaries into complete system prompt
+  app.post("/api/intake/generate-system-prompt", async (req, res) => {
+    try {
+      const { 
+        personality, 
+        avatar, 
+        boundaries, 
+        course,
+        topic,
+        gradeLevel,
+        goals 
+      } = req.body;
+
+      if (!personality) {
+        return res.status(400).json({ error: "Personality description is required" });
+      }
+
+      // Generate comprehensive system prompt
+      const systemPrompt = `# ${personality.name || "Assessment Bot"} - AI Teaching Assistant
+
+## PERSONALITY & CHARACTER
+${personality.description || "You are a friendly and knowledgeable AI assistant."}
+
+${personality.speakingStyle ? `### Speaking Style
+${personality.speakingStyle}` : ""}
+
+${personality.sampleDialogue ? `### Sample Dialogue
+${personality.sampleDialogue}` : ""}
+
+## VISUAL REPRESENTATION
+${avatar?.description ? `You appear as: ${avatar.description}` : ""}
+${avatar?.imageUrl ? `Avatar Image: ${avatar.imageUrl}` : ""}
+
+## EDUCATIONAL CONTEXT
+- **Course**: ${course || "General Education"}
+- **Topic**: ${topic || "Learning Content"}
+- **Grade Level**: ${gradeLevel || "Grade Level Not Specified"}
+
+## GOALS & OBJECTIVES
+${goals ? goals : `Your primary goal is to assess student understanding of ${topic || "the learning content"} and provide appropriate feedback and guidance.`}
+
+## BOUNDARIES & LIMITATIONS
+${boundaries ? boundaries : "Maintain appropriate classroom standards and stay focused on educational content."}
+
+## ASSESSMENT APPROACH
+- Engage students in meaningful conversation about ${topic || "the topic"}
+- Ask follow-up questions to gauge deep understanding
+- Provide encouragement and constructive feedback
+- Route students to appropriate next steps based on their performance
+
+## RESPONSE GUIDELINES
+- Keep responses conversational and age-appropriate for ${gradeLevel || "students"}
+- Use ${personality.name || "your character's"} voice consistently
+- Be encouraging while maintaining academic rigor
+- Ask one question at a time to avoid overwhelming students
+- Acknowledge correct responses and gently correct misconceptions`;
+
+      res.json({
+        success: true,
+        systemPrompt,
+        components: {
+          personality,
+          avatar,
+          boundaries,
+          course,
+          topic,
+          gradeLevel,
+          goals
+        },
+        generatedAt: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error('System prompt generation error:', error);
+      res.status(500).json({
+        error: "Failed to generate system prompt",
+        details: error.message
+      });
+    }
+  });
+  
+  // PDF text extraction endpoint
+  app.post("/api/intake/extract-pdf", upload.single('pdf'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "PDF file is required" });
+      }
+      
+      if (req.file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ error: "File must be a PDF" });
+      }
+      
+      // Use pdf-parse to extract text from PDF buffer
+      const pdfParse = await import('pdf-parse');
+      const data = await pdfParse.default(req.file.buffer);
+      
+      res.json({
+        success: true,
+        filename: req.file.originalname,
+        text: data.text,
+        pages: data.numpages,
+        info: data.info
+      });
+      
+    } catch (error: any) {
+      console.error('PDF extraction error:', error);
+      res.status(500).json({
+        error: "Failed to extract PDF text",
+        details: error.message
+      });
+    }
+  });
+  
+  // Text file processing endpoint
+  app.post("/api/intake/extract-text", upload.single('textfile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Text file is required" });
+      }
+      
+      // Check if it's a text file
+      const allowedTypes = ['text/plain', 'text/csv', 'application/rtf'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: "File must be a text file (txt, csv, rtf)" });
+      }
+      
+      // Convert buffer to text
+      const text = req.file.buffer.toString('utf-8');
+      
+      res.json({
+        success: true,
+        filename: req.file.originalname,
+        text: text,
+        size: req.file.size,
+        encoding: 'utf-8'
+      });
+      
+    } catch (error: any) {
+      console.error('Text file extraction error:', error);
+      res.status(500).json({
+        error: "Failed to extract text from file",
+        details: error.message
+      });
+    }
+  });
+
+  // Generate short display description for bot personality
+  app.post("/api/intake/generate-display-description", async (req, res) => {
+    try {
+      const { fullPersonality, botName } = req.body;
+
+      console.log("🎭 DISPLAY DESCRIPTION - Generating short description for:", botName);
+      console.log("🎭 DISPLAY DESCRIPTION - Full personality length:", fullPersonality?.length || 0);
+
+      if (!fullPersonality) {
+        return res.status(400).json({ error: "Full personality description is required" });
+      }
+
+      if (!anthropic) {
+        return res.status(500).json({ 
+          error: "Anthropic API not configured",
+          details: "AI description generation is not available" 
+        });
+      }
+
+      // Create a prompt to generate a short, pithy description
+      const shortDescriptionPrompt = `Given this full personality description for an educational assessment bot:
+
+"${fullPersonality}"
+
+Create a concise, engaging 2-3 sentence description suitable for display under the bot's name and title. This should capture the essence of their personality and role without being verbose. Focus on what makes them unique and interesting to students.
+
+Examples of good short descriptions:
+- "A stranded researcher who discovered the Lord of the Flies island. Expert in survival symbolism and artifact analysis."
+- "A retired civics teacher with 35 years of experience. Known for her dry wit and ability to make government accessible."
+- "An enthusiastic superhero dedicated to proper punctuation. Uses dramatic flair to teach grammar rules."
+
+Respond with only the short description, no additional text or formatting.`;
+
+      // Generate the short description using Claude
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 150,
+        messages: [
+          {
+            role: "user",
+            content: shortDescriptionPrompt
+          }
+        ]
+      });
+
+      const shortDescription = response.content[0]?.text?.trim() || "";
+
+      console.log("🎭 DISPLAY DESCRIPTION - Generated description:", shortDescription);
+      console.log("🎭 DISPLAY DESCRIPTION - Description length:", shortDescription.length);
+
+      if (!shortDescription) {
+        return res.status(500).json({ 
+          error: "Failed to generate description",
+          details: "No description returned from AI" 
+        });
+      }
+
+      res.json({
+        success: true,
+        shortDescription,
+        originalLength: fullPersonality.length,
+        newLength: shortDescription.length
+      });
+
+    } catch (error: any) {
+      console.error('Display description generation error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      res.status(500).json({
+        error: "Failed to generate display description",
+        details: error.message
       });
     }
   });

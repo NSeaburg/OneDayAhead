@@ -1,0 +1,94 @@
+Please diagnose and fix the DALL-E avatar generation issue. The avatars are either low quality or don't match the prompt.
+Diagnostic checks to perform:
+
+Add comprehensive logging to /api/intake/generate-image endpoint in server/routes.ts around line 2830:
+
+typescriptapp.post("/api/intake/generate-image", async (req, res) => {
+  try {
+    const { prompt, style = "digital art" } = req.body;
+    
+    // ADD DETAILED LOGGING
+    console.log("🎨 DALL-E API REQUEST DEBUG:");
+    console.log("  - Raw prompt received:", prompt);
+    console.log("  - Prompt length:", prompt?.length || 0);
+    console.log("  - Style:", style);
+    console.log("  - Full DALL-E prompt being sent:", `${prompt}. Style: ${style}. Educational, friendly, appropriate for students, cartoon-style square illustration. IMPORTANT: Show only ONE person, a single character, centered, and facing forward. Do not include multiple people or figures.`);
+    console.log("  - OpenAI client exists:", !!openai);
+    console.log("  - OPENAI_API_KEY exists:", !!process.env.OPENAI_API_KEY);
+    
+    // ... rest of the endpoint
+
+Verify the OpenAI API response in the same endpoint:
+
+typescript    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: fullPrompt,
+      size: "1024x1024",
+      quality: "standard",
+      n: 1,
+    });
+
+    // ADD RESPONSE LOGGING
+    console.log("🎨 DALL-E API RESPONSE DEBUG:");
+    console.log("  - Response received:", !!response);
+    console.log("  - Image URL exists:", !!response.data[0]?.url);
+    console.log("  - Revised prompt from DALL-E:", response.data[0]?.revised_prompt);
+    console.log("  - Full response data:", JSON.stringify(response.data[0], null, 2));
+
+Check if DALL-E is modifying your prompt - DALL-E 3 sometimes revises prompts for safety/quality. Log the revised_prompt field from the response to see what DALL-E actually used.
+Verify the frontend is sending the correct prompt in client/src/pages/new-intake.tsx:
+
+In the handleCreateAvatar function (around line 1230), add logging before the API call:
+
+
+
+typescriptconsole.log("🎨 FRONTEND - Sending to DALL-E API:");
+console.log("  - botVisualDescription:", botVisualDescription);
+console.log("  - avatarPrompt being sent:", avatarPrompt);
+console.log("  - API endpoint:", "/api/intake/generate-image");
+
+Check for potential issues:
+
+Is botVisualDescription null or undefined when sending?
+Is the prompt being truncated somewhere?
+Is DALL-E's content filter rejecting or modifying the prompt?
+Are you hitting rate limits that might be causing fallback behavior?
+
+
+Add error details to the response when DALL-E fails:
+
+typescript} catch (error: any) {
+  console.error('Image generation error - Full details:', {
+    message: error.message,
+    response: error.response?.data,
+    status: error.response?.status,
+    headers: error.response?.headers
+  });
+  
+  // Return more detailed error info
+  res.status(500).json({
+    error: "Image generation failed",
+    details: error.message,
+    apiError: error.response?.data?.error || null
+  });
+}
+
+Test with a hardcoded prompt to isolate the issue:
+
+Temporarily replace the prompt with a simple hardcoded one like "A friendly cartoon teacher with glasses" to see if the issue is prompt-specific.
+
+
+Check your OpenAI API key permissions:
+
+Ensure your API key has access to DALL-E 3
+Check if you're hitting usage limits
+Verify the API key hasn't been rate-limited
+
+
+
+After adding this logging, run through the avatar generation process once and check the console logs to identify where the issue is occurring. The logs will show if:
+
+The prompt is being received correctly
+The prompt is being sent to DALL-E correctly
+DALL-E is modifying the prompt
+The API is returning an error or unexpected response

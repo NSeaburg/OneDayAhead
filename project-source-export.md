@@ -1,27 +1,32 @@
 # Educational Learning Platform - Complete Source Export
 
 ## Project Overview
-An advanced multi-tenant, content-agnostic AI-powered adaptive learning platform deployable across grade levels and subjects via LTI 1.3 Deep Linking. Features admin interface for conversational AI-powered content creation, complete avatar upload system, and production deployment on AWS EC2 with load balancer. Platform uses unified file-based configuration system with content package-driven avatar management for complete scalability.
+An advanced AI-powered educational intake system that creates personalized assessment bots for teachers. The system guides users through a multi-stage intake process to collect variables (subject, grade level, learning targets, bot personality, etc.) and uses a GBPAC template to generate assessment bots that can evaluate student understanding through conversational interaction.
 
-**Current Status**: Fully functional multi-tenant platform with complete Canvas Deep Linking integration
-**Last Updated**: July 11, 2025
+**Current Status**: Fully functional intake system with fixed assessment targets data flow
+**Last Updated**: August 7, 2025
 
-## Recent Major Changes (July 11, 2025)
-- ✅ **Canvas Deep Linking Fixed**: Added proper Deep Linking scope and placement configurations for Canvas integration
-- ✅ **Message Type Detection**: Launch handler now properly detects LtiDeepLinkingRequest vs LtiResourceLinkRequest
-- ✅ **Canvas Placements**: Configured assignment_selection, link_selection, and editor_button for content selection
+## Recent Major Changes (August 7, 2025)
+- ✅ **Assessment Targets Data Flow Fixed**: Resolved critical issue where learning targets from Stage 2 were not being stored in stageContext
+- ✅ **Missing Callback Implementation**: Added handleLearningTargetsUpdate callback to parent NewIntake component
+- ✅ **Interface Updates**: Updated IntakeChatProps interface with onLearningTargetsUpdate prop
+- ✅ **Data Extraction Logic**: Connected learning targets extraction from Stage 2 to stageContext storage for bot generation
+- ✅ **Component Communication**: Fixed data flow between intake stages to ensure learning targets properly reach PersonalityTestingBot
 
-## Previous Changes (July 10, 2025)
-- ✅ **Complete Avatar Upload System**: Implemented full file upload workflow with FormData handling and multer middleware
-- ✅ **Admin Interface**: Built comprehensive multi-step content creation wizard with conversational AI assistant
-- ✅ **Multi-Tenant Architecture**: Content packages stored in `/content/{district}/{course}/{topic}/` structure
-- ✅ **File-Based Configuration**: All UI elements configurable through ui-config.json files in content packages
-- ✅ **Enhanced Admin Forms**: Rich text inputs with spell check and keyboard shortcuts (Ctrl+B, Ctrl+I)
-- ✅ **Avatar Management**: Uploaded images saved to content package folders and referenced in config files
-- ✅ **Component Error Fixes**: Resolved HighBotWithArticleScreen setMessages hook error by switching to useStreamingChatLegacy
-- ✅ **Static File Serving**: Avatar images served directly from /content/ URLs with express.static middleware
-- ✅ **Complete UI Configurability**: Assessment and teaching bots fully interchangeable through content package files
-- ✅ **Production Ready**: Multi-tenant platform ready for deployment across educational institutions
+## Previous Changes (August 6-7, 2025)
+- ✅ **Boundaries System Removal**: Completely removed all boundaries customization functionality to resolve excessive time/cost issues
+- ✅ **Persona Extraction System**: Fixed botPersonality extraction - now correctly extracts full detailed personalities
+- ✅ **Variable Naming Consistency**: Fixed critical naming inconsistencies between GBPAC template and component state
+- ✅ **JSON Button System**: Unified all 7 button trigger methods into single JSON detection system
+- ✅ **Assessment Targets Fix**: Resolved critical data flow where learning targets weren't reaching stageContext
+- ✅ **Component Communication**: Enhanced data flow between NewIntake parent and IntakeChat child components
+
+## Core System Design
+- **AI-Powered Intake Wizard**: Guides teachers through multi-stage content creation process
+- **GBPAC Template System**: Goals, Boundaries, Personality, Audience, Context framework for bot generation
+- **Dynamic UI Configuration**: All UI elements configurable via content packages
+- **Stage-Based Workflow**: 3-stage intake process (basics, content collection, personality/avatar)
+- **Real-time Bot Testing**: PersonalityTestingBot component for immediate bot validation
 
 ## Architecture
 
@@ -99,24 +104,59 @@ An advanced multi-tenant, content-agnostic AI-powered adaptive learning platform
 └── package.json
 ```
 
+## Assessment Targets Data Flow Fix Details
+
+### Problem Identified (August 7, 2025)
+The critical issue was that learning targets extracted from Stage 2 assessment targets confirmation were not being stored in `stageContext` for use in bot generation. The `handleConfirmAssessmentTargets` function was trying to call a non-existent `onLearningTargetsUpdate` callback.
+
+### Solution Implemented
+1. **Added Missing Callback**: Created `handleLearningTargetsUpdate` function in parent `NewIntake` component
+2. **Interface Update**: Added `onLearningTargetsUpdate?: (learningTargets: string) => void` to `IntakeChatProps` interface
+3. **Prop Connection**: Passed the callback from `NewIntake` to `IntakeChat` component
+4. **Data Flow**: Learning targets now properly flow: Stage 2 extraction → `stageContext.learningTargets` → bot generation
+
+### Code Changes Made
+- **File**: `client/src/pages/new-intake.tsx`
+- **Lines**: 3270-3278 (handleLearningTargetsUpdate function)
+- **Lines**: 48 (IntakeChatProps interface update)
+- **Lines**: 4060 (prop passed to IntakeChat)
+- **Lines**: 129 (prop accepted in IntakeChat function)
+
+### Result
+Assessment targets confirmation now works correctly, with learning targets properly stored in `stageContext` and available for PersonalityTestingBot and final bot generation.
+
 ## Core Components Details
 
-### 1. Server Routes (server/routes.ts)
+### 1. New Intake System (client/src/pages/new-intake.tsx)
+**Key Features:**
+- **Multi-Stage Workflow**: 3-stage intake process (basics, content collection, personality/avatar)
+- **State Management**: Complex state management with stageContext for data persistence
+- **Component Communication**: Parent-child data flow with proper callback system
+- **Bot Testing**: Integrated PersonalityTestingBot for real-time bot validation
+- **Skip Functionality**: Development shortcut (`skipToBoundaries`) for testing
+
+**Stage Flow:**
+1. **Stage 1**: Basic course information (district, school, subject, topic, grade)
+2. **Stage 2**: Content collection and learning targets confirmation 
+3. **Stage 3**: Bot personality design, avatar generation, and boundaries
+
+### 2. Server Routes (server/routes.ts)
 **Primary Endpoints:**
-- `GET /dev` - Development access with mock LTI session
-- `POST /api/article-chat-stream` - Streaming article discussion
-- `POST /api/claude-chat` - Assessment and teaching chat with streaming
-- `POST /api/assess-conversation` - Native Claude assessment for difficulty level assignment
-- `POST /api/grade-conversations` - Comprehensive Claude-based grading and feedback
-- `GET /api/assistant-config` - AI assistant configuration with content package loading
-- `GET /admin` - Admin interface access (password protected)
-- `POST /api/content/create-package` - Content package creation with file upload support
-- `GET /api/content/scan` - Content package discovery and listing
-- `GET /api/lti/config` - LTI 1.3 configuration for Canvas registration
-- `POST /api/lti/launch` - Main LTI launch endpoint with Deep Linking support
-- `POST /api/lti/login` - LTI OIDC login initiation
-- `GET /api/lti/jwks` - Public key set for Canvas verification
-- `POST /api/lti/deep-linking/jwt` - JWT generation for content selection
+- `POST /api/claude/chat` - Main Claude chat endpoint with streaming support and intake bot prompts
+- `POST /api/intake/extract-pdf` - PDF content extraction for Stage 2 file uploads
+- `POST /api/intake/extract-text` - Text file content extraction  
+- `POST /api/intake/upload-imscc` - Canvas IMSCC file parsing
+- `POST /api/intake/extract-youtube` - YouTube transcript extraction
+- `POST /api/intake/summarize-content` - Content summarization for assessment context
+- `POST /api/intake/generate-welcome-message` - Bot welcome message generation
+- `GET /intake` - Main intake wizard interface
+- `GET /` - Home route with demo content packages
+
+**Key Features:**
+- **Streaming Responses**: Real-time Claude responses with word-by-word display
+- **File Processing**: Multi-format content extraction (PDF, text, IMSCC, YouTube)
+- **Content Summarization**: Intelligent content summarization for assessment context
+- **Bot Prompt System**: Dynamic prompt generation based on intake stage and context
 
 **File Upload System:**
 - Multer middleware for handling FormData uploads

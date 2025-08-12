@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 
 // Environment configuration
 const isProduction = process.env.NODE_ENV === 'production';
+const isDeployedProduction = isProduction && (
+  process.env.REPLIT_DOMAINS?.includes('onedayahead.com') || 
+  process.env.REPL_SLUG?.includes('prod') ||
+  process.env.HOST?.includes('onedayahead.com')
+);
 
 // Array of allowed LMS domains for embedding
 const allowedLmsDomains = [
@@ -65,13 +70,20 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
     // Explicitly remove X-Frame-Options to allow iframe embedding
     res.removeHeader('X-Frame-Options');
   } else {
-    // For regular routes, use more standard security headers
-    // Content Security Policy with specific frame-ancestors to allow embedding
+    // For regular routes, use environment-specific security headers
     const cspDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // Environment-specific script sources - no Replit in deployed production
+      isDeployedProduction 
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        : isProduction
+          ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://replit.com"
+          : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://replit.com",
       "connect-src 'self' https://* http://*",
-      "frame-ancestors 'self' https://*.onedayahead.com https://*.replit.app", // Allow embedding from specific domains
+      // Frame ancestors - allow specific domains for production, more permissive for dev
+      isProduction
+        ? "frame-ancestors 'self' https://*.instructure.com https://*.blackboard.com https://*.onedayahead.com"
+        : "frame-ancestors 'self' https://*.onedayahead.com https://*.replit.app https://*.replit.dev",
       "img-src 'self' data: blob: https://* http://*",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",

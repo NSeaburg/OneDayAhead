@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { Message } from '@/lib/openai';
 import { streamChatCompletionWithClaude } from '@/lib/anthropic';
 
@@ -34,12 +35,15 @@ export function useStreamingChat(assistantType?: string) {
         credentials: 'include',
         body: JSON.stringify({
           messages: newMessages,
-          assistantType: assistantType || 'content-creation'
+          assistantType: assistantType || 'intake-basics'
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        if (response.status === 429) {
+          throw new Error('Rate limited - please wait a moment and try again. The system is temporarily busy.');
+        }
+        throw new Error(`Failed to get response: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
@@ -71,7 +75,16 @@ export function useStreamingChat(assistantType?: string) {
                 const parsed = JSON.parse(data);
                 if (parsed.content) {
                   assistantContent += parsed.content;
-                  setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+                  // Force immediate render with flushSync to prevent batching
+                  flushSync(() => {
+                    setMessages(prev => 
+                      prev.map((msg, index) => 
+                        index === prev.length - 1 && msg.role === 'assistant'
+                          ? { ...msg, content: assistantContent }
+                          : msg
+                      )
+                    );
+                  });
                 }
               } catch (e) {
                 // Ignore parsing errors for malformed chunks
@@ -84,7 +97,15 @@ export function useStreamingChat(assistantType?: string) {
       }
     } catch (err: any) {
       console.error('Error in streaming chat:', err);
-      setError(err.message || 'Something went wrong');
+      const errorMessage = err.message || 'Something went wrong';
+      setError(errorMessage);
+      
+      // Add error message to chat for user visibility
+      const errorChatMessage: Message = { 
+        role: 'assistant', 
+        content: `I'm sorry, I'm having trouble processing your response right now. ${errorMessage} Could you try again in a moment?`
+      };
+      setMessages(prev => [...prev, errorChatMessage]);
     } finally {
       setIsStreaming(false);
     }
