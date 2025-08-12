@@ -260,11 +260,16 @@ function IntakeChat({
               const parsed = JSON.parse(data);
               if (parsed.content) {
                 botResponse += parsed.content;
-                setMessages(prev => prev.map(msg => 
-                  msg.id === streamingMessageId 
-                    ? { ...msg, content: botResponse }
-                    : msg
-                ));
+                console.log('🎬 BUTTON STREAMING - New chunk:', parsed.content.length, 'chars. Total:', botResponse.length);
+                setMessages(prev => {
+                  const updated = prev.map(msg => 
+                    msg.id === streamingMessageId 
+                      ? { ...msg, content: botResponse }
+                      : msg
+                  );
+                  console.log('🎬 BUTTON STREAMING - Updated content length:', botResponse.length);
+                  return updated;
+                });
               }
             } catch (e) {
               console.error('Error parsing streaming data:', e);
@@ -2261,15 +2266,18 @@ function IntakeChat({
                 }
                 
                 botResponse += parsed.content;
+                console.log('🎬 STREAMING - New chunk received:', parsed.content.length, 'chars. Total:', botResponse.length);
 
                 // Update the specific streaming message in real time
-                setMessages((prev) => 
-                  prev.map((msg) => 
+                setMessages((prev) => {
+                  const updated = prev.map((msg) => 
                     msg.id === streamingMessageId 
                       ? { ...msg, content: botResponse }
                       : msg
-                  )
-                );
+                  );
+                  console.log('🎬 STREAMING - Updated message content length:', botResponse.length);
+                  return updated;
+                });
               }
             } catch (e) {
               // Ignore JSON parsing errors for streaming
